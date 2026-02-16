@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Machine — Template</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="../styles.css" rel="stylesheet">
+    <style>
+      .container-inner {max-width:1100px;margin:88px auto 28px;padding:0 16px}
+      .breadcrumbs {color:#aab4bf;font-size:13px;margin-bottom:12px}
+      .grid {display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+      .card {background:rgba(255,255,255,0.03);padding:18px;border-radius:8px}
+      .media-main {background:#0b1320;border-radius:8px;height:420px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+      .media-main img, .media-main video {max-width:100%;max-height:100%;display:block}
+      .thumbs {display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+      .thumbs button{border:0;padding:0;background:transparent;cursor:pointer}
+      .thumbs img{width:84px;height:56px;object-fit:cover;border-radius:6px}
+      .ex-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+      .ex-card{display:flex;gap:10px;align-items:center;padding:10px;background:#07101a;border-radius:8px}
+      .ex-card img{width:64px;height:48px;object-fit:cover;border-radius:6px}
+      .modal{position:fixed;inset:0;background:rgba(2,6,10,0.7);display:none;align-items:center;justify-content:center;padding:20px}
+      .modal .box{background:#0b1320;padding:18px;border-radius:8px;max-width:900px;width:100%}
+      .modal.active{display:flex}
+      .meta-list{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+      .meta-list li{font-size:14px;color:#c9d6e1}
+      .cta{margin-top:10px}
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand brand-font" href="../index.html">
+                [FIT-STOP]
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item me-4">
+                        <a class="nav-link text-white" href="../equipment.html">EQUIPMENT</a>
+                    </li>
+                    <li class="nav-item me-4">
+                        <a class="nav-link text-white" href="../index.html#location">LOCATION</a>
+                    </li>
+                    <li class="nav-item me-4">
+                        <a class="nav-link text-white" href="../aboutus.html">About Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="btn btn-hazard">
+                            <i class="fa-solid fa-lock me-2"></i> LOGIN
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+  <div class="container-inner">
+    <div class="breadcrumbs">Home › Equipment › Smith Machine</div>
+    <h1>Smith Machine</h1>
+
+    <div class="grid">
+      <main>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong>Usage Gallery</strong>
+            <small style="color:#9fb1c7">Photos & videos of machine in use</small>
+          </div>
+
+          <div id="mediaMain" class="media-main">
+            <img src="../images/placeholder-1.jpg" alt="Main media">
+          </div>
+
+          <div class="thumbs" id="thumbs">
+            <!-- Replace src with your images/videos. Use data-type="video" for video thumbnails -->
+            <button data-src="../images/placeholder-1.jpg" aria-label="View photo 1"><img src="../images/placeholder-1.jpg"></button>
+            <button data-src="../images/placeholder-2.jpg"><img src="../images/placeholder-2.jpg"></button>
+            <button data-src="../images/placeholder-3.jpg"><img src="../images/placeholder-3.jpg"></button>
+            <button data-src="../videos/placeholder-1.mp4" data-type="video" aria-label="Play video 1"><img src="../images/video-thumb.jpg"></button>
+          </div>
+
+          <section style="margin-top:14px">
+            <strong>Exercises You Can Do On This Machine</strong>
+            <div class="ex-gallery" id="exGallery">
+              <!-- Example exercise cards: replace thumbnails and links with actual media -->
+              <article class="ex-card">
+                <img src="../images/ex-1.jpg" alt="Exercise 1">
+                <div>
+                  <div style="font-weight:600">Exercise Title 1</div>
+                  <div style="font-size:13px;color:#9fb1c7">Primary muscle • Chest</div>
+                </div>
+              </article>
+
+              <article class="ex-card">
+                <img src="../images/ex-2.jpg" alt="Exercise 2">
+                <div>
+                  <div style="font-weight:600">Exercise Title 2</div>
+                  <div style="font-size:13px;color:#9fb1c7">Primary muscle • Shoulders</div>
+                </div>
+              </article>
+
+              <article class="ex-card">
+                <img src="../images/ex-3.jpg" alt="Exercise 3">
+                <div>
+                  <div style="font-weight:600">Exercise Title 3</div>
+                  <div style="font-size:13px;color:#9fb1c7">Primary muscle • Triceps</div>
+                </div>
+              </article>
+
+              <article class="ex-card">
+                <img src="../images/ex-4.jpg" alt="Exercise 4">
+                <div>
+                  <div style="font-weight:600">Exercise Title 4</div>
+                  <div style="font-size:13px;color:#9fb1c7">Primary muscle • Back</div>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <aside>
+        <div class="card">
+          <strong>Machine Details</strong>
+          <ul class="meta-list" style="margin-top:10px">
+            <li><strong>Equipment:</strong> Smith Machine</li>
+            <li><strong>Type:</strong> Selectorized / Smith / Cable</li>
+            <li><strong>Difficulty:</strong> Beginner — Advanced</li>
+
+          </ul>
+
+          <div class="cta">
+            <button onclick="openModalFor('all')">Open full gallery</button>
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+        <div class="card">
+          <strong>Quick Tips</strong>
+          <ol style="margin-top:8px;color:#c9d6e1;font-size:14px">
+            <li>Start with light weight to learn the path.</li>
+            <li>Use a spotter for heavy sets when applicable.</li>
+          </ol>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Modal viewer for large media and exercise detail -->
+  <div id="modal" class="modal" role="dialog" aria-hidden="true">
+    <div class="box">
+      <button id="modalClose" style="float:right">Close</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <footer>
+        <div class="container text-center">
+            <div class="d-flex justify-content-center gap-4 mb-4">
+                <a href="#" class="footer-link">Privacy Policy</a>
+                <a href="#" class="footer-link">Terms of Service</a>
+                <a href="#" class="footer-link text-hazard">Staff Portal</a>
+            </div>
+            <p class="text-muted small mb-0">
+                &copy; 2025 FIT-STOP FITNESS CENTER. <br>
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const mediaMain = document.getElementById('mediaMain');
+    const thumbs = document.getElementById('thumbs');
+    const modal = document.getElementById('modal');
+    const modalContent = document.getElementById('modalContent');
+    document.getElementById('modalClose').addEventListener('click',()=>modal.classList.remove('active'));
+
+    thumbs.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const src = btn.dataset.src;
+      const type = btn.dataset.type;
+      setMainMedia(src, type === 'video');
+    });
+
+    function setMainMedia(src, isVideo){
+      mediaMain.innerHTML = '';
+      if(isVideo){
+        const v = document.createElement('video'); v.src = src; v.controls = true; v.autoplay = true; mediaMain.appendChild(v);
+      } else {
+        const i = document.createElement('img'); i.src = src; i.alt = '';
+        mediaMain.appendChild(i);
+      }
+    }
+
+    function openModalFor(which){
+      // simple example: show all thumbnails in modal as full-size images/videos
+      modalContent.innerHTML = '';
+      const buttons = Array.from(thumbs.querySelectorAll('button'));
+      buttons.forEach(b=>{
+        const src = b.dataset.src; const isVideo = b.dataset.type === 'video';
+        const el = document.createElement(isVideo ? 'video' : 'img');
+        el.src = src; if(isVideo) el.controls = true; el.style.maxWidth='100%'; el.style.marginBottom='12px';
+        modalContent.appendChild(el);
+      });
+      modal.classList.add('active');
+    }
+  </script>
+</body>
+</html>
