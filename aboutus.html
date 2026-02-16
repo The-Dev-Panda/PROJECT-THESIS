@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us | FIT-STOP</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <style>
+        .profile-img-container {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1.5rem;
+            position: relative;
+        }
+        
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid var(--hazard-yellow);
+            background-color: #222;
+        }
+
+        .team-card {
+            background-color: var(--bg-card);
+            border: 1px solid #333;
+            transition: transform 0.3s ease;
+        }
+
+        .team-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--hazard-yellow);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand brand-font" href="index.html">
+                [FIT-STOP]
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item me-4">
+                        <a class="nav-link text-white" href="equipment.html">EQUIPMENT</a>
+                    </li>
+                    <li class="nav-item me-4">
+                        <a class="nav-link text-white" href="index.html#location">LOCATION</a>
+                    </li>
+					<li class="nav-item me-4">
+                        <a class="nav-link text-hazard fw-bold" href="aboutus.html">About Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="btn btn-hazard">
+                            <i class="fa-solid fa-lock me-2"></i> LOGIN
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="hero-section" style="min-height: 50vh;">
+        <div class="container text-center">
+            <h1>THE <span class="text-hazard">CREW</span></h1>
+            <p class="lead text-muted mx-auto" style="max-width: 600px;">
+                We are a small, dedicated team committed to merging old-school grit with modern tracking. 
+                Meet the people behind the system.
+            </p>
+        </div>
+    </section>
+
+    <div class="hazard-stripes"></div>
+
+    <section class="py-5">
+        <div class="container py-5">
+            <!-- Owner Profile -->
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-8">
+                    <div class="text-center mb-4">
+                        <h2 class="text-white mb-2">THE <span class="text-hazard">HEAD</span></h2>
+                    </div>
+                    
+                    <div class="pricing-card p-4"> <!-- Using pricing-card class for consistent look -->
+                        <div class="row align-items-center">
+                            <div class="col-md-5 text-center">
+                                <div class="profile-img-container" style="width: 200px; height: 200px;">
+                                    <!-- Placeholder for Owner Image -->
+                                    <div class="profile-img d-flex align-items-center justify-content-center bg-black">
+                                        <i class="fa-solid fa-user-secret fa-4x text-muted"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-7 text-center text-md-start">
+                                <h3 class="text-white mb-1">ERIC ENRIQUEZ</h3>
+                                <p class="text-hazard fw-bold mb-3">FOUNDER & HEAD COACH</p>
+                                <p class="text-muted small">
+                                    "Lorem, ipsum dolor sit amet consectetur adipisicing elit. Odit, quod! Consequatur optio vitae quasi. Velit consequatur at, quod eaque ducimus quibusdam est excepturi iure enim fugiat, consectetur nisi, nostrum maxime!."
+                                </p>
+                                <div class="d-flex gap-2 justify-content-center justify-content-md-start mt-3">
+                                    <a href="#" class="btn btn-sm btn-outline-secondary"><i class="fa-brands fa-instagram"></i></a>
+                                    <a href="#" class="btn btn-sm btn-outline-secondary"><i class="fa-brands fa-linkedin"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Grid -->
+            <div class="row mb-5 text-center">
+                <div class="col-12">
+                    <h3 class="text-white">OUR <span class="text-hazard">STAFF</span></h3>
+                </div>
+            </div>
+
+            <div class="row g-4 justify-content-center">
+                
+                <!-- Employee 1 -->
+                <div class="col-md-4 col-lg-4">
+                    <div class="feature-card text-center h-100 p-4">
+                        <div class="profile-img-container">
+                             <div class="profile-img d-flex align-items-center justify-content-center bg-black">
+                                <i class="fa-solid fa-dumbbell fa-2x text-muted"></i>
+                            </div>
+                        </div>
+                        <h5 class="text-white">Jhon Dela Torre</h5>
+                        <p class="text-muted small">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, sint doloribus in impedit sequi neque necessitatibus possimus voluptas odit expedita est quidem ut autem beatae ab dolor eaque dicta repellendus!</p>
+                    </div>
+                </div>
+
+                <!-- Employee 2 -->
+                <div class="col-md-4 col-lg-4">
+                    <div class="feature-card text-center h-100 p-4">
+                        <div class="profile-img-container">
+                             <div class="profile-img d-flex align-items-center justify-content-center bg-black">
+                                <i class="fa-solid fa-heart-pulse fa-2x text-muted"></i>
+                            </div>
+                        </div>
+                        <h5 class="text-white">Dennsy Vega</h5>
+                        <p class="text-muted small">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, sint doloribus in impedit sequi neque necessitatibus possimus voluptas odit expedita est quidem ut autem beatae ab dolor eaque dicta repellendus!</p>
+                    </div>
+                </div>
+
+                <!-- Employee 3 -->
+                <div class="col-md-4 col-lg-4">
+                    <div class="feature-card text-center h-100 p-4">
+                        <div class="profile-img-container">
+                             <div class="profile-img d-flex align-items-center justify-content-center bg-black">
+                                <i class="fa-solid fa-clipboard-check fa-2x text-muted"></i>
+                            </div>
+                        </div>
+                        <h5 class="text-white">Kurt Ramos</h5>
+                        <p class="text-muted small">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, sint doloribus in impedit sequi neque necessitatibus possimus voluptas odit expedita est quidem ut autem beatae ab dolor eaque dicta repellendus!</p>
+                    </div>
+                </div>
+
+                <!-- Employee 4 -->
+                <div class="col-md-4 col-lg-4">
+                    <div class="feature-card text-center h-100 p-4">
+                        <div class="profile-img-container">
+                             <div class="profile-img d-flex align-items-center justify-content-center bg-black">
+                                <i class="fa-solid fa-nutrition-leaf fa-2x text-muted"></i>
+                            </div>
+                        </div>
+                        <h5 class="text-white">Celerio Raymund</h5>
+                        <p class="text-muted small">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, sint doloribus in impedit sequi neque necessitatibus possimus voluptas odit expedita est quidem ut autem beatae ab dolor eaque dicta repellendus!</p>
+                    </div>
+                </div>
+
+                <!-- Employee 5 -->
+                <div class="col-md-4 col-lg-4">
+                    <div class="feature-card text-center h-100 p-4">
+                        <div class="profile-img-container">
+                             <div class="profile-img d-flex align-items-center justify-content-center bg-black">
+                                <i class="fa-solid fa-headset fa-2x text-muted"></i>
+                            </div>
+                        </div>
+                        <h5 class="text-white">Charles Carillo</h5>
+                        <p class="text-muted small">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, sint doloribus in impedit sequi neque necessitatibus possimus voluptas odit expedita est quidem ut autem beatae ab dolor eaque dicta repellendus!</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container text-center">
+            <div class="d-flex justify-content-center gap-4 mb-4">
+                <a href="#" class="footer-link">Privacy Policy</a>
+                <a href="#" class="footer-link">Terms of Service</a>
+                <a href="#" class="footer-link text-hazard">Staff Portal</a>
+            </div>
+            <p class="text-muted small mb-0">
+                &copy; 2025 FIT-STOP FITNESS CENTER. <br>
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
