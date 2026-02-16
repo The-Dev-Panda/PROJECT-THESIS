@@ -21,12 +21,11 @@
       .ex-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
       .ex-card{display:flex;gap:10px;align-items:center;padding:10px;background:#07101a;border-radius:8px}
       .ex-card img{width:64px;height:48px;object-fit:cover;border-radius:6px}
-      .modal{position:fixed;inset:0;background:rgba(2,6,10,0.7);display:none;align-items:center;justify-content:center;padding:20px}
-      .modal .box{background:#0b1320;padding:18px;border-radius:8px;max-width:900px;width:100%}
-      .modal.active{display:flex}
       .meta-list{list-style:none;padding:0;margin:0;display:grid;gap:6px}
       .meta-list li{font-size:14px;color:#c9d6e1}
       .cta{margin-top:10px}
+      /* Thumbnail styles (kept minimal) */
+      .thumb-placeholder{min-height:0}
     </style>
 </head>
 <body>
@@ -61,7 +60,7 @@
     </nav>
 
   <div class="container-inner">
-    <div class="breadcrumbs">Home › Equipment › Smith Machine</div>
+    <div class="breadcrumbs"><a href="../index.html">Home</a> › <a href="../equipment.html">Equipment</a> › <a href="../machine.html">Machines</a> › Smith Machine</div>
     <h1>Smith Machine</h1>
 
     <div class="grid">
@@ -73,15 +72,12 @@
           </div>
 
           <div id="mediaMain" class="media-main">
-            <img src="../images/placeholder-1.jpg" alt="Main media">
+            <img src="../images/smith-pic.jpg" alt="Main media">
           </div>
 
           <div class="thumbs" id="thumbs">
-            <!-- Replace src with your images/videos. Use data-type="video" for video thumbnails -->
-            <button data-src="../images/placeholder-1.jpg" aria-label="View photo 1"><img src="../images/placeholder-1.jpg"></button>
-            <button data-src="../images/placeholder-2.jpg"><img src="../images/placeholder-2.jpg"></button>
-            <button data-src="../images/placeholder-3.jpg"><img src="../images/placeholder-3.jpg"></button>
-            <button data-src="../videos/placeholder-1.mp4" data-type="video" aria-label="Play video 1"><img src="../images/video-thumb.jpg"></button>
+            <button type="button" data-src="../images/smith-pic.jpg" data-type="image" aria-label="View photo 1"><img src="../images/smith-pic.jpg" alt="Photo 1"></button>
+            <button type="button" data-src="../images/Smith-Bench.mp4" data-type="video" aria-label="Play video 1"><img src="../images/smith-press-thumbnail.png" alt="Video thumbnail"></button>
           </div>
 
           <section style="margin-top:14px">
@@ -89,7 +85,7 @@
             <div class="ex-gallery" id="exGallery">
               <!-- Example exercise cards: replace thumbnails and links with actual media -->
               <article class="ex-card">
-                <img src="../images/ex-1.jpg" alt="Exercise 1">
+                <img src="../images/Fitstop.png" alt="Exercise 1">
                 <div>
                   <div style="font-weight:600">Exercise Title 1</div>
                   <div style="font-size:13px;color:#9fb1c7">Primary muscle • Chest</div>
@@ -135,7 +131,7 @@
           </ul>
 
           <div class="cta">
-            <button onclick="openModalFor('all')">Open full gallery</button>
+            <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#galleryModal">Open full gallery</button>
           </div>
         </div>
 
@@ -151,13 +147,36 @@
     </div>
   </div>
 
-  <!-- Modal viewer for large media and exercise detail -->
-  <div id="modal" class="modal" role="dialog" aria-hidden="true">
-    <div class="box">
-      <button id="modalClose" style="float:right">Close</button>
-      <div id="modalContent"></div>
+  <!-- Bootstrap gallery modal -->
+    <div class="modal fade" id="galleryModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content bg-dark text-light">
+          <div class="modal-header border-0">
+            <nav aria-label="breadcrumb" class="m-0">
+              <ol class="breadcrumb m-0" style="background:transparent;padding:0">
+                <li class="breadcrumb-item active" aria-current="page">Gallery</li>
+              </ol>
+            </nav>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body py-2 px-3">
+            <!-- Grid view (5x5) using Bootstrap row-cols -->
+            <div id="galleryGrid" class="row row-cols-5 g-2"></div>
+
+            <!-- Viewer (hidden by default) -->
+            <div id="galleryViewer" class="d-none d-flex flex-column align-items-center gap-3 mt-2">
+              <div class="w-100 d-flex justify-content-start">
+                <button id="galleryBack" type="button" class="btn btn-sm btn-secondary">Back</button>
+              </div>
+              <div class="w-100 d-flex justify-content-center align-items-center">
+                <img id="galleryViewerImg" src="" alt="" class="img-fluid rounded" style="max-height:70vh;object-fit:contain;" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
 
   <footer>
         <div class="container text-center">
@@ -176,39 +195,94 @@
   <script>
     const mediaMain = document.getElementById('mediaMain');
     const thumbs = document.getElementById('thumbs');
-    const modal = document.getElementById('modal');
-    const modalContent = document.getElementById('modalContent');
-    document.getElementById('modalClose').addEventListener('click',()=>modal.classList.remove('active'));
 
+    // set main media (image or video)
+    function setMainMedia(src, isVideo){
+      const prevVideo = mediaMain.querySelector('video');
+      if (prevVideo) {
+        try { prevVideo.pause(); } catch(e){}
+        prevVideo.removeAttribute('src');
+        prevVideo.load && prevVideo.load();
+      }
+
+      mediaMain.innerHTML = '';
+      if (!src) return;
+
+      if (isVideo) {
+        const v = document.createElement('video');
+        v.src = src; v.controls = true; v.autoplay = true; v.playsInline = true;
+        v.style.maxWidth = '100%'; v.style.maxHeight = '100%';
+        mediaMain.appendChild(v);
+        v.play().catch(()=>{});
+      } else {
+        const i = document.createElement('img');
+        i.src = src; i.alt = ''; i.style.maxWidth = '100%'; i.style.maxHeight = '100%';
+        mediaMain.appendChild(i);
+      }
+    }
+
+    // Delegate clicks from the thumbnail container to change main media
     thumbs.addEventListener('click', e => {
       const btn = e.target.closest('button');
-      if (!btn) return;
+      if (!btn || !thumbs.contains(btn)) return;
+      e.preventDefault();
       const src = btn.dataset.src;
       const type = btn.dataset.type;
       setMainMedia(src, type === 'video');
     });
 
-    function setMainMedia(src, isVideo){
-      mediaMain.innerHTML = '';
-      if(isVideo){
-        const v = document.createElement('video'); v.src = src; v.controls = true; v.autoplay = true; mediaMain.appendChild(v);
-      } else {
-        const i = document.createElement('img'); i.src = src; i.alt = '';
-        mediaMain.appendChild(i);
+    // Gallery modal elements
+    const galleryModalEl = document.getElementById('galleryModal');
+    const galleryGrid = document.getElementById('galleryGrid');
+    const galleryViewer = document.getElementById('galleryViewer');
+    const galleryViewerImg = document.getElementById('galleryViewerImg');
+    const galleryBack = document.getElementById('galleryBack');
+
+    // Build the 5x5 gallery grid showing only images (no videos), up to 25
+    function buildGallery(){
+      galleryGrid.innerHTML = '';
+      galleryViewer.classList.add('d-none');
+      galleryGrid.classList.remove('d-none');
+
+      const buttons = Array.from(thumbs.querySelectorAll('button')).filter(b => b.dataset.type !== 'video');
+      const imgs = buttons.map(b => b.dataset.src).slice(0,25);
+      imgs.forEach(src => {
+        const col = document.createElement('div'); col.className = 'col';
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'btn p-0 w-100';
+        const img = document.createElement('img'); img.src = src; img.alt = ''; img.className = 'img-fluid rounded';
+        b.appendChild(img);
+        b.addEventListener('click', () => openViewer(src));
+        col.appendChild(b);
+        galleryGrid.appendChild(col);
+      });
+
+      // keep consistent grid size: add empty placeholders if fewer than 25
+      const fill = 25 - imgs.length;
+      for (let i=0;i<fill;i++){
+        const ph = document.createElement('div'); ph.className = 'col thumb-placeholder'; galleryGrid.appendChild(ph);
       }
     }
 
-    function openModalFor(which){
-      // simple example: show all thumbnails in modal as full-size images/videos
-      modalContent.innerHTML = '';
-      const buttons = Array.from(thumbs.querySelectorAll('button'));
-      buttons.forEach(b=>{
-        const src = b.dataset.src; const isVideo = b.dataset.type === 'video';
-        const el = document.createElement(isVideo ? 'video' : 'img');
-        el.src = src; if(isVideo) el.controls = true; el.style.maxWidth='100%'; el.style.marginBottom='12px';
-        modalContent.appendChild(el);
+    function openViewer(src){
+      galleryViewerImg.src = src;
+      galleryGrid.classList.add('d-none');
+      galleryViewer.classList.remove('d-none');
+    }
+
+    galleryBack.addEventListener('click', () => {
+      galleryViewerImg.src = '';
+      galleryViewer.classList.add('d-none');
+      galleryGrid.classList.remove('d-none');
+    });
+
+    // Wire modal events
+    if (galleryModalEl) {
+      galleryModalEl.addEventListener('show.bs.modal', buildGallery);
+      galleryModalEl.addEventListener('hidden.bs.modal', () => {
+        galleryViewerImg.src = '';
+        galleryViewer.style.display = 'none';
+        galleryGrid.style.display = 'grid';
       });
-      modal.classList.add('active');
     }
   </script>
 </body>
