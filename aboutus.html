@@ -70,13 +70,43 @@
     </nav>
     
     <!-- Hero Section -->
-    <section class="hero-section" style="min-height: 50vh;">
-        <div class="container text-center">
-            <h1>THE <span class="text-hazard">CREW</span></h1>
-            <p class="lead text-muted mx-auto" style="max-width: 600px;">
-                We are a small, dedicated team committed to merging old-school grit with modern tracking. 
-                Meet the people behind the system.
+    <section class="hero-section position-relative" style="display: flex; align-items: center; overflow: hidden;">
+        <div class="position-absolute w-100 h-100" style="opacity: 0.03; z-index: 0;">
+            <i class="fa-solid fa-users position-absolute" style="font-size: 20rem; top: 50%; left: 50%; transform: translate(-50%, -50%);"></i>
+        </div>
+        
+        <div class="container text-center position-relative" style="z-index: 1;">
+            <div class="mb-4">
+                <i class="fa-solid fa-people-group fa-3x text-hazard mb-3 d-block"></i>
+            </div>
+            
+            <h1 class="display-3 fw-bold mb-3">
+                MEET THE <span class="text-hazard">CREW</span>
+            </h1>
+            
+            <div class="d-flex justify-content-center align-items-center gap-3 mb-4">
+                <div style="width: 60px; height: 2px; background: var(--hazard-yellow);"></div>
+                <i class="fa-solid fa-dumbbell text-hazard"></i>
+                <div style="width: 60px; height: 2px; background: var(--hazard-yellow);"></div>
+            </div>
+            
+            <p class="lead text-light mx-auto" style="max-width: 700px; font-size: 1.25rem; line-height: 1.8;">
+                We are a <strong class="text-white">small, dedicated team</strong> committed to merging 
+                <span class="text-hazard">old-school grit</span> with modern tracking technology. 
+                
             </p>
+            
+            <div class="d-flex justify-content-center gap-4 mt-5">
+                <div class="text-center">
+                    <div class="fs-2 fw-bold text-hazard">5+</div>
+                    <div class="text-muted small">TEAM MEMBERS</div>
+                </div>
+                <div class="text-center border-start border-secondary ps-4">
+                    <div class="fs-2 fw-bold text-hazard">100%</div>
+                    <div class="text-muted small">COMMITTED</div>
+                </div>
+                
+            </div>
         </div>
     </section>
 
