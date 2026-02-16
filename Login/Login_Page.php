@@ -22,7 +22,8 @@
                 <div class="col-md-6 rounded border border-warning shadow p-4">
                     <form action="Process_Login.php" method="POST">
                         <div class="col" style="font-size: 1.2rem;">
-                            <h3 class=" text-center text-warning m-3">FITSTOP GYM <span class="text-light">LOGIN</span></h3>
+                            <h3 class=" text-center text-warning m-3">FITSTOP GYM <span class="text-light">LOGIN</span>
+                            </h3>
                             <div class="row mb-3">
                                 <label for="username" class="text-warning" style="font-weight: 500;">USERNAME</label>
                                 <input type="text" name="username" id="username" required placeholder="Enter username"
@@ -48,15 +49,16 @@
                         </div>
                     </form>
                     <form action="Forgot_Password.php" method="POST">
-                        <div class="col-md-4 border border-light">
-                            <input type="submit" value="Forgot Password?" class="btn text-light"
-                                style="background-color:none; text-align: end;">
+                        <div class="col-md-4 text-center">
+                            <input type="submit" value="Forgot Password?" class="btn text-light text-center"
+                                style="background-color:none;">
                         </div>
                     </form>
                 </div>
             </div>
-            <div class="col-md-6 bg-light">
-                <img src="../images/Fitstop.png" alt="FITSTOP LOGIN">
+            <div class="col-md-6 border-start border-warning p-0" style="box-shadow: 0px 0 10px 10px rgba(0, 0, 0, 0.5);">
+                <img src="../images/Fitstop.png" alt="FITSTOP LOGIN" class="img-fluid w-100 h-100"
+                    style="object-fit: cover;">
             </div>
         </div>
     </div>
