@@ -56,7 +56,7 @@
                 </div>
             </div>
             <div class="col-md-6 bg-light">
-                <img src="images/Fitstop.png" alt="FITSTOP LOGIN">
+                <img src="../images/Fitstop.png" alt="FITSTOP LOGIN">
             </div>
         </div>
     </div>
