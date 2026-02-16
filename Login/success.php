@@ -9,6 +9,24 @@ if (empty($_SESSION["username"])) {
 
     echo "<br>Session save path: " . session_save_path();
 }
+#redirect
+if(!empty($_SESSION["username"])){
+    if($_SESSION["user_type"] == "admin"){
+        header('Location: ../ADMIN_PAGE_CHANGE.php'); #CHANGE THIS TO ADMIN PAGE
+        exit();
+    } else if($_SESSION["user_type"] == "user"){
+        header('Location: ../USER_PAGE_CHANGE.php'); #CHANGE THIS TO USER PAGE
+        exit();
+    } else if($_SESSION["user_type"] == "staff"){
+        header('Location: ../STAFF_PAGE_CHANGE.php'); #CHANGE THIS TO STAFF PAGE
+        exit();
+    } else {
+        echo "Invalid user type.";
+        header('Location: ../Login_Page.php');
+        session_destroy();
+        exit();
+    }
+}
 ?>
 <!DOCTYPE html>
 <html>
