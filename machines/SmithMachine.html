@@ -11,21 +11,31 @@
     <style>
       .container-inner {max-width:1100px;margin:88px auto 28px;padding:0 16px}
       .breadcrumbs {color:#aab4bf;font-size:13px;margin-bottom:12px}
-      .grid {display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
       .card {background:rgba(255,255,255,0.03);padding:18px;border-radius:8px}
       .media-main {background:#0b1320;border-radius:8px;height:420px;display:flex;align-items:center;justify-content:center;overflow:hidden}
       .media-main img, .media-main video {max-width:100%;max-height:100%;display:block}
       .thumbs {display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
       .thumbs button{border:0;padding:0;background:transparent;cursor:pointer}
       .thumbs img{width:84px;height:56px;object-fit:cover;border-radius:6px}
-      .ex-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
       .ex-card{display:flex;gap:10px;align-items:center;padding:10px;background:#07101a;border-radius:8px}
-      .ex-card img{width:64px;height:48px;object-fit:cover;border-radius:6px}
+      .ex-card img{width:64px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0}
       .meta-list{list-style:none;padding:0;margin:0;display:grid;gap:6px}
       .meta-list li{font-size:14px;color:#c9d6e1}
       .cta{margin-top:10px}
-      /* Thumbnail styles (kept minimal) */
       .thumb-placeholder{min-height:0}
+      @media (max-width: 991px) {
+        .container-inner {margin-top:70px}
+      }
+      @media (max-width: 768px) {
+        .media-main {height:280px}
+        .thumbs img{width:70px;height:46px}
+        .breadcrumbs {font-size:12px}
+      }
+      @media (max-width: 576px) {
+        .container-inner {margin-top:64px}
+        .media-main {height:220px}
+        .ex-card img{width:56px;height:42px}
+      }
     </style>
 </head>
 <body>
@@ -35,7 +45,7 @@
             <a class="navbar-brand brand-font" href="../index.html">
                 [FIT-STOP]
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -61,10 +71,10 @@
 
   <div class="container-inner">
     <div class="breadcrumbs"><a href="../index.html">Home</a> › <a href="../equipment.html">Equipment</a> › <a href="../machine.html">Machines</a> › Smith Machine</div>
-    <h1>Smith Machine</h1>
+    <h1 class="mb-4">Smith Machine</h1>
 
-    <div class="grid">
-      <main>
+    <div class="row g-3">
+      <div class="col-12 col-lg-8">
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <strong>Usage Gallery</strong>
@@ -82,46 +92,54 @@
 
           <section style="margin-top:14px">
             <strong>Exercises You Can Do On This Machine</strong>
-            <div class="ex-gallery" id="exGallery">
+            <div class="row row-cols-1 row-cols-md-2 g-3 mt-1" id="exGallery">
               <!-- Example exercise cards: replace thumbnails and links with actual media -->
-              <article class="ex-card">
-                <img src="../images/Fitstop.png" alt="Exercise 1">
-                <div>
-                  <div style="font-weight:600">Exercise Title 1</div>
-                  <div style="font-size:13px;color:#9fb1c7">Primary muscle • Chest</div>
-                </div>
-              </article>
+              <div class="col">
+                <article class="ex-card">
+                  <img src="../images/Fitstop.png" alt="Exercise 1">
+                  <div>
+                    <div style="font-weight:600">Exercise Title 1</div>
+                    <div style="font-size:13px;color:#9fb1c7">Primary muscle • Chest</div>
+                  </div>
+                </article>
+              </div>
 
-              <article class="ex-card">
-                <img src="../images/ex-2.jpg" alt="Exercise 2">
-                <div>
-                  <div style="font-weight:600">Exercise Title 2</div>
-                  <div style="font-size:13px;color:#9fb1c7">Primary muscle • Shoulders</div>
-                </div>
-              </article>
+              <div class="col">
+                <article class="ex-card">
+                  <img src="../images/ex-2.jpg" alt="Exercise 2">
+                  <div>
+                    <div style="font-weight:600">Exercise Title 2</div>
+                    <div style="font-size:13px;color:#9fb1c7">Primary muscle • Shoulders</div>
+                  </div>
+                </article>
+              </div>
 
-              <article class="ex-card">
-                <img src="../images/ex-3.jpg" alt="Exercise 3">
-                <div>
-                  <div style="font-weight:600">Exercise Title 3</div>
-                  <div style="font-size:13px;color:#9fb1c7">Primary muscle • Triceps</div>
-                </div>
-              </article>
+              <div class="col">
+                <article class="ex-card">
+                  <img src="../images/ex-3.jpg" alt="Exercise 3">
+                  <div>
+                    <div style="font-weight:600">Exercise Title 3</div>
+                    <div style="font-size:13px;color:#9fb1c7">Primary muscle • Triceps</div>
+                  </div>
+                </article>
+              </div>
 
-              <article class="ex-card">
-                <img src="../images/ex-4.jpg" alt="Exercise 4">
-                <div>
-                  <div style="font-weight:600">Exercise Title 4</div>
-                  <div style="font-size:13px;color:#9fb1c7">Primary muscle • Back</div>
-                </div>
-              </article>
+              <div class="col">
+                <article class="ex-card">
+                  <img src="../images/ex-4.jpg" alt="Exercise 4">
+                  <div>
+                    <div style="font-weight:600">Exercise Title 4</div>
+                    <div style="font-size:13px;color:#9fb1c7">Primary muscle • Back</div>
+                  </div>
+                </article>
+              </div>
             </div>
           </section>
         </div>
-      </main>
+      </div>
 
-      <aside>
-        <div class="card">
+      <div class="col-12 col-lg-4">
+        <div class="card mb-3">
           <strong>Machine Details</strong>
           <ul class="meta-list" style="margin-top:10px">
             <li><strong>Equipment:</strong> Smith Machine</li>
@@ -131,11 +149,10 @@
           </ul>
 
           <div class="cta">
-            <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#galleryModal">Open full gallery</button>
+            <button type="button" class="btn btn-outline-light w-100" data-bs-toggle="modal" data-bs-target="#galleryModal">Open full gallery</button>
           </div>
         </div>
 
-        <div style="height:12px"></div>
         <div class="card">
           <strong>Quick Tips</strong>
           <ol style="margin-top:8px;color:#c9d6e1;font-size:14px">
@@ -143,7 +160,7 @@
             <li>Use a spotter for heavy sets when applicable.</li>
           </ol>
         </div>
-      </aside>
+      </div>
     </div>
   </div>
 
@@ -161,10 +178,8 @@
           </div>
 
           <div class="modal-body py-2 px-3">
-            <!-- Grid view (5x5) using Bootstrap row-cols -->
             <div id="galleryGrid" class="row row-cols-5 g-2"></div>
 
-            <!-- Viewer (hidden by default) -->
             <div id="galleryViewer" class="d-none d-flex flex-column align-items-center gap-3 mt-2">
               <div class="w-100 d-flex justify-content-start">
                 <button id="galleryBack" type="button" class="btn btn-sm btn-secondary">Back</button>
