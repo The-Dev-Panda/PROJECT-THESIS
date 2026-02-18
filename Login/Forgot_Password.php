@@ -16,6 +16,9 @@
 </head>
 
 <body class="bg-dark">
+    <img src="../images/Fitstop.png" alt="FITSTOP LOGIN" class="img-fluid w-100 h-100"
+        style="object-fit: cover; position: absolute; opacity: 10%; z-index: -1;">
+    </div>
     <div class="container">
         <div class="row justify-content-center align-items-center min-vh-100 rounded">
             <div class="col-md-4">
@@ -37,6 +40,18 @@
                                         <input type="submit" value="Send Code" class="btn"
                                             style="background-color:rgb(197, 184, 0);">
                                     </div>
+                                    <?php
+                                    if (isset($_GET['c'])) {
+                                        if ($_GET['c'] == '1') {
+                                            echo '<span class="text-danger py-2">Code Expired</span>';
+                                        }
+                                    }
+                                    if (isset($_GET['c'])) {
+                                        if ($_GET['c'] == '500') {
+                                            echo '<span class="text-danger py-2">Failed to Send Email</span>';
+                                        }
+                                    }
+                                    ?>
                                 </div>
                             </form>
                         </div>

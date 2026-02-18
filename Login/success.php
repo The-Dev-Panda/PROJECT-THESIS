@@ -1,32 +1,4 @@
-<?php
-session_start();
-if (empty($_SESSION["username"])) {
-    print ("<h1>Login First</h1>");
-    echo "<br> Login Here:<a href='Login_Page.php'>Login Again</a>";
-    exit();
-} else {
-    print ("Login Success. Welcome, " . $_SESSION["username"] . "  !  " . $_SESSION["user_type"] . "!");
 
-    echo "<br>Session save path: " . session_save_path();
-}
-#redirect
-if(!empty($_SESSION["username"])){
-    if($_SESSION["user_type"] == "admin"){
-        header('Location: ../ADMIN_PAGE_CHANGE.php'); #CHANGE THIS TO ADMIN PAGE
-        exit();
-    } else if($_SESSION["user_type"] == "user"){
-        header('Location: ../USER_PAGE_CHANGE.php'); #CHANGE THIS TO USER PAGE
-        exit();
-    } else if($_SESSION["user_type"] == "staff"){
-        header('Location: ../STAFF_PAGE_CHANGE.php'); #CHANGE THIS TO STAFF PAGE
-        exit();
-    } else {
-        echo "Invalid user type.";
-        header('Location: ../Login_Page.php');
-        session_destroy();
-        exit();
-    }
-}
 ?>
 <!DOCTYPE html>
 <html>
@@ -45,7 +17,10 @@ if(!empty($_SESSION["username"])){
 
 </head>
 
-<body>
+<body class="bg-dark">
+    <img src="../images/Fitstop.png" alt="FITSTOP LOGIN" class="img-fluid w-100 h-100"
+        style="object-fit: cover; position: absolute; opacity: 10%; z-index: -1;">
+    </div>>
     <div class="container">
         <div class="row">
             <div class="col-md-12">
@@ -56,5 +31,35 @@ if(!empty($_SESSION["username"])){
         </div>
     </div>
 </body>
+<?php
+session_start();
+if (empty($_SESSION["username"])) {
+    print ("<h1>Login First</h1>");
+    echo "<br> Login Here:<a href='Login_Page.php'>Login Again</a>";
+    session_destroy();
+    exit();
+} else {
+    print ("Login Success. Welcome, " . $_SESSION["username"] . "  !  " . $_SESSION["user_type"] . "!");
 
+    echo "<br>Session save path: " . session_save_path();
+}
+#redirect
+if (!empty($_SESSION["username"])) {
+    if ($_SESSION["user_type"] == "admin") {
+        header('Location: ../admin/Admin_Landing_Page.php'); #CHANGE THIS TO ADMIN PAGE
+        exit();
+    } else if ($_SESSION["user_type"] == "user") {
+        #header('Location: ../USER_PAGE_CHANGE.php'); #CHANGE THIS TO USER PAGE
+        #exit();
+    } else if ($_SESSION["user_type"] == "staff") {
+        #header('Location: ../STAFF_PAGE_CHANGE.php'); #CHANGE THIS TO STAFF PAGE
+        #exit();
+    } else {
+        echo "Invalid user type.";
+        header('Location: ../Login_Page.php');
+        session_destroy();
+        exit();
+    }
+}
+?>
 </html>

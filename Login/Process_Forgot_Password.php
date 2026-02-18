@@ -27,18 +27,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $mail->setFrom('noreplyfitstop@gmail.com', 'FITSTOP');
             $mail->addAddress($email);
             $mail->Subject = 'FITSTOP - Reset Password';
-            $mail->Body = 'This is your password reset code: ' . $email_code;
+            $mail->Body = 'Your verification code is: '. $email_code . ' . This code will expire in 5 minutes.';
             $mail->send();
-
             session_start();
             $_SESSION['reset_password_email'] = $email;
-            $update = $pdo->prepare('UPDATE users SET verification_code = :code WHERE email = :email');
-            $update->execute(['code' => password_hash($email_code, PASSWORD_DEFAULT), 'email' => $email]);    
+            date_default_timezone_set('Asia/Manila');
+            $date = new DateTime();
+            $date->modify('+5 minutes');
+            $expiration = $date->format('Y-m-d H:i:s');
+            $update = $pdo->prepare('UPDATE users SET verification_code = :code, verification_code_expiration = :expiration WHERE email = :email');
+            $update->execute([
+                'code' => $email_code,
+                'expiration' => $expiration,
+                'email' => $email
+            ]);
             header('Location: Verify_Password_Change.php');
             exit();
 
         } catch (Exception $e) {
             echo "Failed to send email: {$mail->ErrorInfo}";
+            header('location: Forgot_Password.php?c=500');
         }
     } else {
         header('Location: Verify_Password_Change.php');

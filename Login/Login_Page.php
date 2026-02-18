@@ -16,6 +16,36 @@
 </head>
 
 <body class="bg-dark">
+
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand brand-font" href="index.html">
+                [FIT-STOP]
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item me-4">
+                        <a class="nav-link text-white" href="equipment.html">EQUIPMENT</a>
+                    </li>
+                    <li class="nav-item me-4">
+                        <a class="nav-link text-white" href="#location">LOCATION</a>
+                    </li>
+                    <li class="nav-item me-4">
+                        <a class="nav-link text-white" href="aboutus.html">About Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="btn btn-hazard">
+                            <i class="fa-solid fa-lock me-2"></i> LOGIN
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
     <div class="container-fluid">
         <div class="row vh-100">
             <div class="col-md-6 col-sm-12 d-flex justify-content-center align-items-center">
@@ -56,7 +86,8 @@
                     </form>
                 </div>
             </div>
-            <div class="col-md-6 border-start border-warning p-0" style="box-shadow: 0px 0 10px 10px rgba(0, 0, 0, 0.5);">
+            <div class="col-md-6 border-start border-warning p-0"
+                style="box-shadow: 0px 0 10px 10px rgba(0, 0, 0, 0.5);">
                 <img src="../images/Fitstop.png" alt="FITSTOP LOGIN" class="img-fluid w-100 h-100"
                     style="object-fit: cover;">
             </div>

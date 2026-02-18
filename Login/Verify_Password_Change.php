@@ -16,6 +16,9 @@
 </head>
 
 <body class="bg-dark">
+    <img src="../images/Fitstop.png" alt="FITSTOP LOGIN" class="img-fluid w-100 h-100"
+        style="object-fit: cover; position: absolute; opacity: 10%;">
+    </div>
     <div class="container">
         <div class="row justify-content-center align-items-center min-vh-100 rounded">
             <div class="col-md-4">
@@ -54,9 +57,13 @@
                                         <input type="hidden" name="code" id="code">
                                     </div>
                                     <?php
+                                    #debugging
+                                    #date_default_timezone_set('Asia/Manila');
+                                    #echo 'Time Started: ' . date('H:i:s');
+                                    #debugging
                                     if (isset($_GET['c'])) {
-                                        if ($_GET['c'] == 'false') {
-                                            echo '<span class="text-danger">Invalid Code</span>';
+                                        if ($_GET['c'] == '2') {
+                                            echo '<span class="text-danger py-2">Invalid Code</span>';
                                         }
                                     }
                                     ?>
@@ -70,11 +77,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="d-flex justify-content-center align-items-center vh-100">
-        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-            <span class="visually-hidden">Loading...</span>
         </div>
     </div>
 </body>

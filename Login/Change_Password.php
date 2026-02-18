@@ -16,6 +16,9 @@
 </head>
 
 <body class="bg-dark">
+    <img src="../images/Fitstop.png" alt="FITSTOP LOGIN" class="img-fluid w-100 h-100"
+        style="object-fit: cover; position: absolute; opacity: 10%; z-index: -1">
+    </div>
     <div class="container">
         <div class="row justify-content-center align-items-center min-vh-100 rounded">
             <div class="col-md-4">
@@ -25,16 +28,17 @@
                         <div class="card-body p-3" style="background-color:rgba(153, 153, 153, 0.5)">
                             <h3 class="text-center mb-4">Password Change - <span style="color:rgb(197, 184, 0);">FitStop
                                     Gym</span></h3>
-                            <h4 class="text-center mb-4 border border-dark shadow p-1 rounded"><?php 
+                            <h4 class="text-center mb-4 border border-dark shadow p-1 rounded"><?php
                             session_start();
-                            echo $_SESSION['reset_password_email']; 
+                            echo $_SESSION['reset_password_email'];
                             ?></h4>
                             <form action="Process_Change_Password.php" method="POST">
                                 <div class="col px-4">
                                     <div class="row mb-2">
                                         <p>Please enter your new password</p>
                                         <label for="password" style="font-weight: 500;">password</label>
-                                        <input type="text" name="password" id="password" required placeholder="New Password"
+                                        <input type="text" name="password" id="password" required
+                                            placeholder="New Password"
                                             style="border: none; border-bottom: 1px solid black; background: none;">
                                     </div>
                                     <div class="row mt-4">
