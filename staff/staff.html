@@ -57,10 +57,9 @@
     </ul>
   </aside>
 
-  <!-- MAIN CONTENT -->
   <main class="main-content">
     
-    <!-- TOP PROFILE BAR -->
+  
     <div class="profile-container">
       <div class="profile-content">
         <div class="profile-text">  
@@ -70,7 +69,7 @@
       </div>
     </div>
 
-    <!-- QUICK ACTIONS -->
+ 
     <section class="quick-actions">
       <h2>Quick Actions</h2>
       <div class="actions-grid">
@@ -84,13 +83,14 @@
           <i class="bi bi-qr-code-scan"></i>
           <h3>Scan Attendance</h3>
           <p>Track member check-ins</p>
-          <button class="action-btn">Scan QR Code</button>
+         <button class="action-btn" onclick="startScanner()">Scan QR Code</button>
+        <div id="reader" style="width:300px; margin-top:15px;"></div>
         </div>
         <div class="action-card">
           <i class="bi bi-box-seam-fill"></i>
           <h3>Update Inventory</h3>
           <p>Manage equipment stock</p>
-          <button class="action-btn">View Inventory</button>
+         <a href="inventory.html" class="action-btn">View Inventory</a>
         </div>
         <div class="action-card">
           <i class="bi bi-card-checklist"></i>
@@ -101,7 +101,6 @@
       </div>
     </section>
 
-    <!-- REAL-TIME STATISTICS -->
     <section class="statistics">
       <h2>Today's Overview</h2>
       <div class="stats-grid">
@@ -144,11 +143,10 @@
       </div>
     </section>
 
-    <!-- CLIENT REGISTRATION SECTION -->
     <section class="registration-section">
       <h2>Client Registration</h2>
       <div class="registration-card">
-        <form class="registration-form">
+       <form class="registration-form" id="registrationForm">
           <div class="form-grid">
             <div class="form-group">
               <label>Full Name</label>
@@ -188,15 +186,14 @@
             </div>
           </div>
           <div class="form-actions">
-            <button type="button" class="btn-secondary">Clear Form</button>
+            <button type="button" class="btn-secondary" id="clearBtn">Clear Form</button>
             <button type="submit" class="btn-primary">Register & Generate ID</button>
           </div>
         </form>
       </div>
     </section>
 
-    <!-- INVENTORY MANAGEMENT -->
-    <section class="inventory-section">
+    <section class="inventory-section" id="inventory">
       <h2>Inventory Management</h2>
       <div class="inventory-header">
         <div class="search-container">
@@ -452,8 +449,6 @@
     </section>
 
     
-
-    <!-- NOTIFICATIONS -->
     <section class="notifications-section">
       <h2>Pending Notifications</h2>
       <div class="notifications-list">
@@ -486,6 +481,46 @@
 
   </main>
 </div>
+<script>
+  document.getElementById("clearBtn").addEventListener("click", function() {
+      document.getElementById("registrationForm").reset();
+  });
+</script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
+<script>
+function startScanner() {
+
+  const readerDiv = document.getElementById("reader");
+  readerDiv.innerHTML = ""; 
+
+  const html5QrCode = new Html5Qrcode("reader");
+
+  html5QrCode.start(
+    { facingMode: "environment" }, 
+    {
+      fps: 10,
+      qrbox: 250
+    },
+    qrCodeMessage => {
+
+      alert("Scanned Member ID: " + qrCodeMessage);
+
+      html5QrCode.stop();
+    },
+    errorMessage => {
+    }
+  ).catch(err => {
+    alert("Camera Error: " + err);
+  });
+}
+</script>
+<script>
+function goToInventory() {
+  document.getElementById("inventory").scrollIntoView({
+    behavior: "smooth"
+  });
+}
+</script>
 </body>
 </html>
