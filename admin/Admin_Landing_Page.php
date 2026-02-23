@@ -30,7 +30,8 @@
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
             <a class="navbar-brand brand-front" href="Admin_Landing_Page.php">
-                <i class="bi bi-lightning-fill"></i> FITSTOP - <span class="text-danger">ADMIN</span>
+                <i class="bi bi-lightning-fill"></i> FITSTOP - <span class="text-danger">
+                    Admin</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -80,7 +81,12 @@
     </nav>
     <div class="dashboard-header">
         <div class="container">
-            <h1 class="mb-2">Welcome back, Admin!</h1>
+            <h1 class="mb-2">Welcome back,
+                <?php
+                session_start();
+                echo $_SESSION["username"] ?? '';
+                ?>
+            </h1>
             <p class="mb-0">Here's what's happening with your gym today.</p>
         </div>
     </div>

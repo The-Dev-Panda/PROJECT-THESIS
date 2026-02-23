@@ -13,6 +13,11 @@
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
 
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="../styles.css" rel="stylesheet">
+
 </head>
 
 <body class="bg-dark">
@@ -35,11 +40,6 @@
                     </li>
                     <li class="nav-item me-4">
                         <a class="nav-link text-white" href="aboutus.html">About Us</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="btn btn-hazard">
-                            <i class="fa-solid fa-lock me-2"></i> LOGIN
-                        </a>
                     </li>
                 </ul>
             </div>

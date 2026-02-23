@@ -52,8 +52,8 @@ if (!empty($_SESSION["username"])) {
         #header('Location: ../USER_PAGE_CHANGE.php'); #CHANGE THIS TO USER PAGE
         #exit();
     } else if ($_SESSION["user_type"] == "staff") {
-        #header('Location: ../STAFF_PAGE_CHANGE.php'); #CHANGE THIS TO STAFF PAGE
-        #exit();
+        header('Location: ../staff/staff.php');
+        exit();
     } else {
         echo "Invalid user type.";
         header('Location: ../Login_Page.php');
