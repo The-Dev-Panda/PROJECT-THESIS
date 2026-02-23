@@ -49,7 +49,7 @@ if (!empty($_SESSION["username"])) {
         header('Location: ../admin/Admin_Landing_Page.php'); #CHANGE THIS TO ADMIN PAGE
         exit();
     } else if ($_SESSION["user_type"] == "user") {
-        header('Location: ../user/user.html');
+        header('Location: ../user/user.php');
         exit();
     } else if ($_SESSION["user_type"] == "staff") {
         header('Location: ../staff/staff.php');
