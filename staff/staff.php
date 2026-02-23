@@ -22,53 +22,74 @@
 
  
     <ul class="menu">
-      <li class="active">
-        <i class="bi bi-speedometer2"></i>
-        <span>Dashboard</span>
-      </li>
-      <li id="clientRegBtn">
-        <i class="bi bi-person-plus"></i>
-        <span>Client Registration</span>
-      </li>
-      <script>
-        document.getElementById("clientRegBtn").addEventListener("click", function() {
-  document.getElementById("clientRegistration").scrollIntoView({
-    behavior: "smooth"
-  });
+  <li class="active" id="dashboardBtn" data-target="dashboard">
+    <i class="bi bi-speedometer2"></i>
+    <span>Dashboard</span>
+  </li>
 
-  document.querySelectorAll(".sidebar .menu li").forEach(li => li.classList.remove("active"));
-  this.classList.add("active");
-});
-      </script>
-      <li>
-        <i class="bi bi-box-seam"></i>
-        <span>Inventory Management</span>
-      </li>
-      <li>
-        <i class="bi bi-clipboard-check"></i>
-        <span>Attendance Tracking</span>
-      </li>
-      <li>
-        <i class="bi bi-people"></i>
-        <span>Member Management</span>
-      </li>
-      <li>
-        <i class="bi bi-qr-code"></i>
-        <span>ID Generation</span>
-      </li>
-      <li>
-        <i class="bi bi-gear"></i>
-        <span>Settings</span>
-      </li>
-      <li>
-        <i class="bi bi-box-arrow-right"></i>
-        <span>Logout</span>
-      </li>
-    </ul>
+  <li id="clientRegBtn" data-target="clientRegistration">
+    <i class="bi bi-person-plus"></i>
+    <span>Client Registration</span>
+  </li>
+
+  <li id="inventoryBtn" data-target="inventory">
+    <i class="bi bi-box-seam"></i>
+    <span>Inventory Management</span>
+  </li>
+
+  <li id="attendanceBtn" data-target="attendance">
+    <i class="bi bi-clipboard-check"></i>
+    <span>Attendance Tracking</span>
+  </li>
+
+  <li id="memberBtn" data-target="memberManagement">
+    <i class="bi bi-people"></i>
+    <span>Member Management</span>
+  </li>
+
+  <li id="idGenBtn" data-target="idGeneration">
+    <i class="bi bi-qr-code"></i>
+    <span>ID Generation</span>
+  </li>
+
+  <li id="settingsBtn" data-target="settings">
+    <i class="bi bi-gear"></i>
+    <span>Settings</span>
+  </li>
+
+  <li id="logoutBtn">
+    <i class="bi bi-box-arrow-right"></i>
+    <span>Logout</span>
+  </li>
+</ul>
   </aside>
 
+  <script>
+  document.querySelectorAll(".menu li").forEach(item => {
+    item.addEventListener("click", function () {
+
+      const targetId = this.getAttribute("data-target");
+
+      if (targetId) {
+        document.getElementById(targetId).scrollIntoView({
+          behavior: "smooth"
+        });
+      }
+
+      document.querySelectorAll(".menu li").forEach(li => 
+        li.classList.remove("active")
+      );
+
+      this.classList.add("active");
+    });
+  });
+</script>
+
   <main class="main-content">
-    
+
+<section id="dashboard">
+
+<div class="profile-container">
   
     <div class="profile-container">
       <div class="profile-content">
@@ -152,7 +173,7 @@
         </div>
       </div>
     </section>
-
+</section>
    <section class="registration-section" id="clientRegistration">  
       <h2>Client Registration</h2>
       <div class="registration-card">
@@ -313,8 +334,7 @@
     </section>
 
     <!-- ATTENDANCE TRACKING -->
-    <section class="attendance-section">
-      <section class="attendance-section">
+   <section class="attendance-section" id="attendance">
   <h2>Workout / Performance Log</h2>
   <div class="registration-card">
     <div class="form-grid">
@@ -427,7 +447,7 @@
     </section>
 
 
-    <section class="members-section">
+    <section class="members-section" id="memberManagement">
       <h2>Active Members Management</h2>
       <div class="members-grid">
         <div class="member-card">
@@ -516,7 +536,11 @@
       </div>
     </section>
 
-    
+    <section id="settings">
+  <h2>Settings</h2>
+  <p>System settings will be configured here.</p>
+</section>
+
     <section class="notifications-section">
       <h2>Pending Notifications</h2>
       <div class="notifications-list">
