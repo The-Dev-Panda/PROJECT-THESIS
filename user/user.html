@@ -17,12 +17,871 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
+    <style>
+      /* ─── AI ADVISER SECTION ─────────────────────────────────── */
+      .ai-adviser-section {
+        margin: 28px 0;
+      }
+
+      .ai-adviser-section .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .ai-adviser-section .section-header h3 {
+        font-family: "Chakra Petch", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--text-primary, #1a1a2e);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .ai-adviser-section .section-header h3 i {
+        color: #7c3aed;
+      }
+
+      .ai-adviser-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 16px;
+      }
+
+      .ai-chat-box {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border-radius: 18px;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        box-shadow: 0 8px 32px rgba(124, 58, 237, 0.18);
+        border: 1px solid rgba(124, 58, 237, 0.25);
+      }
+
+      .ai-chat-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .ai-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #7c3aed, #06b6d4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: #fff;
+        flex-shrink: 0;
+        box-shadow: 0 0 14px rgba(124, 58, 237, 0.5);
+        animation: pulse-glow 2.5s infinite;
+      }
+
+      @keyframes pulse-glow {
+        0%,
+        100% {
+          box-shadow: 0 0 14px rgba(124, 58, 237, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 22px rgba(124, 58, 237, 0.85);
+        }
+      }
+
+      .ai-chat-header-text h4 {
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      .ai-chat-header-text span {
+        color: #06b6d4;
+        font-size: 0.72rem;
+      }
+
+      .ai-messages {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+        min-height: 130px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .ai-msg {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+
+      .ai-msg.user-msg {
+        flex-direction: row-reverse;
+      }
+
+      .ai-msg-bubble {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 12px 12px 12px 4px;
+        padding: 10px 14px;
+        color: #e2e8f0;
+        font-size: 0.83rem;
+        line-height: 1.5;
+        max-width: 80%;
+        backdrop-filter: blur(4px);
+      }
+
+      .ai-msg.user-msg .ai-msg-bubble {
+        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+        border-radius: 12px 12px 4px 12px;
+        color: #fff;
+      }
+
+      .ai-input-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .ai-input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        border-radius: 10px;
+        padding: 10px 14px;
+        color: #fff;
+        font-size: 0.84rem;
+        outline: none;
+        transition: border 0.2s;
+      }
+
+      .ai-input::placeholder {
+        color: rgba(255, 255, 255, 0.35);
+      }
+      .ai-input:focus {
+        border-color: #7c3aed;
+      }
+
+      .ai-send-btn {
+        background: linear-gradient(135deg, #7c3aed, #06b6d4);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 14px;
+        color: #fff;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition:
+          opacity 0.2s,
+          transform 0.15s;
+      }
+
+      .ai-send-btn:hover {
+        opacity: 0.88;
+        transform: scale(1.05);
+      }
+
+      .ai-suggestions-box {
+        background: #fff;
+        border-radius: 18px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+        border: 1px solid #f0f0f0;
+      }
+
+      .ai-suggestions-box h4 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin: 0;
+      }
+
+      .suggestion-tabs {
+        display: flex;
+        gap: 6px;
+      }
+
+      .tab-btn {
+        padding: 5px 13px;
+        border-radius: 20px;
+        border: 1.5px solid #e5e7eb;
+        background: transparent;
+        font-size: 0.77rem;
+        font-weight: 500;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .tab-btn.active {
+        background: linear-gradient(135deg, #7c3aed, #06b6d4);
+        border-color: transparent;
+        color: #fff;
+      }
+
+      .suggestion-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+
+      .suggestion-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 14px;
+        border-radius: 12px;
+        background: #f8f7ff;
+        border: 1px solid #ede9fe;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          transform 0.15s;
+      }
+
+      .suggestion-card:hover {
+        background: #ede9fe;
+        transform: translateX(4px);
+      }
+
+      .suggestion-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+      }
+
+      .suggestion-icon.workout {
+        background: #fef3c7;
+        color: #d97706;
+      }
+      .suggestion-icon.meal {
+        background: #dcfce7;
+        color: #16a34a;
+      }
+      .suggestion-icon.rest {
+        background: #e0e7ff;
+        color: #4f46e5;
+      }
+
+      .suggestion-text h5 {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin: 0 0 2px;
+      }
+
+      .suggestion-text p {
+        font-size: 0.73rem;
+        color: #6b7280;
+        margin: 0;
+      }
+
+      /* ─── LEADERBOARD SECTION ────────────────────────────────── */
+      .leaderboard-section {
+        margin: 28px 0;
+      }
+
+      .leaderboard-section .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .leaderboard-section .section-header h3 {
+        font-family: "Chakra Petch", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--text-primary, #1a1a2e);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .leaderboard-section .section-header h3 i {
+        color: #f59e0b;
+      }
+
+      .leaderboard-filter {
+        display: flex;
+        gap: 6px;
+      }
+
+      .filter-btn {
+        padding: 5px 14px;
+        border-radius: 20px;
+        border: 1.5px solid #e5e7eb;
+        background: transparent;
+        font-size: 0.76rem;
+        font-weight: 500;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .filter-btn.active {
+        background: #f59e0b;
+        border-color: #f59e0b;
+        color: #fff;
+      }
+
+      .leaderboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.6fr;
+        gap: 16px;
+      }
+
+      /* Podium */
+      .podium-box {
+        background: linear-gradient(160deg, #1a1a2e 0%, #0f3460 100%);
+        border-radius: 18px;
+        padding: 24px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        box-shadow: 0 8px 32px rgba(245, 158, 11, 0.15);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+      }
+
+      .podium-title {
+        color: #f59e0b;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .podium-row {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+      }
+
+      .podium-member {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .podium-member .avatar {
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #f59e0b;
+      }
+
+      .podium-member.rank-1 .avatar {
+        width: 58px;
+        height: 58px;
+      }
+      .podium-member.rank-2 .avatar,
+      .podium-member.rank-3 .avatar {
+        width: 46px;
+        height: 46px;
+        border-color: rgba(245, 158, 11, 0.5);
+      }
+
+      .podium-member .member-name {
+        font-size: 0.72rem;
+        color: #e2e8f0;
+        font-weight: 600;
+        text-align: center;
+      }
+
+      .podium-member .member-days {
+        font-size: 0.67rem;
+        color: #94a3b8;
+      }
+
+      .podium-stand {
+        width: 60px;
+        border-radius: 6px 6px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        color: #fff;
+      }
+
+      .podium-stand.p1 {
+        height: 64px;
+        background: linear-gradient(180deg, #f59e0b, #d97706);
+      }
+      .podium-stand.p2 {
+        height: 48px;
+        background: linear-gradient(180deg, #94a3b8, #64748b);
+      }
+      .podium-stand.p3 {
+        height: 38px;
+        background: linear-gradient(180deg, #cd7f32, #92400e);
+      }
+
+      .podium-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+      }
+
+      /* Rankings list */
+      .rankings-box {
+        background: #fff;
+        border-radius: 18px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+        border: 1px solid #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+
+      .ranking-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 4px;
+        border-bottom: 1px solid #f3f4f6;
+        transition: background 0.15s;
+        border-radius: 8px;
+      }
+
+      .ranking-row:last-child {
+        border-bottom: none;
+      }
+      .ranking-row:hover {
+        background: #fafafa;
+      }
+      .ranking-row.highlight {
+        background: #fffbeb;
+        border-left: 3px solid #f59e0b;
+        padding-left: 10px;
+      }
+
+      .rank-num {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #94a3b8;
+        width: 20px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+
+      .rank-num.top {
+        color: #f59e0b;
+      }
+
+      .rank-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #7c3aed20, #06b6d420);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: #7c3aed;
+        font-weight: 600;
+        border: 2px solid #ede9fe;
+      }
+
+      .rank-info {
+        flex: 1;
+      }
+      .rank-info .rname {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        display: block;
+      }
+      .rank-info .rsub {
+        font-size: 0.72rem;
+        color: #94a3b8;
+      }
+
+      .rank-score {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+      }
+
+      .rank-score .rscore {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #1a1a2e;
+      }
+      .rank-score .rbadge {
+        font-size: 0.65rem;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-weight: 500;
+      }
+
+      .rbadge.up {
+        background: #dcfce7;
+        color: #16a34a;
+      }
+      .rbadge.down {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+      .rbadge.same {
+        background: #f3f4f6;
+        color: #6b7280;
+      }
+
+      /* ─── WALK-IN CLIENT SECTION ─────────────────────────────── */
+      .walkin-section {
+        margin: 28px 0;
+      }
+
+      .walkin-section .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .walkin-section .section-header h3 {
+        font-family: "Chakra Petch", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--text-primary, #1a1a2e);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .walkin-section .section-header h3 i {
+        color: #06b6d4;
+      }
+
+      .walkin-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .qr-card {
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+        border-radius: 18px;
+        padding: 26px;
+        color: #fff;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        box-shadow: 0 8px 28px rgba(6, 182, 212, 0.25);
+      }
+
+      .qr-placeholder {
+        width: 90px;
+        height: 90px;
+        background: #fff;
+        border-radius: 12px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: #0ea5e9;
+      }
+
+      .qr-info h4 {
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0 0 6px;
+      }
+      .qr-info p {
+        font-size: 0.8rem;
+        opacity: 0.85;
+        margin: 0 0 14px;
+        line-height: 1.5;
+      }
+
+      .qr-scan-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #fff;
+        color: #0ea5e9;
+        border: none;
+        border-radius: 10px;
+        padding: 8px 16px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+
+      .qr-scan-btn:hover {
+        opacity: 0.88;
+      }
+
+      .feedback-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+        border: 1px solid #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .feedback-card h4 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .feedback-card h4 i {
+        color: #06b6d4;
+      }
+
+      .rating-row {
+        display: flex;
+        gap: 6px;
+      }
+
+      .star-btn {
+        background: none;
+        border: none;
+        font-size: 1.4rem;
+        color: #d1d5db;
+        cursor: pointer;
+        transition:
+          color 0.15s,
+          transform 0.1s;
+        line-height: 1;
+      }
+
+      .star-btn:hover,
+      .star-btn.active {
+        color: #f59e0b;
+        transform: scale(1.15);
+      }
+
+      .feedback-textarea {
+        width: 100%;
+        min-height: 80px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 0.82rem;
+        color: #374151;
+        resize: none;
+        outline: none;
+        font-family: inherit;
+        transition: border 0.2s;
+        box-sizing: border-box;
+      }
+
+      .feedback-textarea:focus {
+        border-color: #06b6d4;
+      }
+
+      .feedback-submit {
+        align-self: flex-end;
+        background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+        border: none;
+        border-radius: 10px;
+        padding: 9px 22px;
+        color: #fff;
+        font-size: 0.83rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+
+      .feedback-submit:hover {
+        opacity: 0.88;
+      }
+
+      /* ─── ATTENDANCE LOGS & E-RECEIPTS ───────────────────────── */
+      .member-records-section {
+        margin: 28px 0;
+      }
+
+      .member-records-section .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .member-records-section .section-header h3 {
+        font-family: "Chakra Petch", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--text-primary, #1a1a2e);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .member-records-section .section-header h3 i {
+        color: #10b981;
+      }
+
+      .records-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .attendance-log-box,
+      .ereceipt-box {
+        background: #fff;
+        border-radius: 18px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+        border: 1px solid #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .attendance-log-box h4,
+      .ereceipt-box h4 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .log-entry {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 9px 12px;
+        background: #f8fafb;
+        border-radius: 10px;
+        border-left: 3px solid #10b981;
+      }
+
+      .log-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #10b981;
+        flex-shrink: 0;
+      }
+
+      .log-info {
+        flex: 1;
+      }
+      .log-info .log-date {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        display: block;
+      }
+      .log-info .log-time {
+        font-size: 0.72rem;
+        color: #94a3b8;
+      }
+      .log-status {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: 10px;
+        background: #dcfce7;
+        color: #16a34a;
+      }
+
+      .receipt-entry {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 9px 12px;
+        background: #f8fafb;
+        border-radius: 10px;
+      }
+
+      .receipt-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #ecfdf5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #10b981;
+        font-size: 1rem;
+        flex-shrink: 0;
+      }
+
+      .receipt-info {
+        flex: 1;
+      }
+      .receipt-info .rname {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        display: block;
+      }
+      .receipt-info .rdate {
+        font-size: 0.72rem;
+        color: #94a3b8;
+      }
+      .receipt-amount {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #10b981;
+      }
+
+      .view-all-link {
+        font-size: 0.78rem;
+        color: #7c3aed;
+        font-weight: 500;
+        text-decoration: none;
+        align-self: flex-end;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+      }
+
+      .view-all-link:hover {
+        text-decoration: underline;
+      }
+
+      /* SECTION DIVIDER */
+      .section-divider {
+        border: none;
+        border-top: 1.5px solid #f0f0f0;
+        margin: 8px 0;
+      }
+    </style>
   </head>
   <body>
     <div class="dashboard">
       <!-- SIDEBAR -->
       <aside class="sidebar">
-        <!-- LOGO -->
         <div class="sidebar-header">
           <img
             src="userimage/FIT-STOP LOGO.png"
@@ -31,63 +890,47 @@
           />
           <span class="logo-text">Fit-Stop</span>
         </div>
-
-        <!-- MENU -->
         <ul class="menu">
           <li class="active">
-            <a href="user.html">
-              <i class="bi bi-grid-1x2"></i>
-              <span>Dashboard</span>
-            </a>
+            <a href="user.html"
+              ><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a
+            >
           </li>
-
           <li>
-            <a href="bmi.html">
-              <i class="bi bi-heart-pulse"></i>
-              <span>BMI Tracker</span>
-            </a>
+            <a href="bmi.html"
+              ><i class="bi bi-heart-pulse"></i><span>BMI Tracker</span></a
+            >
           </li>
-
           <li>
-            <a href="myplan.html">
-              <i class="bi bi-clipboard-check"></i>
-              <span>My Plan</span>
-            </a>
+            <a href="myplan.html"
+              ><i class="bi bi-clipboard-check"></i><span>My Plan</span></a
+            >
           </li>
-
           <li>
-            <a href="history.html">
-              <i class="bi bi-clock-history"></i>
-              <span>Exercise History</span>
-            </a>
+            <a href="history.html"
+              ><i class="bi bi-clock-history"></i
+              ><span>Exercise History</span></a
+            >
           </li>
-
           <li>
-            <a href="payments.html">
-              <i class="bi bi-credit-card"></i>
-              <span>Payments</span>
-            </a>
+            <a href="payments.html"
+              ><i class="bi bi-credit-card"></i><span>Payments</span></a
+            >
           </li>
-
           <li>
-            <a href="profile.html">
-              <i class="bi bi-person"></i>
-              <span>Profile</span>
-            </a>
+            <a href="profile.html"
+              ><i class="bi bi-person"></i><span>Profile</span></a
+            >
           </li>
-
           <li>
-            <a href="settings.html">
-              <i class="bi bi-gear"></i>
-              <span>Settings</span>
-            </a>
+            <a href="settings.html"
+              ><i class="bi bi-gear"></i><span>Settings</span></a
+            >
           </li>
-
           <li>
-            <a href="logout.html">
-              <i class="bi bi-box-arrow-right"></i>
-              <span>Logout</span>
-            </a>
+            <a href="logout.html"
+              ><i class="bi bi-box-arrow-right"></i><span>Logout</span></a
+            >
           </li>
         </ul>
       </aside>
@@ -100,7 +943,6 @@
             <h1>Hey Sharien!</h1>
             <p>You are doing great so far</p>
           </div>
-
           <div class="search-container">
             <div class="search-wrapper">
               <i class="fas fa-search search-icon"></i>
@@ -112,7 +954,6 @@
             </div>
             <button class="search-btn">Search</button>
           </div>
-
           <div class="profile-container">
             <div class="profile-content">
               <div class="profile-text">
@@ -163,20 +1004,20 @@
               </div>
               <div class="bmi-info">
                 <div class="info-row">
-                  <span class="label">Height:</span>
-                  <span class="value">165 cm</span>
+                  <span class="label">Height:</span
+                  ><span class="value">165 cm</span>
                 </div>
                 <div class="info-row">
-                  <span class="label">Weight:</span>
-                  <span class="value">65 kg</span>
+                  <span class="label">Weight:</span
+                  ><span class="value">65 kg</span>
                 </div>
                 <div class="info-row">
-                  <span class="label">Target:</span>
-                  <span class="value">60 kg</span>
+                  <span class="label">Target:</span
+                  ><span class="value">60 kg</span>
                 </div>
                 <div class="info-row">
-                  <span class="label">To Goal:</span>
-                  <span class="value">-5 kg</span>
+                  <span class="label">To Goal:</span
+                  ><span class="value">-5 kg</span>
                 </div>
               </div>
             </div>
@@ -185,10 +1026,8 @@
                 <div class="scale-marker" style="left: 61%"></div>
               </div>
               <div class="scale-labels">
-                <span>Underweight</span>
-                <span>Normal</span>
-                <span>Overweight</span>
-                <span>Obese</span>
+                <span>Underweight</span><span>Normal</span
+                ><span>Overweight</span><span>Obese</span>
               </div>
             </div>
           </div>
@@ -216,83 +1055,624 @@
               <div class="quick-stat">
                 <i class="fas fa-fire"></i>
                 <div>
-                  <span class="stat-number">1,458</span>
-                  <span class="stat-text">Calories Burned</span>
+                  <span class="stat-number">1,458</span
+                  ><span class="stat-text">Calories Burned</span>
                 </div>
               </div>
               <div class="quick-stat">
                 <i class="fas fa-shoe-prints"></i>
                 <div>
-                  <span class="stat-number">13,946</span>
-                  <span class="stat-text">Steps</span>
+                  <span class="stat-number">13,946</span
+                  ><span class="stat-text">Steps</span>
                 </div>
               </div>
               <div class="quick-stat">
                 <i class="fas fa-moon"></i>
                 <div>
-                  <span class="stat-number">8h 54m</span>
-                  <span class="stat-text">Sleep</span>
+                  <span class="stat-number">8h 54m</span
+                  ><span class="stat-text">Sleep</span>
                 </div>
               </div>
               <div class="quick-stat">
                 <i class="fas fa-tint"></i>
                 <div>
-                  <span class="stat-number">2.1 L</span>
-                  <span class="stat-text">Water Intake</span>
+                  <span class="stat-number">2.1 L</span
+                  ><span class="stat-text">Water Intake</span>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-       
-
-          <div class="history-grid">
-                    
-
-            <div class="history-card">
-              <div class="history-date">
-                <span class="date-day">Feb 7</span>
-                <span class="date-full">Thursday</span>
+        <!-- EXERCISE HISTORY -->
+        <div class="history-grid">
+          <div class="history-card">
+            <div class="history-date">
+              <span class="date-day">Feb 7</span>
+              <span class="date-full">Thursday</span>
+            </div>
+            <div class="history-workout">
+              <div class="workout-icon cardio">
+                <i class="fas fa-heartbeat"></i>
               </div>
-              <div class="history-workout">
-                <div class="workout-icon cardio">
-                  <i class="fas fa-heartbeat"></i>
+              <div class="workout-details">
+                <h4>Cardio & Abs</h4>
+                <p>6:00 AM - 6:45 AM</p>
+                <div class="workout-stats-mini">
+                  <span><i class="fas fa-fire"></i> 380 cal</span>
+                  <span><i class="fas fa-clock"></i> 45 mins</span>
                 </div>
-                <div class="workout-details">
-                  <h4>Cardio & Abs</h4>
-                  <p>6:00 AM - 6:45 AM</p>
-                  <div class="workout-stats-mini">
-                    <span><i class="fas fa-fire"></i> 380 cal</span>
-                    <span><i class="fas fa-clock"></i> 45 mins</span>
+              </div>
+            </div>
+            <span class="completion-badge completed">Completed</span>
+          </div>
+
+          <div class="history-card">
+            <div class="history-date">
+              <span class="date-day">Feb 6</span>
+              <span class="date-full">Wednesday</span>
+            </div>
+            <div class="history-workout">
+              <div class="workout-icon back"><i class="fas fa-user"></i></div>
+              <div class="workout-details">
+                <h4>Back & Biceps</h4>
+                <p>7:00 AM - 8:15 AM</p>
+                <div class="workout-stats-mini">
+                  <span><i class="fas fa-fire"></i> 465 cal</span>
+                  <span
+                    ><i class="fas fa-weight-hanging"></i> 2,890 kg total</span
+                  >
+                </div>
+              </div>
+            </div>
+            <span class="completion-badge completed">Completed</span>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════
+             AI ADVISER SECTION (NEW)
+        ══════════════════════════════════════════════════════════ -->
+        <section class="ai-adviser-section">
+          <div class="section-header">
+            <h3><i class="fas fa-robot"></i> AI Fitness Adviser</h3>
+            <button class="btn-outline">Full Chat</button>
+          </div>
+
+          <div class="ai-adviser-grid">
+            <!-- Chat Box -->
+            <div class="ai-chat-box">
+              <div class="ai-chat-header">
+                <div class="ai-avatar"><i class="fas fa-robot"></i></div>
+                <div class="ai-chat-header-text">
+                  <h4>FitBot AI</h4>
+                  <span>● Online • Personalized to your data</span>
+                </div>
+              </div>
+
+              <div class="ai-messages" id="aiMessages">
+                <div class="ai-msg">
+                  <div class="ai-msg-bubble">
+                    Hey Sharien! 👋 Based on your BMI of
+                    <strong>23.87</strong> and goal to lose 5 kg, I recommend
+                    adding 2 cardio sessions this week. You're on track!
+                  </div>
+                </div>
+                <div class="ai-msg user-msg">
+                  <div class="ai-msg-bubble">
+                    What should I eat after my workout today?
+                  </div>
+                </div>
+                <div class="ai-msg">
+                  <div class="ai-msg-bubble">
+                    Great question! Post-workout, aim for a 3:1 carb-to-protein
+                    ratio. Try <strong>Greek yogurt + banana</strong> or a
+                    <strong>protein shake with oats</strong> within 30 minutes.
+                    🍌
                   </div>
                 </div>
               </div>
-              <span class="completion-badge completed">Completed</span>
+
+              <div class="ai-input-row">
+                <input
+                  type="text"
+                  class="ai-input"
+                  id="aiInput"
+                  placeholder="Ask about your fitness or nutrition…"
+                />
+                <button class="ai-send-btn" onclick="sendAIMessage()">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </div>
             </div>
 
-            <div class="history-card">
-              <div class="history-date">
-                <span class="date-day">Feb 6</span>
-                <span class="date-full">Wednesday</span>
+            <!-- AI Suggestions -->
+            <div class="ai-suggestions-box">
+              <h4>Personalized Suggestions</h4>
+              <div class="suggestion-tabs">
+                <button
+                  class="tab-btn active"
+                  onclick="switchTab(this, 'workout')"
+                >
+                  Workout
+                </button>
+                <button class="tab-btn" onclick="switchTab(this, 'meal')">
+                  Meal Plan
+                </button>
+                <button class="tab-btn" onclick="switchTab(this, 'rest')">
+                  Recovery
+                </button>
               </div>
-              <div class="history-workout">
-                <div class="workout-icon back">
-                  <i class="fas fa-user"></i>
+
+              <div class="suggestion-cards" id="suggestionCards">
+                <!-- Workout tab (default) -->
+                <div class="suggestion-card" data-tab="workout">
+                  <div class="suggestion-icon workout">
+                    <i class="fas fa-dumbbell"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>HIIT Session — 30 mins</h5>
+                    <p>Based on your cardio history & calorie goal</p>
+                  </div>
                 </div>
-                <div class="workout-details">
-                  <h4>Back & Biceps</h4>
-                  <p>7:00 AM - 8:15 AM</p>
-                  <div class="workout-stats-mini">
-                    <span><i class="fas fa-fire"></i> 465 cal</span>
-                    <span
-                      ><i class="fas fa-weight-hanging"></i> 2,890 kg
-                      total</span
-                    >
+                <div class="suggestion-card" data-tab="workout">
+                  <div class="suggestion-icon workout">
+                    <i class="fas fa-running"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>5 km Morning Run</h5>
+                    <p>Aligns with your running goal (42/100 days)</p>
+                  </div>
+                </div>
+                <div class="suggestion-card" data-tab="workout">
+                  <div class="suggestion-icon workout">
+                    <i class="fas fa-bicycle"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Cycling — 45 mins</h5>
+                    <p>Boost your cycling streak (65/100 days)</p>
+                  </div>
+                </div>
+
+                <!-- Meal tab -->
+                <div
+                  class="suggestion-card"
+                  data-tab="meal"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon meal">
+                    <i class="fas fa-egg"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>High-Protein Breakfast</h5>
+                    <p>3 eggs + oats to hit your 180g protein goal</p>
+                  </div>
+                </div>
+                <div
+                  class="suggestion-card"
+                  data-tab="meal"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon meal">
+                    <i class="fas fa-fish"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Salmon & Quinoa Dinner</h5>
+                    <p>Rich in omega-3 for muscle recovery</p>
+                  </div>
+                </div>
+                <div
+                  class="suggestion-card"
+                  data-tab="meal"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon meal">
+                    <i class="fas fa-apple-alt"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Post-Workout Snack</h5>
+                    <p>Banana + Greek yogurt within 30 mins</p>
+                  </div>
+                </div>
+
+                <!-- Rest tab -->
+                <div
+                  class="suggestion-card"
+                  data-tab="rest"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon rest">
+                    <i class="fas fa-moon"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Sleep by 10 PM</h5>
+                    <p>Maintain your 8h 54m average sleep</p>
+                  </div>
+                </div>
+                <div
+                  class="suggestion-card"
+                  data-tab="rest"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon rest">
+                    <i class="fas fa-spa"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Stretching — 10 mins</h5>
+                    <p>Reduces soreness after Back & Biceps day</p>
+                  </div>
+                </div>
+                <div
+                  class="suggestion-card"
+                  data-tab="rest"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon rest">
+                    <i class="fas fa-tint"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Hydration Reminder</h5>
+                    <p>You need 0.4 L more to hit your 2.5 L goal</p>
                   </div>
                 </div>
               </div>
-              <span class="completion-badge completed">Completed</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════
+             LEADERBOARD SECTION (NEW)
+        ══════════════════════════════════════════════════════════ -->
+        <section class="leaderboard-section">
+          <div class="section-header">
+            <h3><i class="fas fa-trophy"></i> Gym Consistency Leaderboard</h3>
+            <div class="leaderboard-filter">
+              <button class="filter-btn active">Weekly</button>
+              <button class="filter-btn">Monthly</button>
+              <button class="filter-btn">All Time</button>
+            </div>
+          </div>
+
+          <div class="leaderboard-grid">
+            <!-- Podium -->
+            <div class="podium-box">
+              <span class="podium-title">🏅 Top Performers</span>
+              <div class="podium-row">
+                <!-- 2nd -->
+                <div class="podium-member rank-2">
+                  <div
+                    class="avatar"
+                    style="
+                      width: 46px;
+                      height: 46px;
+                      border-radius: 50%;
+                      background: linear-gradient(135deg, #94a3b8, #64748b);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      color: #fff;
+                      font-weight: 700;
+                      font-size: 1rem;
+                      border: 3px solid rgba(245, 158, 11, 0.5);
+                    "
+                  >
+                    JR
+                  </div>
+                  <span class="member-name">Jose R.</span>
+                  <span class="member-days">27 days</span>
+                  <div class="podium-wrap">
+                    <div class="podium-stand p2">2</div>
+                  </div>
+                </div>
+                <!-- 1st -->
+                <div class="podium-member rank-1">
+                  <div
+                    class="avatar"
+                    style="
+                      width: 58px;
+                      height: 58px;
+                      border-radius: 50%;
+                      background: linear-gradient(135deg, #f59e0b, #d97706);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      color: #fff;
+                      font-weight: 700;
+                      font-size: 1.1rem;
+                      border: 3px solid #f59e0b;
+                    "
+                  >
+                    SS
+                  </div>
+                  <span class="member-name">Sharien S. 👑</span>
+                  <span class="member-days">30 days</span>
+                  <div class="podium-wrap">
+                    <div class="podium-stand p1">1</div>
+                  </div>
+                </div>
+                <!-- 3rd -->
+                <div class="podium-member rank-3">
+                  <div
+                    class="avatar"
+                    style="
+                      width: 46px;
+                      height: 46px;
+                      border-radius: 50%;
+                      background: linear-gradient(135deg, #cd7f32, #92400e);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      color: #fff;
+                      font-weight: 700;
+                      font-size: 1rem;
+                      border: 3px solid rgba(245, 158, 11, 0.5);
+                    "
+                  >
+                    MA
+                  </div>
+                  <span class="member-name">Maria A.</span>
+                  <span class="member-days">25 days</span>
+                  <div class="podium-wrap">
+                    <div class="podium-stand p3">3</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rankings List -->
+            <div class="rankings-box">
+              <div class="ranking-row highlight">
+                <span class="rank-num top">1</span>
+                <div
+                  class="rank-avatar"
+                  style="
+                    background: linear-gradient(135deg, #f59e0b20, #d97706, 20);
+                    color: #d97706;
+                    border-color: #fef3c7;
+                    font-weight: 700;
+                  "
+                >
+                  SS
+                </div>
+                <div class="rank-info">
+                  <span class="rname"
+                    >Sharien Salarda
+                    <span style="font-size: 0.7rem; color: #f59e0b"
+                      >★ You</span
+                    ></span
+                  >
+                  <span class="rsub"
+                    >135-day streak • 30 check-ins this week</span
+                  >
+                </div>
+                <div class="rank-score">
+                  <span class="rscore">9,840 pts</span>
+                  <span class="rbadge up">▲ +2</span>
+                </div>
+              </div>
+
+              <div class="ranking-row">
+                <span class="rank-num top">2</span>
+                <div class="rank-avatar">JR</div>
+                <div class="rank-info">
+                  <span class="rname">Jose Reyes</span>
+                  <span class="rsub">98-day streak • 27 check-ins</span>
+                </div>
+                <div class="rank-score">
+                  <span class="rscore">8,720 pts</span>
+                  <span class="rbadge same">— 0</span>
+                </div>
+              </div>
+
+              <div class="ranking-row">
+                <span class="rank-num top">3</span>
+                <div class="rank-avatar">MA</div>
+                <div class="rank-info">
+                  <span class="rname">Maria Alcantara</span>
+                  <span class="rsub">77-day streak • 25 check-ins</span>
+                </div>
+                <div class="rank-score">
+                  <span class="rscore">7,560 pts</span>
+                  <span class="rbadge up">▲ +1</span>
+                </div>
+              </div>
+
+              <div class="ranking-row">
+                <span class="rank-num">4</span>
+                <div class="rank-avatar">KL</div>
+                <div class="rank-info">
+                  <span class="rname">Kyle Lim</span>
+                  <span class="rsub">54-day streak • 22 check-ins</span>
+                </div>
+                <div class="rank-score">
+                  <span class="rscore">6,340 pts</span>
+                  <span class="rbadge down">▼ -1</span>
+                </div>
+              </div>
+
+              <div class="ranking-row">
+                <span class="rank-num">5</span>
+                <div class="rank-avatar">AC</div>
+                <div class="rank-info">
+                  <span class="rname">Ana Cruz</span>
+                  <span class="rsub">42-day streak • 20 check-ins</span>
+                </div>
+                <div class="rank-score">
+                  <span class="rscore">5,890 pts</span>
+                  <span class="rbadge up">▲ +3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════
+             MEMBER RECORDS — ATTENDANCE LOGS & E-RECEIPTS (NEW)
+        ══════════════════════════════════════════════════════════ -->
+        <section class="member-records-section">
+          <div class="section-header">
+            <h3><i class="fas fa-clipboard-list"></i> Member Records</h3>
+            <a class="view-all-link"
+              >View All <i class="fas fa-chevron-right"></i
+            ></a>
+          </div>
+
+          <div class="records-grid">
+            <!-- Attendance Logs -->
+            <div class="attendance-log-box">
+              <h4><i class="bi bi-calendar-check"></i> Attendance Logs</h4>
+              <hr class="section-divider" />
+
+              <div class="log-entry">
+                <div class="log-dot"></div>
+                <div class="log-info">
+                  <span class="log-date">Monday, Feb 10</span>
+                  <span class="log-time"
+                    >Check-in: 6:28 AM &nbsp;•&nbsp; Check-out: 8:05 AM</span
+                  >
+                </div>
+                <span class="log-status">Present</span>
+              </div>
+
+              <div class="log-entry">
+                <div class="log-dot"></div>
+                <div class="log-info">
+                  <span class="log-date">Tuesday, Feb 11</span>
+                  <span class="log-time"
+                    >Check-in: 6:55 AM &nbsp;•&nbsp; Check-out: 7:50 AM</span
+                  >
+                </div>
+                <span class="log-status">Present</span>
+              </div>
+
+              <div class="log-entry" style="border-color: #e5e7eb">
+                <div class="log-dot" style="background: #e5e7eb"></div>
+                <div class="log-info">
+                  <span class="log-date">Wednesday, Feb 12</span>
+                  <span class="log-time">Rest Day</span>
+                </div>
+                <span
+                  class="log-status"
+                  style="background: #f3f4f6; color: #6b7280"
+                  >Absent</span
+                >
+              </div>
+
+              <div class="log-entry">
+                <div class="log-dot"></div>
+                <div class="log-info">
+                  <span class="log-date">Today, Feb 13</span>
+                  <span class="log-time"
+                    >Check-in: 6:30 AM &nbsp;•&nbsp; Ongoing</span
+                  >
+                </div>
+                <span class="log-status">Present</span>
+              </div>
+
+              <a class="view-all-link"
+                >See full log <i class="fas fa-chevron-right"></i
+              ></a>
+            </div>
+
+            <!-- E-Receipts -->
+            <div class="ereceipt-box">
+              <h4>
+                <i class="bi bi-receipt"></i> E-Receipts & Payment History
+              </h4>
+              <hr class="section-divider" />
+
+              <div class="receipt-entry">
+                <div class="receipt-icon">
+                  <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div class="receipt-info">
+                  <span class="rname">Monthly Membership</span>
+                  <span class="rdate"
+                    >Jan 15, 2025 &nbsp;•&nbsp; Auto-renewed</span
+                  >
+                </div>
+                <span class="receipt-amount">$49.99</span>
+              </div>
+
+              <div class="receipt-entry">
+                <div class="receipt-icon">
+                  <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div class="receipt-info">
+                  <span class="rname">Personal Training Session</span>
+                  <span class="rdate"
+                    >Jan 22, 2025 &nbsp;•&nbsp; 1 session</span
+                  >
+                </div>
+                <span class="receipt-amount">$35.00</span>
+              </div>
+
+              <div class="receipt-entry">
+                <div class="receipt-icon">
+                  <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div class="receipt-info">
+                  <span class="rname">Monthly Membership</span>
+                  <span class="rdate"
+                    >Feb 15, 2025 &nbsp;•&nbsp; Auto-renewed</span
+                  >
+                </div>
+                <span class="receipt-amount">$49.99</span>
+              </div>
+
+              <a class="view-all-link"
+                >Download all receipts <i class="fas fa-download"></i
+              ></a>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════
+             WALK-IN CLIENT — QR & FEEDBACK (NEW)
+        ══════════════════════════════════════════════════════════ -->
+        <section class="walkin-section">
+          <div class="section-header">
+            <h3><i class="fas fa-qrcode"></i> Walk-In Features</h3>
+          </div>
+
+          <div class="walkin-grid">
+            <!-- QR Code Scanner -->
+            <div class="qr-card">
+              <div class="qr-placeholder">
+                <i class="fas fa-qrcode"></i>
+              </div>
+              <div class="qr-info">
+                <h4>Scan Equipment QR Code</h4>
+                <p>
+                  Point your camera at any gym equipment QR code to instantly
+                  access usage instructions, safety tips, and workout guides.
+                </p>
+                <button class="qr-scan-btn">
+                  <i class="fas fa-camera"></i> Open Scanner
+                </button>
+              </div>
+            </div>
+
+            <!-- Feedback Form -->
+            <div class="feedback-card">
+              <h4><i class="fas fa-star"></i> Share Your Feedback</h4>
+              <hr class="section-divider" />
+              <p style="font-size: 0.8rem; color: #6b7280; margin: 0">
+                Rate your gym experience today:
+              </p>
+              <div class="rating-row" id="starRow">
+                <button class="star-btn" onclick="setRating(1)">★</button>
+                <button class="star-btn" onclick="setRating(2)">★</button>
+                <button class="star-btn" onclick="setRating(3)">★</button>
+                <button class="star-btn" onclick="setRating(4)">★</button>
+                <button class="star-btn" onclick="setRating(5)">★</button>
+              </div>
+              <textarea
+                class="feedback-textarea"
+                placeholder="Tell us about your experience — equipment, staff, cleanliness, atmosphere…"
+              ></textarea>
+              <button class="feedback-submit">
+                <i class="fas fa-paper-plane"></i> Submit Feedback
+              </button>
             </div>
           </div>
         </section>
@@ -314,24 +1694,24 @@
               </div>
               <div class="meals">
                 <div class="meal-item">
-                  <span class="meal-time">Breakfast</span>
-                  <span class="meal-name">Oatmeal with berries & nuts</span>
-                  <span class="meal-cal">450 cal</span>
+                  <span class="meal-time">Breakfast</span
+                  ><span class="meal-name">Oatmeal with berries & nuts</span
+                  ><span class="meal-cal">450 cal</span>
                 </div>
                 <div class="meal-item">
-                  <span class="meal-time">Lunch</span>
-                  <span class="meal-name">Grilled chicken salad</span>
-                  <span class="meal-cal">550 cal</span>
+                  <span class="meal-time">Lunch</span
+                  ><span class="meal-name">Grilled chicken salad</span
+                  ><span class="meal-cal">550 cal</span>
                 </div>
                 <div class="meal-item">
-                  <span class="meal-time">Snack</span>
-                  <span class="meal-name">Protein shake & banana</span>
-                  <span class="meal-cal">320 cal</span>
+                  <span class="meal-time">Snack</span
+                  ><span class="meal-name">Protein shake & banana</span
+                  ><span class="meal-cal">320 cal</span>
                 </div>
                 <div class="meal-item">
-                  <span class="meal-time">Dinner</span>
-                  <span class="meal-name">Salmon with quinoa</span>
-                  <span class="meal-cal">680 cal</span>
+                  <span class="meal-time">Dinner</span
+                  ><span class="meal-name">Salmon with quinoa</span
+                  ><span class="meal-cal">680 cal</span>
                 </div>
               </div>
             </div>
@@ -343,24 +1723,24 @@
               </div>
               <div class="meals">
                 <div class="meal-item completed">
-                  <span class="meal-time">Breakfast</span>
-                  <span class="meal-name">Greek yogurt with granola</span>
-                  <span class="meal-cal">420 cal</span>
+                  <span class="meal-time">Breakfast</span
+                  ><span class="meal-name">Greek yogurt with granola</span
+                  ><span class="meal-cal">420 cal</span>
                 </div>
                 <div class="meal-item completed">
-                  <span class="meal-time">Lunch</span>
-                  <span class="meal-name">Turkey wrap with veggies</span>
-                  <span class="meal-cal">520 cal</span>
+                  <span class="meal-time">Lunch</span
+                  ><span class="meal-name">Turkey wrap with veggies</span
+                  ><span class="meal-cal">520 cal</span>
                 </div>
                 <div class="meal-item">
-                  <span class="meal-time">Snack</span>
-                  <span class="meal-name">Apple & almond butter</span>
-                  <span class="meal-cal">280 cal</span>
+                  <span class="meal-time">Snack</span
+                  ><span class="meal-name">Apple & almond butter</span
+                  ><span class="meal-cal">280 cal</span>
                 </div>
                 <div class="meal-item">
-                  <span class="meal-time">Dinner</span>
-                  <span class="meal-name">Grilled steak & sweet potato</span>
-                  <span class="meal-cal">730 cal</span>
+                  <span class="meal-time">Dinner</span
+                  ><span class="meal-name">Grilled steak & sweet potato</span
+                  ><span class="meal-cal">730 cal</span>
                 </div>
               </div>
             </div>
@@ -372,24 +1752,24 @@
               </div>
               <div class="meals">
                 <div class="meal-item">
-                  <span class="meal-time">Breakfast</span>
-                  <span class="meal-name">Scrambled eggs & toast</span>
-                  <span class="meal-cal">480 cal</span>
+                  <span class="meal-time">Breakfast</span
+                  ><span class="meal-name">Scrambled eggs & toast</span
+                  ><span class="meal-cal">480 cal</span>
                 </div>
                 <div class="meal-item">
-                  <span class="meal-time">Lunch</span>
-                  <span class="meal-name">Pasta with vegetables</span>
-                  <span class="meal-cal">600 cal</span>
+                  <span class="meal-time">Lunch</span
+                  ><span class="meal-name">Pasta with vegetables</span
+                  ><span class="meal-cal">600 cal</span>
                 </div>
                 <div class="meal-item">
-                  <span class="meal-time">Snack</span>
-                  <span class="meal-name">Mixed nuts</span>
-                  <span class="meal-cal">300 cal</span>
+                  <span class="meal-time">Snack</span
+                  ><span class="meal-name">Mixed nuts</span
+                  ><span class="meal-cal">300 cal</span>
                 </div>
                 <div class="meal-item">
-                  <span class="meal-time">Dinner</span>
-                  <span class="meal-name">Chicken stir-fry</span>
-                  <span class="meal-cal">720 cal</span>
+                  <span class="meal-time">Dinner</span
+                  ><span class="meal-name">Chicken stir-fry</span
+                  ><span class="meal-cal">720 cal</span>
                 </div>
               </div>
             </div>
@@ -408,7 +1788,6 @@
                 </div>
               </div>
             </div>
-
             <div class="nutrition-card">
               <div class="nutrition-icon carbs">
                 <i class="fas fa-bread-slice"></i>
@@ -421,7 +1800,6 @@
                 </div>
               </div>
             </div>
-
             <div class="nutrition-card">
               <div class="nutrition-icon fats">
                 <i class="fas fa-cheese"></i>
@@ -434,7 +1812,6 @@
                 </div>
               </div>
             </div>
-
             <div class="nutrition-card">
               <div class="nutrition-icon fiber">
                 <i class="fas fa-seedling"></i>
@@ -457,7 +1834,6 @@
               <h3>Goals Progress</h3>
               <button class="btn-outline">View All</button>
             </div>
-
             <ul class="goals-list">
               <li>
                 <div class="icon-circle cycling">
@@ -471,7 +1847,6 @@
                   <span class="days-count">65/100 days</span>
                 </div>
               </li>
-
               <li>
                 <div class="icon-circle running">
                   <i class="fas fa-running"></i>
@@ -484,7 +1859,6 @@
                   <span class="days-count">42/100 days</span>
                 </div>
               </li>
-
               <li>
                 <div class="icon-circle water"><i class="fas fa-tint"></i></div>
                 <div class="goal-info">
@@ -495,7 +1869,6 @@
                   <span class="days-count">85/100 days</span>
                 </div>
               </li>
-
               <li>
                 <div class="icon-circle workout">
                   <i class="fas fa-dumbbell"></i>
@@ -513,6 +1886,67 @@
         </section>
       </main>
     </div>
+
     <script src="lightmode.js"></script>
+    <script>
+      /* ── AI Adviser Chat ── */
+      function sendAIMessage() {
+        const input = document.getElementById("aiInput");
+        const msgs = document.getElementById("aiMessages");
+        const text = input.value.trim();
+        if (!text) return;
+
+        // User bubble
+        msgs.innerHTML += `<div class="ai-msg user-msg"><div class="ai-msg-bubble">${text}</div></div>`;
+        input.value = "";
+
+        // Simulated AI response
+        setTimeout(() => {
+          const replies = [
+            "Great question! Based on your BMI and fitness history, I'd recommend focusing on compound movements for faster fat loss. 💪",
+            "Looking at your nutrition data, you're slightly low on protein today. Try adding a boiled egg or some Greek yogurt to your next meal! 🥚",
+            "Your sleep stats look fantastic at 8h 54m! Make sure to stay consistent — quality sleep accelerates muscle recovery. 😴",
+            "You're so close to your water goal! Drink 400ml more to hit 2.5 L today. 💧",
+          ];
+          const reply = replies[Math.floor(Math.random() * replies.length)];
+          msgs.innerHTML += `<div class="ai-msg"><div class="ai-msg-bubble">${reply}</div></div>`;
+          msgs.scrollTop = msgs.scrollHeight;
+        }, 700);
+
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+
+      document.getElementById("aiInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") sendAIMessage();
+      });
+
+      /* ── Suggestion Tabs ── */
+      function switchTab(btn, tab) {
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".suggestion-card").forEach((card) => {
+          card.style.display = card.dataset.tab === tab ? "flex" : "none";
+        });
+      }
+
+      /* ── Star Rating ── */
+      function setRating(n) {
+        document.querySelectorAll(".star-btn").forEach((btn, i) => {
+          btn.classList.toggle("active", i < n);
+        });
+      }
+
+      /* ── Leaderboard Filter ── */
+      document.querySelectorAll(".filter-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".filter-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+    </script>
   </body>
 </html>
