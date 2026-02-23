@@ -52,13 +52,13 @@
                             <h3 class=" text-center text-warning m-3">FITSTOP GYM <span class="text-light">LOGIN</span>
                             </h3>
                             <div class="row mb-3">
-                                <label for="username" class="text-warning" style="font-weight: 500;">USERNAME</label>
-                                <input type="text" name="username" id="username" required placeholder="Enter username"
+                                <label for="username" class="text-light" style="font-weight: 500;">USERNAME</label>
+                                <input type="text" name="username" id="username" class="text-light" required placeholder="Enter username"
                                     style="border: none; border-bottom: 1px solid black; background: none;">
                             </div>
                             <div class="row mb-2">
-                                <label for="password" class="text-warning" style="font-weight: 500;">PASSWORD</label>
-                                <input type="password" name="password" id="password" required
+                                <label for="password" class="text-light" style="font-weight: 500;">PASSWORD</label>
+                                <input type="password" name="password" class="text-light" id="password" required
                                     placeholder="Enter password"
                                     style="border: none; border-bottom: 1px solid black; background: none;">
                             </div>

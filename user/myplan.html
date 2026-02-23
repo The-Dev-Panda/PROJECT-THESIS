@@ -18,7 +18,278 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
   </head>
+  
   <body>
+    <style>
+      /* ─── AI ADVISER SECTION ─────────────────────────────────── */
+      .ai-adviser-section {
+        margin: 28px 0;
+      }
+
+      .ai-adviser-section .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .ai-adviser-section .section-header h3 {
+        font-family: "Chakra Petch", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--text-primary, #1a1a2e);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .ai-adviser-section .section-header h3 i {
+        color: #7c3aed;
+      }
+
+      .ai-adviser-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 16px;
+      }
+
+      .ai-chat-box {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border-radius: 18px;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        box-shadow: 0 8px 32px rgba(124, 58, 237, 0.18);
+        border: 1px solid rgba(124, 58, 237, 0.25);
+      }
+
+      .ai-chat-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .ai-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #7c3aed, #06b6d4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: #fff;
+        flex-shrink: 0;
+        box-shadow: 0 0 14px rgba(124, 58, 237, 0.5);
+        animation: pulse-glow 2.5s infinite;
+      }
+
+      @keyframes pulse-glow {
+        0%,
+        100% {
+          box-shadow: 0 0 14px rgba(124, 58, 237, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 22px rgba(124, 58, 237, 0.85);
+        }
+      }
+
+      .ai-chat-header-text h4 {
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      .ai-chat-header-text span {
+        color: #06b6d4;
+        font-size: 0.72rem;
+      }
+
+      .ai-messages {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+        min-height: 130px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .ai-msg {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+
+      .ai-msg.user-msg {
+        flex-direction: row-reverse;
+      }
+
+      .ai-msg-bubble {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 12px 12px 12px 4px;
+        padding: 10px 14px;
+        color: #e2e8f0;
+        font-size: 0.83rem;
+        line-height: 1.5;
+        max-width: 80%;
+        backdrop-filter: blur(4px);
+      }
+
+      .ai-msg.user-msg .ai-msg-bubble {
+        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+        border-radius: 12px 12px 4px 12px;
+        color: #fff;
+      }
+
+      .ai-input-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .ai-input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        border-radius: 10px;
+        padding: 10px 14px;
+        color: #fff;
+        font-size: 0.84rem;
+        outline: none;
+        transition: border 0.2s;
+      }
+
+      .ai-input::placeholder {
+        color: rgba(255, 255, 255, 0.35);
+      }
+      .ai-input:focus {
+        border-color: #7c3aed;
+      }
+
+      .ai-send-btn {
+        background: linear-gradient(135deg, #7c3aed, #06b6d4);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 14px;
+        color: #fff;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition:
+          opacity 0.2s,
+          transform 0.15s;
+      }
+
+      .ai-send-btn:hover {
+        opacity: 0.88;
+        transform: scale(1.05);
+      }
+
+      .ai-suggestions-box {
+        background: #fff;
+        border-radius: 18px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+        border: 1px solid #f0f0f0;
+      }
+
+      .ai-suggestions-box h4 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin: 0;
+      }
+
+      .suggestion-tabs {
+        display: flex;
+        gap: 6px;
+      }
+
+      .tab-btn {
+        padding: 5px 13px;
+        border-radius: 20px;
+        border: 1.5px solid #e5e7eb;
+        background: transparent;
+        font-size: 0.77rem;
+        font-weight: 500;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .tab-btn.active {
+        background: linear-gradient(135deg, #7c3aed, #06b6d4);
+        border-color: transparent;
+        color: #fff;
+      }
+
+      .suggestion-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+
+      .suggestion-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 14px;
+        border-radius: 12px;
+        background: #f8f7ff;
+        border: 1px solid #ede9fe;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          transform 0.15s;
+      }
+
+      .suggestion-card:hover {
+        background: #ede9fe;
+        transform: translateX(4px);
+      }
+
+      .suggestion-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+      }
+
+      .suggestion-icon.workout {
+        background: #fef3c7;
+        color: #d97706;
+      }
+      .suggestion-icon.meal {
+        background: #dcfce7;
+        color: #16a34a;
+      }
+      .suggestion-icon.rest {
+        background: #e0e7ff;
+        color: #4f46e5;
+      }
+
+      .suggestion-text h5 {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin: 0 0 2px;
+      }
+
+      .suggestion-text p {
+        font-size: 0.73rem;
+        color: #6b7280;
+        margin: 0;
+      }
+    </style>
     <div class="dashboard">
       <!-- SIDEBAR -->
       <aside class="sidebar">
@@ -35,14 +306,14 @@
         <!-- MENU -->
         <ul class="menu">
           <li>
-            <a href="user.html">
+            <a href="user.php">
               <i class="bi bi-grid-1x2"></i>
               <span>Dashboard</span>
             </a>
           </li>
 
           <li>
-            <a href="bmi.html">
+            <a href="bmi.php">
               <i class="bi bi-heart-pulse"></i>
               <span>BMI Tracker</span>
             </a>
@@ -129,84 +400,191 @@
             </div>
           </div>
         </header>
-
-        <!-- AI ADVISER SECTION -->
+        </section>
         <section class="ai-adviser-section">
-          <div class="ai-card">
-            <div class="ai-header">
-              <div class="ai-avatar">
-                <i class="bi bi-robot"></i>
+          <div class="section-header">
+            <h3><i class="fas fa-robot"></i> AI Fitness Adviser</h3>
+            <button class="btn-outline">Full Chat</button>
+          </div>
+
+          <div class="ai-adviser-grid">
+            <!-- Chat Box -->
+            <div class="ai-chat-box">
+              <div class="ai-chat-header">
+                <div class="ai-avatar"><i class="fas fa-robot"></i></div>
+                <div class="ai-chat-header-text">
+                  <h4>FitBot AI</h4>
+                  <span>● Online • Personalized to your data</span>
+                </div>
               </div>
-              <div>
-                <h3>Your AI Fitness Adviser</h3>
-                <p>Personalized insights based on your activity</p>
+
+              <div class="ai-messages" id="aiMessages">
+                <div class="ai-msg">
+                  <div class="ai-msg-bubble">
+                    Hey Sharien! 👋 Based on your BMI of
+                    <strong>23.87</strong> and goal to lose 5 kg, I recommend
+                    adding 2 cardio sessions this week. You're on track!
+                  </div>
+                </div>
+                <div class="ai-msg user-msg">
+                  <div class="ai-msg-bubble">
+                    What should I eat after my workout today?
+                  </div>
+                </div>
+                <div class="ai-msg">
+                  <div class="ai-msg-bubble">
+                    Great question! Post-workout, aim for a 3:1 carb-to-protein
+                    ratio. Try <strong>Greek yogurt + banana</strong> or a
+                    <strong>protein shake with oats</strong> within 30 minutes.
+                    🍌
+                  </div>
+                </div>
+              </div>
+
+              <div class="ai-input-row">
+                <input
+                  type="text"
+                  class="ai-input"
+                  id="aiInput"
+                  placeholder="Ask about your fitness or nutrition…"
+                />
+                <button class="ai-send-btn" onclick="sendAIMessage()">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
               </div>
             </div>
 
-            <div class="ai-insights">
-              <div class="insight-card training">
-                <div class="insight-icon">
-                  <i class="fas fa-lightbulb"></i>
-                </div>
-                <div class="insight-content">
-                  <h4>Training Insight</h4>
-                  <p>
-                    Great progress on chest workouts! Consider increasing weight
-                    by 5% next session. Your form has improved significantly
-                    based on your last 5 sessions.
-                  </p>
-                  <span class="insight-time">Based on last 7 days</span>
-                </div>
+            <!-- AI Suggestions -->
+            <div class="ai-suggestions-box">
+              <h4>Personalized Suggestions</h4>
+              <div class="suggestion-tabs">
+                <button
+                  class="tab-btn active"
+                  onclick="switchTab(this, 'workout')"
+                >
+                  Workout
+                </button>
+                <button class="tab-btn" onclick="switchTab(this, 'meal')">
+                  Meal Plan
+                </button>
+                <button class="tab-btn" onclick="switchTab(this, 'rest')">
+                  Recovery
+                </button>
               </div>
 
-              <div class="insight-card nutrition">
-                <div class="insight-icon">
-                  <i class="fas fa-apple-alt"></i>
+              <div class="suggestion-cards" id="suggestionCards">
+                <!-- Workout tab (default) -->
+                <div class="suggestion-card" data-tab="workout">
+                  <div class="suggestion-icon workout">
+                    <i class="fas fa-dumbbell"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>HIIT Session — 30 mins</h5>
+                    <p>Based on your cardio history & calorie goal</p>
+                  </div>
                 </div>
-                <div class="insight-content">
-                  <h4>Nutrition Recommendation</h4>
-                  <p>
-                    Your protein intake is below target. Add 30g more protein to
-                    support muscle recovery. Try adding Greek yogurt or chicken
-                    breast to your meals.
-                  </p>
-                  <span class="insight-time">Updated today</span>
+                <div class="suggestion-card" data-tab="workout">
+                  <div class="suggestion-icon workout">
+                    <i class="fas fa-running"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>5 km Morning Run</h5>
+                    <p>Aligns with your running goal (42/100 days)</p>
+                  </div>
                 </div>
-              </div>
+                <div class="suggestion-card" data-tab="workout">
+                  <div class="suggestion-icon workout">
+                    <i class="fas fa-bicycle"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Cycling — 45 mins</h5>
+                    <p>Boost your cycling streak (65/100 days)</p>
+                  </div>
+                </div>
 
-              <div class="insight-card recovery">
-                <div class="insight-icon">
-                  <i class="fas fa-bed"></i>
+                <!-- Meal tab -->
+                <div
+                  class="suggestion-card"
+                  data-tab="meal"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon meal">
+                    <i class="fas fa-egg"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>High-Protein Breakfast</h5>
+                    <p>3 eggs + oats to hit your 180g protein goal</p>
+                  </div>
                 </div>
-                <div class="insight-content">
-                  <h4>Recovery Tip</h4>
-                  <p>
-                    Excellent sleep quality! Your 8h 54m sleep optimizes muscle
-                    recovery. Maintain this pattern for best results.
-                  </p>
-                  <span class="insight-time">Sleep analysis</span>
+                <div
+                  class="suggestion-card"
+                  data-tab="meal"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon meal">
+                    <i class="fas fa-fish"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Salmon & Quinoa Dinner</h5>
+                    <p>Rich in omega-3 for muscle recovery</p>
+                  </div>
                 </div>
-              </div>
+                <div
+                  class="suggestion-card"
+                  data-tab="meal"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon meal">
+                    <i class="fas fa-apple-alt"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Post-Workout Snack</h5>
+                    <p>Banana + Greek yogurt within 30 mins</p>
+                  </div>
+                </div>
 
-              <div class="insight-card motivation">
-                <div class="insight-icon">
-                  <i class="fas fa-star"></i>
+                <!-- Rest tab -->
+                <div
+                  class="suggestion-card"
+                  data-tab="rest"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon rest">
+                    <i class="fas fa-moon"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Sleep by 10 PM</h5>
+                    <p>Maintain your 8h 54m average sleep</p>
+                  </div>
                 </div>
-                <div class="insight-content">
-                  <h4>Motivation Boost</h4>
-                  <p>
-                    You're 80% to your monthly goal! Just 6 more workouts to
-                    complete your target. Keep up the amazing work!
-                  </p>
-                  <span class="insight-time">Goal tracking</span>
+                <div
+                  class="suggestion-card"
+                  data-tab="rest"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon rest">
+                    <i class="fas fa-spa"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Stretching — 10 mins</h5>
+                    <p>Reduces soreness after Back & Biceps day</p>
+                  </div>
+                </div>
+                <div
+                  class="suggestion-card"
+                  data-tab="rest"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon rest">
+                    <i class="fas fa-tint"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Hydration Reminder</h5>
+                    <p>You need 0.4 L more to hit your 2.5 L goal</p>
+                  </div>
                 </div>
               </div>
             </div>
-
-            <button class="ai-chat-btn">
-              <i class="bi bi-chat-dots"></i>
-              Ask AI Adviser Anything
-            </button>
           </div>
         </section>
 

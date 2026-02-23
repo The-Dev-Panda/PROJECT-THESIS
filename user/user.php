@@ -547,38 +547,7 @@
         color: #6b7280;
       }
 
-      /* ─── WALK-IN CLIENT SECTION ─────────────────────────────── */
-      .walkin-section {
-        margin: 28px 0;
-      }
-
-      .walkin-section .section-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 16px;
-      }
-
-      .walkin-section .section-header h3 {
-        font-family: "Chakra Petch", sans-serif;
-        font-size: 1.15rem;
-        font-weight: 600;
-        color: var(--text-primary, #1a1a2e);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .walkin-section .section-header h3 i {
-        color: #06b6d4;
-      }
-
-      .walkin-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-      }
-
+      /* QR Card */
       .qr-card {
         background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
         border-radius: 18px;
@@ -633,91 +602,6 @@
       .qr-scan-btn:hover {
         opacity: 0.88;
       }
-
-      .feedback-card {
-        background: #fff;
-        border-radius: 18px;
-        padding: 24px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
-        border: 1px solid #f0f0f0;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-
-      .feedback-card h4 {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: #1a1a2e;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .feedback-card h4 i {
-        color: #06b6d4;
-      }
-
-      .rating-row {
-        display: flex;
-        gap: 6px;
-      }
-
-      .star-btn {
-        background: none;
-        border: none;
-        font-size: 1.4rem;
-        color: #d1d5db;
-        cursor: pointer;
-        transition:
-          color 0.15s,
-          transform 0.1s;
-        line-height: 1;
-      }
-
-      .star-btn:hover,
-      .star-btn.active {
-        color: #f59e0b;
-        transform: scale(1.15);
-      }
-
-      .feedback-textarea {
-        width: 100%;
-        min-height: 80px;
-        border: 1.5px solid #e5e7eb;
-        border-radius: 10px;
-        padding: 10px 12px;
-        font-size: 0.82rem;
-        color: #374151;
-        resize: none;
-        outline: none;
-        font-family: inherit;
-        transition: border 0.2s;
-        box-sizing: border-box;
-      }
-
-      .feedback-textarea:focus {
-        border-color: #06b6d4;
-      }
-
-      .feedback-submit {
-        align-self: flex-end;
-        background: linear-gradient(135deg, #06b6d4, #0ea5e9);
-        border: none;
-        border-radius: 10px;
-        padding: 9px 22px;
-        color: #fff;
-        font-size: 0.83rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: opacity 0.2s;
-      }
-
-      .feedback-submit:hover {
-        opacity: 0.88;
-      }
-
       /* ─── ATTENDANCE LOGS & E-RECEIPTS ───────────────────────── */
       .member-records-section {
         margin: 28px 0;
@@ -891,13 +775,13 @@
           <span class="logo-text">Fit-Stop</span>
         </div>
         <ul class="menu">
-          <li class="active">
-            <a href="user.html"
+          <li>
+            <a href="user.php"
               ><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a
             >
           </li>
           <li>
-            <a href="bmi.html"
+            <a href="bmi.php"
               ><i class="bi bi-heart-pulse"></i><span>BMI Tracker</span></a
             >
           </li>
@@ -1355,9 +1239,9 @@
                       border: 3px solid rgba(245, 158, 11, 0.5);
                     "
                   >
-                    JR
+                    CC
                   </div>
-                  <span class="member-name">Jose R.</span>
+                  <span class="member-name">Charles C.</span>
                   <span class="member-days">27 days</span>
                   <div class="podium-wrap">
                     <div class="podium-stand p2">2</div>
@@ -1407,9 +1291,9 @@
                       border: 3px solid rgba(245, 158, 11, 0.5);
                     "
                   >
-                    MA
+                    CB
                   </div>
-                  <span class="member-name">Maria A.</span>
+                  <span class="member-name">Christian B.</span>
                   <span class="member-days">25 days</span>
                   <div class="podium-wrap">
                     <div class="podium-stand p3">3</div>
@@ -1452,9 +1336,9 @@
 
               <div class="ranking-row">
                 <span class="rank-num top">2</span>
-                <div class="rank-avatar">JR</div>
+                <div class="rank-avatar">CC</div>
                 <div class="rank-info">
-                  <span class="rname">Jose Reyes</span>
+                  <span class="rname">Charles C.</span>
                   <span class="rsub">98-day streak • 27 check-ins</span>
                 </div>
                 <div class="rank-score">
@@ -1465,9 +1349,9 @@
 
               <div class="ranking-row">
                 <span class="rank-num top">3</span>
-                <div class="rank-avatar">MA</div>
+                <div class="rank-avatar">CB</div>
                 <div class="rank-info">
-                  <span class="rname">Maria Alcantara</span>
+                  <span class="rname">Christian B.</span>
                   <span class="rsub">77-day streak • 25 check-ins</span>
                 </div>
                 <div class="rank-score">
@@ -1478,9 +1362,9 @@
 
               <div class="ranking-row">
                 <span class="rank-num">4</span>
-                <div class="rank-avatar">KL</div>
+                <div class="rank-avatar">LC</div>
                 <div class="rank-info">
-                  <span class="rname">Kyle Lim</span>
+                  <span class="rname">Lance C.</span>
                   <span class="rsub">54-day streak • 22 check-ins</span>
                 </div>
                 <div class="rank-score">
@@ -1491,9 +1375,9 @@
 
               <div class="ranking-row">
                 <span class="rank-num">5</span>
-                <div class="rank-avatar">AC</div>
+                <div class="rank-avatar">SR</div>
                 <div class="rank-info">
-                  <span class="rname">Ana Cruz</span>
+                  <span class="rname">Stephen R.</span>
                   <span class="rsub">42-day streak • 20 check-ins</span>
                 </div>
                 <div class="rank-score">
@@ -1590,7 +1474,7 @@
                     >Jan 15, 2025 &nbsp;•&nbsp; Auto-renewed</span
                   >
                 </div>
-                <span class="receipt-amount">$49.99</span>
+                <span class="receipt-amount">Php49.99</span>
               </div>
 
               <div class="receipt-entry">
@@ -1603,7 +1487,7 @@
                     >Jan 22, 2025 &nbsp;•&nbsp; 1 session</span
                   >
                 </div>
-                <span class="receipt-amount">$35.00</span>
+                <span class="receipt-amount">Php35.00</span>
               </div>
 
               <div class="receipt-entry">
@@ -1616,7 +1500,7 @@
                     >Feb 15, 2025 &nbsp;•&nbsp; Auto-renewed</span
                   >
                 </div>
-                <span class="receipt-amount">$49.99</span>
+                <span class="receipt-amount">Php49.99</span>
               </div>
 
               <a class="view-all-link"
@@ -1625,58 +1509,6 @@
             </div>
           </div>
         </section>
-
-        <!-- ═══════════════════════════════════════════════════════
-             WALK-IN CLIENT — QR & FEEDBACK (NEW)
-        ══════════════════════════════════════════════════════════ -->
-        <section class="walkin-section">
-          <div class="section-header">
-            <h3><i class="fas fa-qrcode"></i> Walk-In Features</h3>
-          </div>
-
-          <div class="walkin-grid">
-            <!-- QR Code Scanner -->
-            <div class="qr-card">
-              <div class="qr-placeholder">
-                <i class="fas fa-qrcode"></i>
-              </div>
-              <div class="qr-info">
-                <h4>Scan Equipment QR Code</h4>
-                <p>
-                  Point your camera at any gym equipment QR code to instantly
-                  access usage instructions, safety tips, and workout guides.
-                </p>
-                <button class="qr-scan-btn">
-                  <i class="fas fa-camera"></i> Open Scanner
-                </button>
-              </div>
-            </div>
-
-            <!-- Feedback Form -->
-            <div class="feedback-card">
-              <h4><i class="fas fa-star"></i> Share Your Feedback</h4>
-              <hr class="section-divider" />
-              <p style="font-size: 0.8rem; color: #6b7280; margin: 0">
-                Rate your gym experience today:
-              </p>
-              <div class="rating-row" id="starRow">
-                <button class="star-btn" onclick="setRating(1)">★</button>
-                <button class="star-btn" onclick="setRating(2)">★</button>
-                <button class="star-btn" onclick="setRating(3)">★</button>
-                <button class="star-btn" onclick="setRating(4)">★</button>
-                <button class="star-btn" onclick="setRating(5)">★</button>
-              </div>
-              <textarea
-                class="feedback-textarea"
-                placeholder="Tell us about your experience — equipment, staff, cleanliness, atmosphere…"
-              ></textarea>
-              <button class="feedback-submit">
-                <i class="fas fa-paper-plane"></i> Submit Feedback
-              </button>
-            </div>
-          </div>
-        </section>
-
         <!-- DIET SCHEDULE SECTION -->
         <section class="diet-schedule-section">
           <div class="section-header">
