@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="user.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Chakra+Petch:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="dashboard">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <!-- LOGO -->
+        <div class="sidebar-header">
+          <img
+            src="userimage/FIT-STOP LOGO.png"
+            alt="Fit-Stop Logo"
+            class="logo-img"
+          />
+          <span class="logo-text">Fit-Stop</span>
+        </div>
+
+        <!-- MENU -->
+        <ul class="menu">
+          <li class="active">
+            <a href="user.html">
+              <i class="bi bi-grid-1x2"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="bmi.html">
+              <i class="bi bi-heart-pulse"></i>
+              <span>BMI Tracker</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="myplan.html">
+              <i class="bi bi-clipboard-check"></i>
+              <span>My Plan</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="history.html">
+              <i class="bi bi-clock-history"></i>
+              <span>Exercise History</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="payments.html">
+              <i class="bi bi-credit-card"></i>
+              <span>Payments</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="profile.html">
+              <i class="bi bi-person"></i>
+              <span>Profile</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="settings.html">
+              <i class="bi bi-gear"></i>
+              <span>Settings</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="logout.html">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Logout</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="main-content">
+        <!-- TOP BAR -->
+        <header class="topbar">
+          <div class="welcome">
+            <h1>Hey Sharien!</h1>
+            <p>You are doing great so far</p>
+          </div>
+
+          <div class="search-container">
+            <div class="search-wrapper">
+              <i class="fas fa-search search-icon"></i>
+              <input
+                type="text"
+                class="search-input"
+                placeholder="What is your goal today?"
+              />
+            </div>
+            <button class="search-btn">Search</button>
+          </div>
+
+          <div class="profile-container">
+            <div class="profile-content">
+              <div class="profile-text">
+                <strong class="profile-name">Sharien Salarda</strong>
+                <span class="profile-streak">🔥 Streaks • 135 days</span>
+              </div>
+              <div class="profile-pic">
+                <img
+                  src="userimage/andrea.jpg"
+                  alt="User Profile"
+                  class="profile-image"
+                />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- NOTIFICATION BANNER -->
+        <section class="notifications">
+          <div class="notification-card attendance">
+            <i class="bi bi-check-circle-fill"></i>
+            <div class="notification-content">
+              <h4>Attendance Confirmed</h4>
+              <p>Check-in successful • Today at 6:30 AM</p>
+            </div>
+          </div>
+          <div class="notification-card payment">
+            <i class="bi bi-credit-card-fill"></i>
+            <div class="notification-content">
+              <h4>Payment Due Soon</h4>
+              <p>Monthly membership renews in 5 days • $49.99</p>
+            </div>
+            <button class="notify-btn">Pay Now</button>
+          </div>
+        </section>
+
+        <!-- BMI TRACKER SECTION -->
+        <section class="bmi-section">
+          <div class="bmi-card main-bmi">
+            <div class="bmi-header">
+              <h3>Your BMI Analysis</h3>
+              <span class="bmi-badge healthy">Healthy</span>
+            </div>
+            <div class="bmi-display">
+              <div class="bmi-circle">
+                <div class="bmi-value">23.87</div>
+                <span class="bmi-unit">kg/m²</span>
+              </div>
+              <div class="bmi-info">
+                <div class="info-row">
+                  <span class="label">Height:</span>
+                  <span class="value">165 cm</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">Weight:</span>
+                  <span class="value">65 kg</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">Target:</span>
+                  <span class="value">60 kg</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">To Goal:</span>
+                  <span class="value">-5 kg</span>
+                </div>
+              </div>
+            </div>
+            <div class="bmi-scale">
+              <div class="scale-bar">
+                <div class="scale-marker" style="left: 61%"></div>
+              </div>
+              <div class="scale-labels">
+                <span>Underweight</span>
+                <span>Normal</span>
+                <span>Overweight</span>
+                <span>Obese</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bmi-card progress-chart">
+            <h3>Weight Progress</h3>
+            <div class="chart-area">
+              <div class="chart-line"></div>
+            </div>
+            <div class="progress-stats">
+              <div class="stat-item">
+                <span class="stat-label">This Month</span>
+                <span class="stat-value">-2.3 kg</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Total Lost</span>
+                <span class="stat-value">-8.7 kg</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bmi-card quick-stats">
+            <h3>Today's Stats</h3>
+            <div class="quick-stat-grid">
+              <div class="quick-stat">
+                <i class="fas fa-fire"></i>
+                <div>
+                  <span class="stat-number">1,458</span>
+                  <span class="stat-text">Calories Burned</span>
+                </div>
+              </div>
+              <div class="quick-stat">
+                <i class="fas fa-shoe-prints"></i>
+                <div>
+                  <span class="stat-number">13,946</span>
+                  <span class="stat-text">Steps</span>
+                </div>
+              </div>
+              <div class="quick-stat">
+                <i class="fas fa-moon"></i>
+                <div>
+                  <span class="stat-number">8h 54m</span>
+                  <span class="stat-text">Sleep</span>
+                </div>
+              </div>
+              <div class="quick-stat">
+                <i class="fas fa-tint"></i>
+                <div>
+                  <span class="stat-number">2.1 L</span>
+                  <span class="stat-text">Water Intake</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+       
+
+          <div class="history-grid">
+                    
+
+            <div class="history-card">
+              <div class="history-date">
+                <span class="date-day">Feb 7</span>
+                <span class="date-full">Thursday</span>
+              </div>
+              <div class="history-workout">
+                <div class="workout-icon cardio">
+                  <i class="fas fa-heartbeat"></i>
+                </div>
+                <div class="workout-details">
+                  <h4>Cardio & Abs</h4>
+                  <p>6:00 AM - 6:45 AM</p>
+                  <div class="workout-stats-mini">
+                    <span><i class="fas fa-fire"></i> 380 cal</span>
+                    <span><i class="fas fa-clock"></i> 45 mins</span>
+                  </div>
+                </div>
+              </div>
+              <span class="completion-badge completed">Completed</span>
+            </div>
+
+            <div class="history-card">
+              <div class="history-date">
+                <span class="date-day">Feb 6</span>
+                <span class="date-full">Wednesday</span>
+              </div>
+              <div class="history-workout">
+                <div class="workout-icon back">
+                  <i class="fas fa-user"></i>
+                </div>
+                <div class="workout-details">
+                  <h4>Back & Biceps</h4>
+                  <p>7:00 AM - 8:15 AM</p>
+                  <div class="workout-stats-mini">
+                    <span><i class="fas fa-fire"></i> 465 cal</span>
+                    <span
+                      ><i class="fas fa-weight-hanging"></i> 2,890 kg
+                      total</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <span class="completion-badge completed">Completed</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- DIET SCHEDULE SECTION -->
+        <section class="diet-schedule-section">
+          <div class="section-header">
+            <h3>Weekly Diet Schedule</h3>
+            <button class="edit-btn">
+              <i class="bi bi-pencil"></i> Edit Schedule
+            </button>
+          </div>
+
+          <div class="diet-calendar">
+            <div class="diet-day">
+              <div class="day-header">
+                <span class="day-name">Monday</span>
+                <span class="day-calories">2,100 cal</span>
+              </div>
+              <div class="meals">
+                <div class="meal-item">
+                  <span class="meal-time">Breakfast</span>
+                  <span class="meal-name">Oatmeal with berries & nuts</span>
+                  <span class="meal-cal">450 cal</span>
+                </div>
+                <div class="meal-item">
+                  <span class="meal-time">Lunch</span>
+                  <span class="meal-name">Grilled chicken salad</span>
+                  <span class="meal-cal">550 cal</span>
+                </div>
+                <div class="meal-item">
+                  <span class="meal-time">Snack</span>
+                  <span class="meal-name">Protein shake & banana</span>
+                  <span class="meal-cal">320 cal</span>
+                </div>
+                <div class="meal-item">
+                  <span class="meal-time">Dinner</span>
+                  <span class="meal-name">Salmon with quinoa</span>
+                  <span class="meal-cal">680 cal</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="diet-day active">
+              <div class="day-header">
+                <span class="day-name">Today</span>
+                <span class="day-calories">2,050 cal</span>
+              </div>
+              <div class="meals">
+                <div class="meal-item completed">
+                  <span class="meal-time">Breakfast</span>
+                  <span class="meal-name">Greek yogurt with granola</span>
+                  <span class="meal-cal">420 cal</span>
+                </div>
+                <div class="meal-item completed">
+                  <span class="meal-time">Lunch</span>
+                  <span class="meal-name">Turkey wrap with veggies</span>
+                  <span class="meal-cal">520 cal</span>
+                </div>
+                <div class="meal-item">
+                  <span class="meal-time">Snack</span>
+                  <span class="meal-name">Apple & almond butter</span>
+                  <span class="meal-cal">280 cal</span>
+                </div>
+                <div class="meal-item">
+                  <span class="meal-time">Dinner</span>
+                  <span class="meal-name">Grilled steak & sweet potato</span>
+                  <span class="meal-cal">730 cal</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="diet-day">
+              <div class="day-header">
+                <span class="day-name">Wednesday</span>
+                <span class="day-calories">2,200 cal</span>
+              </div>
+              <div class="meals">
+                <div class="meal-item">
+                  <span class="meal-time">Breakfast</span>
+                  <span class="meal-name">Scrambled eggs & toast</span>
+                  <span class="meal-cal">480 cal</span>
+                </div>
+                <div class="meal-item">
+                  <span class="meal-time">Lunch</span>
+                  <span class="meal-name">Pasta with vegetables</span>
+                  <span class="meal-cal">600 cal</span>
+                </div>
+                <div class="meal-item">
+                  <span class="meal-time">Snack</span>
+                  <span class="meal-name">Mixed nuts</span>
+                  <span class="meal-cal">300 cal</span>
+                </div>
+                <div class="meal-item">
+                  <span class="meal-time">Dinner</span>
+                  <span class="meal-name">Chicken stir-fry</span>
+                  <span class="meal-cal">720 cal</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="nutrition-summary">
+            <div class="nutrition-card">
+              <div class="nutrition-icon protein">
+                <i class="fas fa-drumstick-bite"></i>
+              </div>
+              <div class="nutrition-info">
+                <span class="nutrition-label">Protein</span>
+                <span class="nutrition-value">142g / 180g</span>
+                <div class="nutrition-bar">
+                  <div class="bar-fill" style="width: 79%"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="nutrition-card">
+              <div class="nutrition-icon carbs">
+                <i class="fas fa-bread-slice"></i>
+              </div>
+              <div class="nutrition-info">
+                <span class="nutrition-label">Carbs</span>
+                <span class="nutrition-value">218g / 250g</span>
+                <div class="nutrition-bar">
+                  <div class="bar-fill" style="width: 87%"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="nutrition-card">
+              <div class="nutrition-icon fats">
+                <i class="fas fa-cheese"></i>
+              </div>
+              <div class="nutrition-info">
+                <span class="nutrition-label">Fats</span>
+                <span class="nutrition-value">58g / 70g</span>
+                <div class="nutrition-bar">
+                  <div class="bar-fill" style="width: 83%"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="nutrition-card">
+              <div class="nutrition-icon fiber">
+                <i class="fas fa-seedling"></i>
+              </div>
+              <div class="nutrition-info">
+                <span class="nutrition-label">Fiber</span>
+                <span class="nutrition-value">28g / 35g</span>
+                <div class="nutrition-bar">
+                  <div class="bar-fill" style="width: 80%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- GOALS & TRAINERS -->
+        <section class="bottom-grid">
+          <div class="box goals-box">
+            <div class="box-header">
+              <h3>Goals Progress</h3>
+              <button class="btn-outline">View All</button>
+            </div>
+
+            <ul class="goals-list">
+              <li>
+                <div class="icon-circle cycling">
+                  <i class="fas fa-bicycle"></i>
+                </div>
+                <div class="goal-info">
+                  <span class="goal-name">Cycling</span>
+                  <div class="progress-container">
+                    <div class="progress-bar yellow" style="width: 65%"></div>
+                  </div>
+                  <span class="days-count">65/100 days</span>
+                </div>
+              </li>
+
+              <li>
+                <div class="icon-circle running">
+                  <i class="fas fa-running"></i>
+                </div>
+                <div class="goal-info">
+                  <span class="goal-name">Running</span>
+                  <div class="progress-container">
+                    <div class="progress-bar orange" style="width: 42%"></div>
+                  </div>
+                  <span class="days-count">42/100 days</span>
+                </div>
+              </li>
+
+              <li>
+                <div class="icon-circle water"><i class="fas fa-tint"></i></div>
+                <div class="goal-info">
+                  <span class="goal-name">Water Intake</span>
+                  <div class="progress-container">
+                    <div class="progress-bar blue" style="width: 85%"></div>
+                  </div>
+                  <span class="days-count">85/100 days</span>
+                </div>
+              </li>
+
+              <li>
+                <div class="icon-circle workout">
+                  <i class="fas fa-dumbbell"></i>
+                </div>
+                <div class="goal-info">
+                  <span class="goal-name">Strength Training</span>
+                  <div class="progress-container">
+                    <div class="progress-bar purple" style="width: 73%"></div>
+                  </div>
+                  <span class="days-count">73/100 days</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="lightmode.js"></script>
+  </body>
+</html>
