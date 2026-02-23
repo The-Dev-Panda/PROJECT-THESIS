@@ -90,7 +90,7 @@
           <i class="bi bi-box-seam-fill"></i>
           <h3>Update Inventory</h3>
           <p>Manage equipment stock</p>
-         <a href="inventory.html" class="action-btn">View Inventory</a>
+         <a href="inventory.php" class="action-btn">View Inventory</a>
         </div>
         <div class="action-card">
           <i class="bi bi-card-checklist"></i>
