@@ -26,10 +26,20 @@
         <i class="bi bi-speedometer2"></i>
         <span>Dashboard</span>
       </li>
-      <li>
+      <li id="clientRegBtn">
         <i class="bi bi-person-plus"></i>
         <span>Client Registration</span>
       </li>
+      <script>
+        document.getElementById("clientRegBtn").addEventListener("click", function() {
+  document.getElementById("clientRegistration").scrollIntoView({
+    behavior: "smooth"
+  });
+
+  document.querySelectorAll(".sidebar .menu li").forEach(li => li.classList.remove("active"));
+  this.classList.add("active");
+});
+      </script>
       <li>
         <i class="bi bi-box-seam"></i>
         <span>Inventory Management</span>
@@ -143,7 +153,7 @@
       </div>
     </section>
 
-    <section class="registration-section">
+   <section class="registration-section" id="clientRegistration">  
       <h2>Client Registration</h2>
       <div class="registration-card">
        <form class="registration-form" id="registrationForm">
@@ -193,8 +203,38 @@
       </div>
     </section>
 
+    <!-- MEMBERSHIP PAYMENT SECTION -->
+<section class="registration-section">
+  <h2>Membership Payments</h2>
+  <div class="registration-card">
+    <form class="registration-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Member ID</label>
+          <input type="text" id="paymentMemberID" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Amount</label>
+          <input type="number" id="paymentAmount" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Payment Method</label>
+          <select class="form-input">
+            <option>Cash</option>
+            <option>GCash</option>
+            <option>Bank Transfer</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-primary" onclick="processPayment()">Record Payment</button>
+      </div>
+    </form>
+  </div>
+</section>
     <section class="inventory-section" id="inventory">
       <h2>Inventory Management</h2>
+      
       <div class="inventory-header">
         <div class="search-container">
           <div class="search-wrapper">
@@ -274,6 +314,34 @@
 
     <!-- ATTENDANCE TRACKING -->
     <section class="attendance-section">
+      <section class="attendance-section">
+  <h2>Workout / Performance Log</h2>
+  <div class="registration-card">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Member ID</label>
+        <input type="text" id="perfID" class="form-input">
+      </div>
+      <div class="form-group">
+        <label>Exercise</label>
+        <input type="text" id="exercise" class="form-input">
+      </div>
+      <div class="form-group">
+        <label>Sets</label>
+        <input type="number" id="sets" class="form-input">
+      </div>
+      <div class="form-group">
+        <label>Reps</label>
+        <input type="number" id="reps" class="form-input">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" onclick="logWorkout()">Save Workout</button>
+    </div>
+  </div>
+
+  <div id="workoutLogs" style="margin-top:20px;"></div>
+</section>
       <h2>Real-Time Attendance</h2>
       <div class="attendance-grid">
         <div class="attendance-card">
@@ -521,6 +589,74 @@ function goToInventory() {
     behavior: "smooth"
   });
 }
+</script>
+<script>
+
+function logAttendance(memberID) {
+  const attendanceList = document.querySelector(".attendance-list");
+
+  const newItem = document.createElement("div");
+  newItem.classList.add("attendance-item");
+
+  newItem.innerHTML = `
+    <div class="member-info">
+      <div class="member-avatar">${memberID.substring(0,2)}</div>
+      <div>
+        <strong>${memberID}</strong>
+        <span class="time">Just now</span>
+      </div>
+    </div>
+    <span class="check-in-badge">Check-In</span>
+  `;
+
+  attendanceList.prepend(newItem);
+  addNotification("Attendance logged for " + memberID);
+}
+
+function processPayment(){
+  const id = document.getElementById("paymentMemberID").value;
+  const amount = document.getElementById("paymentAmount").value;
+
+  if(id && amount){
+    addNotification("Payment received from " + id + " (₱" + amount + ")");
+    alert("Payment Recorded Successfully!");
+  }
+}
+
+function logWorkout(){
+  const id = document.getElementById("perfID").value;
+  const exercise = document.getElementById("exercise").value;
+  const sets = document.getElementById("sets").value;
+  const reps = document.getElementById("reps").value;
+
+  if(id && exercise){
+    const logs = document.getElementById("workoutLogs");
+
+    const entry = document.createElement("div");
+    entry.classList.add("attendance-item");
+    entry.innerHTML = `<strong>${id}</strong> - ${exercise} (${sets} sets x ${reps} reps)`;
+
+    logs.prepend(entry);
+    addNotification("Workout logged for " + id);
+  }
+}
+
+function addNotification(message){
+  const list = document.querySelector(".notifications-list");
+
+  const item = document.createElement("div");
+  item.classList.add("notification-item", "priority-low");
+  item.innerHTML = `
+    <i class="bi bi-bell-fill"></i>
+    <div>
+      <strong>${message}</strong>
+      <span class="notification-time">Just now</span>
+    </div>
+  `;
+
+  list.prepend(item);
+}
+
 </script>
 </body>
 </html>
