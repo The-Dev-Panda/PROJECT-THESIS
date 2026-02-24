@@ -10,11 +10,10 @@
 		<link href="styles.css" rel="stylesheet">
 		<style>
 			.page-hero{padding-top:96px;padding-bottom:28px}
-			.machine-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
-			.machine-card{background:rgba(255,255,255,0.03);border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
-			.machine-card img{width:100%;height:150px;object-fit:cover;display:block}
-			.machine-card .body{padding:12px}
-			.breadcrumbs{color:#aab4bf;font-size:13px;margin-bottom:8px}
+			.machine-card{background:rgba(255,255,255,0.03);border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.03);text-decoration:none;color:inherit;display:flex;flex-direction:column;height:100%;transition:transform 0.2s,box-shadow 0.2s}
+			.machine-card:hover{transform:translateY(-4px);box-shadow:0 8px 16px rgba(0,0,0,0.3)}
+			.machine-card img{width:100%;height:250px;object-fit:cover;display:block}
+			.machine-card .body{padding:16px;flex-grow:1;display:flex;flex-direction:column}
 		</style>
 </head>
 <body>
@@ -23,14 +22,14 @@
 				<div class="container">
 						<a class="navbar-brand brand-font" href="index.html">[FIT-STOP]</a>
 						<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-								<span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+								<span class="navbar-toggler-icon" style="filter: invert(0);"></span>
 						</button>
 						<div class="collapse navbar-collapse" id="navbarNav">
 								<ul class="navbar-nav ms-auto align-items-center">
 										<li class="nav-item me-4"><a class="nav-link text-white" href="equipment.html">EQUIPMENT</a></li>
 										<li class="nav-item me-4"><a class="nav-link text-white" href="index.html#location">LOCATION</a></li>
 										<li class="nav-item me-4"><a class="nav-link text-white" href="aboutus.html">About Us</a></li>
-										<li class="nav-item"><a href="#" class="btn btn-hazard"><i class="fa-solid fa-lock me-2"></i> LOGIN</a></li>
+										<li class="nav-item"><a href="Login/Login_Page.php" class="btn btn-hazard"><i class="fa-solid fa-lock me-2"></i> LOGIN</a></li>
 								</ul>
 						</div>
 				</div>
@@ -48,41 +47,109 @@
 		</section>
 
 		<main class="container mb-5">
-			<div class="breadcrumbs"><a href="index.html">Home</a> › <a href="equipment.html">Equipment</a> › Machines</div>
+			<div class="breadcrumbs mb-4"><a href="index.html">Home</a> › <a href="equipment.html">Equipment</a> › Machines</div>
 
-			<div class="machine-grid">
-				<!-- Example machine cards: point each to its page in the machines/ folder -->
-				<a class="machine-card" href="machines/SmithMachine.html">
-					<img src="images/smith-pic.jpg" alt="Smith Machine">
-					<div class="body">
-						<h5 class="mb-1">Smith Machine</h5>
-						<div class="text-muted small">Bench press, shoulder press, guided bar path</div>
-					</div>
-				</a>
+			<div class="row g-4">
+				<!-- Machine cards: point each to its page in the machines/ folder -->
+				<div class="col-lg-3 col-md-4 col-sm-6">
+					<a class="machine-card" href="machines/SmithMachine.html">
+						<img src="images/smith-pic.jpg" alt="Smith Machine">
+						<div class="body">
+							<h5 class="mb-1">Smith Machine</h5>
+							<div class="text-muted small">Bench press, shoulder press, guided bar path</div>
+						</div>
+					</a>
+				</div>
 
-				<a class="machine-card" href="machines/machine-template.html">
-					<img src="images/placeholder-2.jpg" alt="Leg Press">
-					<div class="body">
-						<h5 class="mb-1">Leg Press</h5>
-						<div class="text-muted small">Quadriceps, hamstrings, glutes</div>
-					</div>
-				</a>
+				<div class="col-lg-3 col-md-4 col-sm-6">
+					<a class="machine-card" href="machines/LatPulldownSeatedCableRow.html">
+						<img src="images/Fitstop.png" alt="Lat Pulldown/Seated Cable Row">
+						<div class="body">
+							<h5 class="mb-1">Lat Pulldown/Seated Cable Row</h5>
+							<div class="text-muted small">Back width, lats, rowing movements</div>
+						</div>
+					</a>
+				</div>
 
-				<a class="machine-card" href="machines/machine-template.html">
-					<img src="images/placeholder-3.jpg" alt="Lat Pulldown">
-					<div class="body">
-						<h5 class="mb-1">Lat Pulldown</h5>
-						<div class="text-muted small">Back width, lats</div>
-					</div>
-				</a>
+				<div class="col-lg-3 col-md-4 col-sm-6">
+					<a class="machine-card" href="machines/ShoulderPress.html">
+						<img src="images/Fitstop.png" alt="Shoulder Press">
+						<div class="body">
+							<h5 class="mb-1">Shoulder Press</h5>
+							<div class="text-muted small">Deltoids, overhead pressing</div>
+						</div>
+					</a>
+				</div>
 
-				<a class="machine-card" href="machines/machine-template.html">
-					<img src="images/ex-1.jpg" alt="Chest Press">
-					<div class="body">
-						<h5 class="mb-1">Chest Press</h5>
-						<div class="text-muted small">Selectorized chest movements</div>
-					</div>
-				</a>
+				<div class="col-lg-3 col-md-4 col-sm-6">
+					<a class="machine-card" href="machines/SeatedChestPress.html">
+						<img src="images/Fitstop.png" alt="Seated Chest Press">
+						<div class="body">
+							<h5 class="mb-1">Seated Chest Press</h5>
+							<div class="text-muted small">Chest, pectorals, pressing movements</div>
+						</div>
+					</a>
+				</div>
+
+				<div class="col-lg-3 col-md-4 col-sm-6">
+					<a class="machine-card" href="machines/PecDeckFlyRearDelt.html">
+						<img src="images/Fitstop.png" alt="Pec Deck Fly/Rear Delt Fly">
+						<div class="body">
+							<h5 class="mb-1">Pec Deck Fly/Rear Delt Fly</h5>
+							<div class="text-muted small">Chest flys, rear deltoid isolation</div>
+						</div>
+					</a>
+				</div>
+
+				<div class="col-lg-3 col-md-4 col-sm-6">
+					<a class="machine-card" href="machines/DeclineChestPress.html">
+						<img src="images/Fitstop.png" alt="Decline Chest Press">
+						<div class="body">
+							<h5 class="mb-1">Decline Chest Press</h5>
+							<div class="text-muted small">Lower chest, decline pressing</div>
+						</div>
+					</a>
+				</div>
+
+				<div class="col-lg-3 col-md-4 col-sm-6">
+					<a class="machine-card" href="machines/MultiPress.html">
+						<img src="images/Fitstop.png" alt="Multi Press">
+						<div class="body">
+							<h5 class="mb-1">Multi Press Machine</h5>
+							<div class="text-muted small">Chest & shoulder, multi-angle press</div>
+						</div>
+					</a>
+				</div>
+
+				<div class="col-lg-3 col-md-4 col-sm-6">
+					<a class="machine-card" href="machines/LegPressHackSquat.html">
+						<img src="images/Fitstop.png" alt="Leg Press/Hack Squat">
+						<div class="body">
+							<h5 class="mb-1">Leg Press/Hack Squat</h5>
+							<div class="text-muted small">Quads, glutes, lower body power</div>
+						</div>
+					</a>
+				</div>
+
+				<div class="col-lg-3 col-md-4 col-sm-6">
+					<a class="machine-card" href="machines/CableMachine.html">
+						<img src="images/Fitstop.png" alt="Cable Machine">
+						<div class="body">
+							<h5 class="mb-1">Cable Machine</h5>
+							<div class="text-muted small">Multi-function, cables, various exercises</div>
+						</div>
+					</a>
+				</div>
+
+				<div class="col-lg-3 col-md-4 col-sm-6">
+					<a class="machine-card" href="machines/PullupStation.html">
+						<img src="images/Fitstop.png" alt="Pullup Station">
+						<div class="body">
+							<h5 class="mb-1">Pullup Station</h5>
+							<div class="text-muted small">Pull-ups, chin-ups, bodyweight training</div>
+						</div>
+					</a>
+				</div>
 
 			</div>
 		</main>
