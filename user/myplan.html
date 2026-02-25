@@ -306,14 +306,14 @@
         <!-- MENU -->
         <ul class="menu">
           <li>
-            <a href="user.php">
+            <a href="user.html">
               <i class="bi bi-grid-1x2"></i>
               <span>Dashboard</span>
             </a>
           </li>
 
           <li>
-            <a href="bmi.php">
+            <a href="bmi.html">
               <i class="bi bi-heart-pulse"></i>
               <span>BMI Tracker</span>
             </a>
@@ -406,6 +406,67 @@
             <h3><i class="fas fa-robot"></i> AI Fitness Adviser</h3>
             <button class="btn-outline">Full Chat</button>
           </div>
+  <!-- ═════════ FITBOT FLOATING BUBBLE ═════════ -->
+        <div class="fitbot-container">
+          <!-- Floating Bubble -->
+          <div class="fitbot-bubble" onclick="toggleFitbot()">
+            <i class="fas fa-robot"></i>
+          </div>
+
+          <!-- Chat Window -->
+          <div class="fitbot-chat" id="fitbotChat">
+            <div class="fitbot-header">
+              <div class="fitbot-title">
+                <i class="fas fa-robot"></i>
+                <span>FitBot AI</span>
+              </div>
+              <button onclick="toggleFitbot()">✕</button>
+            </div>
+
+            <div class="fitbot-messages" id="fitbotMessages">
+              <div class="bot-msg">
+                Hey Sharien 👋 Ready to crush today’s workout?
+              </div>
+            </div>
+
+            <div class="fitbot-input">
+              <input type="text" id="fitbotInput" placeholder="Ask FitBot..." />
+              <button onclick="sendFitbotMessage()">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="fitbot-container">
+          <!-- Floating Bubble -->
+          <div class="fitbot-bubble" onclick="toggleFitbot()">
+            <i class="fas fa-robot"></i>
+          </div>
+
+          <!-- Chat Window -->
+          <div class="fitbot-chat" id="fitbotChat">
+            <div class="fitbot-header">
+              <div class="fitbot-title">
+                <i class="fas fa-robot"></i>
+                <span>FitBot AI</span>
+              </div>
+              <button class="bmi-modal-x" onclick="toggleFitbot()"><i class="bi bi-x-lg"></i></button>
+            </div>
+
+            <div class="fitbot-messages" id="fitbotMessages">
+              <div class="bot-msg">
+                Hey Sharien 👋 Ready to crush today’s workout?
+              </div>
+            </div>
+
+            <div class="fitbot-input">
+              <input type="text" id="fitbotInput" placeholder="Ask FitBot..." />
+              <button onclick="sendFitbotMessage()">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
 
           <div class="ai-adviser-grid">
             <!-- Chat Box -->
@@ -801,6 +862,138 @@
               </li>
             </ul>
           </div>
+          
+            <!-- AI Suggestions -->
+            <div class="ai-suggestions-box">
+              <h4>Personalized Suggestions</h4>
+              <div class="suggestion-tabs">
+                <button
+                  class="tab-btn active"
+                  onclick="switchTab(this, 'workout')"
+                >
+                  Workout
+                </button>
+                <button class="tab-btn" onclick="switchTab(this, 'meal')">
+                  Meal Plan
+                </button>
+                <button class="tab-btn" onclick="switchTab(this, 'rest')">
+                  Recovery
+                </button>
+              </div>
+
+              <div class="suggestion-cards" id="suggestionCards">
+                <!-- Workout tab (default) -->
+                <div class="suggestion-card" data-tab="workout">
+                  <div class="suggestion-icon workout">
+                    <i class="fas fa-dumbbell"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>HIIT Session — 30 mins</h5>
+                    <p>Based on your cardio history & calorie goal</p>
+                  </div>
+                </div>
+                <div class="suggestion-card" data-tab="workout">
+                  <div class="suggestion-icon workout">
+                    <i class="fas fa-running"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>5 km Morning Run</h5>
+                    <p>Aligns with your running goal (42/100 days)</p>
+                  </div>
+                </div>
+                <div class="suggestion-card" data-tab="workout">
+                  <div class="suggestion-icon workout">
+                    <i class="fas fa-bicycle"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Cycling — 45 mins</h5>
+                    <p>Boost your cycling streak (65/100 days)</p>
+                  </div>
+                </div>
+
+                <!-- Meal tab -->
+                <div
+                  class="suggestion-card"
+                  data-tab="meal"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon meal">
+                    <i class="fas fa-egg"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>High-Protein Breakfast</h5>
+                    <p>3 eggs + oats to hit your 180g protein goal</p>
+                  </div>
+                </div>
+                <div
+                  class="suggestion-card"
+                  data-tab="meal"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon meal">
+                    <i class="fas fa-fish"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Salmon & Quinoa Dinner</h5>
+                    <p>Rich in omega-3 for muscle recovery</p>
+                  </div>
+                </div>
+                <div
+                  class="suggestion-card"
+                  data-tab="meal"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon meal">
+                    <i class="fas fa-apple-alt"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Post-Workout Snack</h5>
+                    <p>Banana + Greek yogurt within 30 mins</p>
+                  </div>
+                </div>
+
+                <!-- Rest tab -->
+                <div
+                  class="suggestion-card"
+                  data-tab="rest"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon rest">
+                    <i class="fas fa-moon"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Sleep by 10 PM</h5>
+                    <p>Maintain your 8h 54m average sleep</p>
+                  </div>
+                </div>
+                <div
+                  class="suggestion-card"
+                  data-tab="rest"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon rest">
+                    <i class="fas fa-spa"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Stretching — 10 mins</h5>
+                    <p>Reduces soreness after Back & Biceps day</p>
+                  </div>
+                </div>
+                <div
+                  class="suggestion-card"
+                  data-tab="rest"
+                  style="display: none"
+                >
+                  <div class="suggestion-icon rest">
+                    <i class="fas fa-tint"></i>
+                  </div>
+                  <div class="suggestion-text">
+                    <h5>Hydration Reminder</h5>
+                    <p>You need 0.4 L more to hit your 2.5 L goal</p>
+                  </div>
+                </div>
+              </div>
+            </div>
         </section>
         <!-- CUSTOM MEAL PLANNER -->
         <section class="ai-card">
@@ -848,6 +1041,57 @@
     </div>
     <script src="lightmode.js"></script>
     <script>
+      function toggleFitbot() {
+        const chat = document.getElementById("fitbotChat");
+        chat.style.display = chat.style.display === "flex" ? "none" : "flex";
+      }
+
+      function sendFitbotMessage() {
+        const input = document.getElementById("fitbotInput");
+        const messages = document.getElementById("fitbotMessages");
+        const text = input.value.trim();
+        if (!text) return;
+
+        messages.innerHTML += `
+    <div class="user-msg-fitbot">${text}</div>
+  `;
+
+        input.value = "";
+
+        setTimeout(() => {
+          const replies = [
+            "Stay consistent. Discipline beats motivation. 💪",
+            "Increase protein intake slightly today.",
+            "Hydrate more. You’re 400ml short.",
+            "Try progressive overload this week.",
+          ];
+
+          const reply = replies[Math.floor(Math.random() * replies.length)];
+
+          messages.innerHTML += `
+      <div class="bot-msg">${reply}</div>
+    `;
+
+          messages.scrollTop = messages.scrollHeight;
+        }, 600);
+      }
+
+      document
+        .getElementById("fitbotInput")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter") sendFitbotMessage();
+        });
+      /* ── Suggestion Tabs ── */
+      function switchTab(btn, tab) {
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".suggestion-card").forEach((card) => {
+          card.style.display = card.dataset.tab === tab ? "flex" : "none";
+        });
+      }
+
       function addMeal() {
         const mealType = document.getElementById("mealType").value;
         const foodName = document.getElementById("foodName").value;

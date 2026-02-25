@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="user.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Chakra+Petch:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="dashboard">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <img
+            src="userimage/FIT-STOP LOGO.png"
+            alt="Fit-Stop Logo"
+            class="logo-img"
+          />
+          <span class="logo-text">Fit-Stop</span>
+        </div>
+        <ul class="menu">
+          <li   >
+            <a href="user.html"
+              ><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a
+            >
+          </li>
+          <li class="active">
+            <a href="bmi.html"
+              ><i class="bi bi-heart-pulse"></i><span>BMI Tracker</span></a
+            >
+          </li>
+          <li>
+            <a href="myplan.html"
+              ><i class="bi bi-clipboard-check"></i><span>My Plan</span></a
+            >
+          </li>
+          <li>
+            <a href="history.html"
+              ><i class="bi bi-clock-history"></i
+              ><span>Exercise History</span></a
+            >
+          </li>
+          <li>
+            <a href="payments.html"
+              ><i class="bi bi-credit-card"></i><span>Payments</span></a
+            >
+          </li>
+          <li>
+            <a href="profile.html"
+              ><i class="bi bi-person"></i><span>Profile</span></a
+            >
+          </li>
+          <li>
+            <a href="settings.html"
+              ><i class="bi bi-gear"></i><span>Settings</span></a
+            >
+          </li>
+          <li>
+            <a href="logout.html"
+              ><i class="bi bi-box-arrow-right"></i><span>Logout</span></a
+            >
+          </li>
+        </ul>
+      </aside>
+
+
+      <main class="main-content">
+  
+        <header class="topbar">
+          <div class="welcome">
+            <h1>Hey Linda!</h1>
+            <p>You are doing great so far</p>
+          </div>
+        </header>
+
+<div class="bmi-card main-bmi">
+  <div class="bmi-header">
+    <h3>Your BMI Analysis</h3>
+    <span class="bmi-badge healthy" id="bmiBadgeDisplay">Healthy</span>
+  </div>
+  <div class="bmi-display">
+    <div class="bmi-circle">
+      <div class="bmi-value" id="bmiValueDisplay">23.87</div>
+      <span class="bmi-unit">kg/m²</span>
+    </div>
+    <div class="bmi-info">
+      <div class="info-row">
+        <span class="label">Height:</span>
+        <span class="value" id="bmiHeightDisplay">165 cm</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Weight:</span>
+        <span class="value" id="bmiWeightDisplay">65 kg</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Target:</span>
+        <span class="value">60 kg</span>
+      </div>
+      <div class="info-row">
+        <span class="label">To Goal:</span>
+        <span class="value" id="bmiToGoalDisplay">-5 kg</span>
+      </div>
+    </div>
+  </div>
+  <div class="bmi-scale">
+    <div class="scale-bar">
+      <div class="scale-marker" id="bmiScaleMarker" style="left: 61%"></div>
+    </div>
+    <div class="scale-labels">
+      <span>Underweight</span><span>Normal</span>
+      <span>Overweight</span><span>Obese</span>
+    </div>
+  </div>
+  <button class="bmi-calc-open-btn" onclick="openBMIModal()">
+    <i class="bi bi-calculator"></i> Calculate BMI
+  </button>
+</div>
+
+
+<div class="bmi-modal-overlay" id="bmiModalOverlay" onclick="closeBMIOnBackdrop(event)">
+  <div class="bmi-modal">
+
+    <div class="bmi-modal-head">
+      <div>
+        <h2><i class="bi bi-heart-pulse"></i> BMI Calculator</h2>
+        <p>Enter your measurements below</p>
+      </div>
+      <button class="bmi-modal-x" onclick="closeBMIModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <hr class="bmi-hr"/>
+
+ 
+    <div class="bmi-toggle-row">
+      <button class="bmi-tog active" onclick="bmiTogUnit('metric',this)">kg / cm</button>
+      <button class="bmi-tog" onclick="bmiTogUnit('imperial',this)">lb / in</button>
+    </div>
+
+
+    <div class="bmi-fields">
+      <div class="bmi-field-card">
+        <label class="bmi-field-lbl">Height</label>
+        <div class="bmi-slider-row">
+          <input type="range" class="bmi-slider" id="calcHeight" min="100" max="220" value="165"
+            oninput="bmiSliderSync(this,'calcHeightVal','calcHUnit')"/>
+          <span class="bmi-slider-display">
+            <span id="calcHeightVal">165</span>
+            <span class="bmi-sl-unit" id="calcHUnit">cm</span>
+          </span>
+        </div>
+      </div>
+      <div class="bmi-field-card">
+        <label class="bmi-field-lbl">Weight</label>
+        <div class="bmi-slider-row">
+          <input type="range" class="bmi-slider" id="calcWeight" min="30" max="200" value="65"
+            oninput="bmiSliderSync(this,'calcWeightVal','calcWUnit')"/>
+          <span class="bmi-slider-display">
+            <span id="calcWeightVal">65</span>
+            <span class="bmi-sl-unit" id="calcWUnit">kg</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <button class="bmi-do-calc" onclick="runBMICalc()">
+      <i class="bi bi-lightning-fill"></i> Calculate
+    </button>
+
+    <div class="bmi-modal-result" id="bmiModalResult">
+      <div class="bmi-res-left">
+        <div class="bmi-res-score-box">
+          <span class="bmi-res-num" id="bmiResNum">--</span>
+          <span class="bmi-res-unit">kg/m²</span>
+        </div>
+        <span class="bmi-res-badge" id="bmiResBadge">--</span>
+      </div>
+      <div class="bmi-res-right">
+        <div class="bmi-res-row"><span>Healthy Range</span><strong id="bmiResRange">--</strong></div>
+        <div class="bmi-res-row"><span>To Ideal Weight</span><strong id="bmiResDiff">--</strong></div>
+        <div class="bmi-res-bar">
+          <div class="bmi-res-bar-track">
+            <div class="bmi-res-bar-needle" id="bmiResNeedle" style="left:0%"></div>
+          </div>
+          <div class="bmi-res-bar-labels">
+            <span>Under</span><span>Normal</span><span>Over</span><span>Obese</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="bmi-tip-text" id="bmiTipText"></p>
+
+    <button class="bmi-apply-btn" id="bmiApplyBtn" onclick="applyBMI()" style="display:none">
+      <i class="bi bi-check-circle"></i> Apply to Dashboard
+    </button>
+
+  </div>
+</div>
+
+
+
+<script>
+let _bmiUnit = 'metric';
+let _bmiCalcResult = null;
+
+function openBMIModal() {
+  document.getElementById('bmiModalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeBMIModal() {
+  document.getElementById('bmiModalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeBMIOnBackdrop(e) {
+  if (e.target === document.getElementById('bmiModalOverlay')) closeBMIModal();
+}
+
+function bmiTogUnit(u, btn) {
+  _bmiUnit = u;
+  document.querySelectorAll('.bmi-tog').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const h = document.getElementById('calcHeight');
+  const w = document.getElementById('calcWeight');
+  if (u === 'metric') {
+    h.min=100; h.max=220; h.value=165;
+    w.min=30;  w.max=200; w.value=65;
+    document.getElementById('calcHUnit').textContent='cm';
+    document.getElementById('calcWUnit').textContent='kg';
+    document.getElementById('calcHeightVal').textContent='165';
+    document.getElementById('calcWeightVal').textContent='65';
+  } else {
+    h.min=48; h.max=86; h.value=65;
+    w.min=66; w.max=440; w.value=143;
+    document.getElementById('calcHUnit').textContent='in';
+    document.getElementById('calcWUnit').textContent='lb';
+    document.getElementById('calcHeightVal').textContent='65';
+    document.getElementById('calcWeightVal').textContent='143';
+  }
+  bmiSliderPct(h); bmiSliderPct(w);
+  document.getElementById('bmiModalResult').classList.remove('show');
+  document.getElementById('bmiTipText').classList.remove('show');
+  document.getElementById('bmiApplyBtn').style.display = 'none';
+}
+
+function bmiSliderPct(el) {
+  const p = ((el.value - el.min) / (el.max - el.min)) * 100;
+  el.style.setProperty('--pct', p + '%');
+}
+function bmiSliderSync(el, valId) {
+  document.getElementById(valId).textContent = el.value;
+  bmiSliderPct(el);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  ['calcHeight','calcWeight'].forEach(id => bmiSliderPct(document.getElementById(id)));
+});
+
+function runBMICalc() {
+  const hRaw = parseFloat(document.getElementById('calcHeight').value);
+  const wRaw = parseFloat(document.getElementById('calcWeight').value);
+  let hM = _bmiUnit === 'metric' ? hRaw / 100 : hRaw * 0.0254;
+  let wKg = _bmiUnit === 'metric' ? wRaw : wRaw * 0.453592;
+
+  const bmi  = wKg / (hM * hM);
+  const bmiR = Math.round(bmi * 10) / 10;
+
+  let label, cls, tip;
+  if      (bmi < 18.5) { label='Underweight'; cls='underweight'; tip='Your BMI is below the healthy range. Focus on nutrient-dense foods and progressive strength training to safely gain lean muscle mass.'; }
+  else if (bmi < 25)   { label='Healthy';     cls='healthy';     tip='Great work — your BMI is in the healthy range! Stay consistent with training and balanced nutrition to maintain peak performance.'; }
+  else if (bmi < 30)   { label='Overweight';  cls='overweight';  tip='Your BMI is slightly elevated. A moderate caloric deficit with 3–4 cardio sessions per week can help bring you into the healthy range.'; }
+  else                 { label='Obese';       cls='obese';       tip='Your BMI indicates higher health risk. Consider consulting a healthcare professional and start with consistent daily activity and dietary changes.'; }
+
+  const minW   = 18.5 * hM * hM;
+  const maxW   = 24.9 * hM * hM;
+  const idealW = 21.7 * hM * hM;
+  const diff   = wKg - idealW;
+  const fmt    = kg => _bmiUnit === 'metric' ? Math.round(kg)+' kg' : Math.round(kg*2.20462)+' lb';
+  const fmtH   = _bmiUnit === 'metric' ? hRaw+' cm' : hRaw+' in';
+  const fmtW   = _bmiUnit === 'metric' ? wRaw+' kg' : wRaw+' lb';
+  const needlePct  = Math.min(Math.max(((bmi-10)/30)*100, 2), 97);
+  const markerPct  = Math.min(Math.max(((bmi-16)/19)*100, 2), 97);
+
+  _bmiCalcResult = { bmiR, label, cls, fmtH, fmtW, diff, fmt, markerPct };
+
+  // Modal result
+  document.getElementById('bmiResNum').textContent   = bmiR;
+  document.getElementById('bmiResRange').textContent = fmt(minW)+' – '+fmt(maxW);
+  document.getElementById('bmiResDiff').textContent  = (diff>=0?'+':'')+fmt(diff)+(diff>0?' over':diff<0?' under':' ✓');
+  document.getElementById('bmiResNeedle').style.left = needlePct+'%';
+
+  const badge = document.getElementById('bmiResBadge');
+  badge.textContent = label;
+  badge.className   = 'bmi-res-badge '+cls;
+
+  const res = document.getElementById('bmiModalResult');
+  res.classList.remove('show'); void res.offsetWidth; res.classList.add('show');
+
+  const tipEl = document.getElementById('bmiTipText');
+  tipEl.textContent = tip;
+  tipEl.classList.remove('show'); void tipEl.offsetWidth; tipEl.classList.add('show');
+
+  document.getElementById('bmiApplyBtn').style.display = 'flex';
+}
+
+function applyBMI() {
+  if (!_bmiCalcResult) return;
+  const { bmiR, label, cls, fmtH, fmtW, diff, fmt, markerPct } = _bmiCalcResult;
+
+  // Update dashboard card values
+  document.getElementById('bmiValueDisplay').textContent  = bmiR;
+  document.getElementById('bmiHeightDisplay').textContent = fmtH;
+  document.getElementById('bmiWeightDisplay').textContent = fmtW;
+  document.getElementById('bmiToGoalDisplay').textContent = (diff>=0?'+':'')+fmt(diff);
+  document.getElementById('bmiScaleMarker').style.left    = markerPct+'%';
+
+  const dispBadge = document.getElementById('bmiBadgeDisplay');
+  dispBadge.textContent = label;
+  dispBadge.className   = 'bmi-badge '+cls;
+
+  // Pulse animation on the bmi-circle
+  const circle = document.querySelector('.bmi-circle');
+  circle.style.transition = 'transform 0.2s';
+  circle.style.transform  = 'scale(1.08)';
+  setTimeout(() => { circle.style.transform = 'scale(1)'; }, 220);
+
+  closeBMIModal();
+}
+</script>
+
+          <div class="bmi-card progress-chart">
+            <h3>Weight Progress</h3>
+            <div class="chart-area">
+              <div class="chart-line"></div>
+            </div>
+            <div class="progress-stats">
+              <div class="stat-item">
+                <span class="stat-label">This Month</span>
+                <span class="stat-value">-2.3 kg</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Total Lost</span>
+                <span class="stat-value">-8.7 kg</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bmi-card quick-stats">
+            <h3>Today's Stats</h3>
+            <div class="quick-stat-grid">
+              <div class="quick-stat">
+                <i class="fas fa-fire"></i>
+                <div>
+                  <span class="stat-number">1,458</span
+                  ><span class="stat-text">Calories Burned</span>
+                </div>
+              </div>
+              <div class="quick-stat">
+                <i class="fas fa-shoe-prints"></i>
+                <div>
+                  <span class="stat-number">13,946</span
+                  ><span class="stat-text">Steps</span>
+                </div>
+              </div>
+              <div class="quick-stat">
+                <i class="fas fa-moon"></i>
+                <div>
+                  <span class="stat-number">8h 54m</span
+                  ><span class="stat-text">Sleep</span>
+                </div>
+              </div>
+              <div class="quick-stat">
+                <i class="fas fa-tint"></i>
+                <div>
+                  <span class="stat-number">2.1 L</span
+                  ><span class="stat-text">Water Intake</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- EXERCISE HISTORY -->
+        <div class="history-grid">
+          <div class="history-card">
+            <div class="history-date">
+              <span class="date-day">Feb 7</span>
+              <span class="date-full">Thursday</span>
+            </div>
+            <div class="history-workout">
+              <div class="workout-icon cardio">
+                <i class="fas fa-heartbeat"></i>
+              </div>
+              <div class="workout-details">
+                <h4>Cardio & Abs</h4>
+                <p>6:00 AM - 6:45 AM</p>
+                <div class="workout-stats-mini">
+                  <span><i class="fas fa-fire"></i> 380 cal</span>
+                  <span><i class="fas fa-clock"></i> 45 mins</span>
+                </div>
+              </div>
+            </div>
+            <span class="completion-badge completed">Completed</span>
+          </div>
+
+          <div class="history-card">
+            <div class="history-date">
+              <span class="date-day">Feb 6</span>
+              <span class="date-full">Wednesday</span>
+            </div>
+            <div class="history-workout">
+              <div class="workout-icon back"><i class="fas fa-user"></i></div>
+              <div class="workout-details">
+                <h4>Back & Biceps</h4>
+                <p>7:00 AM - 8:15 AM</p>
+                <div class="workout-stats-mini">
+                  <span><i class="fas fa-fire"></i> 465 cal</span>
+                  <span
+                    ><i class="fas fa-weight-hanging"></i> 2,890 kg total</span
+                  >
+                </div>
+              </div>
+            </div>
+            <span class="completion-badge completed">Completed</span>
+          </div>
+        </div>
+    <script src="lightmode.js"></script>
+    <script>
+      /* ── AI Adviser Chat ── */
+      function sendAIMessage() {
+        const input = document.getElementById("aiInput");
+        const msgs = document.getElementById("aiMessages");
+        const text = input.value.trim();
+        if (!text) return;
+
+        // User bubble
+        msgs.innerHTML += `<div class="ai-msg user-msg"><div class="ai-msg-bubble">${text}</div></div>`;
+        input.value = "";
+
+        // Simulated AI response
+        setTimeout(() => {
+          const replies = [
+            "Great question! Based on your BMI and fitness history, I'd recommend focusing on compound movements for faster fat loss. 💪",
+            "Looking at your nutrition data, you're slightly low on protein today. Try adding a boiled egg or some Greek yogurt to your next meal! 🥚",
+            "Your sleep stats look fantastic at 8h 54m! Make sure to stay consistent — quality sleep accelerates muscle recovery. 😴",
+            "You're so close to your water goal! Drink 400ml more to hit 2.5 L today. 💧",
+          ];
+          const reply = replies[Math.floor(Math.random() * replies.length)];
+          msgs.innerHTML += `<div class="ai-msg"><div class="ai-msg-bubble">${reply}</div></div>`;
+          msgs.scrollTop = msgs.scrollHeight;
+        }, 700);
+
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+
+      document.getElementById("aiInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") sendAIMessage();
+      });
+
+      /* ── Suggestion Tabs ── */
+      function switchTab(btn, tab) {
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".suggestion-card").forEach((card) => {
+          card.style.display = card.dataset.tab === tab ? "flex" : "none";
+        });
+      }
+
+      /* ── Star Rating ── */
+      function setRating(n) {
+        document.querySelectorAll(".star-btn").forEach((btn, i) => {
+          btn.classList.toggle("active", i < n);
+        });
+      }
+
+      /* ── Leaderboard Filter ── */
+      document.querySelectorAll(".filter-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".filter-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+    </script>
+  </body>
+</html>
