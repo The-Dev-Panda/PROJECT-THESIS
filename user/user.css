@@ -8947,7 +8947,7 @@ body.light-mode .toggle-track {
 
 .view-all-link {
   font-size: 0.78rem;
-  color: #7c3aed;
+  color: var(--hazard-yellow);
   font-weight: 500;
   text-decoration: none;
   align-self: flex-end;
