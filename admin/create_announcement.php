@@ -195,7 +195,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
         <div class="row justify-content-center">
             <div class="col-lg-8">
                 <div class="form-card">
-                <h1 class="mb-0 text-dark"><i class="bi bi-box-seam me-2 text-dark"></i>Create Announcement</h1>
+                <h1 class="mb-0 text-dark"><i class="bi bi-megaphone-fill me-2 text-dark"></i>Create Announcement</h1>
                     <form action="process_create_announcement.php" method="POST" enctype="multipart/form-data">
                         <div class="mb-4">
                             <label for="title" class="form-label fw-bold">
@@ -253,7 +253,6 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
             const preview = document.getElementById('imagePreview');
 
             if (file) {
-                // Check file size (5MB = 5 * 1024 * 1024 bytes)
                 if (file.size > 5 * 1024 * 1024) {
                     alert('File size must be less than 5MB');
                     event.target.value = '';
@@ -261,7 +260,6 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                     return;
                 }
 
-                // Check file type
                 const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
                 if (!allowedTypes.includes(file.type)) {
                     alert('Only PNG, JPG, and JPEG files are allowed');
@@ -270,7 +268,6 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                     return;
                 }
 
-                // Show preview
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     preview.src = e.target.result;
@@ -280,7 +277,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
             }
         }
     </script>
-    
+
     <div class="page-header">
         <div class="container">
             <h1 class="mb-0"><i class="bi bi-megaphone-fill me-2"></i>View Recent Announcements</h1>

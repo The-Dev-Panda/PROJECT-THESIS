@@ -91,7 +91,6 @@ if(empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin'){
         <div class="container">
             <h1 class="mb-2">Welcome back,
                 <?php
-                session_start();
                 echo $_SESSION["username"] ?? '';
                 ?>
             </h1>
