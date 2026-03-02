@@ -1,52 +1,72 @@
 <?php
-require_once '../Login/connection.php';
+session_start();
 
-header('Content-Type: application/json');
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+// Validate user is logged in
+if (empty($_SESSION['username']) || empty($_SESSION['id'])) {
+    header('Location: ../Login/Login_Page.php');
     exit();
 }
 
-$desc = isset($_POST['feedback']) ? trim($_POST['feedback']) : '';
-$about = isset($_POST['machine']) ? trim($_POST['machine']) : 'General';
-$reporterID = isset($_POST['reporterID']) ? intval($_POST['reporterID']) : 1; // Default to 1 if not provided
-$lastName = isset($_POST['last_name']) ? trim($_POST['last_name']) : 'Anonymous';
+// Validate POST request
+if ($_SERVER['REQUEST_METHOD'] != 'POST') {
+    header('Location: ../index.html');
+    exit();
+}
 
+// Get and validate inputs
+$desc = isset($_POST['feedback']) ? trim($_POST['feedback']) : '';
+$about = isset($_POST['machine']) ? trim($_POST['machine']) : '';
+
+// Validate feedback description
 if (empty($desc)) {
-    echo json_encode(['success' => false, 'message' => 'Feedback cannot be empty']);
+    header('Location: ' . $_SERVER['HTTP_REFERER'] . '?error=empty_feedback');
     exit();
 }
 
 if (strlen($desc) > 1000) {
-    echo json_encode(['success' => false, 'message' => 'Feedback is too long (max 1000 characters)']);
+    header('Location: ' . $_SERVER['HTTP_REFERER'] . '?error=feedback_too_long');
+    exit();
+}
+
+// Validate about field
+if (empty($about)) {
+    header('Location: ' . $_SERVER['HTTP_REFERER'] . '?error=invalid_machine');
+    exit();
+}
+
+if (strlen($about) > 255) {
+    header('Location: ' . $_SERVER['HTTP_REFERER'] . '?error=machine_name_too_long');
     exit();
 }
 
 try {
+    include('../Login/connection.php');
+    
+    // Get user information from session (secure - cannot be manipulated)
+    $reporterID = $_SESSION['id'];
+    
+    // Get last_name from users table based on session ID
+    $userStmt = $pdo->prepare("SELECT last_name FROM users WHERE id = :id");
+    $userStmt->execute(['id' => $reporterID]);
+    $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+    
+    $lastName = $user ? $user['last_name'] : null;
+    
+    // Insert feedback with current timestamp
     $stmt = $pdo->prepare("INSERT INTO feedback (about, reporterID, last_name, created_at, desc) VALUES (:about, :reporterID, :last_name, datetime('now'), :desc)");
     
-    $stmt->bindParam(':about', $about, PDO::PARAM_STR);
-    $stmt->bindParam(':reporterID', $reporterID, PDO::PARAM_INT);
-    $stmt->bindParam(':last_name', $lastName, PDO::PARAM_STR);
-    $stmt->bindParam(':desc', $desc, PDO::PARAM_STR);
-
-    if ($stmt->execute()) {
-        echo json_encode([
-            'success' => true, 
-            'message' => 'Thank you for your feedback!',
-            'about' => $about
-        ]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to submit feedback']);
-    }
+    $stmt->execute([
+        'about' => $about,
+        'reporterID' => $reporterID,
+        'last_name' => $lastName,
+        'desc' => $desc
+    ]);
+    
+    header('Location: ' . $_SERVER['HTTP_REFERER'] . '?success=feedback_submitted');
+    exit();
     
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false, 
-        'message' => 'Database error: ' . $e->getMessage()
-    ]);
+    header('Location: ' . $_SERVER['HTTP_REFERER'] . '?error=database');
+    exit();
 }
 ?>

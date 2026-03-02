@@ -165,11 +165,12 @@
 
         <div class="card">
           <strong>Machine Feedback</strong>
+          <div id="feedbackMessage" style="margin-top:12px"></div>
           <form style="margin-top:12px" action="../Database/submit_feedback.php" method="POST">
             <input type="hidden" name="machine" value="Leg Press/Hack Squat">
             <div class="mb-3">
               <label for="feedbackLegPress" class="form-label" style="color:#c9d6e1;font-size:13px">Concerns / Comments on Performance</label>
-              <textarea class="form-control bg-dark text-light border-secondary" id="feedbackLegPress" name="feedback" rows="4" placeholder="Share your feedback about this machine..." style="font-size:13px"></textarea>
+              <textarea class="form-control bg-dark text-light border-secondary" id="feedbackLegPress" name="feedback" rows="4" placeholder="Share your feedback about this machine..." style="font-size:13px" required></textarea>
             </div>
             <button type="submit" class="btn btn-hazard w-100" style="font-size:13px">Submit Feedback</button>
           </form>
@@ -314,49 +315,39 @@
       });
     }
 
-    // Handle feedback form submission via AJAX
-    const feedbackForm = document.querySelector('form[action="../Database/submit_feedback.php"]');
-    if (feedbackForm) {
-      feedbackForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(feedbackForm);
-        const submitBtn = feedbackForm.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Submitting...';
-        
-        try {
-          const response = await fetch('../Database/submit_feedback.php', {
-            method: 'POST',
-            body: formData
-          });
-          
-          const result = await response.json();
-          
-          if (result.success) {
-            // Clear form
-            feedbackForm.reset();
-            // Show success message
-            submitBtn.textContent = '✓ Feedback submitted!';
-            submitBtn.classList.add('btn-success');
-            submitBtn.classList.remove('btn-hazard');
-            setTimeout(() => {
-              submitBtn.textContent = originalText;
-              submitBtn.classList.remove('btn-success');
-              submitBtn.classList.add('btn-hazard');
-              submitBtn.disabled = false;
-            }, 3000);
-          } else {
-            alert('Error: ' + result.message);
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-          }
-        } catch (error) {
-          alert('Error submitting feedback: ' + error.message);
-          submitBtn.textContent = originalText;
-          submitBtn.disabled = false;
-        }
-      });
+    // Display feedback submission results
+    const urlParams = new URLSearchParams(window.location.search);
+    const feedbackMessage = document.getElementById('feedbackMessage');
+    
+    if (urlParams.has('success')) {
+      if (urlParams.get('success') === 'feedback_submitted') {
+        feedbackMessage.innerHTML = '<div class="alert alert-success" role="alert" style="font-size:13px"><i class="bi bi-check-circle-fill me-2"></i>Thank you! Your feedback has been submitted.</div>';
+        setTimeout(() => {
+          window.history.replaceState({}, document.title, window.location.pathname);
+          feedbackMessage.innerHTML = '';
+        }, 5000);
+      }
+    } else if (urlParams.has('error')) {
+      let errorMsg = 'An error occurred. Please try again.';
+      switch(urlParams.get('error')) {
+        case 'empty_feedback':
+          errorMsg = 'Please enter your feedback before submitting.';
+          break;
+        case 'feedback_too_long':
+          errorMsg = 'Feedback is too long. Maximum 1000 characters.';
+          break;
+        case 'invalid_machine':
+          errorMsg = 'Invalid machine selection.';
+          break;
+        case 'database':
+          errorMsg = 'Database error. Please try again later.';
+          break;
+      }
+      feedbackMessage.innerHTML = '<div class="alert alert-danger" role="alert" style="font-size:13px"><i class="bi bi-exclamation-triangle-fill me-2"></i>' + errorMsg + '</div>';
+      setTimeout(() => {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        feedbackMessage.innerHTML = '';
+      }, 5000);
     }
   </script>
 </body>
