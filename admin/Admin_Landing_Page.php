@@ -1,3 +1,11 @@
+<?php
+session_start();
+
+if(empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin'){
+    header('Location: ../Login/Login_Page.php');
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html>
 

@@ -53,13 +53,13 @@
                             </h3>
                             <div class="row mb-3">
                                 <label for="username" class="text-light" style="font-weight: 500;">USERNAME</label>
-                                <input type="text" name="username" id="username" class="text-light" required placeholder="Enter username"
+                                <input type="text" name="username" id="username" class="text-light" required placeholder="e.g. johndoe"
                                     style="border: none; border-bottom: 1px solid black; background: none;">
                             </div>
                             <div class="row mb-2">
                                 <label for="password" class="text-light" style="font-weight: 500;">PASSWORD</label>
                                 <input type="password" name="password" class="text-light" id="password" required
-                                    placeholder="Enter password"
+                                    placeholder=" e.g. password"
                                     style="border: none; border-bottom: 1px solid black; background: none;">
                             </div>
                             <?php

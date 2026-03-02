@@ -1,12 +1,10 @@
 <?php
 session_start();
 
-// Check if user is logged in and is admin
-if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
-    header('Location: Login_Page.php');
+if(empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin'){
+    header('Location: ../Login/Login_Page.php');
     exit();
 }
-
 include("../login/connection.php");
 
 // Handle Add Item
@@ -189,7 +187,6 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
         </div>
     </nav>
 
-    <!-- Page Header -->
     <div class="page-header">
         <div class="container">
             <h1 class="mb-0"><i class="bi bi-box-seam me-2"></i>Manage Inventory</h1>
