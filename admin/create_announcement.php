@@ -30,111 +30,6 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
 </head>
-<style>
-    body {
-        background-color: #f8f9fa;
-    }
-
-    .form-card {
-        background: white;
-        border-radius: 10px;
-        padding: 2rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .image-preview {
-        max-width: 100%;
-        max-height: 300px;
-        margin-top: 10px;
-        border-radius: 8px;
-        display: none;
-    }
-
-    .custom-file-upload {
-        border: 2px dashed #ccc;
-        display: inline-block;
-        padding: 40px;
-        cursor: pointer;
-        width: 100%;
-        text-align: center;
-        border-radius: 8px;
-        transition: all 0.3s;
-    }
-
-    .custom-file-upload:hover {
-        border-color: #3498db;
-        background-color: #f8f9fa;
-    }
-
-    .custom-file-upload i {
-        font-size: 48px;
-        color: #3498db;
-        margin-bottom: 10px;
-    }
-
-    .announcement-container {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 40px 20px;
-    }
-
-    .announcement-card {
-        background: white;
-        border-radius: 12px;
-        padding: 40px;
-        max-width: 800px;
-        width: 100%;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        opacity: 0;
-        transform: translateY(20px);
-        animation: fadeInUp 0.6s ease forwards;
-    }
-
-    @keyframes fadeInUp {
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .announcement-image {
-        width: 100%;
-        border-radius: 8px;
-        margin-bottom: 24px;
-        max-height: 500px;
-        object-fit: cover;
-    }
-
-    .announcement-title {
-        font-size: 32px;
-        font-weight: 700;
-        color: #333;
-        margin-bottom: 16px;
-    }
-
-    .announcement-description {
-        font-size: 18px;
-        color: #666;
-        line-height: 1.8;
-        margin-bottom: 24px;
-    }
-
-    .announcement-meta {
-        font-size: 14px;
-        color: #999;
-        padding-top: 16px;
-        border-top: 1px solid #eee;
-    }
-
-    .no-announcements {
-        text-align: center;
-        color: #999;
-        padding: 60px 20px;
-    }
-</style>
-
 <body class="bg-dark">
     <img src="../images/Fitstop.png" alt="FITSTOP LOGIN" class="img-fluid w-100 h-100"
         style="object-fit: cover; position: fixed; opacity: 10%; z-index: -1;">
@@ -195,7 +90,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
         <div class="row justify-content-center">
             <div class="col-lg-8">
                 <div class="form-card">
-                <h1 class="mb-0 text-dark"><i class="bi bi-megaphone-fill me-2 text-dark"></i>Create Announcement</h1>
+                <h1 class="mb-0"><i class="bi bi-megaphone-fill me-2"></i>Create Announcement</h1>
                     <form action="process_create_announcement.php" method="POST" enctype="multipart/form-data">
                         <div class="mb-4">
                             <label for="title" class="form-label fw-bold">
@@ -211,7 +106,6 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                             </label>
                             <textarea class="form-control" id="description" name="description" rows="6"
                                 placeholder="Enter announcement details..." required></textarea>
-                            <small class="text-muted">Provide detailed information about your announcement</small>
                         </div>
 
                         <div class="mb-4">
@@ -238,7 +132,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                                 echo '<span class="text-danger">File too large</span>';
                             }
                             ?>
-                            <button type="submit" class="btn btn-success">
+                            <button type="submit" class="btn form-button">
                                 <i class="bi bi-megaphone-fill me-2"></i>Publish Announcement
                             </button>
                         </div>
@@ -306,11 +200,13 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
             <div class='announcement-container'>
                 <div class='announcement-card'>
                     $image_html
+                    <div class='announcement-header'>
                     <h1 class='announcement-title'>$title</h1>
-                    <p class='announcement-description'>$description</p>
                     <div class='announcement-meta'>
                         Posted by $created_by • $date
                     </div>
+                    </div>
+                    <p class='announcement-description'>$description</p>
                 </div>
             </div>
             ";
