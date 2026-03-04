@@ -24,7 +24,7 @@
 
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
-        <a class="navbar-brand brand-font" href="../index.html">
+        <a class="navbar-brand brand-font" href="../index.php">
                 [FIT-STOP]
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -33,10 +33,10 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item me-4">
-                        <a class="nav-link text-white" href="../machines/equipment.html">EQUIPMENT</a>
+                        <a class="nav-link text-white" href="../machines/equipment.php">EQUIPMENT</a>
                     </li>
                     <li class="nav-item me-4">
-                        <a class="nav-link text-white" href="../aboutus.html">About Us</a>
+                        <a class="nav-link text-white" href="../aboutus.php">About Us</a>
                     </li>
                 </ul>
             </div>

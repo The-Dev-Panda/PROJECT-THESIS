@@ -33,7 +33,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
 
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
-            <a class="navbar-brand brand-front" href="Admin_Landing_Page.php">
+            <a class="navbar-brand brand-front" href="../index.php.php">
                 <i class="bi bi-lightning-fill"></i> FITSTOP - <span class="text-danger">Admin</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">

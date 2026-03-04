@@ -36,7 +36,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
 
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
-            <a class="navbar-brand brand-front" href="Admin_Landing_Page.php">
+            <a class="navbar-brand brand-front" href="../index.php">
                 <i class="bi bi-lightning-fill"></i> FITSTOP - <span class="text-danger">
                     Admin</span>
             </a>
@@ -73,6 +73,11 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                     <li class="nav-item">
                         <a class="nav-link" href="view_members.php">
                             <i class="bi bi-person-badge"></i> Members
+                        </a>
+                    </li>
+                     <li class="nav-item">
+                        <a class="nav-link" href="view_feedback.php">
+                            <i class="bi bi-chat-square-text"></i> Feedback
                         </a>
                     </li>
                     <li class="nav-item">
