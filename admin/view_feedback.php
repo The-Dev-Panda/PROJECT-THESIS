@@ -95,6 +95,12 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     </div>
 
     <div class="container pb-5">
+        <div class="mb-3">
+            <button class="btn btn-sm btn-outline-light filter-btn active" data-filter="all">ALL</button>
+            <button class="btn btn-sm btn-outline-light filter-btn" data-filter="member">MEMBER</button>
+            <button class="btn btn-sm btn-outline-light filter-btn" data-filter="guest">GUEST</button>
+        </div>
+
         <?php
         include("../Login/connection.php");
 
@@ -104,15 +110,23 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
 
             if (count($feedbacks) > 0) {
                 foreach ($feedbacks as $feedback) {
+                    $id = htmlspecialchars($feedback['id']);
                     $about = htmlspecialchars($feedback['about']);
                     $description = nl2br(htmlspecialchars($feedback['desc']));
-                    $reporterID = htmlspecialchars($feedback['reporterID']);
+                    $reporterID = $feedback['reporterID'];
                     $lastName = $feedback['last_name'] ? htmlspecialchars($feedback['last_name']) : 'Anonymous';
                     $date = date('F j, Y \a\t g:i A', strtotime($feedback['created_at']));
+                    $status = isset($feedback['status']) ? htmlspecialchars($feedback['status']) : 'pending';
                     
-                    // Get reporter's first name if available
-                    $reporterName = $lastName;
-                    if ($reporterID) {
+                    // Determine if guest or member
+                    $isGuest = ($reporterID === null || $reporterID === '');
+                    $filterType = $isGuest ? 'guest' : 'member';
+                    
+                    // Get reporter name
+                    if ($isGuest) {
+                        $reporterName = 'Guest';
+                    } else {
+                        $reporterName = $lastName;
                         $userStmt = $pdo->prepare("SELECT first_name FROM users WHERE id = :id");
                         $userStmt->execute(['id' => $reporterID]);
                         $user = $userStmt->fetch(PDO::FETCH_ASSOC);
@@ -122,7 +136,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                     }
 
                     echo "
-                    <div class='announcement-container'>
+                    <div class='announcement-container feedback-item' data-feedback-id='$id' data-filter='$filterType'>
                         <div class='announcement-card'>
                             <div class='announcement-header'>
                                 <h2 class='announcement-title'><i class='bi bi-wrench me-2'></i>$about</h2>
@@ -131,6 +145,18 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                                 </div>
                             </div>
                             <p class='announcement-description'>$description</p>
+                            
+                            <div class='mt-3' style='border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;'>
+                                <label class='form-label' style='font-size: 0.9rem;'>Status:</label>
+                                <select class='form-select form-select-sm status-select' data-feedback-id='$id' style='max-width: 200px; display: inline-block;'>
+                                    <option value='pending'" . ($status === 'pending' ? ' selected' : '') . ">Pending</option>
+                                    <option value='in_progress'" . ($status === 'in_progress' ? ' selected' : '') . ">In Progress</option>
+                                    <option value='resolved'" . ($status === 'resolved' ? ' selected' : '') . ">Resolved</option>
+                                    <option value='closed'" . ($status === 'closed' ? ' selected' : '') . ">Closed</option>
+                                </select>
+                                <button class='btn btn-sm btn-primary ms-2 update-feedback-btn' data-feedback-id='$id'>Update</button>
+                                <span class='feedback-message ms-2' style='font-size: 0.85rem;'></span>
+                            </div>
                         </div>
                     </div>
                     ";
@@ -159,6 +185,103 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
         }
         ?>
     </div>
-</body>
 
-</html>
+    <script>
+    // Handle feedback status updates
+    document.addEventListener('DOMContentLoaded', function() {
+        const updateButtons = document.querySelectorAll('.update-feedback-btn');
+        
+        updateButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const feedbackId = this.dataset.feedbackId;
+                const container = this.closest('[data-feedback-id]');
+                const statusSelect = container.querySelector('.status-select');
+                const responseTextarea = container.querySelector('.admin-response');
+                const messageSpan = container.querySelector('.feedback-message');
+                
+                const newStatus = statusSelect.value;
+                const adminResponse = responseTextarea.value.trim();
+                
+                // Disable button during request
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Updating...';
+                messageSpan.textContent = '';
+                
+                // Send AJAX request
+                fetch('update_feedback_status.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: feedbackId,
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter functionality
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const feedbackItems = document.querySelectorAll('.feedback-item');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const filter = this.dataset.filter;
+                
+                // Update active button
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Filter feedback items
+                feedbackItems.forEach(item => {
+                    if (filter === 'all' || item.dataset.filter === filter) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Update status functionality
+        const updateButtons = document.querySelectorAll('.update-feedback-btn');
+        
+        updateButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const feedbackId = this.dataset.feedbackId;
+                const container = this.closest('[data-feedback-id]');
+                const statusSelect = container.querySelector('.status-select');
+                const messageSpan = container.querySelector('.feedback-message');
+                
+                const newStatus = statusSelect.value;
+                
+                this.disabled = true;
+                this.textContent = 'Updating...';
+                messageSpan.textContent = '';
+                
+                fetch('update_feedback_status.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: feedbackId,
+                        status: newStatus
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        messageSpan.className = 'feedback-message ms-2 text-success';
+                        messageSpan.textContent = '✓ ' + data.message;
+                        setTimeout(() => {
+                            messageSpan.textContent = '';
+                        }, 3000);
+                    } else {
+                        messageSpan.className = 'feedback-message ms-2 text-danger';
+                        messageSpan.textContent = '✗ ' + data.message;
+                    }
+                })
+                .catch(error => {
+                    messageSpan.className = 'feedback-message ms-2 text-danger';
+                    messageSpan.textContent = '✗ Error updating status';
+                })
+                .finally(() => {
+                    this.disabled = false;
+                    this.textContent = 'Update

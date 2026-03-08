@@ -177,9 +177,32 @@ include('../includes/header.php');
             <!-- Machine Feedback Form -->
             <div class="card">
                 <strong>Machine Feedback</strong>
+                <?php if (empty($_SESSION['username'])): ?>
+                    <p style="font-size:13px;color:#9fb1c7;margin-top:8px;margin-bottom:0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Visitor feedback - help us improve our equipment!
+                    </p>
+                <?php endif; ?>
                 <div id="feedbackMessage" style="margin-top:12px"></div>
                 <form style="margin-top:12px" action="../Database/submit_feedback.php" method="POST">
                     <input type="hidden" name="machine" value="Cable Machine">
+                    
+                    <?php if (empty($_SESSION['username'])): ?>
+                        <!-- Guest Name Field (Optional) -->
+                        <div class="mb-3">
+                            <label for="guestName" class="form-label" style="color:#c9d6e1;font-size:13px">
+                                Your Name (Optional)
+                            </label>
+                            <input type="text" 
+                                   class="form-control bg-dark text-light border-secondary" 
+                                   id="guestName" 
+                                   name="guest_name" 
+                                   placeholder="Anonymous"
+                                   maxlength="100"
+                                   style="font-size:13px">
+                        </div>
+                    <?php endif; ?>
+                    
                     <div class="mb-3">
                         <label for="feedbackCable" class="form-label" style="color:#c9d6e1;font-size:13px">
                             Concerns / Comments on Performance
@@ -353,6 +376,9 @@ include('../includes/header.php');
         }, 5000);
     }
 </script>
+
+<!-- Feedback Form Handler -->
+<script src="feedback.js"></script>
 
 <?php
 // Include footer

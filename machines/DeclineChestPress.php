@@ -105,9 +105,32 @@ include('../includes/header.php');
 
             <div class="card">
                 <strong>Machine Feedback</strong>
+                <?php if (empty($_SESSION['username'])): ?>
+                    <p style="font-size:13px;color:#9fb1c7;margin-top:8px;margin-bottom:0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Visitor feedback - help us improve our equipment!
+                    </p>
+                <?php endif; ?>
                 <div id="feedbackMessage" style="margin-top:12px"></div>
                 <form style="margin-top:12px" action="../Database/submit_feedback.php" method="POST">
                     <input type="hidden" name="machine" value="Decline Chest Press">
+                    
+                    <?php if (empty($_SESSION['username'])): ?>
+                        <!-- Guest Name Field (Optional) -->
+                        <div class="mb-3">
+                            <label for="guestName" class="form-label" style="color:#c9d6e1;font-size:13px">
+                                Your Name (Optional)
+                            </label>
+                            <input type="text" 
+                                   class="form-control bg-dark text-light border-secondary" 
+                                   id="guestName" 
+                                   name="guest_name" 
+                                   placeholder="Anonymous"
+                                   maxlength="100"
+                                   style="font-size:13px">
+                        </div>
+                    <?php endif; ?>
+                    
                     <div class="mb-3">
                         <label for="feedback" class="form-label" style="color:#c9d6e1;font-size:13px">Concerns / Comments on Performance</label>
                         <textarea class="form-control bg-dark text-light border-secondary" id="feedback" name="feedback" rows="4" placeholder="Share your feedback about this machine..." style="font-size:13px" required></textarea>
@@ -149,5 +172,8 @@ include('../includes/header.php');
     const urlParams=new URLSearchParams(window.location.search),feedbackMessage=document.getElementById('feedbackMessage');
     if(urlParams.has('success')&&urlParams.get('success')==='feedback_submitted'){feedbackMessage.innerHTML='<div class="alert alert-success" role="alert" style="font-size:13px"><i class="bi bi-check-circle-fill me-2"></i>Thank you! Your feedback has been submitted.</div>';setTimeout(()=>{window.history.replaceState({},document.title,window.location.pathname);feedbackMessage.innerHTML=''},5000)}else if(urlParams.has('error')){let errorMsg='An error occurred. Please try again.';switch(urlParams.get('error')){case 'empty_feedback':errorMsg='Please enter your feedback before submitting.';break;case 'feedback_too_long':errorMsg='Feedback is too long. Maximum 1000 characters.';break;case 'invalid_machine':errorMsg='Invalid machine selection.';break;case 'database':errorMsg='Database error. Please try again later.';break}feedbackMessage.innerHTML='<div class="alert alert-danger" role="alert" style="font-size:13px"><i class="bi bi-exclamation-triangle-fill me-2"></i>'+errorMsg+'</div>';setTimeout(()=>{window.history.replaceState({},document.title,window.location.pathname);feedbackMessage.innerHTML=''},5000)}
 </script>
+
+<!-- Feedback Form Handler -->
+<script src="feedback.js"></script>
 
 <?php include('../includes/footer.php'); ?>
