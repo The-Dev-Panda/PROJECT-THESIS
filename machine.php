@@ -77,61 +77,61 @@ include('includes/header.php');
 $machines = [
     [
         'name' => 'Smith Machine',
-        'file' => 'SmithMachine.html',
+        'file' => 'SmithMachine.php',
         'image' => 'images/smith-pic.jpg',
         'desc' => 'Bench press, shoulder press, guided bar path'
     ],
     [
         'name' => 'Lat Pulldown/Seated Cable Row',
-        'file' => 'LatPulldownSeatedCableRow.html',
+        'file' => 'LatPulldownSeatedCableRow.php',
         'image' => 'images/Fitstop.png',
         'desc' => 'Back width, lats, rowing movements'
     ],
     [
         'name' => 'Shoulder Press',
-        'file' => 'ShoulderPress.html',
+        'file' => 'ShoulderPress.php',
         'image' => 'images/Fitstop.png',
         'desc' => 'Deltoids, overhead pressing'
     ],
     [
         'name' => 'Seated Chest Press',
-        'file' => 'SeatedChestPress.html',
+        'file' => 'SeatedChestPress.php',
         'image' => 'images/Fitstop.png',
         'desc' => 'Chest, pectorals, pressing movements'
     ],
     [
         'name' => 'Pec Deck Fly/Rear Delt Fly',
-        'file' => 'PecDeckFlyRearDelt.html',
+        'file' => 'PecDeckFlyRearDelt.php',
         'image' => 'images/Fitstop.png',
         'desc' => 'Chest flys, rear deltoid isolation'
     ],
     [
         'name' => 'Decline Chest Press',
-        'file' => 'DeclineChestPress.html',
+        'file' => 'DeclineChestPress.php',
         'image' => 'images/Fitstop.png',
         'desc' => 'Lower chest, decline pressing'
     ],
     [
         'name' => 'Multi Press Machine',
-        'file' => 'MultiPress.html',
+        'file' => 'MultiPress.php',
         'image' => 'images/Fitstop.png',
         'desc' => 'Chest & shoulder, multi-angle press'
     ],
     [
         'name' => 'Leg Press/Hack Squat',
-        'file' => 'LegPressHackSquat.html',
+        'file' => 'LegPressHackSquat.php',
         'image' => 'images/Fitstop.png',
         'desc' => 'Quads, glutes, lower body power'
     ],
     [
         'name' => 'Cable Machine',
-        'file' => 'CableMachine.html',
+        'file' => 'CableMachine.php',
         'image' => 'images/Fitstop.png',
         'desc' => 'Multi-function, cables, various exercises'
     ],
     [
         'name' => 'Pullup Station',
-        'file' => 'PullupStation.html',
+        'file' => 'PullupStation.php',
         'image' => 'images/Fitstop.png',
         'desc' => 'Pull-ups, chin-ups, bodyweight training'
     ]
@@ -162,15 +162,6 @@ $machines = [
         <!-- Machine Grid -->
         <div class="row g-4">
             <?php 
-            /**
-             * LOOP THROUGH MACHINES
-             * 
-             * Dynamically generates machine cards from $machines array
-             * Benefits:
-             * - Easy to add/remove machines
-             * - Consistent styling
-             * - Maintained in one place
-             */
             foreach ($machines as $machine): 
             ?>
                 <div class="col-lg-3 col-md-4 col-sm-6">
