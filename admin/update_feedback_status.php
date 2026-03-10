@@ -3,28 +3,52 @@ session_start();
 
 header('Content-Type: application/json');
 
-$allowedRoles = ['admin', 'staff'];
-if (empty($_SESSION['username']) || empty($_SESSION['user_type']) || !in_array($_SESSION['user_type'], $allowedRoles, true)) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+function respondWithError(int $statusCode, string $message): void {
+    http_response_code($statusCode);
+    echo json_encode(['success' => false, 'message' => $message]);
     exit();
 }
 
+function getFilteredFeedbackId(array $payload): int {
+    if (!array_key_exists('id', $payload) || is_array($payload['id'])) {
+        return 0;
+    }
+
+    $idRaw = trim((string)$payload['id']);
+    if ($idRaw === '' || !preg_match('/^\d+$/', $idRaw)) {
+        return 0;
+    }
+
+    $id = (int)$idRaw;
+    return $id > 0 ? $id : 0;
+}
+
+function getFilteredStatus(array $payload): string {
+    if (!array_key_exists('status', $payload) || is_array($payload['status'])) {
+        return '';
+    }
+
+    $status = strtolower(trim((string)$payload['status']));
+    $status = preg_replace('/[^a-z_]/', '', $status);
+    return $status ?? '';
+}
+
+$allowedRoles = ['admin', 'staff'];
+if (empty($_SESSION['username']) || empty($_SESSION['user_type']) || !in_array($_SESSION['user_type'], $allowedRoles, true)) {
+    respondWithError(403, 'Unauthorized');
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-    exit();
+    respondWithError(405, 'Method not allowed');
 }
 
 $inputRaw = file_get_contents('php://input');
 $input = json_decode($inputRaw, true);
 
-// Support both JSON and form-encoded payloads.
 if (!is_array($input)) {
     $input = $_POST;
 }
 
-// Fallback for urlencoded payloads that might not populate $_POST.
 if (!is_array($input) || count($input) === 0) {
     $parsedRaw = [];
     parse_str((string)$inputRaw, $parsedRaw);
@@ -33,25 +57,20 @@ if (!is_array($input) || count($input) === 0) {
     }
 }
 
-// Last fallback to query string for environments with strict body handling.
 if (!is_array($input) || count($input) === 0) {
     $input = $_REQUEST;
 }
 
-$feedbackId = isset($input['id']) ? (int)$input['id'] : 0;
-$newStatus = isset($input['status']) ? trim((string)$input['status']) : '';
+$feedbackId = getFilteredFeedbackId($input);
+$newStatus = getFilteredStatus($input);
 
 if ($feedbackId <= 0) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Invalid feedback ID']);
-    exit();
+    respondWithError(400, 'Invalid feedback ID');
 }
 
 $validStatuses = ['pending', 'in_progress', 'resolved', 'closed'];
 if (!in_array($newStatus, $validStatuses, true)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Invalid status value']);
-    exit();
+    respondWithError(400, 'Invalid status value');
 }
 
 try {
@@ -62,9 +81,7 @@ try {
     $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$existing) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Feedback not found']);
-        exit();
+        respondWithError(404, 'Feedback not found');
     }
 
     if ((string)$existing['status'] === $newStatus) {
@@ -84,10 +101,6 @@ try {
     ]);
 } catch (PDOException $e) {
     error_log('Feedback status update error: ' . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database error occurred while updating feedback status'
-    ]);
+    respondWithError(500, 'Database error occurred while updating feedback status');
 }
 ?>
