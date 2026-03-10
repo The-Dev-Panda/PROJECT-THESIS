@@ -181,7 +181,6 @@ include('includes/header.php');
                                 <li><i class="fa-solid fa-check"></i> Locker Use</li>
                                 <li class="text-muted"><i class="fa-solid fa-xmark"></i> App Tracking</li>
                             </ul>
-                            <a href="Login/Login_Page.php" class="btn btn-outline-light w-100 mt-3">VISIT TODAY</a>
                         </div>
                     </div>
                 </div>

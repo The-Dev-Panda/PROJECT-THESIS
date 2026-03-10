@@ -1,4 +1,7 @@
 <?php
+// Define base path for includes (we're in machines/ folder, one level deep)
+$base_path = '../';
+
 /**
  * CABLE MACHINE - Equipment Detail Page
  * 

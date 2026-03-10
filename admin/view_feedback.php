@@ -187,34 +187,6 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     </div>
 
     <script>
-    // Handle feedback status updates
-    document.addEventListener('DOMContentLoaded', function() {
-        const updateButtons = document.querySelectorAll('.update-feedback-btn');
-        
-        updateButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const feedbackId = this.dataset.feedbackId;
-                const container = this.closest('[data-feedback-id]');
-                const statusSelect = container.querySelector('.status-select');
-                const responseTextarea = container.querySelector('.admin-response');
-                const messageSpan = container.querySelector('.feedback-message');
-                
-                const newStatus = statusSelect.value;
-                const adminResponse = responseTextarea.value.trim();
-                
-                // Disable button during request
-                this.disabled = true;
-                this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Updating...';
-                messageSpan.textContent = '';
-                
-                // Send AJAX request
-                fetch('update_feedback_status.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        id: feedbackId,
     document.addEventListener('DOMContentLoaded', function() {
         // Filter functionality
         const filterButtons = document.querySelectorAll('.filter-btn');
@@ -265,7 +237,12 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                         status: newStatus
                     })
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP error! status: ' + response.status);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         messageSpan.className = 'feedback-message ms-2 text-success';
@@ -279,9 +256,18 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                     }
                 })
                 .catch(error => {
+                    console.error('Error:', error);
                     messageSpan.className = 'feedback-message ms-2 text-danger';
-                    messageSpan.textContent = '✗ Error updating status';
+                    messageSpan.textContent = '✗ Error: ' + error.message;
                 })
                 .finally(() => {
                     this.disabled = false;
-                    this.textContent = 'Update
+                    this.textContent = 'Update';
+                });
+            });
+        });
+    });
+    </script>
+
+</body>
+</html>

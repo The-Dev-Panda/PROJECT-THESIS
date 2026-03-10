@@ -15,15 +15,15 @@
     <footer>
         <div class="container text-center">
             <div class="d-flex justify-content-center gap-4 mb-4">
-                <a href="index.php" class="footer-link">Home</a>
+                <a href="<?php echo $base_path ?? ''; ?>index.php" class="footer-link">Home</a>
                 <a href="#" class="footer-link">Privacy Policy</a>
                 <a href="#" class="footer-link">Terms of Service</a>
                 <?php if (!empty($_SESSION['user_type']) && $_SESSION['user_type'] === 'staff'): ?>
-                    <a href="staff/staff.php" class="footer-link text-hazard">Staff Portal</a>
+                    <a href="<?php echo $base_path ?? ''; ?>staff/staff.php" class="footer-link text-hazard">Staff Portal</a>
                 <?php elseif (!empty($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin'): ?>
-                    <a href="admin/Admin_Landing_Page.php" class="footer-link text-hazard">Admin Portal</a>
+                    <a href="<?php echo $base_path ?? ''; ?>admin/Admin_Landing_Page.php" class="footer-link text-hazard">Admin Portal</a>
                 <?php else: ?>
-                    <a href="Login/Login_Page.php" class="footer-link text-hazard">Staff Portal</a>
+                    <a href="<?php echo $base_path ?? ''; ?>Login/Login_Page.php" class="footer-link text-hazard">Staff Portal</a>
                 <?php endif; ?>
             </div>
             <p class="text-muted small mb-0">

@@ -108,7 +108,7 @@ $amenities = [
 ?>
 
     <!-- HERO SECTION -->
-    <section class="hero-section" style="background-image: linear-gradient(rgba(10,10,10,0.85), rgba(10,10,10,0.85));">
+    <section class="hero-section" style="background-image: linear-gradient(rgba(10,10,10,0.85), rgba(10,10,10,0.85)), url('images/Fitstop.png');">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8 hero-content">

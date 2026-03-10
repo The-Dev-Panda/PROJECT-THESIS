@@ -24,18 +24,23 @@ $is_logged_in = !empty($_SESSION['username']);
 $username = $is_logged_in ? $_SESSION['username'] : null;
 $user_type = $is_logged_in ? ($_SESSION['user_type'] ?? 'user') : null;
 
+// Set base path if not already defined (default to root level)
+if (!isset($base_path)) {
+    $base_path = '';
+}
+
 // Determine dashboard link based on user type
-$dashboard_link = 'Login/Login_Page.php'; // Default to login
+$dashboard_link = $base_path . 'Login/Login_Page.php'; // Default to login
 if ($is_logged_in) {
     switch ($user_type) {
         case 'admin':
-            $dashboard_link = 'admin/Admin_Landing_Page.php';
+            $dashboard_link = $base_path . 'admin/Admin_Landing_Page.php';
             break;
         case 'staff':
-            $dashboard_link = 'staff/staff.php';
+            $dashboard_link = $base_path . 'staff/staff.php';
             break;
         case 'user':
-            $dashboard_link = 'user/user.html';
+            $dashboard_link = $base_path . 'user/user.html';
             break;
     }
 }
@@ -54,7 +59,7 @@ if ($is_logged_in) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
     <!-- Custom Styles -->
-    <link href="styles.css" rel="stylesheet">
+    <link href="<?php echo $base_path; ?>styles.css" rel="stylesheet">
     
     <?php 
     // Allow pages to inject custom CSS
@@ -68,7 +73,7 @@ if ($is_logged_in) {
     <!-- NAVIGATION BAR -->
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
-            <a class="navbar-brand brand-font" href="index.php">
+            <a class="navbar-brand brand-font" href="<?php echo $base_path; ?>index.php">
                 [FIT-STOP]
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -76,16 +81,26 @@ if ($is_logged_in) {
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item me-4">
-                        <a class="nav-link text-white <?php echo ($current_page === 'equipment.php') ? 'text-hazard fw-bold' : ''; ?>" 
-                           href="equipment.php">EQUIPMENT</a>
+                    <li class="nav-item dropdown me-4">
+                        <a class="nav-link dropdown-toggle text-white <?php echo (in_array($current_page, ['equipment.php', 'machine.php'])) ? 'text-hazard fw-bold' : ''; ?>" 
+                           href="#" 
+                           id="equipmentDropdown" 
+                           role="button" 
+                           data-bs-toggle="dropdown" 
+                           aria-expanded="false">
+                            EQUIPMENT
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="equipmentDropdown">
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>equipment.php">All Equipment</a></li>
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>machine.php">Machines</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item me-4">
-                        <a class="nav-link text-white" href="index.php#location">LOCATION</a>
+                        <a class="nav-link text-white" href="<?php echo $base_path; ?>index.php#location">LOCATION</a>
                     </li>
                     <li class="nav-item me-4">
                         <a class="nav-link text-white <?php echo ($current_page === 'aboutus.php') ? 'text-hazard fw-bold' : ''; ?>" 
-                           href="aboutus.php">About Us</a>
+                           href="<?php echo $base_path; ?>aboutus.php">About Us</a>
                     </li>
                     
                     <?php if ($is_logged_in): ?>
@@ -104,7 +119,7 @@ if ($is_logged_in) {
                     <?php else: ?>
                         <!-- NOT LOGGED IN: Show login button -->
                         <li class="nav-item">
-                            <a href="Login/Login_Page.php" class="btn btn-hazard">
+                            <a href="<?php echo $base_path; ?>Login/Login_Page.php" class="btn btn-hazard">
                                 <i class="fa-solid fa-lock me-2"></i> LOGIN
                             </a>
                         </li>

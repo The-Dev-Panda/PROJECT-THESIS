@@ -1,6 +1,9 @@
 <?php
 session_start();
 
+// Set JSON header
+header('Content-Type: application/json');
+
 // Check if user is admin
 if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     http_response_code(403);
@@ -40,12 +43,11 @@ if (!in_array($newStatus, $validStatuses)) {
 try {
     include('../Login/connection.php');
     
-    // Update feedback status
+    // Update feedback status (without updated_at since it might not exist in the table)
     $stmt = $pdo->prepare("
         UPDATE feedback 
         SET status = :status,
-            admin_response = :admin_response,
-            updated_at = datetime('now')
+            admin_response = :admin_response
         WHERE id = :id
     ");
     
@@ -64,7 +66,7 @@ try {
         http_response_code(404);
         echo json_encode([
             'success' => false,
-            'message' => 'Feedback not found'
+            'message' => 'Feedback not found or no changes made'
         ]);
     }
     
@@ -73,7 +75,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Database error occurred'
+        'message' => 'Database error occurred: ' . $e->getMessage()
     ]);
 }
 ?>
