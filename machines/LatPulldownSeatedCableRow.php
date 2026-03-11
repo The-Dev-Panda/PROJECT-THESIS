@@ -1,5 +1,7 @@
-<?php// Define base path for includes (we're in machines/ folder, one level deep)
+<?php
+// Define base path for includes (we're in machines/ folder, one level deep)
 $base_path = '../';
+
 /**
  * LAT PULLDOWN / SEATED CABLE ROW - Equipment Detail Page
  * TO CUSTOMIZE: Update images, exercises, details, and tips below
