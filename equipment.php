@@ -123,8 +123,8 @@ $amenities = [
                         Everything you need to build strength the right way.
                     </p>
                     <div class="d-flex gap-3 flex-wrap">
-                        <a href="machine.php" class="btn btn-hazard">VIEW EQUIPMENT</a>
-                        <a href="#zones" class="btn btn-outline-hazard">FACILITY ZONES</a>
+                        <a href="machine.php" class="btn btn-hazard">VIEW MACHINES</a>
+                        <a href="#zones" class="btn btn-outline-hazard">VIEW FACILITIES</a>
                     </div>
                 </div>
             </div>

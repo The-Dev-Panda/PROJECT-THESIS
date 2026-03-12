@@ -30,16 +30,16 @@ include('../includes/header.php');
 
                 <!-- Main Media Display -->
                 <div id="mediaMain" class="media-main">
-                    <img src="../images/Fitstop.png" alt="Decline Chest Press">
+                    <img src="../images/DeclineChestPress.jpg" alt="Decline Chest Press">
                 </div>
 
                 <!-- Thumbnails -->
                 <div class="thumbs" id="thumbs">
                     <button type="button"
-                            data-src="../images/Fitstop.png"
+                            data-src="../images/DeclineChestPress.jpg"
                             data-type="image"
                             aria-label="View photo 1">
-                        <img src="../images/Fitstop.png" alt="Decline Chest Press Photo">
+                        <img src="../images/DeclineChestPress.jpg" alt="Decline Chest Press Photo">
                     </button>
                 </div>
 

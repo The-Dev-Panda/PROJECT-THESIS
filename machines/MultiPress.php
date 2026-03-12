@@ -30,16 +30,28 @@ include('../includes/header.php');
 
                 <!-- Main Media Display -->
                 <div id="mediaMain" class="media-main">
-                    <img src="../images/Fitstop.png" alt="Multi Press">
+                    <img src="../images/Multipress.png" alt="Multi Press">
                 </div>
 
                 <!-- Thumbnails -->
                 <div class="thumbs" id="thumbs">
                     <button type="button"
-                            data-src="../images/Fitstop.png"
+                            data-src="../images/Multipress.png"
                             data-type="image"
                             aria-label="View photo 1">
-                        <img src="../images/Fitstop.png" alt="Multi Press Photo">
+                        <img src="../images/Multipress.png" alt="Multi Press Photo">
+                    </button>
+                    <button type="button"
+                            data-src="../images/Multipress2.jpg"
+                            data-type="image"
+                            aria-label="View photo 2">
+                        <img src="../images/Multipress2.jpg" alt="Multi Press Photo">
+                    </button>
+                    <button type="button"
+                            data-src="../images/Multipress3.jpg"
+                            data-type="image"
+                            aria-label="View photo 3">
+                        <img src="../images/Multipress3.jpg" alt="Multi Press Photo">
                     </button>
                 </div>
 
@@ -65,7 +77,19 @@ include('../includes/header.php');
                             <article class="ex-card">
                                 <img src="../images/Fitstop.png" alt="Chest Press">
                                 <div>
-                                    <div style="font-weight:600">Chest Press</div>
+                                    <div style="font-weight:600">Flat Chest Press</div>
+                                    <div style="font-size:13px; color:#9fb1c7">
+                                        Primary muscle &bull; Chest
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+
+                        <div class="col">
+                            <article class="ex-card">
+                                <img src="../images/Fitstop.png" alt="Chest Press">
+                                <div>
+                                    <div style="font-weight:600">Incline Chest Press</div>
                                     <div style="font-size:13px; color:#9fb1c7">
                                         Primary muscle &bull; Chest
                                     </div>

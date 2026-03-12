@@ -41,7 +41,7 @@ include('../includes/header.php');
                             aria-label="View photo 1">
                         <img src="../images/smith-pic.jpg" alt="Smith Machine Photo">
                     </button>
-                    
+                        
                     <button type="button" 
                             data-src="../images/Smith-Bench.mp4" 
                             data-type="video" 

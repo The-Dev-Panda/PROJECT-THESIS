@@ -84,56 +84,74 @@ $machines = [
     [
         'name' => 'Lat Pulldown/Seated Cable Row',
         'file' => 'LatPulldownSeatedCableRow.php',
-        'image' => 'images/Fitstop.png',
+        'image' => 'images/LatPulldown-CableRow.png',
         'desc' => 'Back width, lats, rowing movements'
     ],
     [
         'name' => 'Shoulder Press',
         'file' => 'ShoulderPress.php',
-        'image' => 'images/Fitstop.png',
+        'image' => 'images/ShoulderPress.jpg',
         'desc' => 'Deltoids, overhead pressing'
     ],
     [
         'name' => 'Seated Chest Press',
         'file' => 'SeatedChestPress.php',
-        'image' => 'images/Fitstop.png',
+        'image' => 'images/SeatedChestPress.png',
         'desc' => 'Chest, pectorals, pressing movements'
     ],
     [
         'name' => 'Pec Deck Fly/Rear Delt Fly',
         'file' => 'PecDeckFlyRearDelt.php',
-        'image' => 'images/Fitstop.png',
+        'image' => 'images/PeckDeckFly.png',
         'desc' => 'Chest flys, rear deltoid isolation'
     ],
     [
         'name' => 'Decline Chest Press',
         'file' => 'DeclineChestPress.php',
-        'image' => 'images/Fitstop.png',
+        'image' => 'images/DeclineChestPress.jpg',
         'desc' => 'Lower chest, decline pressing'
     ],
     [
         'name' => 'Multi Press Machine',
         'file' => 'MultiPress.php',
-        'image' => 'images/Fitstop.png',
+        'image' => 'images/MultiPress.png',
         'desc' => 'Chest & shoulder, multi-angle press'
     ],
     [
         'name' => 'Leg Press/Hack Squat',
         'file' => 'LegPressHackSquat.php',
-        'image' => 'images/Fitstop.png',
+        'image' => 'images/HackSquat-LegPress.png',
         'desc' => 'Quads, glutes, lower body power'
     ],
     [
         'name' => 'Cable Machine',
         'file' => 'CableMachine.php',
-        'image' => 'images/Fitstop.png',
+        'image' => 'images/CableMachine-Pullups.png',
         'desc' => 'Multi-function, cables, various exercises'
     ],
     [
         'name' => 'Pullup Station',
         'file' => 'PullupStation.php',
-        'image' => 'images/Fitstop.png',
+        'image' => 'images/PullUpBar.png',
         'desc' => 'Pull-ups, chin-ups, bodyweight training'
+    ],
+    [
+        'name' => 'Treadmill',
+        'file' => 'Treadmill.php',
+        'image' => 'images/Treadmill.png',
+        'desc' => 'Cardiovascular exercise, running, walking'
+    ],
+    [
+        'name' => 'Leg Extension Station',
+        'file' => 'LegExtension.php',
+        'image' => 'images/LegExtension-HamstringCurl.png',
+        'desc' => 'Leg extensions, hamstring curls, quad isolation'
+    ],
+    [
+        'name' => 'Dips Station',
+        'file' => 'Dips.php',
+        'image' => 'images/DIPS.png',
+        'desc' => 'Triceps, chest, shoulder exercises'
     ]
 ];
 ?>

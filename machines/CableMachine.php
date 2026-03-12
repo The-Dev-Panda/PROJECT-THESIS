@@ -30,16 +30,22 @@ include('../includes/header.php');
 
                 <!-- Main Media Display -->
                 <div id="mediaMain" class="media-main">
-                    <img src="../images/Fitstop.png" alt="Cable Machine">
+                    <img src="../images/CableMachine-Pullups.png" alt="Cable Machine">
                 </div>
 
                 <!-- Thumbnails -->
                 <div class="thumbs" id="thumbs">
                     <button type="button"
-                            data-src="../images/Fitstop.png"
+                            data-src="../images/CableMachine-Pullups.png"
                             data-type="image"
                             aria-label="View photo 1">
-                        <img src="../images/Fitstop.png" alt="Cable Machine Photo">
+                        <img src="../images/CableMachine-Pullups.png" alt="Cable Machine Photo">
+                    </button>
+                    <button type="button"
+                            data-src="../images/CableStack.jpg"
+                            data-type="image"
+                            aria-label="View photo 2">
+                        <img src="../images/CableStack.jpg" alt="Cable Machine Photo">
                     </button>
                 </div>
 

@@ -30,16 +30,16 @@ include('../includes/header.php');
 
                 <!-- Main Media Display -->
                 <div id="mediaMain" class="media-main">
-                    <img src="../images/Fitstop.png" alt="Pec Deck Fly / Rear Delt">
+                    <img src="../images/PeckDeckFly.png" alt="Pec Deck Fly / Rear Delt">
                 </div>
 
                 <!-- Thumbnails -->
                 <div class="thumbs" id="thumbs">
                     <button type="button"
-                            data-src="../images/Fitstop.png"
+                            data-src="../images/PeckDeckFly.png"
                             data-type="image"
                             aria-label="View photo 1">
-                        <img src="../images/Fitstop.png" alt="Pec Deck Fly / Rear Delt Photo">
+                        <img src="../images/PeckDeckFly.png" alt="Pec Deck Fly / Rear Delt Photo">
                     </button>
                 </div>
 
