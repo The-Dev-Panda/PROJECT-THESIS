@@ -39,7 +39,7 @@ include('../includes/header.php');
                             data-src="../images/DeclineChestPress.jpg"
                             data-type="image"
                             aria-label="View photo 1">
-                        <img src="../images/DeclineChestPress.jpg" alt="Decline Chest Press Photo">
+                        <img src="../images/DeclineChestPress.jpg" alt="Decline Chest Press Photo" loading="lazy" decoding="async">
                     </button>
                 </div>
 
@@ -50,7 +50,7 @@ include('../includes/header.php');
                         <!-- Exercise 1: Decline Press -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Decline Press">
+                                <img src="../images/Fitstop.png" alt="Decline Press" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Decline Press</div>
                                     <div style="font-size:13px; color:#9fb1c7">

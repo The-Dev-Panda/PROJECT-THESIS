@@ -39,14 +39,14 @@ include('../includes/header.php');
                             data-src="../images/SeatedChestPress.png"
                             data-type="image"
                             aria-label="View photo 1">
-                        <img src="../images/SeatedChestPress.png" alt="Seated Chest Press Photo">
+                        <img src="../images/SeatedChestPress.png" alt="Seated Chest Press Photo" loading="lazy" decoding="async">
                     </button>
                 
                     <button type="button"
                             data-src="../images/SeatedChestPress2.png"
                             data-type="image"
                             aria-label="View photo 2">
-                        <img src="../images/SeatedChestPress2.png" alt="Seated Chest Press Photo">
+                        <img src="../images/SeatedChestPress2.png" alt="Seated Chest Press Photo" loading="lazy" decoding="async">
                     </button>
                 </div>
 
@@ -57,7 +57,7 @@ include('../includes/header.php');
                         <!-- Exercise 1: Chest Press -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/SeatedChestPress.png" alt="Chest Press">
+                                <img src="../images/SeatedChestPress.png" alt="Chest Press" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Chest Press</div>
                                     <div style="font-size:13px; color:#9fb1c7">

@@ -39,19 +39,19 @@ include('../includes/header.php');
                             data-src="../images/Multipress.png"
                             data-type="image"
                             aria-label="View photo 1">
-                        <img src="../images/Multipress.png" alt="Multi Press Photo">
+                        <img src="../images/Multipress.png" alt="Multi Press Photo" loading="lazy" decoding="async">
                     </button>
                     <button type="button"
                             data-src="../images/Multipress2.jpg"
                             data-type="image"
                             aria-label="View photo 2">
-                        <img src="../images/Multipress2.jpg" alt="Multi Press Photo">
+                        <img src="../images/Multipress2.jpg" alt="Multi Press Photo" loading="lazy" decoding="async">
                     </button>
                     <button type="button"
                             data-src="../images/Multipress3.jpg"
                             data-type="image"
                             aria-label="View photo 3">
-                        <img src="../images/Multipress3.jpg" alt="Multi Press Photo">
+                        <img src="../images/Multipress3.jpg" alt="Multi Press Photo" loading="lazy" decoding="async">
                     </button>
                 </div>
 
@@ -62,7 +62,7 @@ include('../includes/header.php');
                         <!-- Exercise 1: Shoulder Press -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Shoulder Press">
+                                <img src="../images/Fitstop.png" alt="Shoulder Press" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Shoulder Press</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -75,7 +75,7 @@ include('../includes/header.php');
                         <!-- Exercise 2: Chest Press -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Chest Press">
+                                <img src="../images/Fitstop.png" alt="Chest Press" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Flat Chest Press</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -87,7 +87,7 @@ include('../includes/header.php');
 
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Chest Press">
+                                <img src="../images/Fitstop.png" alt="Chest Press" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Incline Chest Press</div>
                                     <div style="font-size:13px; color:#9fb1c7">

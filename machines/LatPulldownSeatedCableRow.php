@@ -39,7 +39,7 @@ include('../includes/header.php');
                             data-src="../images/LatPulldown-CableRow.png"
                             data-type="image"
                             aria-label="View photo 1">
-                        <img src="../images/LatPulldown-CableRow.png" alt="Lat Pulldown / Seated Cable Row Photo">
+                        <img src="../images/LatPulldown-CableRow.png" alt="Lat Pulldown / Seated Cable Row Photo" loading="lazy" decoding="async">
                     </button>
                 </div>
 
@@ -50,7 +50,7 @@ include('../includes/header.php');
                         <!-- Exercise 1: Lat Pulldown -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Lat Pulldown">
+                                <img src="../images/Fitstop.png" alt="Lat Pulldown" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Lat Pulldown</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -63,7 +63,7 @@ include('../includes/header.php');
                         <!-- Exercise 2: Seated Cable Row -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Seated Cable Row">
+                                <img src="../images/Fitstop.png" alt="Seated Cable Row" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Seated Cable Row</div>
                                     <div style="font-size:13px; color:#9fb1c7">

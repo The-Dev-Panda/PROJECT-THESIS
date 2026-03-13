@@ -39,14 +39,14 @@ include('../includes/header.php');
                             data-src="../images/CableMachine-Pullups.png"
                             data-type="image"
                             aria-label="View photo 1">
-                        <img src="../images/CableMachine-Pullups.png" alt="Pullup Station Photo">
+                        <img src="../images/CableMachine-Pullups.png" alt="Pullup Station Photo" loading="lazy" decoding="async">
                     </button>
                     
                     <button type="button" 
                             data-src="../images/Pull-UpBar.mp4" 
                             data-type="video" 
                             aria-label="Play video 1">
-                        <img src="../images/pullup-thumbnail.png" alt="Pullup Video">
+                        <img src="../images/pullup-thumbnail.png" alt="Pullup Video" loading="lazy" decoding="async">
                     </button>
 
                 </div>
@@ -60,7 +60,7 @@ include('../includes/header.php');
                         <!-- Exercise 1: Pullups -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Pullups">
+                                <img src="../images/Fitstop.png" alt="Pullups" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Pullups</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -73,7 +73,7 @@ include('../includes/header.php');
                         <!-- Exercise 2: Chin-ups -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Chin-ups">
+                                <img src="../images/Fitstop.png" alt="Chin-ups" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Chin-ups</div>
                                     <div style="font-size:13px; color:#9fb1c7">

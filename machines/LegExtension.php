@@ -39,14 +39,14 @@ include('../includes/header.php');
                             data-src="../images/LegExtension-HamstringCurl.png" 
                             data-type="image" 
                             aria-label="View photo 1">
-                        <img src="../images/LegExtension-HamstringCurl.png" alt="Leg Extension Machine Photo">
+                        <img src="../images/LegExtension-HamstringCurl.png" alt="Leg Extension Machine Photo" loading="lazy" decoding="async">
                     </button>
                         
                     <button type="button" 
                             data-src="../images/LegExtHamCurl2.png" 
                             data-type="image" 
                             aria-label="View photo 2">
-                        <img src="../images/LegExtHamCurl2.png" alt="Leg Extension Machine Photo">
+                        <img src="../images/LegExtHamCurl2.png" alt="Leg Extension Machine Photo" loading="lazy" decoding="async">
                     </button>
                 </div>
                 
@@ -57,7 +57,7 @@ include('../includes/header.php');
                         <!-- Exercise 1: Smith Squat -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/smith-pic.jpg" alt="Smith Squat">
+                                <img src="../images/smith-pic.jpg" alt="Smith Squat" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Smith Squat</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -70,7 +70,7 @@ include('../includes/header.php');
                         <!-- Exercise 2: Smith Bench Press -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/smith-press-thumbnail.png" alt="Smith Bench Press">
+                                <img src="../images/smith-press-thumbnail.png" alt="Smith Bench Press" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Smith Bench Press</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -83,7 +83,7 @@ include('../includes/header.php');
                         <!-- Exercise 3: Smith Shoulder Press -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/smith-pic.jpg" alt="Smith Shoulder Press">
+                                <img src="../images/smith-pic.jpg" alt="Smith Shoulder Press" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Smith Shoulder Press</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -96,7 +96,7 @@ include('../includes/header.php');
                         <!-- Exercise 4: Smith Row -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/smith-pic.jpg" alt="Smith Row">
+                                <img src="../images/smith-pic.jpg" alt="Smith Row" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Smith Row</div>
                                     <div style="font-size:13px; color:#9fb1c7">

@@ -60,7 +60,7 @@ include('../includes/header.php');
                             data-src="<?php echo htmlspecialchars($item['src'], ENT_QUOTES, 'UTF-8'); ?>"
                             data-type="<?php echo htmlspecialchars($item['type'], ENT_QUOTES, 'UTF-8'); ?>"
                             aria-label="<?php echo ($item['type'] === 'video' ? 'Play' : 'View') . ' media ' . ($index + 1); ?>">
-                        <img src="<?php echo htmlspecialchars($item['thumb'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($item['alt'], ENT_QUOTES, 'UTF-8'); ?>">
+                        <img src="<?php echo htmlspecialchars($item['thumb'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($item['alt'], ENT_QUOTES, 'UTF-8'); ?>" loading="lazy" decoding="async">
                     </button>
                     <?php endforeach; ?>
                 </div>
@@ -71,7 +71,7 @@ include('../includes/header.php');
                         <?php foreach ($exercises as $exercise): ?>
                         <div class="col">
                             <article class="ex-card">
-                                <img src="<?php echo htmlspecialchars($exercise['image'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($exercise['alt'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <img src="<?php echo htmlspecialchars($exercise['image'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($exercise['alt'], ENT_QUOTES, 'UTF-8'); ?>" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600"><?php echo htmlspecialchars($exercise['name'], ENT_QUOTES, 'UTF-8'); ?></div>
                                     <div style="font-size:13px; color:#9fb1c7"><?php echo htmlspecialchars($exercise['muscle'], ENT_QUOTES, 'UTF-8'); ?></div>

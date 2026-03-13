@@ -39,7 +39,7 @@ include('../includes/header.php');
                             data-src="../images/HackSquat-LegPress.png"
                             data-type="image"
                             aria-label="View photo 1">
-                        <img src="../images/HackSquat-LegPress.png" alt="Leg Press / Hack Squat Photo">
+                        <img src="../images/HackSquat-LegPress.png" alt="Leg Press / Hack Squat Photo" loading="lazy" decoding="async">
                     </button>
                 </div>
 
@@ -50,7 +50,7 @@ include('../includes/header.php');
                         <!-- Exercise 1: Leg Press -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Leg Press">
+                                <img src="../images/Fitstop.png" alt="Leg Press" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Leg Press</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -63,7 +63,7 @@ include('../includes/header.php');
                         <!-- Exercise 2: Hack Squat -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Hack Squat">
+                                <img src="../images/Fitstop.png" alt="Hack Squat" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Hack Squat</div>
                                     <div style="font-size:13px; color:#9fb1c7">

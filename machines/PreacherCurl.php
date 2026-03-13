@@ -39,7 +39,7 @@ include('../includes/header.php');
                             data-src="../images/PreacherCurl.png" 
                             data-type="image" 
                             aria-label="View photo 1">
-                        <img src="../images/PreacherCurl.png" alt="Preacher Curl Photo">
+                        <img src="../images/PreacherCurl.png" alt="Preacher Curl Photo" loading="lazy" decoding="async">
                     </button>
                         
                 </div>
@@ -51,7 +51,7 @@ include('../includes/header.php');
                         <!-- Exercise 1: Preacher Curl -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/PreacherCurl.png" alt="Preacher Curl">
+                                <img src="../images/PreacherCurl.png" alt="Preacher Curl" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Preacher Curl</div>
                                     <div style="font-size:13px; color:#9fb1c7">
