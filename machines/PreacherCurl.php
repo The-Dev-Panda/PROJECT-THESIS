@@ -41,6 +41,12 @@ include('../includes/header.php');
                             aria-label="View photo 1">
                         <img src="../images/PreacherCurl.png" alt="Preacher Curl Photo" loading="lazy" decoding="async">
                     </button>
+                    <button type="button" 
+                            data-src="https://drive.google.com/file/d/1FqEzYNOYHqom4hn60tgw-eha7leTdons/preview" 
+                            data-type="video" 
+                            aria-label="Play video 1">
+                        <img src="../images/PreacherCurl.png" alt="Preacher Curl Video" loading="lazy" decoding="async">
+                    </button>
                         
                 </div>
                 
@@ -113,7 +119,7 @@ include('../includes/header.php');
                 <div id="feedbackMessage" style="margin-top:12px"></div>
                 
                 <form style="margin-top:12px" action="../Database/submit_feedback.php" method="POST">
-                    <input type="hidden" name="machine" value="Smith Machine">
+                    <input type="hidden" name="machine" value="Preacher Curl">
                     
                     <?php if (empty($_SESSION['username'])): ?>
                     <div class="mb-3">
@@ -205,30 +211,40 @@ include('../includes/header.php');
      * Set main media display (image or video)
      */
     function setMainMedia(src, isVideo) {
-        // Clean up any existing video
+        // Clean up any existing video or iframe
         const prevVideo = mediaMain.querySelector('video');
         if (prevVideo) {
-            try {
-                prevVideo.pause();
-            } catch(e) {}
+            try { prevVideo.pause(); } catch(e) {}
             prevVideo.removeAttribute('src');
             prevVideo.load && prevVideo.load();
         }
+        const prevIframe = mediaMain.querySelector('iframe');
+        if (prevIframe) prevIframe.removeAttribute('src');
         
         mediaMain.innerHTML = '';
         if (!src) return;
         
         if (isVideo) {
-            // Create video element
-            const v = document.createElement('video');
-            v.src = src;
-            v.controls = true;
-            v.autoplay = true;
-            v.playsInline = true;
-            v.style.maxWidth = '100%';
-            v.style.maxHeight = '100%';
-            mediaMain.appendChild(v);
-            v.play().catch(() => {});
+            if (src.startsWith('http')) {
+                // Embed URL (Google Drive, YouTube, etc.) — use iframe
+                const f = document.createElement('iframe');
+                f.src = src;
+                f.allowFullscreen = true;
+                f.style.width = '100%';
+                f.style.height = '100%';
+                f.style.border = 'none';
+                f.style.minHeight = '340px';
+                mediaMain.appendChild(f);
+            } else {
+                // Local video file — use video element
+                const v = document.createElement('video');
+                v.src = src;
+                v.controls = true;
+                v.playsInline = true;
+                v.style.maxWidth = '100%';
+                v.style.maxHeight = '100%';
+                mediaMain.appendChild(v);
+            }
         } else {
             // Create image element
             const i = document.createElement('img');
