@@ -77,7 +77,7 @@ if ($is_logged_in) {
                 [FIT-STOP]
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+                <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
@@ -91,7 +91,7 @@ if ($is_logged_in) {
                             EQUIPMENT
                         </a>
                         <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="equipmentDropdown">
-                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>equipment.php">All Equipment</a></li>
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>equipment.php">Zones</a></li>
                             <li><a class="dropdown-item" href="<?php echo $base_path; ?>machine.php">Machines</a></li>
                         </ul>
                     </li>

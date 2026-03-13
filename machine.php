@@ -152,6 +152,12 @@ $machines = [
         'file' => 'Dips.php',
         'image' => 'images/DIPS.png',
         'desc' => 'Triceps, chest, shoulder exercises'
+    ],
+    [
+        'name' => 'Preacher Curl Station',
+        'file' => 'PreacherCurl.php',
+        'image' => 'images/PreacherCurl.png',
+        'desc' => 'Bicep curls, arm isolation'
     ]
 ];
 ?>
