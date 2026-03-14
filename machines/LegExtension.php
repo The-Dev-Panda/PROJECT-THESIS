@@ -54,53 +54,53 @@ include('../includes/header.php');
                 <section style="margin-top:24px">
                     <strong>Exercises You Can Do On This Machine</strong>
                     <div class="row row-cols-1 row-cols-md-2 g-3 mt-1">
-                        <!-- Exercise 1: Smith Squat -->
+                        <!-- Exercise 1: Leg Extension -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/smith-pic.jpg" alt="Smith Squat" loading="lazy" decoding="async">
+                                <img src="../images/LegExtension-HamstringCurl.png" alt="Leg Extension" loading="lazy" decoding="async">
                                 <div>
-                                    <div style="font-weight:600">Smith Squat</div>
+                                    <div style="font-weight:600">Leg Extension</div>
                                     <div style="font-size:13px; color:#9fb1c7">
-                                        Primary muscle • Quads, Glutes
+                                        Primary muscle • Quadriceps
                                     </div>
                                 </div>
                             </article>
                         </div>
                         
-                        <!-- Exercise 2: Smith Bench Press -->
+                        <!-- Exercise 2: Single-Leg Extension -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/smith-press-thumbnail.png" alt="Smith Bench Press" loading="lazy" decoding="async">
+                                <img src="../images/LegExtension-HamstringCurl.png" alt="Single-Leg Extension" loading="lazy" decoding="async">
                                 <div>
-                                    <div style="font-weight:600">Smith Bench Press</div>
+                                    <div style="font-weight:600">Single-Leg Extension</div>
                                     <div style="font-size:13px; color:#9fb1c7">
-                                        Primary muscle • Chest
+                                        Primary muscle • Quads, knee stability
                                     </div>
                                 </div>
                             </article>
                         </div>
                         
-                        <!-- Exercise 3: Smith Shoulder Press -->
+                        <!-- Exercise 3: Seated Leg Curl -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/smith-pic.jpg" alt="Smith Shoulder Press" loading="lazy" decoding="async">
+                                <img src="../images/LegExtHamCurl2.png" alt="Seated Leg Curl" loading="lazy" decoding="async">
                                 <div>
-                                    <div style="font-weight:600">Smith Shoulder Press</div>
+                                    <div style="font-weight:600">Seated Leg Curl</div>
                                     <div style="font-size:13px; color:#9fb1c7">
-                                        Primary muscle • Shoulders
+                                        Primary muscle • Hamstrings
                                     </div>
                                 </div>
                             </article>
                         </div>
                         
-                        <!-- Exercise 4: Smith Row -->
+                        <!-- Exercise 4: Single-Leg Curl -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/smith-pic.jpg" alt="Smith Row" loading="lazy" decoding="async">
+                                <img src="../images/LegExtHamCurl2.png" alt="Single-Leg Curl" loading="lazy" decoding="async">
                                 <div>
-                                    <div style="font-weight:600">Smith Row</div>
+                                    <div style="font-weight:600">Single-Leg Curl</div>
                                     <div style="font-size:13px; color:#9fb1c7">
-                                        Primary muscle • Back
+                                        Primary muscle • Hamstrings, imbalance correction
                                     </div>
                                 </div>
                             </article>
@@ -116,11 +116,11 @@ include('../includes/header.php');
             <div class="card">
                 <strong>Machine Details</strong>
                 <ul class="meta-list" style="margin-top:10px">
-                    <li><strong>Equipment:</strong> Smith Machine</li>
-                    <li><strong>Type:</strong> Guided Barbell / Multi-Function</li>
-                    <li><strong>Difficulty:</strong> Beginner — Advanced</li>
-                    <li><strong>Focus Muscles:</strong> Full Body (varies by exercise)</li>
-                    <li><strong>Auxiliary Muscles:</strong> Stabilizers, Core</li>
+                    <li><strong>Equipment:</strong> Leg Extension / Hamstring Curl Machine</li>
+                    <li><strong>Type:</strong> Selectorized Lower-Body Isolation</li>
+                    <li><strong>Difficulty:</strong> Beginner — Intermediate</li>
+                    <li><strong>Focus Muscles:</strong> Quadriceps, Hamstrings</li>
+                    <li><strong>Auxiliary Muscles:</strong> Hip Flexors, Calves</li>
                 </ul>
                 <div class="cta">
                     <button type="button" 
@@ -136,9 +136,9 @@ include('../includes/header.php');
             <div class="card">
                 <strong>Quick Tips</strong>
                 <ol style="margin-top:8px; color:#c9d6e1; font-size:14px">
-                    <li>Bar moves on fixed vertical path.</li>
-                    <li>Use safety hooks for secure training.</li>
-                    <li>Great for learning proper form safely.</li>
+                    <li>Align your knee joint with the machine pivot before starting.</li>
+                    <li>Control both the lift and the return instead of letting the weight drop.</li>
+                    <li>Use a full but comfortable range of motion without swinging your hips.</li>
                 </ol>
             </div>
             
