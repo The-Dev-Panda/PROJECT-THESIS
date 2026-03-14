@@ -2,7 +2,7 @@
 // Define base path for includes (we're in machines/ folder, one level deep)
 $base_path = '../';
 
-$page_title = 'Multi Press | FIT-STOP Equipment';
+$page_title = 'Multi Press Machine | FIT-STOP Equipment';
 $custom_css = '<link rel="stylesheet" href="../machines/machine-pages.css">';
 include('../includes/header.php');
 ?>
@@ -13,7 +13,7 @@ include('../includes/header.php');
         <a href="<?php echo $base_path; ?>index.php">Home</a> ›
         <a href="<?php echo $base_path; ?>equipment.php">Equipment</a> ›
         <a href="<?php echo $base_path; ?>machine.php">Machines</a> ›
-        Multi Press
+        Multi Press Machine
     </div>
 
     <h1 class="mb-4">Multi Press Machine</h1>
@@ -107,7 +107,7 @@ include('../includes/header.php');
             <div class="card">
                 <strong>Machine Details</strong>
                 <ul class="meta-list" style="margin-top:10px">
-                    <li><strong>Equipment:</strong> Multi Press</li>
+                    <li><strong>Equipment:</strong> Multi Press Machine</li>
                     <li><strong>Type:</strong> Plate-Loaded / Multi-Function</li>
                     <li><strong>Difficulty:</strong> Beginner &mdash; Intermediate</li>
                     <li><strong>Focus Muscles:</strong> Chest, Shoulders</li>
@@ -147,7 +147,7 @@ include('../includes/header.php');
                 <div id="feedbackMessage" style="margin-top:12px"></div>
 
                 <form style="margin-top:12px" action="../Database/submit_feedback.php" method="POST">
-                    <input type="hidden" name="machine" value="Multi Press">
+                    <input type="hidden" name="machine" value="Multi Press Machine">
 
                     <?php if (empty($_SESSION['username'])): ?>
                     <div class="mb-3">

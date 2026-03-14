@@ -2,7 +2,7 @@
 // Define base path for includes (we're in machines/ folder, one level deep)
 $base_path = '../';
 
-$page_title = 'Pec Deck Fly / Rear Delt | FIT-STOP Equipment';
+$page_title = 'Pec Deck Fly / Rear Delt Fly | FIT-STOP Equipment';
 $custom_css = '<link rel="stylesheet" href="../machines/machine-pages.css">';
 include('../includes/header.php');
 ?>
@@ -13,10 +13,10 @@ include('../includes/header.php');
         <a href="<?php echo $base_path; ?>index.php">Home</a> ›
         <a href="<?php echo $base_path; ?>equipment.php">Equipment</a> ›
         <a href="<?php echo $base_path; ?>machine.php">Machines</a> ›
-        Pec Deck Fly / Rear Delt
+        Pec Deck Fly / Rear Delt Fly
     </div>
 
-    <h1 class="mb-4">Pec Deck Fly / Rear Delt Machine</h1>
+    <h1 class="mb-4">Pec Deck Fly / Rear Delt Fly</h1>
 
     <div class="row g-3">
         <!-- Left Column: Gallery & Exercises -->
@@ -83,7 +83,7 @@ include('../includes/header.php');
             <div class="card">
                 <strong>Machine Details</strong>
                 <ul class="meta-list" style="margin-top:10px">
-                    <li><strong>Equipment:</strong> Pec Deck / Rear Delt</li>
+                    <li><strong>Equipment:</strong> Pec Deck Fly / Rear Delt Fly</li>
                     <li><strong>Type:</strong> Dual-Function</li>
                     <li><strong>Difficulty:</strong> Beginner</li>
                     <li><strong>Focus Muscles:</strong> Chest, Rear Delts</li>
@@ -123,7 +123,7 @@ include('../includes/header.php');
                 <div id="feedbackMessage" style="margin-top:12px"></div>
 
                 <form style="margin-top:12px" action="../Database/submit_feedback.php" method="POST">
-                    <input type="hidden" name="machine" value="Pec Deck Fly / Rear Delt">
+                    <input type="hidden" name="machine" value="Pec Deck Fly / Rear Delt Fly">
 
                     <?php if (empty($_SESSION['username'])): ?>
                     <div class="mb-3">

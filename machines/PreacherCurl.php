@@ -79,8 +79,8 @@ include('../includes/header.php');
             <div class="card">
                 <strong>Machine Details</strong>
                 <ul class="meta-list" style="margin-top:10px">
-                    <li><strong>Equipment:</strong> Preacher Curl Machine</li>
-                    <li><strong>Type:</strong> Curl</li>
+                    <li><strong>Equipment:</strong> Preacher Curl</li>
+                    <li><strong>Type:</strong> Curl Machine</li>
                     <li><strong>Difficulty:</strong> Beginner — Advanced</li>
                     <li><strong>Focus Muscles:</strong> Biceps / Forearms</li>
                     <li><strong>Auxiliary Muscles:</strong> Forearms</li>

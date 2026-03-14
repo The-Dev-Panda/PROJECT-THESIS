@@ -16,7 +16,7 @@ include('../includes/header.php');
         Shoulder Press
     </div>
 
-    <h1 class="mb-4">Shoulder Press Machine</h1>
+    <h1 class="mb-4">Shoulder Press</h1>
 
     <div class="row g-3">
         <!-- Left Column: Gallery & Exercises -->

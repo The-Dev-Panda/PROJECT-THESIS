@@ -83,7 +83,7 @@ include('../includes/header.php');
             <div class="card">
                 <strong>Machine Details</strong>
                 <ul class="meta-list" style="margin-top:10px">
-                    <li><strong>Equipment:</strong> Lat Pulldown / Seated Row</li>
+                    <li><strong>Equipment:</strong> Lat Pulldown / Seated Cable Row</li>
                     <li><strong>Type:</strong> Cable / Dual-Function</li>
                     <li><strong>Difficulty:</strong> Beginner &mdash; Intermediate</li>
                     <li><strong>Focus Muscles:</strong> Back (Lats, Rhomboids)</li>

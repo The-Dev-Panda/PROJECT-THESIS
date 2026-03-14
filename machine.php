@@ -70,7 +70,7 @@ include('includes/header.php');
  * Organized list of all gym machines
  * Structure:
  * - name: Display name
- * - file: HTML file in machines/ folder
+ * - file: PHP file in machines/ folder
  * - image: Image path
  * - description: Brief exercise description
  */
@@ -79,91 +79,91 @@ $machines = [
         'name' => 'Smith Machine',
         'file' => 'SmithMachine.php',
         'image' => 'images/smith-pic.jpg',
-        'desc' => 'Bench press, shoulder press, guided bar path'
+        'desc' => 'Smith Squat, Smith Bench Press, Smith Shoulder Press, Smith Row'
     ],
     [
-        'name' => 'Lat Pulldown/Seated Cable Row',
+        'name' => 'Lat Pulldown / Seated Cable Row',
         'file' => 'LatPulldownSeatedCableRow.php',
         'image' => 'images/LatPulldown-CableRow.png',
-        'desc' => 'Back width, lats, rowing movements'
+        'desc' => 'Lat Pulldown, Seated Cable Row'
     ],
     [
         'name' => 'Shoulder Press',
         'file' => 'ShoulderPress.php',
         'image' => 'images/ShoulderPress.jpg',
-        'desc' => 'Deltoids, overhead pressing'
+        'desc' => 'Shoulder Press'
     ],
     [
         'name' => 'Seated Chest Press',
         'file' => 'SeatedChestPress.php',
         'image' => 'images/SeatedChestPress.png',
-        'desc' => 'Chest, pectorals, pressing movements'
+        'desc' => 'Chest Press'
     ],
     [
-        'name' => 'Pec Deck Fly/Rear Delt Fly',
+        'name' => 'Pec Deck Fly / Rear Delt Fly',
         'file' => 'PecDeckFlyRearDelt.php',
         'image' => 'images/PeckDeckFly.png',
-        'desc' => 'Chest flys, rear deltoid isolation'
+        'desc' => 'Pec Deck Fly, Rear Delt Fly'
     ],
     [
         'name' => 'Decline Chest Press',
         'file' => 'DeclineChestPress.php',
         'image' => 'images/DeclineChestPress.jpg',
-        'desc' => 'Lower chest, decline pressing'
+        'desc' => 'Decline Press'
     ],
     [
         'name' => 'Multi Press Machine',
         'file' => 'MultiPress.php',
         'image' => 'images/MultiPress.png',
-        'desc' => 'Chest & shoulder, multi-angle press'
+        'desc' => 'Shoulder Press, Flat Chest Press, Incline Chest Press'
     ],
     [
-        'name' => 'Leg Press/Hack Squat',
+        'name' => 'Leg Press / Hack Squat',
         'file' => 'LegPressHackSquat.php',
         'image' => 'images/HackSquat-LegPress.png',
-        'desc' => 'Quads, glutes, lower body power'
+        'desc' => 'Leg Press, Hack Squat'
     ],
     [
         'name' => 'Cable Machine',
         'file' => 'CableMachine.php',
         'image' => 'images/CableMachine-Pullups.png',
-        'desc' => 'Multi-function, cables, various exercises'
+        'desc' => 'Cable Crossover, Tricep Pushdown, Cable Bicep Curl, Lateral Raise'
     ],
     [
         'name' => 'Pullup Station',
         'file' => 'PullupStation.php',
         'image' => 'images/PullUpBar.png',
-        'desc' => 'Pull-ups, chin-ups, bodyweight training'
+        'desc' => 'Pullups, Chin-ups'
     ],
     [
         'name' => 'Treadmill',
         'file' => 'Treadmill.php',
         'image' => 'images/Treadmill.png',
-        'desc' => 'Cardiovascular exercise, running, walking'
+        'desc' => 'Walking, Jogging, Running, Incline Walking'
     ],
     [
-        'name' => 'Leg Extension Station',
+        'name' => 'Leg Extension / Hamstring Curl Machine',
         'file' => 'LegExtension.php',
         'image' => 'images/LegExtension-HamstringCurl.png',
-        'desc' => 'Leg extensions, hamstring curls, quad isolation'
+        'desc' => 'Leg Extension, Single-Leg Extension, Seated Leg Curl, Single-Leg Curl'
     ],
     [
-        'name' => 'Dips Station',
+        'name' => 'Dips / Leg Raise Station',
         'file' => 'Dips.php',
         'image' => 'images/DIPS.png',
-        'desc' => 'Triceps, chest, shoulder exercises'
+        'desc' => 'Parallel Bar Dips, Vertical Knee Raise, Straight-Leg Raise'
     ],
     [
         'name' => 'Machine Row',
         'file' => 'MachineRow.php',
         'image' => 'images/MachineRow.png',
-        'desc' => 'Back, bicep, and rear delt exercises'
+        'desc' => 'Seated Machine Row, Wide-Grip Row, Close-Grip Row, Single-Arm Row'
     ],
     [
-        'name' => 'Preacher Curl Station',
+        'name' => 'Preacher Curl',
         'file' => 'PreacherCurl.php',
         'image' => 'images/PreacherCurl.png',
-        'desc' => 'Bicep curls, arm isolation'
+        'desc' => 'Preacher Curl'
     ]
 ];
 ?>

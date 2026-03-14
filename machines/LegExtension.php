@@ -2,7 +2,7 @@
 // Define base path for includes (we're in machines/ folder, one level deep)
 $base_path = '../';
 
-$page_title = 'Leg Extension Machine | FIT-STOP Equipment';
+$page_title = 'Leg Extension / Hamstring Curl Machine | FIT-STOP Equipment';
 $custom_css = '<link rel="stylesheet" href="../machines/machine-pages.css">';
 include('../includes/header.php');
 ?>
@@ -13,10 +13,10 @@ include('../includes/header.php');
         <a href="<?php echo $base_path; ?>index.php">Home</a> › 
         <a href="<?php echo $base_path; ?>equipment.php">Equipment</a> › 
         <a href="<?php echo $base_path; ?>machine.php">Machines</a> › 
-        Leg Extension Machine
+        Leg Extension / Hamstring Curl Machine
     </div>
     
-    <h1 class="mb-4">Leg Extension Machine</h1>
+    <h1 class="mb-4">Leg Extension / Hamstring Curl Machine</h1>
     
     <div class="row g-3">
         <!-- Left Column: Gallery & Exercises -->
@@ -156,7 +156,7 @@ include('../includes/header.php');
                 <div id="feedbackMessage" style="margin-top:12px"></div>
                 
                 <form style="margin-top:12px" action="../Database/submit_feedback.php" method="POST">
-                    <input type="hidden" name="machine" value="Leg Extension Machine">
+                    <input type="hidden" name="machine" value="Leg Extension / Hamstring Curl Machine">
                     
                     <?php if (empty($_SESSION['username'])): ?>
                     <div class="mb-3">

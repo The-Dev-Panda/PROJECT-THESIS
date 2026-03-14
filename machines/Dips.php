@@ -2,7 +2,7 @@
 // Define base path for includes (we're in machines/ folder, one level deep)
 $base_path = '../';
 
-$page_title = 'Dips Station | FIT-STOP Equipment';
+$page_title = 'Dips / Leg Raise Station | FIT-STOP Equipment';
 $custom_css = '<link rel="stylesheet" href="../machines/machine-pages.css">';
 include('../includes/header.php');
 ?>
@@ -93,18 +93,7 @@ include('../includes/header.php');
                             </article>
                         </div>
                         
-                        <!-- Exercise 4: Support Hold -->
-                        <div class="col">
-                            <article class="ex-card">
-                                <img src="../images/DIPS.png" alt="Support Hold" loading="lazy" decoding="async">
-                                <div>
-                                    <div style="font-weight:600">Support Hold</div>
-                                    <div style="font-size:13px; color:#9fb1c7">
-                                        Primary muscle • Triceps, shoulders, core
-                                    </div>
-                                </div>
-                            </article>
-                        </div>
+                       
                     </div>
                 </section>
             </div>

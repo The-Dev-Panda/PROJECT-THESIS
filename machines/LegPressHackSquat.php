@@ -16,7 +16,7 @@ include('../includes/header.php');
         Leg Press / Hack Squat
     </div>
 
-    <h1 class="mb-4">Leg Press / Hack Squat Machine</h1>
+    <h1 class="mb-4">Leg Press / Hack Squat</h1>
 
     <div class="row g-3">
         <!-- Left Column: Gallery & Exercises -->
