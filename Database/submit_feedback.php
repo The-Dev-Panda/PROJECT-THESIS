@@ -21,8 +21,16 @@ function sendResponse($success, $message, $redirect = null) {
     }
 }
 
+function getNextFeedbackId(PDO $pdo) {
+    $stmt = $pdo->query('SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM feedback');
+    $row = $stmt ? $stmt->fetch(PDO::FETCH_ASSOC) : null;
+    $nextId = $row && isset($row['next_id']) ? (int)$row['next_id'] : 1;
+    return $nextId > 0 ? $nextId : 1;
+}
+
 // Check if user is logged in (member vs guest)
-$isGuest = empty($_SESSION['username']) || empty($_SESSION['id']);
+$sessionUsername = isset($_SESSION['username']) ? trim((string)$_SESSION['username']) : '';
+$sessionUserId = isset($_SESSION['id']) ? (int)$_SESSION['id'] : 0;
 
 // Validate POST request
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
@@ -32,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST') {
 // Get and validate inputs
 $desc = isset($_POST['feedback']) ? trim($_POST['feedback']) : '';
 $about = isset($_POST['machine']) ? trim($_POST['machine']) : '';
-$guestName = $isGuest && isset($_POST['guest_name']) ? trim($_POST['guest_name']) : null;
+$guestName = isset($_POST['guest_name']) ? trim($_POST['guest_name']) : '';
 
 // Validate feedback description
 if (empty($desc)) {
@@ -58,70 +66,83 @@ if (strlen($about) > 255) {
 
 try {
     include('../Login/connection.php');
-    
-    if ($isGuest) {
-        // GUEST SUBMISSION
-        // Get IP for basic rate limiting
-        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        
-        // Rate limit: 3 submissions per 15 minutes per IP (stricter for guests)
-        $rateLimitStmt = $pdo->prepare("
-            SELECT COUNT(*) as recent_count 
-            FROM feedback 
-            WHERE reporterID IS NULL 
-            AND created_at > datetime('now', '-15 minutes')
-        ");
-        $rateLimitStmt->execute();
-        $rateLimitResult = $rateLimitStmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($rateLimitResult['recent_count'] >= 3) {
-            sendResponse(false, 'Too many submissions. Please wait a few minutes');
+
+    $reporterID = $sessionUserId;
+
+    // Backward-compatibility: resolve ID for older sessions that only stored username.
+    if ($reporterID <= 0 && !empty($sessionUsername)) {
+        $idLookupStmt = $pdo->prepare("SELECT id FROM users WHERE username = :username LIMIT 1");
+        $idLookupStmt->execute(['username' => $sessionUsername]);
+        $resolvedUser = $idLookupStmt->fetch(PDO::FETCH_ASSOC);
+        if ($resolvedUser && !empty($resolvedUser['id'])) {
+            $reporterID = (int)$resolvedUser['id'];
+            $_SESSION['id'] = $reporterID;
         }
-        
-        // Insert with NULL reporterID and guest name as last_name
+    }
+
+    if ($reporterID <= 0) {
+        // GUEST SUBMISSION (reporterID can be NULL)
+        $windowSeconds = 15 * 60;
+        $maxGuestSubmissions = 3;
+        $nowTs = time();
+        $guestHistory = isset($_SESSION['guest_feedback_times']) && is_array($_SESSION['guest_feedback_times'])
+            ? $_SESSION['guest_feedback_times']
+            : [];
+
+        $guestHistory = array_values(array_filter($guestHistory, function ($ts) use ($nowTs, $windowSeconds) {
+            return is_numeric($ts) && ((int)$ts >= ($nowTs - $windowSeconds));
+        }));
+
+        if (count($guestHistory) >= $maxGuestSubmissions) {
+            sendResponse(false, 'Too many guest submissions. Please wait a few minutes');
+        }
+
+        $feedbackId = getNextFeedbackId($pdo);
+
         $stmt = $pdo->prepare("
-            INSERT INTO feedback (about, reporterID, last_name, created_at, desc, status) 
-            VALUES (:about, NULL, :guest_name, datetime('now'), :desc, 'pending')
+            INSERT INTO feedback (id, about, reporterID, last_name, created_at, desc, status)
+            VALUES (:id, :about, NULL, :last_name, datetime('now'), :desc, 'pending')
         ");
-        
+
         $stmt->execute([
+            'id' => $feedbackId,
             'about' => $about,
-            'guest_name' => $guestName ?: 'Anonymous Guest',
+            'last_name' => $guestName !== '' ? $guestName : 'Anonymous Guest',
             'desc' => $desc
         ]);
-        
+
+        $guestHistory[] = $nowTs;
+        $_SESSION['guest_feedback_times'] = $guestHistory;
     } else {
         // MEMBER SUBMISSION
-        $reporterID = $_SESSION['id'];
-        
-        // RATE LIMITING: Check if user submitted feedback recently
         $rateLimitStmt = $pdo->prepare("
-            SELECT COUNT(*) as recent_count 
-            FROM feedback 
-            WHERE reporterID = :reporterID 
+            SELECT COUNT(*) as recent_count
+            FROM feedback
+            WHERE reporterID = :reporterID
             AND created_at > datetime('now', '-5 minutes')
         ");
         $rateLimitStmt->execute(['reporterID' => $reporterID]);
         $rateLimitResult = $rateLimitStmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($rateLimitResult['recent_count'] >= 3) {
             sendResponse(false, 'Please wait a few minutes before submitting more feedback');
         }
-        
-        // Get last_name from users table based on session ID
+
         $userStmt = $pdo->prepare("SELECT last_name FROM users WHERE id = :id");
         $userStmt->execute(['id' => $reporterID]);
         $user = $userStmt->fetch(PDO::FETCH_ASSOC);
-        
+
         $lastName = $user ? $user['last_name'] : null;
-        
-        // Insert feedback with current timestamp and default status
+
+        $feedbackId = getNextFeedbackId($pdo);
+
         $stmt = $pdo->prepare("
-            INSERT INTO feedback (about, reporterID, last_name, created_at, desc, status) 
-            VALUES (:about, :reporterID, :last_name, datetime('now'), :desc, 'pending')
+            INSERT INTO feedback (id, about, reporterID, last_name, created_at, desc, status)
+            VALUES (:id, :about, :reporterID, :last_name, datetime('now'), :desc, 'pending')
         ");
-        
+
         $stmt->execute([
+            'id' => $feedbackId,
             'about' => $about,
             'reporterID' => $reporterID,
             'last_name' => $lastName,

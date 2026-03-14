@@ -17,6 +17,7 @@ if (isset($_POST["username"])) {
     if ($user && password_verify($password, $user['password'])) {
         session_start();
         $_SESSION['username'] = $username;
+        $_SESSION['id'] = (int)$user['id'];
         $_SESSION['user_type'] = $user['user_type'];
         try {
         $update_login = $pdo->prepare('UPDATE users SET last_logged_in = :last_logged_in WHERE username = :username');
