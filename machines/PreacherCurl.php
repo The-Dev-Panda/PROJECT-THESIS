@@ -99,9 +99,9 @@ include('../includes/header.php');
             <div class="card">
                 <strong>Quick Tips</strong>
                 <ol style="margin-top:8px; color:#c9d6e1; font-size:14px">
-                    <li>Bar moves on fixed vertical path.</li>
-                    <li>Use safety hooks for secure training.</li>
-                    <li>Great for learning proper form safely.</li>
+                    <li>Keep your upper arms planted on the pad for the whole rep.</li>
+                    <li>Lower the weight under control to keep tension on the biceps.</li>
+                    <li>Avoid lifting your chest off the bench or swinging the handles up.</li>
                 </ol>
             </div>
             

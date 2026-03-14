@@ -2,7 +2,7 @@
 // Define base path for includes (we're in machines/ folder, one level deep)
 $base_path = '../';
 
-$page_title = 'Treadmill | FIT-STOP Equipment';
+$page_title = 'Machine Row | FIT-STOP Equipment';
 $custom_css = '<link rel="stylesheet" href="../machines/machine-pages.css">';
 include('../includes/header.php');
 ?>
@@ -13,10 +13,10 @@ include('../includes/header.php');
         <a href="<?php echo $base_path; ?>index.php">Home</a> › 
         <a href="<?php echo $base_path; ?>equipment.php">Equipment</a> › 
         <a href="<?php echo $base_path; ?>machine.php">Machines</a> › 
-        Treadmill
+        Machine Row
     </div>
     
-    <h1 class="mb-4">Treadmill</h1>
+    <h1 class="mb-4">Machine Row</h1>
     
     <div class="row g-3">
         <!-- Left Column: Gallery & Exercises -->
@@ -30,16 +30,16 @@ include('../includes/header.php');
                 
                 <!-- Main Media Display -->
                 <div id="mediaMain" class="media-main">
-                    <img src="../images/treadmill.png" alt="Treadmill">
+                    <img src="../images/MachineRow.png" alt="Machine Row">
                 </div>
                 
                 <!-- Thumbnails -->
                 <div class="thumbs" id="thumbs">
                     <button type="button" 
-                            data-src="../images/treadmill.png" 
+                            data-src="../images/MachineRow.png" 
                             data-type="image" 
                             aria-label="View photo 1">
-                        <img src="../images/treadmill.png" alt="Treadmill Photo" loading="lazy" decoding="async">
+                        <img src="../images/MachineRow.png" alt="Machine Row Photo" loading="lazy" decoding="async">
                     </button>
                         
                 </div>
@@ -48,58 +48,58 @@ include('../includes/header.php');
                 <section style="margin-top:24px">
                     <strong>Exercises You Can Do On This Machine</strong>
                     <div class="row row-cols-1 row-cols-md-2 g-3 mt-1">
-                        <!-- Exercise 1: Walking -->
+                        <!-- Exercise 1: Seated Machine Row -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Treadmill.png" alt="Walking" loading="lazy" decoding="async">
+                                <img src="../images/MachineRow.png" alt="Seated Machine Row" loading="lazy" decoding="async">
                                 <div>
-                                    <div style="font-weight:600">Walking</div>
+                                    <div style="font-weight:600">Seated Machine Row</div>
                                     <div style="font-size:13px; color:#9fb1c7">
-                                        Primary muscle • Cardiovascular endurance
+                                        Primary muscle • Lats, middle back
                                     </div>
                                 </div>
                             </article>
                         </div>
-                        
-                        <!-- Exercise 2: Jogging -->
+
+                        <!-- Exercise 2: Wide-Grip Row -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Treadmill.png" alt="Jogging" loading="lazy" decoding="async">
+                                <img src="../images/MachineRow.png" alt="Wide-Grip Row" loading="lazy" decoding="async">
                                 <div>
-                                    <div style="font-weight:600">Jogging</div>
+                                    <div style="font-weight:600">Wide-Grip Row</div>
                                     <div style="font-size:13px; color:#9fb1c7">
-                                        Primary muscle • Cardio, calves, quads
+                                        Primary muscle • Upper back, rear delts
                                     </div>
                                 </div>
                             </article>
                         </div>
-                        
-                        <!-- Exercise 3: Running -->
+
+                        <!-- Exercise 3: Close-Grip Row -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Treadmill.png" alt="Running" loading="lazy" decoding="async">
+                                <img src="../images/MachineRow.png" alt="Close-Grip Row" loading="lazy" decoding="async">
                                 <div>
-                                    <div style="font-weight:600">Running</div>
+                                    <div style="font-weight:600">Close-Grip Row</div>
                                     <div style="font-size:13px; color:#9fb1c7">
-                                        Primary muscle • Cardio, glutes, hamstrings
+                                        Primary muscle • Lats, biceps
                                     </div>
                                 </div>
                             </article>
                         </div>
-                        
-                        <!-- Exercise 4: Incline Walking -->
+
+                        <!-- Exercise 4: Single-Arm Row -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Treadmill.png" alt="Incline Walking" loading="lazy" decoding="async">
+                                <img src="../images/MachineRow.png" alt="Single-Arm Row" loading="lazy" decoding="async">
                                 <div>
-                                    <div style="font-weight:600">Incline Walking</div>
+                                    <div style="font-weight:600">Single-Arm Row</div>
                                     <div style="font-size:13px; color:#9fb1c7">
-                                        Primary muscle • Glutes, calves, endurance
+                                        Primary muscle • Lats, rhomboids
                                     </div>
                                 </div>
                             </article>
                         </div>
-                    </div>
+
                 </section>
             </div>
         </div>
@@ -110,11 +110,11 @@ include('../includes/header.php');
             <div class="card">
                 <strong>Machine Details</strong>
                 <ul class="meta-list" style="margin-top:10px">
-                    <li><strong>Equipment:</strong> Treadmill</li>
-                    <li><strong>Type:</strong> Cardio Conditioning Machine</li>
-                    <li><strong>Difficulty:</strong> Beginner — Advanced</li>
-                    <li><strong>Focus Muscles:</strong> Cardiovascular system, Quads, Calves</li>
-                    <li><strong>Auxiliary Muscles:</strong> Glutes, Hamstrings, Core</li>
+                    <li><strong>Equipment:</strong> Machine Row</li>
+                    <li><strong>Type:</strong> Selectorized Back Machine</li>
+                    <li><strong>Difficulty:</strong> Beginner — Intermediate</li>
+                    <li><strong>Focus Muscles:</strong> Lats, Rhomboids, Middle Back</li>
+                    <li><strong>Auxiliary Muscles:</strong> Biceps, Rear Delts, Forearms</li>
                 </ul>
                 <div class="cta">
                     <button type="button" 
@@ -130,9 +130,9 @@ include('../includes/header.php');
             <div class="card">
                 <strong>Quick Tips</strong>
                 <ol style="margin-top:8px; color:#c9d6e1; font-size:14px">
-                    <li>Attach the safety clip before increasing speed.</li>
-                    <li>Start with a walk, then build up speed or incline gradually.</li>
-                    <li>Keep your posture tall and avoid holding the rails unless needed for balance.</li>
+                    <li>Keep your chest against the pad and your spine neutral throughout the pull.</li>
+                    <li>Drive your elbows back instead of shrugging your shoulders up.</li>
+                    <li>Control the return phase so the weight stack does not slam down.</li>
                 </ol>
             </div>
             
@@ -150,7 +150,7 @@ include('../includes/header.php');
                 <div id="feedbackMessage" style="margin-top:12px"></div>
                 
                 <form style="margin-top:12px" action="../Database/submit_feedback.php" method="POST">
-                    <input type="hidden" name="machine" value="Treadmill">
+                    <input type="hidden" name="machine" value="Machine Row">
                     
                     <?php if (empty($_SESSION['username'])): ?>
                     <div class="mb-3">

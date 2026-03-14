@@ -54,53 +54,53 @@ include('../includes/header.php');
                 <section style="margin-top:24px">
                     <strong>Exercises You Can Do On This Machine</strong>
                     <div class="row row-cols-1 row-cols-md-2 g-3 mt-1">
-                        <!-- Exercise 1: Smith Squat -->
+                        <!-- Exercise 1: Parallel Bar Dips -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/smith-pic.jpg" alt="Smith Squat" loading="lazy" decoding="async">
+                                <img src="../images/DIPS.png" alt="Parallel Bar Dips" loading="lazy" decoding="async">
                                 <div>
-                                    <div style="font-weight:600">Smith Squat</div>
+                                    <div style="font-weight:600">Parallel Bar Dips</div>
                                     <div style="font-size:13px; color:#9fb1c7">
-                                        Primary muscle • Quads, Glutes
+                                        Primary muscle • Triceps, lower chest
                                     </div>
                                 </div>
                             </article>
                         </div>
                         
-                        <!-- Exercise 2: Smith Bench Press -->
+                        <!-- Exercise 2: Vertical Knee Raise -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/smith-press-thumbnail.png" alt="Smith Bench Press" loading="lazy" decoding="async">
+                                <img src="../images/DipBar.png" alt="Vertical Knee Raise" loading="lazy" decoding="async">
                                 <div>
-                                    <div style="font-weight:600">Smith Bench Press</div>
+                                    <div style="font-weight:600">Vertical Knee Raise</div>
                                     <div style="font-size:13px; color:#9fb1c7">
-                                        Primary muscle • Chest
+                                        Primary muscle • Lower abs, hip flexors
                                     </div>
                                 </div>
                             </article>
                         </div>
                         
-                        <!-- Exercise 3: Smith Shoulder Press -->
+                        <!-- Exercise 3: Straight-Leg Raise -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/smith-pic.jpg" alt="Smith Shoulder Press" loading="lazy" decoding="async">
+                                <img src="../images/DipBar.png" alt="Straight-Leg Raise" loading="lazy" decoding="async">
                                 <div>
-                                    <div style="font-weight:600">Smith Shoulder Press</div>
+                                    <div style="font-weight:600">Straight-Leg Raise</div>
                                     <div style="font-size:13px; color:#9fb1c7">
-                                        Primary muscle • Shoulders
+                                        Primary muscle • Abs, hip flexors
                                     </div>
                                 </div>
                             </article>
                         </div>
                         
-                        <!-- Exercise 4: Smith Row -->
+                        <!-- Exercise 4: Support Hold -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/smith-pic.jpg" alt="Smith Row" loading="lazy" decoding="async">
+                                <img src="../images/DIPS.png" alt="Support Hold" loading="lazy" decoding="async">
                                 <div>
-                                    <div style="font-weight:600">Smith Row</div>
+                                    <div style="font-weight:600">Support Hold</div>
                                     <div style="font-size:13px; color:#9fb1c7">
-                                        Primary muscle • Back
+                                        Primary muscle • Triceps, shoulders, core
                                     </div>
                                 </div>
                             </article>
@@ -116,11 +116,11 @@ include('../includes/header.php');
             <div class="card">
                 <strong>Machine Details</strong>
                 <ul class="meta-list" style="margin-top:10px">
-                    <li><strong>Equipment:</strong> Smith Machine</li>
-                    <li><strong>Type:</strong> Guided Barbell / Multi-Function</li>
-                    <li><strong>Difficulty:</strong> Beginner — Advanced</li>
-                    <li><strong>Focus Muscles:</strong> Full Body (varies by exercise)</li>
-                    <li><strong>Auxiliary Muscles:</strong> Stabilizers, Core</li>
+                    <li><strong>Equipment:</strong> Dips / Leg Raise Station</li>
+                    <li><strong>Type:</strong> Bodyweight Upper-Body and Core Station</li>
+                    <li><strong>Difficulty:</strong> Intermediate — Advanced</li>
+                    <li><strong>Focus Muscles:</strong> Triceps, Chest, Abdominals</li>
+                    <li><strong>Auxiliary Muscles:</strong> Shoulders, Hip Flexors, Forearms</li>
                 </ul>
                 <div class="cta">
                     <button type="button" 
@@ -136,9 +136,9 @@ include('../includes/header.php');
             <div class="card">
                 <strong>Quick Tips</strong>
                 <ol style="margin-top:8px; color:#c9d6e1; font-size:14px">
-                    <li>Bar moves on fixed vertical path.</li>
-                    <li>Use safety hooks for secure training.</li>
-                    <li>Great for learning proper form safely.</li>
+                    <li>Keep your shoulders down and chest lifted to avoid shrugging into the rep.</li>
+                    <li>Use slow, controlled leg raises and avoid swinging for momentum.</li>
+                    <li>Reduce range of motion if shoulder discomfort appears during dips.</li>
                 </ol>
             </div>
             

@@ -154,6 +154,12 @@ $machines = [
         'desc' => 'Triceps, chest, shoulder exercises'
     ],
     [
+        'name' => 'Machine Row',
+        'file' => 'MachineRow.php',
+        'image' => 'images/MachineRow.png',
+        'desc' => 'Back, bicep, and rear delt exercises'
+    ],
+    [
         'name' => 'Preacher Curl Station',
         'file' => 'PreacherCurl.php',
         'image' => 'images/PreacherCurl.png',
