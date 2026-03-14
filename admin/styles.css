@@ -225,3 +225,26 @@ body {
     color: var(--text-primary);
     padding: 60px 20px;
 }
+
+/* PAGINATION DESIGN */
+.pagination {
+    margin-top: 1.5rem;
+}
+.page-link {
+    color: var(--hazard-yellow);
+    border-color: #dee2e6;
+}
+.page-link:hover {
+    color: black;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+.page-item.active .page-link {
+    background-color: var(--hazard-yellow);
+    border-color: black;
+}
+.page-item.disabled .page-link {
+    color: var(--hazard-yellow);
+    background-color: #fff;
+    border-color: #dee2e6;
+}
