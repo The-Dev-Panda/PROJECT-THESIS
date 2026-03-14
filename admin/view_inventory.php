@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if(empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin'){
+if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     header('Location: ../Login/Login_Page.php');
     exit();
 }
@@ -131,69 +131,9 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
 </head>
 
 <body class="bg-dark">
-    <img src="../images/Fitstop.png" alt="FITSTOP LOGIN" class="img-fluid w-100 h-100"
-        style="object-fit: cover; position: fixed; opacity: 10%; z-index: -1;">
-
-    <nav class="navbar navbar-expand-lg sticky-top">
-        <div class="container">
-            <a class="navbar-brand brand-front" href="../index.php">
-                <i class="bi bi-lightning-fill"></i> FITSTOP - <span class="text-danger">
-                    Admin</span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="Admin_Landing_Page.php">
-                            <i class="bi bi-graph-up"></i> Analytics
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="create_announcement.php">
-                            <i class="bi bi-megaphone"></i> Announcements
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="create_staff.php">
-                            <i class="bi bi-person-plus"></i> Create Staff
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="view_inventory.php">
-                            <i class="bi bi-box-seam"></i> Inventory
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="view_staff.php">
-                            <i class="bi bi-people"></i> Staff
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="view_members.php">
-                            <i class="bi bi-person-badge"></i> Members
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="view_feedback.php">
-                            <i class="bi bi-chat-square-text"></i> Feedback
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <form action="../Login/logout.php" method="POST" class="d-inline">
-                            <button type="submit" class="nav-link border-0 bg-transparent" style="cursor: pointer;">
-                                <i class="bi bi-box-arrow-right"></i> Logout
-                            </button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
+    <?php include('includes/header_admin.php') ?>
     <div class="page-header">
-        <div class="container">
+        <div class="container py-5">
             <h1 class="mb-0"><i class="bi bi-box-seam me-2"></i>Manage Inventory</h1>
         </div>
     </div>
@@ -354,11 +294,31 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
                             <label class="form-label">Item Name</label>
                             <input type="text" name="item_name" class="form-control" required>
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label">Category</label>
-                            <input type="text" name="category" class="form-control"
-                                placeholder="e.g., Equipment, Supplements, Apparel" required>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <select class="form-select" id="category_select" onchange="handleCategoryChange()">
+                                        <option value="">-- Select Existing --</option>
+                                        <?php
+                                        $cat_stmt = $pdo->query("SELECT DISTINCT category FROM inventory WHERE category IS NOT NULL AND category != '' ORDER BY category");
+                                        $existing_categories = $cat_stmt->fetchAll(PDO::FETCH_COLUMN);
+
+                                        foreach ($existing_categories as $cat) {
+                                            echo "<option value='" . htmlspecialchars($cat) . "'>" . htmlspecialchars($cat) . "</option>";
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" name="category" id="category_input" class="form-control"
+                                        placeholder="Or type new category" required>
+                                </div>
+                            </div>
+                            <small class="text-muted">Select existing or type a new category</small>
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label">Quantity</label>
                             <input type="number" name="quantity" class="form-control" min="0" required>
@@ -381,51 +341,17 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
         </div>
     </div>
 
-    <!-- Edit Item Modal -->
-    <div class="modal fade" id="editItemModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Item</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <form method="POST">
-                    <input type="hidden" name="item_id" id="edit_item_id">
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Item Name</label>
-                            <input type="text" name="item_name" id="edit_item_name" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <input type="text" name="category" id="edit_category" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Quantity</label>
-                            <input type="number" name="quantity" id="edit_quantity" class="form-control" min="0"
-                                required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Price</label>
-                            <input type="number" name="price" id="edit_price" class="form-control" step="0.01" min="0"
-                                required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea name="description" id="edit_description" class="form-control" rows="3"></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" name="update_item" class="btn btn-primary">Update Item</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function handleCategoryChange() {
+            const select = document.getElementById('category_select');
+            const input = document.getElementById('category_input');
+
+            if (select.value !== '') {
+                input.value = '';
+                input.value = select.value;
+            }
+        }
         function editItem(item) {
             document.getElementById('edit_item_id').value = item.id;
             document.getElementById('edit_item_name').value = item.item_name;

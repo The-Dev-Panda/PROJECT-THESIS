@@ -96,34 +96,7 @@ try {
     </style>
 </head>
 <body class="bg-dark">
-    <img src="../images/Fitstop.png" alt="FITSTOP" class="img-fluid w-100 h-100" style="object-fit: cover; position: fixed; opacity: 0.1; z-index: -1;">
-
-    <nav class="navbar navbar-expand-lg sticky-top">
-        <div class="container">
-            <a class="navbar-brand brand-front" href="<?= $isAdmin ? 'Admin_Landing_Page.php' : '../staff/staff.php' ?>">
-                <i class="bi bi-lightning-fill"></i> FITSTOP - <span class="text-danger"><?= $isAdmin ? 'Admin' : 'Staff' ?></span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <?php if ($isAdmin): ?>
-                    <li class="nav-item"><a class="nav-link" href="Admin_Landing_Page.php"><i class="bi bi-graph-up"></i> Analytics</a></li>
-                    <li class="nav-item"><a class="nav-link" href="create_announcement.php"><i class="bi bi-megaphone"></i> Announcements</a></li>
-                    <?php endif; ?>
-                    <li class="nav-item"><a class="nav-link" href="view_inventory.php"><i class="bi bi-box-seam"></i> Inventory</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="view_feedback.php"><i class="bi bi-chat-square-text"></i> Feedback</a></li>
-                    <li class="nav-item">
-                        <form action="../Login/logout.php" method="POST" class="d-inline">
-                            <button type="submit" class="nav-link border-0 bg-transparent" style="cursor:pointer;"><i class="bi bi-box-arrow-right"></i> Logout</button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
+<?php include('includes/header_admin.php') ?>
     <div class="page-header">
         <div class="container">
             <h1 class="mb-0"><i class="bi bi-chat-square-text-fill me-2"></i>Feedback Management</h1>

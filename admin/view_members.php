@@ -32,7 +32,7 @@ function timeAgo($datetime)
 {
     if (!$datetime)
         return 'Never';
-    
+
     $time = strtotime($datetime);
     $diff = time() - $time;
 
@@ -76,67 +76,7 @@ function timeAgo($datetime)
 </head>
 
 <body class="bg-dark">
-    <img src="../images/Fitstop.png" alt="FITSTOP LOGIN" class="img-fluid w-100 h-100"
-        style="object-fit: cover; position: fixed; opacity: 10%; z-index: -1;">
-
-    <nav class="navbar navbar-expand-lg sticky-top">
-        <div class="container">
-            <a class="navbar-brand brand-front" href="../index.php">
-                <i class="bi bi-lightning-fill"></i> FITSTOP - <span class="text-danger">
-                    Admin</span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="Admin_Landing_Page.php">
-                            <i class="bi bi-graph-up"></i> Analytics
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="create_announcement.php">
-                            <i class="bi bi-megaphone"></i> Announcements
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="create_staff.php">
-                            <i class="bi bi-person-plus"></i> Create Staff
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="view_inventory.php">
-                            <i class="bi bi-box-seam"></i> Inventory
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="view_staff.php">
-                            <i class="bi bi-people"></i> Staff
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="view_members.php">
-                            <i class="bi bi-person-badge"></i> Members
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="view_feedback.php">
-                            <i class="bi bi-chat-square-text"></i> Feedback
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <form action="../Login/logout.php" method="POST" class="d-inline">
-                            <button type="submit" class="nav-link border-0 bg-transparent" style="cursor: pointer;">
-                                <i class="bi bi-box-arrow-right"></i> Logout
-                            </button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
+    <?php include('includes/header_admin.php') ?>
     <div class="container py-5">
         <div class="members-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
