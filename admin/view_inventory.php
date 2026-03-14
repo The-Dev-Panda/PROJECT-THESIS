@@ -363,6 +363,7 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
             new bootstrap.Modal(document.getElementById('editItemModal')).show();
         }
     </script>
+    <?php include('includes/footer_admin.php') ?>
 </body>
 
 </html>

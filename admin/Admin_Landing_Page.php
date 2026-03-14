@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if(empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin'){
+if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     header('Location: ../Login/Login_Page.php');
     exit();
 }
@@ -32,7 +32,7 @@ if(empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin'){
 </head>
 
 <body class="bg-dark">
-    <?php include('includes/header_admin.php')?>
+    <?php include('includes/header_admin.php') ?>
     <div class="dashboard-header">
         <div class="container">
             <h1 class="mb-2">Welcome back,
@@ -371,6 +371,8 @@ if(empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin'){
                 }
             });
         </script>
+    </div>
+    <?php include('includes/footer_admin.php') ?>
 </body>
 
 </html>

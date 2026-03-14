@@ -192,7 +192,7 @@ function timeAgo($datetime)
             ?>
         </div>
     </div>
-
+    <?php include('includes/footer_admin.php') ?>
 </body>
 
 </html>

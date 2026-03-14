@@ -141,6 +141,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
             </div>
         </div>
     </div>
+    <?php include('includes/footer_admin.php') ?>
 </body>
 
 </html>
