@@ -1,3 +1,10 @@
+<?php
+session_start();
+if (isset($_SESSION["username"]) && $_SESSION["username"] != "") {
+    header('Location: success.php');
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html>
 
@@ -21,28 +28,7 @@
 </head>
 
 <body class="bg-dark">
-
-    <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container">
-        <a class="navbar-brand brand-font" href="../index.php">
-                [FIT-STOP]
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item me-4">
-                        <a class="nav-link text-white" href="../machines/equipment.php">EQUIPMENT</a>
-                    </li>
-                    <li class="nav-item me-4">
-                        <a class="nav-link text-white" href="../aboutus.php">About Us</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
+<?php include('header.php');?>
     <div class="container-fluid">
         <div class="row vh-100">
             <div class="col-md-6 col-sm-12 d-flex justify-content-center align-items-center">
@@ -70,7 +56,7 @@
                             }
                             ?>
                             <div class="row mt-4">
-                                <input type="submit" value="Login" class="btn"
+                                <input type="submit" value="Login" class="btn text-dark"
                                     style="background-color:rgb(197, 184, 0);">
                             </div>
                         </div>
@@ -90,13 +76,7 @@
             </div>
         </div>
     </div>
+    <?php include('../includes/footer.php');?>
 </body>
-<?php
-session_start();
-if (isset($_SESSION["username"]) && $_SESSION["username"] != "") {
-    header('Location: success.php');
-    exit();
-}
-?>
 
 </html>

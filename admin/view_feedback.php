@@ -23,12 +23,16 @@ try {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <title>Feedback Management - FITSTOP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -77,10 +81,25 @@ try {
             text-transform: uppercase;
         }
 
-        .chip-pending { background: #ffc107; color: #1c1c1c; }
-        .chip-in_progress { background: #17a2b8; color: #fff; }
-        .chip-resolved { background: #28a745; color: #fff; }
-        .chip-closed { background: #6c757d; color: #fff; }
+        .chip-pending {
+            background: #ffc107;
+            color: #1c1c1c;
+        }
+
+        .chip-in_progress {
+            background: #17a2b8;
+            color: #fff;
+        }
+
+        .chip-resolved {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .chip-closed {
+            background: #6c757d;
+            color: #fff;
+        }
 
         .filter-btn.active {
             color: #1c1c1c !important;
@@ -95,35 +114,9 @@ try {
         }
     </style>
 </head>
+
 <body class="bg-dark">
-    <img src="../images/Fitstop.png" alt="FITSTOP" class="img-fluid w-100 h-100" style="object-fit: cover; position: fixed; opacity: 0.1; z-index: -1;">
-
-    <nav class="navbar navbar-expand-lg sticky-top">
-        <div class="container">
-            <a class="navbar-brand brand-front" href="<?= $isAdmin ? 'Admin_Landing_Page.php' : '../staff/staff.php' ?>">
-                <i class="bi bi-lightning-fill"></i> FITSTOP - <span class="text-danger"><?= $isAdmin ? 'Admin' : 'Staff' ?></span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <?php if ($isAdmin): ?>
-                    <li class="nav-item"><a class="nav-link" href="Admin_Landing_Page.php"><i class="bi bi-graph-up"></i> Analytics</a></li>
-                    <li class="nav-item"><a class="nav-link" href="create_announcement.php"><i class="bi bi-megaphone"></i> Announcements</a></li>
-                    <?php endif; ?>
-                    <li class="nav-item"><a class="nav-link" href="view_inventory.php"><i class="bi bi-box-seam"></i> Inventory</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="view_feedback.php"><i class="bi bi-chat-square-text"></i> Feedback</a></li>
-                    <li class="nav-item">
-                        <form action="../Login/logout.php" method="POST" class="d-inline">
-                            <button type="submit" class="nav-link border-0 bg-transparent" style="cursor:pointer;"><i class="bi bi-box-arrow-right"></i> Logout</button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
+    <?php include('includes/header_admin.php') ?>
     <div class="page-header">
         <div class="container">
             <h1 class="mb-0"><i class="bi bi-chat-square-text-fill me-2"></i>Feedback Management</h1>
@@ -151,37 +144,39 @@ try {
                 <?php else: ?>
                     <?php foreach ($feedbacks as $feedback): ?>
                         <?php
-                            $id = isset($feedback['feedback_id']) ? (int)$feedback['feedback_id'] : 0;
-                            $about = htmlspecialchars((string)$feedback['about']);
-                            $desc = htmlspecialchars((string)$feedback['desc']);
-                            $createdAt = !empty($feedback['created_at']) ? date('F j, Y g:i A', strtotime($feedback['created_at'])) : 'Unknown date';
-                            $status = isset($feedback['status']) && $feedback['status'] !== '' ? (string)$feedback['status'] : 'pending';
-                            $statusSafe = htmlspecialchars($status);
-                            $isGuest = empty($feedback['reporterID']);
-                            $sourceType = $isGuest ? 'guest' : 'member';
+                        $id = isset($feedback['feedback_id']) ? (int) $feedback['feedback_id'] : 0;
+                        $about = htmlspecialchars((string) $feedback['about']);
+                        $desc = htmlspecialchars((string) $feedback['desc']);
+                        $createdAt = !empty($feedback['created_at']) ? date('F j, Y g:i A', strtotime($feedback['created_at'])) : 'Unknown date';
+                        $status = isset($feedback['status']) && $feedback['status'] !== '' ? (string) $feedback['status'] : 'pending';
+                        $statusSafe = htmlspecialchars($status);
+                        $isGuest = empty($feedback['reporterID']);
+                        $sourceType = $isGuest ? 'guest' : 'member';
 
-                            $reporterName = 'Guest';
-                            if (!$isGuest) {
-                                $reporterName = !empty($feedback['last_name']) ? (string)$feedback['last_name'] : 'Member';
-                                try {
-                                    $userStmt = $pdo->prepare('SELECT first_name FROM users WHERE id = :id');
-                                    $userStmt->execute(['id' => $feedback['reporterID']]);
-                                    $user = $userStmt->fetch(PDO::FETCH_ASSOC);
-                                    if (!empty($user['first_name'])) {
-                                        $reporterName = $user['first_name'] . ' ' . $reporterName;
-                                    }
-                                } catch (PDOException $e) {
-                                    // Keep fallback reporter name.
+                        $reporterName = 'Guest';
+                        if (!$isGuest) {
+                            $reporterName = !empty($feedback['last_name']) ? (string) $feedback['last_name'] : 'Member';
+                            try {
+                                $userStmt = $pdo->prepare('SELECT first_name FROM users WHERE id = :id');
+                                $userStmt->execute(['id' => $feedback['reporterID']]);
+                                $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+                                if (!empty($user['first_name'])) {
+                                    $reporterName = $user['first_name'] . ' ' . $reporterName;
                                 }
+                            } catch (PDOException $e) {
+                                // Keep fallback reporter name.
                             }
-                            $reporterName = htmlspecialchars($reporterName);
-                            $statusLabel = htmlspecialchars(strtoupper(str_replace('_', ' ', $status)));
+                        }
+                        $reporterName = htmlspecialchars($reporterName);
+                        $statusLabel = htmlspecialchars(strtoupper(str_replace('_', ' ', $status)));
                         ?>
-                        <article class="feedback-card feedback-item" data-source="<?= $sourceType ?>" data-status="<?= $statusSafe ?>" data-feedback-id="<?= $id ?>">
+                        <article class="feedback-card feedback-item" data-source="<?= $sourceType ?>"
+                            data-status="<?= $statusSafe ?>" data-feedback-id="<?= $id ?>">
                             <div class="d-flex justify-content-between align-items-start gap-3">
                                 <div>
                                     <h2 class="feedback-title h5 mb-1"><i class="bi bi-wrench me-2"></i><?= $about ?></h2>
-                                    <div class="feedback-meta">Reported by <?= $reporterName ?> • <?= htmlspecialchars($createdAt) ?></div>
+                                    <div class="feedback-meta">Reported by <?= $reporterName ?> •
+                                        <?= htmlspecialchars($createdAt) ?></div>
                                 </div>
                                 <span class="status-chip chip-<?= $statusSafe ?> status-label"><?= $statusLabel ?></span>
                             </div>
@@ -190,13 +185,15 @@ try {
 
                             <div class="d-flex flex-wrap align-items-center gap-2">
                                 <label class="form-label mb-0 me-1" for="status-<?= $id ?>">Status:</label>
-                                <select id="status-<?= $id ?>" class="form-select form-select-sm status-select" style="max-width: 220px;" data-feedback-id="<?= $id ?>">
+                                <select id="status-<?= $id ?>" class="form-select form-select-sm status-select"
+                                    style="max-width: 220px;" data-feedback-id="<?= $id ?>">
                                     <option value="pending" <?= $status === 'pending' ? 'selected' : '' ?>>Pending</option>
                                     <option value="in_progress" <?= $status === 'in_progress' ? 'selected' : '' ?>>In Progress</option>
                                     <option value="resolved" <?= $status === 'resolved' ? 'selected' : '' ?>>Resolved</option>
                                     <option value="closed" <?= $status === 'closed' ? 'selected' : '' ?>>Closed</option>
                                 </select>
-                                <button class="btn btn-sm btn-primary update-feedback-btn" data-feedback-id="<?= $id ?>">Update</button>
+                                <button class="btn btn-sm btn-primary update-feedback-btn"
+                                    data-feedback-id="<?= $id ?>">Update</button>
                                 <span class="feedback-message"></span>
                             </div>
                         </article>
@@ -286,5 +283,7 @@ try {
             });
         });
     </script>
+    <?php include('includes/footer_admin.php') ?>
 </body>
+
 </html>

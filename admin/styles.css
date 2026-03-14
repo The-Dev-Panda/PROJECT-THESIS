@@ -1,10 +1,5 @@
 @import url("../styles.css");
-h1, h2, h3, h4, h5, .brand-font {
-    font-family: 'Chakra Petch', sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-/* ANALYTICS PART */
+/* NAVBAR PART */
 .text-hazard {
     color: var(--hazard-yellow);
 }
@@ -15,6 +10,40 @@ body {
 .navbar {
     background-color: #ffffff;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.navbar-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+.navbar-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.navbar-nav {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.navbar-nav .nav-item {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+@media (max-width: 1200px) {
+    .nav-link {
+        font-size: 14px;
+        padding: 0.4rem 0.8rem !important;
+    }
+}
+@media (max-width: 991px) {
+    .navbar-nav {
+        overflow-x: visible;
+        flex-direction: column;
+    }
+    
+    .navbar-nav .nav-item {
+        width: 100%;
+    }
 }
 .navbar-brand {
     font-weight: bold;
