@@ -2,7 +2,7 @@ const BMI_KEY = "fitstop_bmi_data";
 
 /* ── On load: restore saved BMI ── */
 window.addEventListener("DOMContentLoaded", () => {
-  ["mHeightSlider", "mWeightSlider", "mAgeSlider"].forEach((id) =>
+  ["mHeightSlider", "mWeightSlider"].forEach((id) =>
     mPct(document.getElementById(id)),
   );
   const saved = localStorage.getItem(BMI_KEY);

@@ -54,8 +54,7 @@
           </li>
           <li>
             <a href="history.html"
-              ><i class="bi bi-clock-history"></i
-              ><span>Exercise History</span></a
+              ><i class="bi bi-clock-history"></i><span>History</span></a
             >
           </li>
           <li>
@@ -249,3 +248,244 @@
     <script src="lightmode.js"></script>
   </body>
 </html>
+<script>
+  // ── Unique IDs fix (duplicate IDs cause bugs) ──────────────────────────
+  document.getElementById("notificationsToggle")?.removeAttribute("id");
+  const toggleInputs = document.querySelectorAll(
+    '.toggle-wrap input[type="checkbox"]',
+  );
+  const [mealToggle, workoutToggle, waterToggle, darkModeToggle] = toggleInputs;
+
+  // ── localStorage keys ──────────────────────────────────────────────────
+  const KEYS = {
+    meal: "fitstop_meal_reminder",
+    workout: "fitstop_workout_reminder",
+    water: "fitstop_water_reminder",
+    dark: "fitstop_dark_mode",
+  };
+
+  // ── Load saved states on page load ─────────────────────────────────────
+  function loadStates() {
+    mealToggle.checked = localStorage.getItem(KEYS.meal) !== "false";
+    workoutToggle.checked = localStorage.getItem(KEYS.workout) !== "false";
+    waterToggle.checked = localStorage.getItem(KEYS.water) !== "false";
+    // Dark mode: default ON (matches your HTML's `checked` attribute)
+    const darkSaved = localStorage.getItem(KEYS.dark);
+    darkModeToggle.checked = darkSaved === null ? true : darkSaved === "true";
+    applyDarkMode(darkModeToggle.checked);
+  }
+
+  // ── Dark mode apply ────────────────────────────────────────────────────
+  function applyDarkMode(enabled) {
+    document.body.classList.toggle("light-mode", !enabled);
+    const darkInfo = darkModeToggle
+      .closest(".setting-row")
+      ?.querySelector(".setting-info p");
+    if (darkInfo)
+      darkInfo.textContent = enabled
+        ? "Currently enabled"
+        : "Currently disabled";
+  }
+
+  // ── Toggle listeners ───────────────────────────────────────────────────
+  darkModeToggle.addEventListener("change", () => {
+    applyDarkMode(darkModeToggle.checked);
+  });
+
+  // Meal / Workout / Water — show browser notification permission prompt if enabled
+  [mealToggle, workoutToggle, waterToggle].forEach((toggle, i) => {
+    const labels = ["Meal", "Workout", "Water"];
+    toggle.addEventListener("change", () => {
+      if (
+        toggle.checked &&
+        "Notification" in window &&
+        Notification.permission === "default"
+      ) {
+        Notification.requestPermission();
+      }
+      showToast(
+        `${labels[i]} Reminders ${toggle.checked ? "enabled" : "disabled"}`,
+      );
+    });
+  });
+
+  // ── Save button ────────────────────────────────────────────────────────
+  document.querySelector(".save-btn").addEventListener("click", () => {
+    localStorage.setItem(KEYS.meal, mealToggle.checked);
+    localStorage.setItem(KEYS.workout, workoutToggle.checked);
+    localStorage.setItem(KEYS.water, waterToggle.checked);
+    localStorage.setItem(KEYS.dark, darkModeToggle.checked);
+    showToast("Settings saved!", "success");
+  });
+
+  // ── Support buttons ────────────────────────────────────────────────────
+  const arrowBtns = document.querySelectorAll(".arrow-btn");
+  const supportActions = [
+    {
+      label: "About",
+      action: () =>
+        showModal(
+          "About Fit-Stop",
+          "Version 1.0.0\nFit-Stop is your all-in-one fitness companion.",
+        ),
+    },
+    {
+      label: "Help & FAQ",
+      action: () =>
+        showModal(
+          "Help & FAQ",
+          "Q: How do I log a meal?\nA: Go to Dashboard → Log Meal.\n\nQ: How do I change my plan?\nA: Visit My Plan page.",
+        ),
+    },
+    { label: "Contact Support", action: () => openContactSupport() },
+    { label: "Feedback & Bug Report", action: () => openFeedback() },
+    {
+      label: "Terms & Privacy",
+      action: () =>
+        showModal(
+          "Terms & Privacy Policy",
+          "By using Fit-Stop you agree to our Terms of Service and Privacy Policy. We do not sell your data.",
+        ),
+    },
+  ];
+  arrowBtns.forEach((btn, i) => {
+    btn.addEventListener("click", supportActions[i]?.action);
+  });
+
+  // ── Modal helper ───────────────────────────────────────────────────────
+  function showModal(title, body) {
+    const existing = document.getElementById("fs-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "fs-modal";
+    modal.innerHTML = `
+      <div class="fs-modal-backdrop"></div>
+      <div class="fs-modal-box">
+        <h3>${title}</h3>
+        <p>${body.replace(/\n/g, "<br>")}</p>
+        <button class="fs-modal-close save-btn" style="margin-top:1.2rem">Close</button>
+      </div>`;
+    modal
+      .querySelector(".fs-modal-close")
+      .addEventListener("click", () => modal.remove());
+    modal
+      .querySelector(".fs-modal-backdrop")
+      .addEventListener("click", () => modal.remove());
+    document.body.appendChild(modal);
+  }
+
+  // ── Contact Support form ───────────────────────────────────────────────
+  function openContactSupport() {
+    const existing = document.getElementById("fs-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "fs-modal";
+    modal.innerHTML = `
+      <div class="fs-modal-backdrop"></div>
+      <div class="fs-modal-box">
+        <h3>Contact Support</h3>
+        <input class="fs-input" type="text"     placeholder="Your name"    id="cs-name" />
+        <input class="fs-input" type="email"    placeholder="Your email"   id="cs-email" />
+        <textarea class="fs-input" rows="4"     placeholder="Describe your issue..." id="cs-msg"></textarea>
+        <div style="display:flex;gap:.8rem;margin-top:1.2rem">
+          <button class="save-btn"      id="cs-send">Send</button>
+          <button class="arrow-btn"     id="cs-cancel">Cancel</button>
+        </div>
+      </div>`;
+    modal
+      .querySelector("#cs-cancel")
+      .addEventListener("click", () => modal.remove());
+    modal
+      .querySelector(".fs-modal-backdrop")
+      .addEventListener("click", () => modal.remove());
+    modal.querySelector("#cs-send").addEventListener("click", () => {
+      const name = document.getElementById("cs-name").value.trim();
+      const email = document.getElementById("cs-email").value.trim();
+      const msg = document.getElementById("cs-msg").value.trim();
+      if (!name || !email || !msg) {
+        showToast("Please fill in all fields.", "error");
+        return;
+      }
+      modal.remove();
+      showToast("Message sent! We'll get back to you shortly.", "success");
+    });
+    document.body.appendChild(modal);
+  }
+
+  // ── Feedback form ──────────────────────────────────────────────────────
+  function openFeedback() {
+    const existing = document.getElementById("fs-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "fs-modal";
+    modal.innerHTML = `
+      <div class="fs-modal-backdrop"></div>
+      <div class="fs-modal-box">
+        <h3>Feedback & Bug Report</h3>
+        <select class="fs-input" id="fb-type">
+          <option value="">Select type…</option>
+          <option value="feedback">General Feedback</option>
+          <option value="bug">Bug Report</option>
+          <option value="feature">Feature Request</option>
+        </select>
+        <textarea class="fs-input" rows="4" placeholder="Describe your feedback or bug..." id="fb-msg"></textarea>
+        <div style="display:flex;gap:.8rem;margin-top:1.2rem">
+          <button class="save-btn"   id="fb-send">Send</button>
+          <button class="arrow-btn"  id="fb-cancel">Cancel</button>
+        </div>
+      </div>`;
+    modal
+      .querySelector("#fb-cancel")
+      .addEventListener("click", () => modal.remove());
+    modal
+      .querySelector(".fs-modal-backdrop")
+      .addEventListener("click", () => modal.remove());
+    modal.querySelector("#fb-send").addEventListener("click", () => {
+      const type = document.getElementById("fb-type").value;
+      const msg = document.getElementById("fb-msg").value.trim();
+      if (!type || !msg) {
+        showToast("Please fill in all fields.", "error");
+        return;
+      }
+      modal.remove();
+      showToast("Thank you for your feedback!", "success");
+    });
+    document.body.appendChild(modal);
+  }
+
+  // ── Toast notification ─────────────────────────────────────────────────
+  function showToast(message, type = "info") {
+    const existing = document.querySelector(".fs-toast");
+    if (existing) existing.remove();
+
+    const toast = document.createElement("div");
+    toast.className = `fs-toast fs-toast--${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("fs-toast--visible"), 10);
+    setTimeout(() => {
+      toast.classList.remove("fs-toast--visible");
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  // ── Inline styles for modal + toast (no extra CSS file needed) ─────────
+  const style = document.createElement("style");
+  style.textContent = `
+    #fs-modal { position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center; }
+    .fs-modal-backdrop { position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(3px); }
+    .fs-modal-box { position:relative;background:#1a1a1a;border:1px solid #f5c800;border-radius:0;padding:2rem;width:min(420px,90vw);display:flex;flex-direction:column;gap:.8rem; }    .fs-modal-box h3 { color:#f5c800;font-family:'Chakra Petch',sans-serif;font-size:1.1rem;margin:0 0 .4rem; }
+    .fs-modal-box p  { color:#ccc;font-size:.9rem;line-height:1.6;margin:0; }
+    .fs-input { width:100%;background:#111;border:1px solid #333;border-radius:0;padding:.7rem 1rem;color:#fff;font-size:.88rem;font-family:inherit;box-sizing:border-box;transition:border-color .2s; }    .fs-input:focus { outline:none;border-color:#f5c800; }
+    .fs-toast { position:fixed;bottom:2rem;right:2rem;background:#1a1a1a;border:1px solid #f5c800;color:#fff;padding:.75rem 1.4rem;border-radius:0;font-size:.88rem;opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;z-index:99999;pointer-events:none; }    .fs-toast--visible { opacity:1;transform:translateY(0); }
+    .fs-toast--success { border-color:#4caf50; }
+    .fs-toast--error   { border-color:#f44336; }
+  `;
+  document.head.appendChild(style);
+
+  // ── Init ───────────────────────────────────────────────────────────────
+  loadStates();
+</script>
