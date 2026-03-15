@@ -188,10 +188,16 @@ function showMessage(container, type, message) {
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
     alertDiv.setAttribute('role', 'alert');
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
+
+    const messageText = document.createTextNode(String(message || ''));
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'btn-close';
+    closeButton.setAttribute('data-bs-dismiss', 'alert');
+    closeButton.setAttribute('aria-label', 'Close');
+
+    alertDiv.appendChild(messageText);
+    alertDiv.appendChild(closeButton);
     
     container.innerHTML = '';
     container.appendChild(alertDiv);
@@ -221,7 +227,7 @@ window.addEventListener('DOMContentLoaded', function() {
     
     // Check for success parameter
     if (urlParams.has('success')) {
-        const message = decodeURIComponent(urlParams.get('success'));
+        const message = urlParams.get('success');
         showMessage(messageDiv, 'success', message || 'Feedback submitted successfully!');
         
         // Clean URL
@@ -230,7 +236,7 @@ window.addEventListener('DOMContentLoaded', function() {
     
     // Check for error parameter
     if (urlParams.has('error')) {
-        const message = decodeURIComponent(urlParams.get('error'));
+        const message = urlParams.get('error');
         showMessage(messageDiv, 'danger', message || 'An error occurred.');
         
         // Clean URL

@@ -28,6 +28,51 @@ function getNextFeedbackId(PDO $pdo) {
     return $nextId > 0 ? $nextId : 1;
 }
 
+function isSameOriginRequest(): bool {
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+    $currentScheme = $https ? 'https' : 'http';
+    $currentHost = isset($_SERVER['HTTP_HOST']) ? strtolower((string)$_SERVER['HTTP_HOST']) : '';
+
+    if ($currentHost === '') {
+        return false;
+    }
+
+    $origin = isset($_SERVER['HTTP_ORIGIN']) ? trim((string)$_SERVER['HTTP_ORIGIN']) : '';
+    if ($origin !== '') {
+        $originParts = parse_url($origin);
+        if (!is_array($originParts) || empty($originParts['host'])) {
+            return false;
+        }
+
+        $originScheme = isset($originParts['scheme']) ? strtolower((string)$originParts['scheme']) : '';
+        $originHost = strtolower((string)$originParts['host']);
+        $originPort = isset($originParts['port']) ? (int)$originParts['port'] : null;
+        $currentPort = isset($_SERVER['SERVER_PORT']) ? (int)$_SERVER['SERVER_PORT'] : null;
+        $samePort = $originPort === null || $currentPort === null || $originPort === $currentPort;
+
+        return $originScheme === $currentScheme && $originHost === strtolower($currentHost) && $samePort;
+    }
+
+    $referer = isset($_SERVER['HTTP_REFERER']) ? trim((string)$_SERVER['HTTP_REFERER']) : '';
+    if ($referer === '') {
+        return false;
+    }
+
+    $refererParts = parse_url($referer);
+    if (!is_array($refererParts) || empty($refererParts['host'])) {
+        return false;
+    }
+
+    $refererScheme = isset($refererParts['scheme']) ? strtolower((string)$refererParts['scheme']) : '';
+    $refererHost = strtolower((string)$refererParts['host']);
+    $refererPort = isset($refererParts['port']) ? (int)$refererParts['port'] : null;
+    $currentPort = isset($_SERVER['SERVER_PORT']) ? (int)$_SERVER['SERVER_PORT'] : null;
+    $samePort = $refererPort === null || $currentPort === null || $refererPort === $currentPort;
+
+    return $refererScheme === $currentScheme && $refererHost === strtolower($currentHost) && $samePort;
+}
+
 // Check if user is logged in (member vs guest)
 $sessionUsername = isset($_SESSION['username']) ? trim((string)$_SESSION['username']) : '';
 $sessionUserId = isset($_SESSION['id']) ? (int)$_SESSION['id'] : 0;
@@ -35,6 +80,10 @@ $sessionUserId = isset($_SESSION['id']) ? (int)$_SESSION['id'] : 0;
 // Validate POST request
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     sendResponse(false, 'Invalid request method');
+}
+
+if (!isSameOriginRequest()) {
+    sendResponse(false, 'Invalid request origin');
 }
 
 // Get and validate inputs
