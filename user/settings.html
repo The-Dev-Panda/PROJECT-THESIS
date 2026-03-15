@@ -37,13 +37,13 @@
 
         <ul class="menu">
           <li>
-            <a href="user.php"
+            <a href="user.html"
               ><i class="bi bi-grid-1x2"></i
               ><span data-lang="nav-dashboard">Dashboard</span></a
             >
           </li>
           <li>
-            <a href="bmi.php"
+            <a href="bmi.html"
               ><i class="bi bi-heart-pulse"></i><span>BMI Tracker</span></a
             >
           </li>
@@ -94,16 +94,16 @@
         <!-- APP PREFERENCES -->
         <div class="settings-section">
           <div class="section-header">
-            <h3><i class="bi bi-sliders"></i> App Preferences</h3>
+            <h3><i class="bi bi-bell"></i> Notifications</h3>
           </div>
 
           <div class="settings-card">
             <div class="setting-row">
               <div class="setting-left">
-                <div class="setting-icon"><i class="bi bi-bell"></i></div>
+                <div class="setting-icon"><i class="bi bi-fork-knife"></i></div>
                 <div class="setting-info">
-                  <h4>Notifications</h4>
-                  <p>Enable or disable app notifications</p>
+                  <h4>Meal Reminders</h4>
+                  <p>Enable or disable meal reminder notifications</p>
                 </div>
               </div>
               <label class="toggle-wrap">
@@ -114,15 +114,31 @@
             </div>
             <div class="setting-row">
               <div class="setting-left">
-                <div class="setting-icon"><i class="bi bi-plugin"></i></div>
+                <div class="setting-icon"><i class="bi bi-activity"></i></div>
                 <div class="setting-info">
-                  <h4>Connected Apps</h4>
-                  <p>Manage your linked applications</p>
+                  <h4>Workout Reminders</h4>
+                  <p>Enable or disable workout reminder notifications</p>
                 </div>
               </div>
-              <button class="arrow-btn">
-                Manage <i class="bi bi-chevron-right"></i>
-              </button>
+              <label class="toggle-wrap">
+                <input type="checkbox" id="notificationsToggle" />
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+              </label>
+            </div>
+            <div class="setting-row">
+              <div class="setting-left">
+                <div class="setting-icon"><i class="bi bi-droplet"></i></div>
+                <div class="setting-info">
+                  <h4>Water Reminders</h4>
+                  <p>Enable or disable water reminder notifications</p>
+                </div>
+              </div>
+              <label class="toggle-wrap">
+                <input type="checkbox" id="notificationsToggle" />
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+              </label>
             </div>
             <div class="setting-row">
               <div class="setting-left">
@@ -150,6 +166,20 @@
           </div>
 
           <div class="settings-card">
+            <div class="setting-row">
+              <div class="setting-left">
+                <div class="setting-icon">
+                  <i class="bi bi-info-circle"></i>
+                </div>
+                <div class="setting-info">
+                  <h4>About</h4>
+                  <p>Browse about Fit-Stop</p>
+                </div>
+              </div>
+              <button class="arrow-btn">
+                View <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
             <div class="setting-row">
               <div class="setting-left">
                 <div class="setting-icon">
