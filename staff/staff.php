@@ -226,29 +226,56 @@
 
     <!-- MEMBERSHIP PAYMENT SECTION -->
 <section class="registration-section">
-  <h2>Membership Payments</h2>
+  <h2>Payment Processing</h2>
   <div class="registration-card">
-    <form class="registration-form">
+    <form class="registration-form" id="paymentForm">
+      <div style="margin-bottom: 20px;">
+        <label style="color: #a0a0a0; font-size: 11px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; display: block;">Customer Type</label>
+        <div style="display: flex; gap: 15px;">
+          <label style="display: flex; align-items: center; cursor: pointer; color: #fff;">
+            <input type="radio" name="customerType" value="member" checked onchange="toggleCustomerType('member')" style="margin-right: 8px;">
+            <span style="font-weight: 600;">Member</span>
+          </label>
+          <label style="display: flex; align-items: center; cursor: pointer; color: #fff;">
+            <input type="radio" name="customerType" value="non-member" onchange="toggleCustomerType('non-member')" style="margin-right: 8px;">
+            <span style="font-weight: 600;">Walk-In</span>
+          </label>
+        </div>
+      </div>
+
       <div class="form-grid">
-        <div class="form-group">
+        <div class="form-group" id="memberIdGroup">
           <label>Member ID</label>
-          <input type="text" id="paymentMemberID" class="form-input">
+          <input type="text" id="paymentMemberID" class="form-input" placeholder="#MB2024001">
+        </div>
+        <div class="form-group" id="customerNameGroup" style="display: none;">
+          <label>Customer Name</label>
+          <input type="text" id="paymentCustomerName" class="form-input" placeholder="Enter full name">
         </div>
         <div class="form-group">
-          <label>Amount</label>
-          <input type="number" id="paymentAmount" class="form-input">
+          <label>Amount (₱)</label>
+          <input type="number" id="paymentAmount" class="form-input" placeholder="0.00" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Paid For</label>
+          <input type="text" id="paymentPaidFor" class="form-input" placeholder="Monthly Membership / Protein Shake / etc.">
+        </div>
+        <div class="form-group">
+          <label>Optional Notes</label>
+          <input type="text" id="paymentNotes" class="form-input" placeholder="Optional note">
         </div>
         <div class="form-group">
           <label>Payment Method</label>
-          <select class="form-input">
-            <option>Cash</option>
-            <option>GCash</option>
-            <option>Bank Transfer</option>
+          <select id="paymentMethod" class="form-input">
+            <option value="">Select Method</option>
+            <option value="Cash">Cash</option>
+            <option value="GCash">GCash</option>
           </select>
         </div>
       </div>
       <div class="form-actions">
-        <button type="button" class="btn-primary" onclick="processPayment()">Record Payment</button>
+        <button type="button" class="btn-secondary" onclick="clearPaymentForm()">Clear</button>
+        <button type="button" class="btn-primary" id="paymentSubmitBtn" onclick="processPayment()">Generate Receipt</button>
       </div>
     </form>
   </div>
@@ -344,11 +371,12 @@
       </div>
       <div class="form-group">
         <label>Exercise</label>
-        <input type="text" id="exercise" class="form-input">
+        <input type="text" id="exercise" class="form-input" list="exerciseOptions" placeholder="Select or type exercise">
+        <datalist id="exerciseOptions"></datalist>
       </div>
       <div class="form-group">
-        <label>Sets</label>
-        <input type="number" id="sets" class="form-input">
+        <label id="performanceMetricLabel">Weight (kg)</label>
+        <input type="number" id="performanceMetric" class="form-input" placeholder="Enter weight" step="0.1" min="0">
       </div>
       <div class="form-group">
         <label>Reps</label>
@@ -573,6 +601,23 @@
 
   </main>
 </div>
+
+<!-- E-RECEIPT MODAL -->
+<div id="receiptModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center;">
+  <div style="background:#1a1a1a; border:1px solid #333; padding:40px; max-width:500px; width:90%; color:#fff; clip-path:polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);">
+    <div style="text-align:center; margin-bottom:30px; padding-bottom:20px; border-bottom:2px dashed #333;">
+      <h2 style="font-family:'Chakra Petch',sans-serif; text-transform:uppercase; letter-spacing:1px; color:#FFCC00; margin-bottom:5px;">Receipt</h2>
+      <p style="color:#a0a0a0; font-size:12px;">Payment Confirmed</p>
+    </div>
+    
+    <div id="receiptContent" style="margin-bottom:30px; font-size:14px; line-height:1.8;"></div>
+    
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button onclick="printReceipt()" style="background:#FFCC00; color:#000; border:none; padding:12px 25px; font-weight:700; cursor:pointer; font-family:'Chakra Petch',sans-serif; text-transform:uppercase; letter-spacing:0.5px; clip-path:polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);">Print</button>
+      <button onclick="closeReceipt()" style="background:transparent; color:#FFCC00; border:1px solid #FFCC00; padding:12px 25px; font-weight:700; cursor:pointer; font-family:'Chakra Petch',sans-serif; text-transform:uppercase; letter-spacing:0.5px; clip-path:polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);">Close</button>
+    </div>
+  </div>
+</div>
 <script>
   document.getElementById("clearBtn").addEventListener("click", function() {
       document.getElementById("registrationForm").reset();
@@ -638,31 +683,287 @@ function logAttendance(memberID) {
 }
 
 function processPayment(){
-  const id = document.getElementById("paymentMemberID").value;
-  const amount = document.getElementById("paymentAmount").value;
+  const customerType = document.querySelector('input[name="customerType"]:checked').value;
+  const amount = document.getElementById("paymentAmount").value.trim();
+  const paidFor = document.getElementById("paymentPaidFor").value.trim();
+  const notes = document.getElementById("paymentNotes").value.trim();
+  const method = document.getElementById("paymentMethod").value;
+  const paymentSubmitBtn = document.getElementById("paymentSubmitBtn");
+  
+  let memberId = null;
+  let customerName = null;
 
-  if(id && amount){
-    addNotification("Payment received from " + id + " (₱" + amount + ")");
-    alert("Payment Recorded Successfully!");
+  if(customerType === 'member') {
+    memberId = document.getElementById("paymentMemberID").value.trim();
+    if(!memberId) {
+      alert("Please enter Member ID!");
+      return;
+    }
+  } else {
+    customerName = document.getElementById("paymentCustomerName").value.trim();
+    if(!customerName) {
+      alert("Please enter customer name!");
+      return;
+    }
+  }
+
+  if(!amount || !method || !paidFor){
+    alert("Please fill in all fields!");
+    return;
+  }
+
+  if(parseFloat(amount) <= 0){
+    alert("Amount must be greater than 0!");
+    return;
+  }
+
+  paymentSubmitBtn.disabled = true;
+  paymentSubmitBtn.textContent = 'Saving...';
+
+  fetch('../Database/save_transaction.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      customer_type: customerType,
+      member_ref: memberId,
+      customer_name: customerName,
+      amount: parseFloat(amount),
+      payment_method: method,
+      paid_for: paidFor,
+      notes: notes
+    })
+  })
+    .then(response => response.json())
+    .then(data => {
+      paymentSubmitBtn.disabled = false;
+      paymentSubmitBtn.textContent = 'Generate Receipt';
+
+      if (!data.success) {
+        alert(data.error || 'Failed to save transaction.');
+        return;
+      }
+
+      displayReceipt(data.receipt);
+      clearPaymentForm();
+    })
+    .catch(() => {
+      paymentSubmitBtn.disabled = false;
+      paymentSubmitBtn.textContent = 'Generate Receipt';
+      alert('Unable to save transaction right now.');
+    });
+}
+
+function displayReceipt(receipt) {
+  const modal = document.getElementById("receiptModal");
+  const content = document.getElementById("receiptContent");
+  
+  const customerInfo = receipt.customerType === 'member' 
+    ? `<p style="margin:5px 0;"><strong>Member ID:</strong> ${receipt.memberId}</p>`
+    : `<p style="margin:5px 0;"><strong>Customer:</strong> ${receipt.customerName}</p>`;
+  const noteInfo = receipt.notes ? `<p style="margin:5px 0;"><strong>Notes:</strong> ${receipt.notes}</p>` : '';
+  
+  content.innerHTML = `
+    <div style="margin-bottom:15px;">
+      <p style="margin:5px 0;"><strong>Receipt #:</strong> ${receipt.receiptNumber}</p>
+      <p style="margin:5px 0;"><strong>Date:</strong> ${receipt.date}</p>
+      <p style="margin:5px 0;"><strong>Time:</strong> ${receipt.time}</p>
+    </div>
+    
+    <div style="padding:15px; background:#141414; margin:15px 0; border:1px solid #333; clip-path:polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);">
+      ${customerInfo}
+      <p style="margin:5px 0;"><strong>Type:</strong> ${receipt.customerType === 'member' ? 'Member' : 'Walk-In'}</p>
+      <p style="margin:5px 0;"><strong>Paid For:</strong> ${receipt.paidFor || '-'}</p>
+      <p style="margin:5px 0;"><strong>Payment:</strong> ${receipt.method}</p>
+      <p style="margin:5px 0;"><strong>Status:</strong> <span style="color:#00d084;">✓ ${receipt.status}</span></p>
+      ${noteInfo}
+    </div>
+    
+    <div style="border-top:2px dashed #333; padding-top:15px;">
+      <div style="display:flex; justify-content:space-between; margin:10px 0; font-size:16px; font-weight:700;">
+        <span>TOTAL:</span>
+        <span style="color:#FFCC00;">₱${receipt.amount.toFixed(2)}</span>
+      </div>
+    </div>
+  `;
+  
+  window.currentReceipt = receipt;
+  modal.style.display = "flex";
+}
+
+function closeReceipt() {
+  document.getElementById("receiptModal").style.display = "none";
+  addNotification("Receipt " + window.currentReceipt.receiptNumber + " generated");
+}
+
+function printReceipt() {
+  const r = window.currentReceipt;
+  const customerInfo = r.customerType === 'member'
+    ? `Member ID: ${r.memberId}`
+    : `Customer: ${r.customerName}`;
+  const noteInfo = r.notes ? `<div class="detailsrow"><span>Notes:</span> <span>${r.notes}</span></div>` : '';
+  
+  const printWindow = window.open('', '', 'height=500,width=700');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Receipt - ${r.receiptNumber}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; background: white; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px dashed black; padding-bottom: 20px; }
+          .header h2 { margin: 0; font-size: 24px; }
+          .detailsrow { display: flex; justify-content: space-between; padding: 8px 0; }
+          .total { border-top: 2px dashed black; padding-top: 20px; display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; }
+          .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>FIT-STOP GYM</h2>
+          <p>Receipt</p>
+        </div>
+        <div class="details">
+          <div class="detailsrow"><span>Receipt #:</span> <span>${r.receiptNumber}</span></div>
+          <div class="detailsrow"><span>Date:</span> <span>${r.date} ${r.time}</span></div>
+          <div class="detailsrow"><span>${customerInfo}</span></div>
+          <div class="detailsrow"><span>Type:</span> <span>${r.customerType === 'member' ? 'Member' : 'Walk-In'}</span></div>
+          <div class="detailsrow"><span>Paid For:</span> <span>${r.paidFor || '-'}</span></div>
+          <div class="detailsrow"><span>Payment:</span> <span>${r.method}</span></div>
+          ${noteInfo}
+        </div>
+        <div class="total">
+          <span>TOTAL:</span> <span>₱${r.amount.toFixed(2)}</span>
+        </div>
+        <div class="footer">
+          <p>Thank you for your payment!</p>
+        </div>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  setTimeout(() => printWindow.print(), 100);
+}
+
+function toggleCustomerType(type) {
+  if(type === 'member') {
+    document.getElementById('memberIdGroup').style.display = 'block';
+    document.getElementById('customerNameGroup').style.display = 'none';
+  } else {
+    document.getElementById('memberIdGroup').style.display = 'none';
+    document.getElementById('customerNameGroup').style.display = 'block';
+  }
+}
+
+function clearPaymentForm() {
+  document.getElementById("paymentForm").reset();
+  toggleCustomerType('member');
+}
+
+let exerciseNameToId = {};
+let exerciseNameToType = {};
+
+function loadExerciseOptions() {
+  fetch('../Database/get_exercises.php')
+    .then(response => response.json())
+    .then(data => {
+      if (!data.success || !Array.isArray(data.exercises)) {
+        return;
+      }
+
+      const exerciseOptions = document.getElementById('exerciseOptions');
+      if (!exerciseOptions) {
+        return;
+      }
+
+      exerciseNameToId = {};
+      exerciseNameToType = {};
+      data.exercises.forEach(item => {
+        exerciseNameToId[item.name.toLowerCase()] = item.exercise_id;
+        exerciseNameToType[item.name.toLowerCase()] = (item.movement_type || '').toLowerCase();
+      });
+
+      exerciseOptions.innerHTML = data.exercises
+        .map(item => `<option value="${item.name}"></option>`)
+        .join('');
+    })
+    .catch(() => {
+      // Keep workout form usable even if exercise list is unavailable.
+    });
+}
+
+function updatePerformanceMetricField() {
+  const exerciseInput = document.getElementById('exercise');
+  const metricLabel = document.getElementById('performanceMetricLabel');
+  const metricInput = document.getElementById('performanceMetric');
+  if (!exerciseInput || !metricLabel || !metricInput) {
+    return;
+  }
+
+  const movementType = exerciseNameToType[exerciseInput.value.trim().toLowerCase()] || '';
+  if (movementType === 'cardio') {
+    metricLabel.textContent = 'Minutes';
+    metricInput.placeholder = 'Enter minutes';
+  } else {
+    metricLabel.textContent = 'Weight (kg)';
+    metricInput.placeholder = 'Enter weight';
   }
 }
 
 function logWorkout(){
-  const id = document.getElementById("perfID").value;
-  const exercise = document.getElementById("exercise").value;
-  const sets = document.getElementById("sets").value;
-  const reps = document.getElementById("reps").value;
+  const id = document.getElementById("perfID").value.trim();
+  const exercise = document.getElementById("exercise").value.trim();
+  const metricValue = document.getElementById("performanceMetric").value.trim();
+  const reps = document.getElementById("reps").value.trim();
 
-  if(id && exercise){
-    const logs = document.getElementById("workoutLogs");
-
-    const entry = document.createElement("div");
-    entry.classList.add("attendance-item");
-    entry.innerHTML = `<strong>${id}</strong> - ${exercise} (${sets} sets x ${reps} reps)`;
-
-    logs.prepend(entry);
-    addNotification("Workout logged for " + id);
+  if(!id || !exercise || !metricValue || !reps){
+    alert("Please provide Member ID, Exercise, Weight/Minutes, and Reps.");
+    return;
   }
+
+  const exerciseId = exerciseNameToId[exercise.toLowerCase()];
+  if (!exerciseId) {
+    alert("Please choose a valid exercise from the dropdown list.");
+    return;
+  }
+
+  const movementType = exerciseNameToType[exercise.toLowerCase()] || '';
+  const metricNumber = parseFloat(metricValue);
+  if (Number.isNaN(metricNumber) || metricNumber < 0) {
+    alert("Please enter a valid Weight/Minutes value.");
+    return;
+  }
+
+  fetch('../Database/save_workout_log.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      member_ref: id,
+      exercise_id: exerciseId,
+      reps: parseInt(reps, 10),
+      weight: metricNumber
+    })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (!data.success) {
+        alert(data.error || "Failed to save workout log.");
+        return;
+      }
+
+      const logs = document.getElementById("workoutLogs");
+      const entry = document.createElement("div");
+      entry.classList.add("attendance-item");
+      const metricSuffix = movementType === 'cardio' ? 'min' : 'kg';
+      entry.innerHTML = `<strong>${id}</strong> - ${exercise} (#${exerciseId}) (${metricNumber} ${metricSuffix}, ${reps} reps)`;
+      logs.prepend(entry);
+      addNotification("Workout logged for " + id);
+    })
+    .catch(() => {
+      alert("Unable to save workout log right now.");
+    });
 }
 
 function addNotification(message){
@@ -680,6 +981,16 @@ function addNotification(message){
 
   list.prepend(item);
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+  loadExerciseOptions();
+  const exerciseInput = document.getElementById('exercise');
+  if (exerciseInput) {
+    exerciseInput.addEventListener('input', updatePerformanceMetricField);
+    exerciseInput.addEventListener('change', updatePerformanceMetricField);
+  }
+  updatePerformanceMetricField();
+});
 
 </script>
 </body>
