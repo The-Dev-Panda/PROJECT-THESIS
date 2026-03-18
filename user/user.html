@@ -292,9 +292,9 @@
           <div class="section-header">
             <h3><i class="fas fa-trophy"></i> Gym Consistency Leaderboard</h3>
             <div class="leaderboard-filter">
-              <button class="filter-btn active">Weekly</button>
-              <button class="filter-btn">Monthly</button>
-              <button class="filter-btn">All Time</button>
+              <button class="filter-btn active" data-period="weekly">Weekly</button>
+              <button class="filter-btn" data-period="monthly">Monthly (30 days)</button>
+              <button class="filter-btn" data-period="all_time">All Time</button>
             </div>
           </div>
 
@@ -302,7 +302,7 @@
             <!-- Podium -->
             <div class="profile-card terms-card">
               <span class="podium-title">🏅 Top Performers</span>
-              <div class="podium-row">
+              <div class="podium-row" id="leaderboardPodium">
                 <!-- 2nd -->
                 <div class="podium-member rank-2">
                   <div
@@ -385,7 +385,7 @@
             </div>
 
             <!-- Rankings List -->
-            <div class="profile-card terms-card">
+            <div class="profile-card terms-card" id="leaderboardRankingList">
               <div class="ranking-row highlight">
                 <span class="rank-num top">1</span>
                 <div
@@ -807,15 +807,140 @@
         });
       }
 
-      /* ── Leaderboard Filter ── */
-      document.querySelectorAll(".filter-btn").forEach((btn) => {
+      function leaderboardEscapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function leaderboardInitials(name) {
+        const parts = String(name || "")
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean);
+        if (!parts.length) {
+          return "??";
+        }
+        if (parts.length === 1) {
+          return parts[0].substring(0, 2).toUpperCase();
+        }
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+
+      function renderLeaderboard(data) {
+        const podium = document.getElementById("leaderboardPodium");
+        const list = document.getElementById("leaderboardRankingList");
+        if (!podium || !list) {
+          return;
+        }
+
+        const top = Array.isArray(data.top_three) ? data.top_three : [];
+        const rankings = Array.isArray(data.rankings) ? data.rankings : [];
+
+        const first = top.find((entry) => entry.rank === 1) || null;
+        const second = top.find((entry) => entry.rank === 2) || null;
+        const third = top.find((entry) => entry.rank === 3) || null;
+
+        function podiumCard(entry, rankClass, standClass, rankNumber) {
+          if (!entry) {
+            return `
+              <div class="podium-member ${rankClass}">
+                <div class="avatar" style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#374151,#111827);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1rem;">--</div>
+                <span class="member-name">No Data</span>
+                <span class="member-days">0 pts</span>
+                <div class="podium-wrap"><div class="podium-stand ${standClass}">${rankNumber}</div></div>
+              </div>
+            `;
+          }
+
+          const displayName = leaderboardEscapeHtml(entry.name);
+          const initials = leaderboardEscapeHtml(leaderboardInitials(entry.name));
+          const score = Number(entry.score || 0).toLocaleString();
+          const avatarSize = rankNumber === 1 ? 58 : 46;
+          const gradient = rankNumber === 1
+            ? "linear-gradient(135deg, #f59e0b, #d97706)"
+            : rankNumber === 2
+              ? "linear-gradient(135deg, #94a3b8, #64748b)"
+              : "linear-gradient(135deg, #cd7f32, #92400e)";
+
+          return `
+            <div class="podium-member ${rankClass}">
+              <div class="avatar" style="width:${avatarSize}px;height:${avatarSize}px;border-radius:50%;background:${gradient};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1rem;border:3px solid rgba(245,158,11,0.5);">${initials}</div>
+              <span class="member-name">${displayName}</span>
+              <span class="member-days">${score} pts</span>
+              <div class="podium-wrap"><div class="podium-stand ${standClass}">${rankNumber}</div></div>
+            </div>
+          `;
+        }
+
+        podium.innerHTML = [
+          podiumCard(second, "rank-2", "p2", 2),
+          podiumCard(first, "rank-1", "p1", 1),
+          podiumCard(third, "rank-3", "p3", 3)
+        ].join("");
+
+        if (!rankings.length) {
+          list.innerHTML = '<div class="ranking-row"><div class="rank-info"><span class="rname">No leaderboard data yet.</span><span class="rsub">No attendance points found for this period.</span></div></div>';
+          return;
+        }
+
+        list.innerHTML = rankings
+          .map((entry) => {
+            const rankClass = entry.rank <= 3 ? "top" : "";
+            const rowClass = entry.rank === 1 ? "ranking-row highlight" : "ranking-row";
+            const initials = leaderboardEscapeHtml(leaderboardInitials(entry.name));
+            const name = leaderboardEscapeHtml(entry.name);
+            const score = Number(entry.score || 0).toLocaleString();
+
+            return `
+              <div class="${rowClass}">
+                <span class="rank-num ${rankClass}">${entry.rank}</span>
+                <div class="rank-avatar">${initials}</div>
+                <div class="rank-info">
+                  <span class="rname">${name}</span>
+                  <span class="rsub">${score} credited attendance points</span>
+                </div>
+                <div class="rank-score">
+                  <span class="rscore">${score} pts</span>
+                  <span class="rbadge same">—</span>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      function loadLeaderboard(period) {
+        fetch(`../Database/get_leaderboard.php?period=${encodeURIComponent(period)}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (!data.success) {
+              throw new Error(data.error || "Unable to load leaderboard");
+            }
+            renderLeaderboard(data);
+          })
+          .catch(() => {
+            const list = document.getElementById("leaderboardRankingList");
+            if (list) {
+              list.innerHTML = '<div class="ranking-row"><div class="rank-info"><span class="rname">Unable to load leaderboard.</span><span class="rsub">Please try again later.</span></div></div>';
+            }
+          });
+      }
+
+      document.querySelectorAll(".leaderboard-filter .filter-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
           document
-            .querySelectorAll(".filter-btn")
+            .querySelectorAll(".leaderboard-filter .filter-btn")
             .forEach((b) => b.classList.remove("active"));
           btn.classList.add("active");
+          loadLeaderboard(btn.dataset.period || "weekly");
         });
       });
+
+      loadLeaderboard("weekly");
     </script>
   </body>
 </html>

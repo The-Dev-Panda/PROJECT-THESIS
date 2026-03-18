@@ -116,6 +116,13 @@
           <p>Track member check-ins</p>
          <button class="action-btn" onclick="startScanner()">Scan QR Code</button>
         <div id="reader" style="width:300px; margin-top:15px;"></div>
+        <div style="margin-top: 12px; text-align: left;">
+          <label for="manualAttendanceUser" style="display:block; margin-bottom:6px; color:#d6d6d6; font-size:13px;">Manual Attendance (Members Only)</label>
+          <select id="manualAttendanceUser" class="form-input" style="margin-bottom:10px;">
+            <option value="">Select a member...</option>
+          </select>
+          <button class="action-btn" onclick="submitManualAttendance()">Record Manual Attendance</button>
+        </div>
         </div>
         <div class="action-card">
           <i class="bi bi-box-seam-fill"></i>
@@ -626,6 +633,90 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function resolveMemberRefFromQr(qrCodeMessage) {
+  const raw = String(qrCodeMessage || '').trim();
+  if (!raw) {
+    return '';
+  }
+
+  // Support JSON QR payloads and plain id/username payloads.
+  if (raw.startsWith('{') && raw.endsWith('}')) {
+    try {
+      const payload = JSON.parse(raw);
+      const preferred = payload.member_ref || payload.member_id || payload.user_id || payload.id || payload.username;
+      return preferred ? String(preferred).trim() : '';
+    } catch (err) {
+      return raw;
+    }
+  }
+
+  return raw;
+}
+
+function submitAttendance(memberRef, source) {
+  return fetch('../Database/save_attendance.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      member_ref: memberRef,
+      source: source
+    })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (!data.success) {
+        throw new Error(data.error || 'Unable to record attendance.');
+      }
+
+      const label = data.member_display_name || memberRef;
+      logAttendance(label, Boolean(data.point_awarded));
+      addNotification(
+        data.point_awarded
+          ? 'Attendance saved for ' + label + ' (+1 point today)'
+          : 'Attendance saved for ' + label + ' (point already credited today)'
+      );
+
+      return data;
+    });
+}
+
+function loadAttendanceMembers() {
+  fetch('../Database/get_attendance_members.php')
+    .then(response => response.json())
+    .then(data => {
+      if (!data.success || !Array.isArray(data.members)) {
+        return;
+      }
+
+      const select = document.getElementById('manualAttendanceUser');
+      if (!select) {
+        return;
+      }
+
+      select.innerHTML = '<option value="">Select a member...</option>';
+      data.members.forEach(member => {
+        const option = document.createElement('option');
+        option.value = member.member_ref;
+        option.textContent = member.display_name;
+        select.appendChild(option);
+      });
+    })
+    .catch(() => {
+      // Keep UI usable even if member list is temporarily unavailable.
+    });
+}
+
 function startScanner() {
 
   const readerDiv = document.getElementById("reader");
@@ -640,16 +731,50 @@ function startScanner() {
       qrbox: 250
     },
     qrCodeMessage => {
+      const memberRef = resolveMemberRefFromQr(qrCodeMessage);
+      if (!memberRef) {
+        alert('Invalid QR data. Please scan a valid member QR code.');
+        return;
+      }
 
-      alert("Scanned Member ID: " + qrCodeMessage);
-
-      html5QrCode.stop();
+      submitAttendance(memberRef, 'qr')
+        .then(data => {
+          const msg = data.point_awarded
+            ? 'Attendance recorded. +1 point credited.'
+            : 'Attendance recorded. Point already credited today.';
+          alert(msg);
+        })
+        .catch(err => {
+          alert(err.message || 'Unable to save attendance right now.');
+        })
+        .finally(() => {
+          html5QrCode.stop();
+        });
     },
     errorMessage => {
     }
   ).catch(err => {
     alert("Camera Error: " + err);
   });
+}
+
+function submitManualAttendance() {
+  const select = document.getElementById('manualAttendanceUser');
+  if (!select || !select.value) {
+    alert('Please select a member first.');
+    return;
+  }
+
+  submitAttendance(select.value, 'manual')
+    .then(data => {
+      const msg = data.point_awarded
+        ? 'Manual attendance recorded. +1 point credited.'
+        : 'Manual attendance recorded. Point already credited today.';
+      alert(msg);
+    })
+    .catch(err => {
+      alert(err.message || 'Unable to save attendance right now.');
+    });
 }
 </script>
 <script>
@@ -661,25 +786,30 @@ function goToInventory() {
 </script>
 <script>
 
-function logAttendance(memberID) {
+function logAttendance(memberID, pointAwarded) {
   const attendanceList = document.querySelector(".attendance-list");
 
   const newItem = document.createElement("div");
   newItem.classList.add("attendance-item");
 
+  const rawMember = String(memberID || '').trim() || 'Member';
+  const safeMember = escapeHtml(rawMember);
+  const initials = rawMember.substring(0, 2).toUpperCase();
+  const badgeClass = pointAwarded ? 'check-in-badge' : 'check-out-badge';
+  const badgeText = pointAwarded ? 'Check-In (+1 pt)' : 'Check-In (No point)';
+
   newItem.innerHTML = `
     <div class="member-info">
-      <div class="member-avatar">${memberID.substring(0,2)}</div>
+      <div class="member-avatar">${initials}</div>
       <div>
-        <strong>${memberID}</strong>
+        <strong>${safeMember}</strong>
         <span class="time">Just now</span>
       </div>
     </div>
-    <span class="check-in-badge">Check-In</span>
+    <span class="${badgeClass}">${badgeText}</span>
   `;
 
   attendanceList.prepend(newItem);
-  addNotification("Attendance logged for " + memberID);
 }
 
 function processPayment(){
@@ -984,6 +1114,7 @@ function addNotification(message){
 
 document.addEventListener('DOMContentLoaded', function () {
   loadExerciseOptions();
+  loadAttendanceMembers();
   const exerciseInput = document.getElementById('exercise');
   if (exerciseInput) {
     exerciseInput.addEventListener('input', updatePerformanceMetricField);
