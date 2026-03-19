@@ -102,7 +102,7 @@
               <img src="userimage/woman.png" alt="Profile Avatar" />
             </div>
             <div class="profile-header-info">
-              <h1>Linda Walker</h1>
+              <h1 id="profileHeaderName">Linda Walker</h1>
               <p class="profile-subtitle">New Member • Active Since 2026</p>
               <div class="profile-stats-mini">
                 <div class="stat-badge">
@@ -132,11 +132,11 @@
             <div class="info-grid">
               <div class="info-item">
                 <span class="info-label">Full Name</span>
-                <span class="info-value">Linda Walker</span>
+                <span class="info-value" id="profileFullName">Linda Walker</span>
               </div>
               <div class="info-item">
                 <span class="info-label">Age</span>
-                <span class="info-value">22 Years</span>
+                <span class="info-value" id="profileAge">22 Years</span>
               </div>
               <div class="info-item">
                 <span class="info-label">Birthdate</span>
@@ -156,12 +156,46 @@
               </div>
               <div class="info-item">
                 <span class="info-label">Email Address</span>
-                <span class="info-value">linda.walker@email.com</span>
+                <span class="info-value" id="profileEmail">linda.walker@email.com</span>
               </div>
               <div class="info-item">
                 <span class="info-label">Member ID</span>
-                <span class="info-value">FS-2026-001</span>
+                <span class="info-value" id="profileMemberId">FS-2026-001</span>
               </div>
+            </div>
+
+            <div class="emergency-contact" style="margin-top: 18px;">
+              <h4><i class="fas fa-user-edit"></i> Onboarding & Goal Setup</h4>
+              <div class="info-grid-small" style="margin-bottom: 12px;">
+                <div class="info-item">
+                  <span class="info-label">Fitness Experience</span>
+                  <span class="info-value" id="profileFitnessLevel">Not set</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Primary Goal</span>
+                  <span class="info-value" id="profileGoal">Not set</span>
+                </div>
+              </div>
+
+              <form id="profileOnboardingForm" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px;">
+                <input type="number" id="onboardAge" class="form-input" placeholder="Age">
+                <input type="number" id="onboardHeight" class="form-input" placeholder="Height (cm)" step="0.1" min="1">
+                <input type="number" id="onboardWeight" class="form-input" placeholder="Weight (kg)" step="0.1" min="1">
+                <select id="onboardFitnessLevel" class="form-input">
+                  <option value="">Fitness Experience</option>
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                </select>
+                <select id="onboardGoal" class="form-input">
+                  <option value="">Primary Goal</option>
+                  <option value="Weight Loss">Weight Loss</option>
+                  <option value="Muscle Gain">Muscle Gain</option>
+                  <option value="Endurance">Endurance</option>
+                  <option value="General Fitness">General Fitness</option>
+                </select>
+                <button type="submit" class="btn-action primary" style="border:none;">Save Profile</button>
+              </form>
             </div>
 
             <div class="emergency-contact">
@@ -363,14 +397,114 @@
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="lightmode.js"></script>
     <script>
-      // Example: this should come from database
-      const memberID = "M-2026-0001";
+      let currentMemberRef = "";
 
-      const qr = new QRCode(document.getElementById("qrcode"), {
-        text: memberID,
-        width: 150,
-        height: 150,
+      function getMemberRefContext() {
+        const params = new URLSearchParams(window.location.search);
+        const fromUrl = params.get("member_ref");
+        if (fromUrl) {
+          localStorage.setItem("fitstop_member_ref", fromUrl);
+          return fromUrl;
+        }
+
+        const fromStorage = localStorage.getItem("fitstop_member_ref");
+        return fromStorage || "";
+      }
+
+      function setFormValue(id, value) {
+        const el = document.getElementById(id);
+        if (!el) {
+          return;
+        }
+        el.value = value === null || value === undefined ? "" : value;
+      }
+
+      function renderProfile(data) {
+        const user = data.user || {};
+        const profile = data.profile || {};
+
+        currentMemberRef = String(user.id || "");
+        if (currentMemberRef) {
+          localStorage.setItem("fitstop_member_ref", currentMemberRef);
+        }
+
+        document.getElementById("profileHeaderName").textContent = user.full_name || "Member";
+        document.getElementById("profileFullName").textContent = user.full_name || "Member";
+        document.getElementById("profileAge").textContent = profile.age ? profile.age + " Years" : "Not set";
+        document.getElementById("profileEmail").textContent = user.email || "Not set";
+        document.getElementById("profileMemberId").textContent = user.member_id_display || "Not set";
+        document.getElementById("profileFitnessLevel").textContent = profile.fitness_level || "Not set";
+        document.getElementById("profileGoal").textContent = profile.goal || "Not set";
+
+        setFormValue("onboardAge", profile.age);
+        setFormValue("onboardHeight", profile.height_cm);
+        setFormValue("onboardWeight", profile.weight_kg);
+        setFormValue("onboardFitnessLevel", profile.fitness_level || "");
+        setFormValue("onboardGoal", profile.goal || "");
+
+        const qrHost = document.getElementById("qrcode");
+        qrHost.innerHTML = "";
+        new QRCode(qrHost, {
+          text: user.qr_payload || JSON.stringify({ member_ref: currentMemberRef }),
+          width: 150,
+          height: 150,
+        });
+      }
+
+      function loadProfile() {
+        const memberRef = getMemberRefContext();
+        const endpoint = memberRef
+          ? `../Database/get_member_profile.php?member_ref=${encodeURIComponent(memberRef)}`
+          : "../Database/get_member_profile.php";
+
+        fetch(endpoint)
+          .then((response) => response.json())
+          .then((data) => {
+            if (!data.success) {
+              throw new Error(data.error || "Unable to load profile");
+            }
+            renderProfile(data);
+          })
+          .catch((error) => {
+            console.error(error);
+            alert("Unable to load member profile right now.");
+          });
+      }
+
+      document.getElementById("profileOnboardingForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const payload = {
+          member_ref: currentMemberRef || getMemberRefContext(),
+          age: document.getElementById("onboardAge").value,
+          height_cm: document.getElementById("onboardHeight").value,
+          weight_kg: document.getElementById("onboardWeight").value,
+          fitness_level: document.getElementById("onboardFitnessLevel").value,
+          goal: document.getElementById("onboardGoal").value
+        };
+
+        fetch("../Database/upsert_member_profile.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (!data.success) {
+              throw new Error(data.error || "Failed to save profile");
+            }
+            loadProfile();
+            alert("Profile saved.");
+          })
+          .catch((error) => {
+            console.error(error);
+            alert("Unable to save profile right now.");
+          });
       });
+
+      loadProfile();
     </script>
     <script>
       function downloadQR() {

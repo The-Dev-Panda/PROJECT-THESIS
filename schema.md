@@ -15,7 +15,6 @@ CREATE TABLE "users" (
     points INTEGER NOT NULL DEFAULT 0);
 
 
-
 CREATE TABLE inventory (   
     id INTEGER PRIMARY KEY AUTOINCREMENT,   
     item_name VARCHAR(100) NOT NULL,   

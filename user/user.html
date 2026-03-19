@@ -79,14 +79,14 @@
         <!-- TOP BAR -->
         <header class="topbar">
           <div class="welcome">
-            <h1>Hey Sharien!</h1>
-            <p>You are doing great so far</p>
+            <h1 id="dashboardWelcome">Hey Member!</h1>
+            <p id="dashboardWelcomeSub">You are doing great so far</p>
           </div>
           <div class="profile-container">
             <div class="profile-content">
               <div class="profile-text">
-                <strong class="profile-name">Sharien Salarda</strong>
-                <span class="profile-streak">🔥 Streaks • 135 days</span>
+                <strong class="profile-name" id="dashboardProfileName">Member</strong>
+                <span class="profile-streak" id="dashboardFitnessLevel">🔥 Fitness Level • Not set</span>
               </div>
               <div class="profile-pic">
                 <img
@@ -751,11 +751,11 @@
                   <i class="fas fa-bicycle"></i>
                 </div>
                 <div class="goal-info">
-                  <span class="goal-name">Cycling</span>
+                  <span class="goal-name" id="dashboardPrimaryGoalName">Primary Goal</span>
                   <div class="progress-container">
                     <div class="progress-bar yellow" style="width: 65%"></div>
                   </div>
-                  <span class="days-count">65/100 days</span>
+                  <span class="days-count" id="dashboardPrimaryGoalHint">Set your goal in Profile</span>
                 </div>
               </li>
               <li>
@@ -940,7 +940,74 @@
         });
       });
 
+      function getMemberRefContext() {
+        const params = new URLSearchParams(window.location.search);
+        const fromUrl = params.get("member_ref");
+        if (fromUrl) {
+          localStorage.setItem("fitstop_member_ref", fromUrl);
+          return fromUrl;
+        }
+        return localStorage.getItem("fitstop_member_ref") || "";
+      }
+
+      function loadDashboardProfile() {
+        const memberRef = getMemberRefContext();
+        const endpoint = memberRef
+          ? `../Database/get_member_profile.php?member_ref=${encodeURIComponent(memberRef)}`
+          : "../Database/get_member_profile.php";
+
+        fetch(endpoint)
+          .then((response) => response.json())
+          .then((data) => {
+            if (!data.success) {
+              return;
+            }
+
+            const user = data.user || {};
+            const profile = data.profile || {};
+
+            if (user.id) {
+              localStorage.setItem("fitstop_member_ref", String(user.id));
+            }
+
+            const displayName = user.full_name || "Member";
+            const firstName = user.first_name || displayName;
+            const fitnessLevel = profile.fitness_level || "Not set";
+            const goal = profile.goal || "Primary Goal";
+
+            const welcome = document.getElementById("dashboardWelcome");
+            const welcomeSub = document.getElementById("dashboardWelcomeSub");
+            const profileName = document.getElementById("dashboardProfileName");
+            const fitnessText = document.getElementById("dashboardFitnessLevel");
+            const goalName = document.getElementById("dashboardPrimaryGoalName");
+            const goalHint = document.getElementById("dashboardPrimaryGoalHint");
+
+            if (welcome) {
+              welcome.textContent = `Hey ${firstName}!`;
+            }
+            if (welcomeSub) {
+              welcomeSub.textContent = `Goal: ${goal}`;
+            }
+            if (profileName) {
+              profileName.textContent = displayName;
+            }
+            if (fitnessText) {
+              fitnessText.textContent = `🔥 Fitness Level • ${fitnessLevel}`;
+            }
+            if (goalName) {
+              goalName.textContent = goal;
+            }
+            if (goalHint) {
+              goalHint.textContent = "From your Profile settings";
+            }
+          })
+          .catch(() => {
+            // Keep fallback static content if profile API is unavailable.
+          });
+      }
+
       loadLeaderboard("weekly");
+      loadDashboardProfile();
     </script>
   </body>
 </html>

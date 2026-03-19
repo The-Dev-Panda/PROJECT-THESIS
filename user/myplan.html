@@ -319,7 +319,7 @@
         <header class="topbar">
           <div class="welcome">
             <h1>My Plan</h1>
-            <p>Hi Sharien! What is your plan today?</p>
+            <p id="myPlanWelcome">Hi Member! What is your plan today?</p>
           </div>
         </header>
 
@@ -688,11 +688,11 @@
                   <i class="fas fa-bicycle"></i>
                 </div>
                 <div class="goal-info">
-                  <span class="goal-name">Cycling</span>
+                  <span class="goal-name" id="myPlanPrimaryGoalName">Primary Goal</span>
                   <div class="progress-container">
                     <div class="progress-bar yellow" style="width: 65%"></div>
                   </div>
-                  <span class="days-count">65/100 days</span>
+                  <span class="days-count" id="myPlanPrimaryGoalHint">Set your goal in Profile</span>
                 </div>
               </li>
               <li>
@@ -1049,6 +1049,60 @@
       document.getElementById("aiInput").addEventListener("keydown", (e) => {
         if (e.key === "Enter") sendAIMessage();
       });
+
+      function getMemberRefContext() {
+        const params = new URLSearchParams(window.location.search);
+        const fromUrl = params.get("member_ref");
+        if (fromUrl) {
+          localStorage.setItem("fitstop_member_ref", fromUrl);
+          return fromUrl;
+        }
+        return localStorage.getItem("fitstop_member_ref") || "";
+      }
+
+      function loadMyPlanProfile() {
+        const memberRef = getMemberRefContext();
+        const endpoint = memberRef
+          ? `../Database/get_member_profile.php?member_ref=${encodeURIComponent(memberRef)}`
+          : "../Database/get_member_profile.php";
+
+        fetch(endpoint)
+          .then((response) => response.json())
+          .then((data) => {
+            if (!data.success) {
+              return;
+            }
+
+            const user = data.user || {};
+            const profile = data.profile || {};
+            if (user.id) {
+              localStorage.setItem("fitstop_member_ref", String(user.id));
+            }
+
+            const firstName = user.first_name || "Member";
+            const goal = profile.goal || "Primary Goal";
+            const fitnessLevel = profile.fitness_level || "Not set";
+
+            const welcome = document.getElementById("myPlanWelcome");
+            const goalName = document.getElementById("myPlanPrimaryGoalName");
+            const goalHint = document.getElementById("myPlanPrimaryGoalHint");
+
+            if (welcome) {
+              welcome.textContent = `Hi ${firstName}! Goal: ${goal} (${fitnessLevel})`;
+            }
+            if (goalName) {
+              goalName.textContent = goal;
+            }
+            if (goalHint) {
+              goalHint.textContent = `Fitness level: ${fitnessLevel}`;
+            }
+          })
+          .catch(() => {
+            // Keep fallback static content if profile API is unavailable.
+          });
+      }
+
+      loadMyPlanProfile();
     </script>
   </body>
 </html>
