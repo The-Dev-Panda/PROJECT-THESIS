@@ -67,6 +67,15 @@
   <script>
   document.querySelectorAll(".menu li").forEach(item => {
     item.addEventListener("click", function () {
+      // Handle logout button
+      if (this.id === "logoutBtn") {
+        const form = document.createElement("form");
+        form.action = "../Login/logout.php";
+        form.method = "POST";
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
 
       const targetId = this.getAttribute("data-target");
 
