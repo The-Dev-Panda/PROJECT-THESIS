@@ -1,9 +1,11 @@
 <?php
 /*
 
-SA "$user_query" NIYO LAGAY YUNG MGA DATA, AS LEAST AS POSSIBLE PARA DI MAUBOS TOKENS
+SA "$user_query" NIYO LAGAY YUNG MGA DATA, AT LEAST AS POSSIBLE PARA DI MAUBOS TOKENS
 PWEDE NIYO LAGYAN NG MGA IF PARA SPECIFIC YUNG QUERIES SA DATABASE PARA RIN DI HUMABA YUNG PROMPT
 
+example niyan if may word sa query na "announcement" then query yung announcement table para malaman niya yung annoucnements
+meron yan sa php na keywords na code, "str_contains($user_query, 'announcement')". balik parin sa first message ko.
 */
 require_once '../load_env.php';
 try {
