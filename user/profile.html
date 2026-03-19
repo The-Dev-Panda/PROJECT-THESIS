@@ -165,7 +165,7 @@
             </div>
 
             <div class="emergency-contact" style="margin-top: 18px;">
-              <h4><i class="fas fa-user-edit"></i> Onboarding & Goal Setup</h4>
+              <h4><i class="fas fa-user-edit"></i> Profile Setup</h4>
               <div class="info-grid-small" style="margin-bottom: 12px;">
                 <div class="info-item">
                   <span class="info-label">Fitness Experience</span>
@@ -444,8 +444,9 @@
 
         const qrHost = document.getElementById("qrcode");
         qrHost.innerHTML = "";
+        const qrPayload = typeof user.qr_payload === 'string' ? user.qr_payload : JSON.stringify({ member_ref: String(user.id), username: user.username });
         new QRCode(qrHost, {
-          text: user.qr_payload || JSON.stringify({ member_ref: currentMemberRef }),
+          text: qrPayload,
           width: 150,
           height: 150,
         });
@@ -508,9 +509,13 @@
     </script>
     <script>
       function downloadQR() {
-        const img = document.querySelector("#qrcode img");
+        const canvas = document.querySelector("#qrcode canvas");
+        if (!canvas) {
+          alert("QR code not available. Please refresh the page.");
+          return;
+        }
         const link = document.createElement("a");
-        link.href = img.src;
+        link.href = canvas.toDataURL("image/png");
         link.download = "membership-qr.png";
         link.click();
       }
