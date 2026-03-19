@@ -1,16 +1,85 @@
 const BMI_KEY = "fitstop_bmi_data";
 
+function getMemberRefContext() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("member_ref");
+  if (fromUrl) {
+    localStorage.setItem("fitstop_member_ref", fromUrl);
+    return fromUrl;
+  }
+
+  const fromStorage = localStorage.getItem("fitstop_member_ref");
+  return fromStorage || "";
+}
+
+function loadProfileFromDb() {
+  const memberRef = getMemberRefContext();
+  const endpoint = memberRef
+    ? `../Database/get_member_profile.php?member_ref=${encodeURIComponent(memberRef)}`
+    : "../Database/get_member_profile.php";
+
+  return fetch(endpoint)
+    .then((response) => response.json())
+    .then((data) => {
+      if (!data.success || !data.profile) {
+        return null;
+      }
+
+      const profile = data.profile;
+      if (!profile.height_cm || !profile.weight_kg) {
+        return null;
+      }
+
+      return {
+        height: Number(profile.height_cm),
+        weight: Number(profile.weight_kg),
+      };
+    })
+    .catch(() => null);
+}
+
+function saveProfileToDb(d) {
+  const memberRef = getMemberRefContext();
+
+  return fetch("../Database/upsert_member_profile.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      member_ref: memberRef,
+      height_cm: d.height,
+      weight_kg: d.weight,
+    }),
+  }).then((response) => response.json());
+}
+
 /* ── On load: restore saved BMI ── */
 window.addEventListener("DOMContentLoaded", () => {
   ["mHeightSlider", "mWeightSlider"].forEach((id) =>
     mPct(document.getElementById(id)),
   );
-  const saved = localStorage.getItem(BMI_KEY);
-  if (saved) {
-    try {
-      applyDataToDashboard(JSON.parse(saved));
-    } catch (e) {}
-  }
+
+  loadProfileFromDb().then((dbProfile) => {
+    if (dbProfile) {
+      document.getElementById("mHeightSlider").value = dbProfile.height;
+      document.getElementById("mWeightSlider").value = dbProfile.weight;
+      mSync(document.getElementById("mHeightSlider"), "mHeightVal", "cm");
+      mSync(document.getElementById("mWeightSlider"), "mWeightVal", "kg");
+      mCalculate();
+      if (lastCalcData) {
+        applyDataToDashboard(lastCalcData);
+      }
+      return;
+    }
+
+    const saved = localStorage.getItem(BMI_KEY);
+    if (saved) {
+      try {
+        applyDataToDashboard(JSON.parse(saved));
+      } catch (e) {}
+    }
+  });
 });
 
 function applyDataToDashboard(d) {
@@ -137,13 +206,24 @@ function mCalculate() {
 /* ── Apply to Dashboard + persist ── */
 function applyToDashboard() {
   if (!lastCalcData) return;
-  localStorage.setItem(BMI_KEY, JSON.stringify(lastCalcData));
-  applyDataToDashboard(lastCalcData);
-  const applyBtn = document.getElementById("mApplyBtn");
-  applyBtn.classList.add("applied");
-  applyBtn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Applied!';
-  const toast = document.getElementById("bmiToast");
-  toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 3000);
-  setTimeout(() => closeBMIModal(), 1200);
+
+  saveProfileToDb(lastCalcData)
+    .then((data) => {
+      if (!data.success) {
+        throw new Error(data.error || "Failed to save profile");
+      }
+
+      localStorage.setItem(BMI_KEY, JSON.stringify(lastCalcData));
+      applyDataToDashboard(lastCalcData);
+      const applyBtn = document.getElementById("mApplyBtn");
+      applyBtn.classList.add("applied");
+      applyBtn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Applied!';
+      const toast = document.getElementById("bmiToast");
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 3000);
+      setTimeout(() => closeBMIModal(), 1200);
+    })
+    .catch(() => {
+      alert("Unable to save BMI to profile right now.");
+    });
 }

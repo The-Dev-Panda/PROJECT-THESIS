@@ -188,39 +188,48 @@
           <div class="form-grid">
             <div class="form-group">
               <label>Full Name</label>
-              <input type="text" placeholder="Enter client name" class="form-input">
+              <input type="text" id="regFullName" placeholder="Enter client name" class="form-input">
             </div>
             <div class="form-group">
               <label>Age</label>
-              <input type="number" placeholder="Enter age" class="form-input">
+              <input type="number" id="regAge" placeholder="Enter age" class="form-input">
             </div>
             <div class="form-group">
               <label>Contact Number</label>
-              <input type="tel" placeholder="09XXXXXXXXX" class="form-input">
+              <input type="tel" id="regContact" placeholder="09XXXXXXXXX" class="form-input">
             </div>
             <div class="form-group">
               <label>Email Address</label>
-              <input type="email" placeholder="email@example.com" class="form-input">
+              <input type="email" id="regEmail" placeholder="email@example.com" class="form-input">
             </div>
             <div class="form-group">
               <label>Address</label>
-              <input type="text" placeholder="Complete address" class="form-input">
-            </div>
-            <div class="form-group">
-              <label>Membership Package</label>
-              <select class="form-input">
-                <option>Bronze Plan</option>
-                <option>Silver Plan</option>
-                <option>Gold Plan</option>
-              </select>
+              <input type="text" id="regAddress" placeholder="Complete address" class="form-input">
             </div>
             <div class="form-group">
               <label>Height (cm)</label>
-              <input type="number" placeholder="Enter height" class="form-input">
+              <input type="number" id="regHeight" placeholder="Enter height" class="form-input">
             </div>
             <div class="form-group">
               <label>Weight (kg)</label>
-              <input type="number" placeholder="Enter weight" class="form-input">
+              <input type="number" id="regWeight" placeholder="Enter weight" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>Fitness Experience</label>
+              <select class="form-input" id="regFitnessLevel">
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Primary Goal</label>
+              <select class="form-input" id="regGoal">
+                <option value="Weight Loss">Weight Loss</option>
+                <option value="Muscle Gain">Muscle Gain</option>
+                <option value="Endurance">Endurance</option>
+                <option value="General Fitness">General Fitness</option>
+              </select>
             </div>
           </div>
           <div class="form-actions">
@@ -628,6 +637,59 @@
 <script>
   document.getElementById("clearBtn").addEventListener("click", function() {
       document.getElementById("registrationForm").reset();
+  });
+
+  document.getElementById("registrationForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const fullName = document.getElementById("regFullName").value.trim();
+    const email = document.getElementById("regEmail").value.trim();
+    const age = document.getElementById("regAge").value.trim();
+    const heightCm = document.getElementById("regHeight").value.trim();
+    const weightKg = document.getElementById("regWeight").value.trim();
+    const fitnessLevel = document.getElementById("regFitnessLevel").value;
+    const goal = document.getElementById("regGoal").value;
+
+    if (!fullName || !email) {
+      alert("Full name and email are required.");
+      return;
+    }
+
+    fetch('../Database/create_member.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        full_name: fullName,
+        email: email,
+        age: age,
+        height_cm: heightCm,
+        weight_kg: weightKg,
+        fitness_level: fitnessLevel,
+        goal: goal
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (!data.success) {
+        alert(data.error || 'Failed to create member.');
+        return;
+      }
+
+      alert(
+        'Member created!\\n' +
+        'Member ID: ' + data.member_id_display + '\\n' +
+        'Username: ' + data.username + '\\n' +
+        'Temp Password: ' + data.temporary_password
+      );
+
+      document.getElementById("registrationForm").reset();
+      loadAttendanceMembers();
+    })
+    .catch(() => {
+      alert('Unable to create member right now.');
+    });
   });
 </script>
 <script src="https://unpkg.com/html5-qrcode"></script>
