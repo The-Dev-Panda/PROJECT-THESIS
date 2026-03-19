@@ -5,7 +5,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     header('Location: Login_Page.php');
     exit();
 }
-include("../login/connection.php");
+include("../Login/connection.php");
 //GET STAFF DATA
 $stmt = $pdo->query("SELECT id, username, first_name, last_name, email, last_logged_in, created_at 
                      FROM users 

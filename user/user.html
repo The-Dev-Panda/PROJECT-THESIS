@@ -123,35 +123,35 @@
           <div class="bmi-card main-bmi">
             <div class="bmi-header">
               <h3>Your BMI Analysis</h3>
-              <span class="bmi-badge healthy">Healthy</span>
+              <span class="bmi-badge healthy" id="dashboardBmiBadge">Healthy</span>
             </div>
             <div class="bmi-display">
               <div class="bmi-circle">
-                <div class="bmi-value">23.87</div>
+                <div class="bmi-value" id="dashboardBmiValue">--</div>
                 <span class="bmi-unit">kg/m²</span>
               </div>
               <div class="bmi-info">
                 <div class="info-row">
                   <span class="label">Height:</span
-                  ><span class="value">165 cm</span>
+                  ><span class="value" id="dashboardHeight">Not set</span>
                 </div>
                 <div class="info-row">
                   <span class="label">Weight:</span
-                  ><span class="value">65 kg</span>
+                  ><span class="value" id="dashboardWeight">Not set</span>
                 </div>
                 <div class="info-row">
                   <span class="label">Target:</span
-                  ><span class="value">60 kg</span>
+                  ><span class="value" id="dashboardTargetWeight">Not set</span>
                 </div>
                 <div class="info-row">
                   <span class="label">To Goal:</span
-                  ><span class="value">-5 kg</span>
+                  ><span class="value" id="dashboardBmiToGoal">Not set</span>
                 </div>
               </div>
             </div>
             <div class="bmi-scale">
               <div class="scale-bar">
-                <div class="scale-marker" style="left: 61%"></div>
+                <div class="scale-marker" id="dashboardBmiMarker" style="left: 50%"></div>
               </div>
               <div class="scale-labels">
                 <span>Underweight</span><span>Normal</span
@@ -950,6 +950,84 @@
         return localStorage.getItem("fitstop_member_ref") || "";
       }
 
+      function classifyBmi(bmi) {
+        if (bmi < 18.5) {
+          return { label: "Underweight", className: "underweight" };
+        }
+        if (bmi < 25) {
+          return { label: "Healthy", className: "healthy" };
+        }
+        if (bmi < 30) {
+          return { label: "Overweight", className: "overweight" };
+        }
+        return { label: "Obese", className: "obese" };
+      }
+
+      function setDashboardBmi(profile) {
+        const bmiValueEl = document.getElementById("dashboardBmiValue");
+        const heightEl = document.getElementById("dashboardHeight");
+        const weightEl = document.getElementById("dashboardWeight");
+        const targetEl = document.getElementById("dashboardTargetWeight");
+        const toGoalEl = document.getElementById("dashboardBmiToGoal");
+        const markerEl = document.getElementById("dashboardBmiMarker");
+        const badgeEl = document.getElementById("dashboardBmiBadge");
+
+        const heightCm = Number(profile.height_cm);
+        const weightKg = Number(profile.weight_kg);
+        let bmi = profile.bmi !== null && profile.bmi !== undefined && profile.bmi !== ""
+          ? Number(profile.bmi)
+          : null;
+
+        if (!Number.isFinite(bmi) && Number.isFinite(heightCm) && heightCm > 0 && Number.isFinite(weightKg) && weightKg > 0) {
+          const hM = heightCm / 100;
+          bmi = Math.round((weightKg / (hM * hM)) * 10) / 10;
+        }
+
+        if (!Number.isFinite(bmi)) {
+          if (bmiValueEl) bmiValueEl.textContent = "--";
+          if (heightEl) heightEl.textContent = Number.isFinite(heightCm) && heightCm > 0 ? `${heightCm} cm` : "Not set";
+          if (weightEl) weightEl.textContent = Number.isFinite(weightKg) && weightKg > 0 ? `${weightKg} kg` : "Not set";
+          if (targetEl) targetEl.textContent = "Not set";
+          if (toGoalEl) toGoalEl.textContent = "Not set";
+          if (markerEl) markerEl.style.left = "50%";
+          if (badgeEl) {
+            badgeEl.textContent = "Not set";
+            badgeEl.className = "bmi-badge";
+          }
+          return;
+        }
+
+        const classification = classifyBmi(bmi);
+        const markerPct = Math.min(Math.max(((bmi - 10) / 30) * 100, 2), 97);
+        const hasMeasurements = Number.isFinite(heightCm) && heightCm > 0 && Number.isFinite(weightKg) && weightKg > 0;
+
+        let targetWeightText = "Not set";
+        let toGoalText = "Not set";
+
+        if (hasMeasurements) {
+          const hM = heightCm / 100;
+          const idealWeight = 21.7 * hM * hM;
+          const diff = weightKg - idealWeight;
+          targetWeightText = `${Math.round(idealWeight)} kg`;
+          if (Math.abs(diff) < 0.1) {
+            toGoalText = "0 kg";
+          } else {
+            toGoalText = `${diff > 0 ? "+" : ""}${Math.round(diff)} kg`;
+          }
+        }
+
+        if (bmiValueEl) bmiValueEl.textContent = bmi.toFixed(1);
+        if (heightEl) heightEl.textContent = hasMeasurements ? `${heightCm} cm` : "Not set";
+        if (weightEl) weightEl.textContent = hasMeasurements ? `${weightKg} kg` : "Not set";
+        if (targetEl) targetEl.textContent = targetWeightText;
+        if (toGoalEl) toGoalEl.textContent = toGoalText;
+        if (markerEl) markerEl.style.left = `${markerPct}%`;
+        if (badgeEl) {
+          badgeEl.textContent = classification.label;
+          badgeEl.className = `bmi-badge ${classification.className}`;
+        }
+      }
+
       function loadDashboardProfile() {
         const memberRef = getMemberRefContext();
         const endpoint = memberRef
@@ -1000,6 +1078,8 @@
             if (goalHint) {
               goalHint.textContent = "From your Profile settings";
             }
+
+            setDashboardBmi(profile);
           })
           .catch(() => {
             // Keep fallback static content if profile API is unavailable.

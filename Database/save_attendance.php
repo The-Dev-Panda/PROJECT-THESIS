@@ -2,13 +2,8 @@
 header('Content-Type: application/json');
 
 date_default_timezone_set('Asia/Manila');
-$dbPath = __DIR__ . '/DB.sqlite';
 
 try {
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
     $input = json_decode(file_get_contents('php://input'), true);
     if (!is_array($input)) {
         throw new Exception('Invalid request payload');
@@ -25,8 +20,8 @@ try {
         throw new Exception('Invalid attendance source');
     }
 
-    $db = new PDO('sqlite:' . $dbPath);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    include('../Login/connection.php');
+    $db = $pdo;
 
     if (ctype_digit($memberRef)) {
         $userStmt = $db->prepare('SELECT id, username, first_name, last_name, user_type FROM users WHERE id = :id LIMIT 1');

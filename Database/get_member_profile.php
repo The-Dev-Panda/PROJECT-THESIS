@@ -24,6 +24,23 @@ try {
 
     $db = new PDO('sqlite:' . $dbPath);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
+    $db->exec('PRAGMA busy_timeout = 10000');
+    $db->exec('PRAGMA journal_mode = WAL');
+    $db->exec('PRAGMA synchronous = NORMAL');
+    $db->exec('PRAGMA foreign_keys = ON');
+
+    $profileColumns = [];
+    $profileColumnStmt = $db->query('PRAGMA table_info(member_profiles)');
+    if ($profileColumnStmt) {
+        $profileColumnRows = $profileColumnStmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($profileColumnRows as $profileColumnRow) {
+            if (isset($profileColumnRow['name'])) {
+                $profileColumns[] = (string)$profileColumnRow['name'];
+            }
+        }
+    }
+    $hasBmiColumn = in_array('bmi', $profileColumns, true);
 
     if ($memberRef === '') {
         $fallbackStmt = $db->prepare("SELECT id FROM users WHERE lower(coalesce(user_type, '')) = 'user' ORDER BY id ASC LIMIT 1");
@@ -48,9 +65,30 @@ try {
         throw new Exception('Member not found');
     }
 
-    $profileStmt = $db->prepare('SELECT age, height_cm, weight_kg, fitness_level, goal, created_at, updated_at FROM member_profiles WHERE user_id = :user_id LIMIT 1');
+    $profileSelectSql = $hasBmiColumn
+        ? 'SELECT age, height_cm, weight_kg, fitness_level, goal, bmi, created_at, updated_at FROM member_profiles WHERE user_id = :user_id LIMIT 1'
+        : 'SELECT age, height_cm, weight_kg, fitness_level, goal, created_at, updated_at FROM member_profiles WHERE user_id = :user_id LIMIT 1';
+    $profileStmt = $db->prepare($profileSelectSql);
     $profileStmt->execute([':user_id' => (int)$user['id']]);
     $profile = $profileStmt->fetch(PDO::FETCH_ASSOC);
+
+    $profileAge = null;
+    $profileHeightCm = null;
+    $profileWeightKg = null;
+    $profileBmi = null;
+
+    if ($profile) {
+        $profileAge = isset($profile['age']) ? (int)$profile['age'] : null;
+        $profileHeightCm = isset($profile['height_cm']) ? (float)$profile['height_cm'] : null;
+        $profileWeightKg = isset($profile['weight_kg']) ? (float)$profile['weight_kg'] : null;
+
+        if ($hasBmiColumn && isset($profile['bmi']) && $profile['bmi'] !== null && $profile['bmi'] !== '') {
+            $profileBmi = (float)$profile['bmi'];
+        } elseif ($profileHeightCm !== null && $profileHeightCm > 0 && $profileWeightKg !== null && $profileWeightKg > 0) {
+            $heightMeters = $profileHeightCm / 100;
+            $profileBmi = round($profileWeightKg / ($heightMeters * $heightMeters), 1);
+        }
+    }
 
     $memberIdDisplay = 'FS-' . date('Y') . '-' . str_pad((string)$user['id'], 4, '0', STR_PAD_LEFT);
     $qrPayload = [
@@ -72,9 +110,10 @@ try {
             'qr_payload' => json_encode($qrPayload)
         ],
         'profile' => $profile ? [
-            'age' => isset($profile['age']) ? (int)$profile['age'] : null,
-            'height_cm' => isset($profile['height_cm']) ? (float)$profile['height_cm'] : null,
-            'weight_kg' => isset($profile['weight_kg']) ? (float)$profile['weight_kg'] : null,
+            'age' => $profileAge,
+            'height_cm' => $profileHeightCm,
+            'weight_kg' => $profileWeightKg,
+            'bmi' => $profileBmi,
             'fitness_level' => $profile['fitness_level'],
             'goal' => $profile['goal'],
             'created_at' => $profile['created_at'],

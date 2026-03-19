@@ -286,7 +286,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
         </div>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <?php
-        include("../login/connection.php");
+        include("../Login/connection.php");
 
         $member_growth = [];
         $months = [];

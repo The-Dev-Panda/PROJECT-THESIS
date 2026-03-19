@@ -9,7 +9,7 @@ if(empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin'){
 
 <?php
 // CREATING STAFF PART
-include("../login/connection.php");
+include("../Login/connection.php");
 
 if($_SERVER["REQUEST_METHOD"] == "POST"){
     $username = $_POST['username'];

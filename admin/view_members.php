@@ -5,7 +5,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     header('Location: Login_Page.php');
     exit();
 }
-include("../login/connection.php");
+include("../Login/connection.php");
 
 // PAGINATION LOGIC
 $records_per_page = 10;

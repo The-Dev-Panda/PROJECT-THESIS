@@ -1,10 +1,7 @@
 <?php
 
-echo "REQUEST METHOD: " . $_SERVER['REQUEST_METHOD'] . "<br>";
-echo "POST DATA: ";
-print_r($_POST);
-echo "<br><br>";
-
+// Process login form submission.
+// Note: this file must not output debug data to the browser.
 if (isset($_POST["username"])) {
     $username = $_POST['username'];
     $password = $_POST['password'];
@@ -23,8 +20,8 @@ if (isset($_POST["username"])) {
         $update_login = $pdo->prepare('UPDATE users SET last_logged_in = :last_logged_in WHERE username = :username');
         $update_login->execute(['username' => $username, 'last_logged_in' => $now]);
         } catch (PDOException $e) {
-            #debugging
-            echo''. $e->getMessage() .'';
+            // Avoid leaking DB errors to the user.
+            error_log('Login update error: ' . $e->getMessage());
         }
         header('Location: success.php');
         exit();

@@ -5,7 +5,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     header('Location: ../Login/Login_Page.php');
     exit();
 }
-include("../login/connection.php");
+include("../Login/connection.php");
 
 // Handle Add Item
 if (isset($_POST['add_item'])) {

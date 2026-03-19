@@ -2,20 +2,15 @@
 header('Content-Type: application/json');
 
 date_default_timezone_set('Asia/Manila');
-$dbPath = __DIR__ . '/DB.sqlite';
 
 try {
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
     $period = isset($_GET['period']) ? strtolower(trim((string)$_GET['period'])) : 'weekly';
     if ($period !== 'weekly' && $period !== 'monthly' && $period !== 'all_time') {
         $period = 'weekly';
     }
 
-    $db = new PDO('sqlite:' . $dbPath);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    include('../Login/connection.php');
+    $db = $pdo;
 
     $limit = 10;
 

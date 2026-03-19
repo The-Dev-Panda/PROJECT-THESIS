@@ -1,65 +1,35 @@
-
-?>
-<!DOCTYPE html>
-<html>
-
-<head>
-    <meta charset="utf-8">
-    <title>Welcome</title>
-    <meta name="description" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-        crossorigin="anonymous"></script>
-
-</head>
-
-<body class="bg-dark">
-    <img src="../images/Fitstop.png" alt="FITSTOP LOGIN" class="img-fluid w-100 h-100"
-        style="object-fit: cover; position: absolute; opacity: 10%; z-index: -1;">
-    </div>>
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <form action="Logout.php" method="POST">
-                    <button type="submit" class="btn btn-danger">Logout</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</body>
 <?php
 session_start();
-if (empty($_SESSION["username"])) {
-    print ("<h1>Login First</h1>");
-    echo "<br> Login Here:<a href='Login_Page.php'>Login Again</a>";
-    session_destroy();
-    exit();
-} else {
-    print ("Login Success. Welcome, " . $_SESSION["username"] . "  !  " . $_SESSION["user_type"] . "!");
 
-    echo "<br>Session save path: " . session_save_path();
+if (empty($_SESSION['username'])) {
+    session_destroy();
+    header('Location: Login_Page.php');
+    exit();
 }
-#redirect
-if (!empty($_SESSION["username"])) {
-    if ($_SESSION["user_type"] == "admin") {
-        header('Location: ../admin/Admin_Landing_Page.php'); #CHANGE THIS TO ADMIN PAGE
-        exit();
-    } else if ($_SESSION["user_type"] == "user") {
-        header('Location: ../user/user.php');
-        exit();
-    } else if ($_SESSION["user_type"] == "staff") {
-        header('Location: ../staff/staff.php');
-        exit();
-    } else {
-        echo "Invalid user type.";
-        header('Location: ../Login_Page.php');
-        session_destroy();
-        exit();
+
+$userType = strtolower((string)($_SESSION['user_type'] ?? ''));
+$memberId = isset($_SESSION['id']) ? (int)$_SESSION['id'] : 0;
+
+if ($userType === 'admin') {
+    header('Location: ../admin/Admin_Landing_Page.php');
+    exit();
+}
+
+if ($userType === 'user') {
+    $target = '../user/user.html';
+    if ($memberId > 0) {
+        $target .= '?member_ref=' . urlencode((string)$memberId);
     }
+    header('Location: ' . $target);
+    exit();
 }
+
+if ($userType === 'staff') {
+    header('Location: ../staff/staff.php');
+    exit();
+}
+
+session_destroy();
+header('Location: Login_Page.php');
+exit();
 ?>
-</html>

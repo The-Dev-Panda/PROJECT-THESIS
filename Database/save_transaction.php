@@ -42,6 +42,11 @@ try {
 
     $db = new PDO('sqlite:' . $dbPath);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
+    $db->exec('PRAGMA busy_timeout = 10000');
+    $db->exec('PRAGMA journal_mode = WAL');
+    $db->exec('PRAGMA synchronous = NORMAL');
+    $db->exec('PRAGMA foreign_keys = ON');
 
     $userId = null;
     if ($customerType === 'member' && $memberRef !== '') {

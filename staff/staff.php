@@ -240,6 +240,14 @@
                 <option value="General Fitness">General Fitness</option>
               </select>
             </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="regPassword" placeholder="At least 8 chars, letters + numbers" class="form-input" autocomplete="new-password">
+            </div>
+            <div class="form-group">
+              <label>Confirm Password</label>
+              <input type="password" id="regConfirmPassword" placeholder="Re-enter password" class="form-input" autocomplete="new-password">
+            </div>
           </div>
           <div class="form-actions">
             <button type="button" class="btn-secondary" id="clearBtn">Clear Form</button>
@@ -658,9 +666,31 @@
     const weightKg = document.getElementById("regWeight").value.trim();
     const fitnessLevel = document.getElementById("regFitnessLevel").value;
     const goal = document.getElementById("regGoal").value;
+    const password = document.getElementById("regPassword").value;
+    const confirmPassword = document.getElementById("regConfirmPassword").value;
 
     if (!fullName || !email) {
       alert("Full name and email are required.");
+      return;
+    }
+
+    if (!password || !confirmPassword) {
+      alert("Password and confirm password are required.");
+      return;
+    }
+
+    if (password.length < 8) {
+      alert("Password must be at least 8 characters.");
+      return;
+    }
+
+    if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+      alert("Password must include at least one letter and one number.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Password and confirm password do not match.");
       return;
     }
 
@@ -676,7 +706,9 @@
         height_cm: heightCm,
         weight_kg: weightKg,
         fitness_level: fitnessLevel,
-        goal: goal
+        goal: goal,
+        password: password,
+        confirm_password: confirmPassword
       })
     })
     .then(response => response.json())
@@ -690,7 +722,7 @@
         'Member created!\\n' +
         'Member ID: ' + data.member_id_display + '\\n' +
         'Username: ' + data.username + '\\n' +
-        'Temp Password: ' + data.temporary_password
+        'Password saved. Member can still change password from Forgot Password.'
       );
 
       document.getElementById("registrationForm").reset();

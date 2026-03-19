@@ -50,6 +50,7 @@ function saveProfileToDb(d) {
       member_ref: memberRef,
       height_cm: d.height,
       weight_kg: d.weight,
+      bmi: d.bmi,
     }),
   }).then((response) => response.json());
 }

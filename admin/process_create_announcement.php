@@ -28,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $image_data = file_get_contents($file_tmp);
     }
     try {
-        include("../login/connection.php");
+        include("../Login/connection.php");
         $stmt = $pdo->prepare("INSERT INTO announcements (title, description, image, created_by) VALUES (:title, :description, :image, :created_by)");
         $stmt->execute([
             'title' => $title,

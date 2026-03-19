@@ -1,15 +1,9 @@
 <?php
 header('Content-Type: application/json');
 
-$dbPath = __DIR__ . '/DB.sqlite';
-
 try {
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
-    $db = new PDO('sqlite:' . $dbPath);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    include('../Login/connection.php');
+    $db = $pdo;
 
     $stmt = $db->query("SELECT id, username, first_name, last_name FROM users WHERE lower(coalesce(user_type, '')) = 'user' ORDER BY first_name ASC, last_name ASC, username ASC");
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
