@@ -5,18 +5,14 @@ SA "$user_query" NIYO LAGAY YUNG MGA DATA, AS LEAST AS POSSIBLE PARA DI MAUBOS T
 PWEDE NIYO LAGYAN NG MGA IF PARA SPECIFIC YUNG QUERIES SA DATABASE PARA RIN DI HUMABA YUNG PROMPT
 
 */
+require_once '../load_env.php';
 try {
-
-    $user_query = 
-    '
-    Answer in one sentence. Plain text only. Query: ' . $_POST['query']
-    
-    ;
+    $user_query = 'Answer in one sentence. Plain text only. Query: ' . $_POST['query'];
 
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-        CURLOPT_URL => 'https://api.groq.com/openai/v1/chat/completions',
+        CURLOPT_URL => $_ENV['API_URL'],
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_ENCODING => '',
         CURLOPT_MAXREDIRS => 10,
@@ -25,24 +21,24 @@ try {
         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
         CURLOPT_CUSTOMREQUEST => 'POST',
         CURLOPT_POSTFIELDS => '{
-    "messages": [
-        {
-            "role": "user",
-            "content": "' . $user_query . '"
-        }
-    ],
-    "model": "openai/gpt-oss-120b", 
-    "temperature": 0.2,
-    "max_completion_tokens": 200,
-    "top_p": 1,
-    "reasoning_effort": "medium",
-    "stop": null,
-    "tools": [],
-    "seed": 1
-}',
+        "messages": [
+            {
+                "role": "user",
+                "content": "' . $user_query . '"
+            }
+        ],
+        "model": "openai/gpt-oss-120b", 
+        "temperature": 0.2,
+        "max_completion_tokens": 200,
+        "top_p": 1,
+        "reasoning_effort": "medium",
+        "stop": null,
+        "tools": [],
+        "seed": 1
+    }',
         CURLOPT_HTTPHEADER => array(
             'Content-Type: application/json',
-            'Authorization: Bearer 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',
+            'Authorization: Bearer ' . $_ENV['API_BEARER_TOKEN'],
             'Cookie: __cf_bm=DbBFAfNz67CNr.IDFhxVYHVK5onMP.40pcDFUnQWwWE-1773877645.7889497-1.0.1.1-ESY_ivhV2UM6pwB5OYdbD7koNNZkDKQQkg6RZ9.ZGQdVWI51NkD6GtrcjT4ZZ74rCwVbZXPw.hZVvqoK4.J9bho5A7g9PuOMu2j_mm.iryVwK7pJbopTfYLDQ0tSwZiy'
         ),
     ));
@@ -97,7 +93,7 @@ try {
     echo "<hr>";
     echo "<a href='AI_ADVISOR.php' class='btn btn-primary'>Back to Chat</a>";
     #debuggings
-    
+
     //header('Location: AI_ADVISOR.php');
     exit();
 } catch (Exception $e) {
