@@ -940,6 +940,24 @@
         });
       });
 
+      function redirectToLogin(message) {
+        window.location.href = "../Login/Login_Page.php" + (message ? "?error=" + encodeURIComponent(message) : "");
+      }
+
+      function handleApiResponse(response) {
+        if (response.status === 401) {
+          redirectToLogin("Session expired. Please log in.");
+          return Promise.reject(new Error("Unauthorized"));
+        }
+        return response.json().then((body) => {
+          if (!body.success && body.error && body.error.toLowerCase().includes("unauthorized")) {
+            redirectToLogin(body.error);
+            return Promise.reject(new Error(body.error));
+          }
+          return body;
+        });
+      }
+
       function getMemberRefContext() {
         const params = new URLSearchParams(window.location.search);
         const fromUrl = params.get("member_ref");
@@ -1035,7 +1053,7 @@
           : "../Database/get_member_profile.php";
 
         fetch(endpoint)
-          .then((response) => response.json())
+          .then(handleApiResponse)
           .then((data) => {
             if (!data.success) {
               return;

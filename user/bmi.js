@@ -12,6 +12,24 @@ function getMemberRefContext() {
   return fromStorage || "";
 }
 
+function redirectToLogin(message) {
+  window.location.href = "../Login/Login_Page.php" + (message ? "?error=" + encodeURIComponent(message) : "");
+}
+
+function handleApiResponse(response) {
+  if (response.status === 401) {
+    redirectToLogin("Session expired. Please log in.");
+    return Promise.reject(new Error("Unauthorized"));
+  }
+  return response.json().then((body) => {
+    if (!body.success && body.error && body.error.toLowerCase().includes("unauthorized")) {
+      redirectToLogin(body.error);
+      return Promise.reject(new Error(body.error));
+    }
+    return body;
+  });
+}
+
 function loadProfileFromDb() {
   const memberRef = getMemberRefContext();
   const endpoint = memberRef
@@ -19,7 +37,7 @@ function loadProfileFromDb() {
     : "../Database/get_member_profile.php";
 
   return fetch(endpoint)
-    .then((response) => response.json())
+    .then(handleApiResponse)
     .then((data) => {
       if (!data.success || !data.profile) {
         return null;
@@ -50,9 +68,8 @@ function saveProfileToDb(d) {
       member_ref: memberRef,
       height_cm: d.height,
       weight_kg: d.weight,
-      bmi: d.bmi,
     }),
-  }).then((response) => response.json());
+  }).then(handleApiResponse);
 }
 
 /* ── On load: restore saved BMI ── */

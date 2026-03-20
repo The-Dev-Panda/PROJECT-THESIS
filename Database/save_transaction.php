@@ -3,10 +3,24 @@ header('Content-Type: application/json');
 
 $dbPath = __DIR__ . '/DB.sqlite';
 
+function requireUserSession() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (empty($_SESSION['id']) || empty($_SESSION['user_type']) || strtolower($_SESSION['user_type']) !== 'user') {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Unauthorized access. Please login as member.']);
+        exit();
+    }
+    return (int)$_SESSION['id'];
+}
+
 try {
     if (!file_exists($dbPath)) {
         throw new Exception('Database file not found');
     }
+
+    $sessionUserId = requireUserSession();
 
     $input = json_decode(file_get_contents('php://input'), true);
     if (!is_array($input)) {
@@ -15,6 +29,10 @@ try {
 
     $customerType = isset($input['customer_type']) ? trim((string)$input['customer_type']) : '';
     $memberRef = isset($input['member_ref']) ? trim((string)$input['member_ref']) : '';
+
+    if ($customerType === 'member' && $memberRef === '') {
+        $memberRef = (string)$sessionUserId;
+    }
     $customerName = isset($input['customer_name']) ? trim((string)$input['customer_name']) : '';
     $amount = isset($input['amount']) ? (float)$input['amount'] : 0;
     $paymentMethod = isset($input['payment_method']) ? trim((string)$input['payment_method']) : '';
@@ -64,6 +82,12 @@ try {
 
         if ($customerName === '') {
             $customerName = $memberRef;
+        }
+
+        if ($userId !== $sessionUserId) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Forbidden: member mismatch']);
+            exit();
         }
     }
 

@@ -4,22 +4,34 @@ header('Content-Type: application/json');
 date_default_timezone_set('Asia/Manila');
 $dbPath = __DIR__ . '/DB.sqlite';
 
+function requireUserSession() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    if (empty($_SESSION['id']) || empty($_SESSION['user_type']) || strtolower($_SESSION['user_type']) !== 'user') {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Unauthorized access. Please login as member.']);
+        exit();
+    }
+
+    return (int)$_SESSION['id'];
+}
+
 try {
     if (!file_exists($dbPath)) {
         throw new Exception('Database file not found');
     }
 
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
+    $sessionUserId = requireUserSession();
 
     $memberRef = '';
     if (isset($_GET['member_ref'])) {
         $memberRef = trim((string)$_GET['member_ref']);
     }
 
-    if ($memberRef === '' && isset($_SESSION['id'])) {
-        $memberRef = (string)$_SESSION['id'];
+    if ($memberRef === '') {
+        $memberRef = (string)$sessionUserId;
     }
 
     $db = new PDO('sqlite:' . $dbPath);
