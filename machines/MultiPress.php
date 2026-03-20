@@ -62,7 +62,6 @@ include('../includes/header.php');
                         <!-- Exercise 1: Shoulder Press -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Shoulder Press" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Shoulder Press</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -75,7 +74,6 @@ include('../includes/header.php');
                         <!-- Exercise 2: Chest Press -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Chest Press" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Flat Chest Press</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -87,7 +85,6 @@ include('../includes/header.php');
 
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Chest Press" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Incline Chest Press</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -426,3 +423,4 @@ include('../includes/header.php');
 <script src="feedback.js"></script>
 
 <?php include('../includes/footer.php'); ?>
+

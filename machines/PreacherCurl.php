@@ -57,7 +57,6 @@ include('../includes/header.php');
                         <!-- Exercise 1: Preacher Curl -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/PreacherCurl.png" alt="Preacher Curl" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Preacher Curl</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -398,3 +397,4 @@ include('../includes/header.php');
 <script src="feedback.js"></script>
 
 <?php include('../includes/footer.php'); ?>
+

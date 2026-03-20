@@ -51,7 +51,6 @@ include('../includes/header.php');
                         <!-- Exercise 1: Seated Machine Row -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/MachineRow.png" alt="Seated Machine Row" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Seated Machine Row</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -64,7 +63,6 @@ include('../includes/header.php');
                         <!-- Exercise 2: Wide-Grip Row -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/MachineRow.png" alt="Wide-Grip Row" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Wide-Grip Row</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -77,7 +75,6 @@ include('../includes/header.php');
                         <!-- Exercise 3: Close-Grip Row -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/MachineRow.png" alt="Close-Grip Row" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Close-Grip Row</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -90,7 +87,6 @@ include('../includes/header.php');
                         <!-- Exercise 4: Single-Arm Row -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/MachineRow.png" alt="Single-Arm Row" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Single-Arm Row</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -429,3 +425,4 @@ include('../includes/header.php');
 <script src="feedback.js"></script>
 
 <?php include('../includes/footer.php'); ?>
+

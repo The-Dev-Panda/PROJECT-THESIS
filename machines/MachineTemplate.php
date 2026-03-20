@@ -71,7 +71,6 @@ include('../includes/header.php');
                         <?php foreach ($exercises as $exercise): ?>
                         <div class="col">
                             <article class="ex-card">
-                                <img src="<?php echo htmlspecialchars($exercise['image'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($exercise['alt'], ENT_QUOTES, 'UTF-8'); ?>" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600"><?php echo htmlspecialchars($exercise['name'], ENT_QUOTES, 'UTF-8'); ?></div>
                                     <div style="font-size:13px; color:#9fb1c7"><?php echo htmlspecialchars($exercise['muscle'], ENT_QUOTES, 'UTF-8'); ?></div>

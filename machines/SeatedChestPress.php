@@ -57,7 +57,6 @@ include('../includes/header.php');
                         <!-- Exercise 1: Chest Press -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/SeatedChestPress.png" alt="Chest Press" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Chest Press</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -396,3 +395,4 @@ include('../includes/header.php');
 <script src="feedback.js"></script>
 
 <?php include('../includes/footer.php'); ?>
+

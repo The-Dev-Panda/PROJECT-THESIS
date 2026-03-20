@@ -57,7 +57,6 @@ include('../includes/header.php');
                         <!-- Exercise 1: Leg Extension -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/LegExtension-HamstringCurl.png" alt="Leg Extension" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Leg Extension</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -70,7 +69,6 @@ include('../includes/header.php');
                         <!-- Exercise 2: Single-Leg Extension -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/LegExtension-HamstringCurl.png" alt="Single-Leg Extension" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Single-Leg Extension</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -83,7 +81,6 @@ include('../includes/header.php');
                         <!-- Exercise 3: Seated Leg Curl -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/LegExtHamCurl2.png" alt="Seated Leg Curl" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Seated Leg Curl</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -96,7 +93,6 @@ include('../includes/header.php');
                         <!-- Exercise 4: Single-Leg Curl -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/LegExtHamCurl2.png" alt="Single-Leg Curl" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Single-Leg Curl</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -435,3 +431,4 @@ include('../includes/header.php');
 <script src="feedback.js"></script>
 
 <?php include('../includes/footer.php'); ?>
+

@@ -60,7 +60,6 @@ include('../includes/header.php');
                         <!-- Exercise 1: Pullups -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Pullups" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Pullups</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -73,7 +72,6 @@ include('../includes/header.php');
                         <!-- Exercise 2: Chin-ups -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Chin-ups" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Chin-ups</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -412,3 +410,4 @@ include('../includes/header.php');
 <script src="feedback.js"></script>
 
 <?php include('../includes/footer.php'); ?>
+

@@ -51,7 +51,6 @@ include('../includes/header.php');
                         <!-- Exercise 1: Walking -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Treadmill.png" alt="Walking" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Walking</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -64,7 +63,6 @@ include('../includes/header.php');
                         <!-- Exercise 2: Jogging -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Treadmill.png" alt="Jogging" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Jogging</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -77,7 +75,6 @@ include('../includes/header.php');
                         <!-- Exercise 3: Running -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Treadmill.png" alt="Running" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Running</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -90,7 +87,6 @@ include('../includes/header.php');
                         <!-- Exercise 4: Incline Walking -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Treadmill.png" alt="Incline Walking" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Incline Walking</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -429,3 +425,4 @@ include('../includes/header.php');
 <script src="feedback.js"></script>
 
 <?php include('../includes/footer.php'); ?>
+

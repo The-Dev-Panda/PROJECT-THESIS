@@ -56,7 +56,6 @@ include('../includes/header.php');
                         <!-- Exercise 1: Cable Crossover -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Cable Crossover" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Cable Crossover</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -69,7 +68,6 @@ include('../includes/header.php');
                         <!-- Exercise 2: Tricep Pushdown -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Tricep Pushdown" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Tricep Pushdown</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -82,7 +80,6 @@ include('../includes/header.php');
                         <!-- Exercise 3: Cable Bicep Curl -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Cable Bicep Curl" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Cable Bicep Curl</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -95,7 +92,6 @@ include('../includes/header.php');
                         <!-- Exercise 4: Lateral Raise -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Lateral Raise" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Lateral Raise</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -432,3 +428,4 @@ include('../includes/header.php');
 <script src="feedback.js"></script>
 
 <?php include('../includes/footer.php'); ?>
+

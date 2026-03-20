@@ -50,7 +50,6 @@ include('../includes/header.php');
                         <!-- Exercise 1: Pec Deck Fly -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Pec Deck Fly" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Pec Deck Fly</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -63,7 +62,6 @@ include('../includes/header.php');
                         <!-- Exercise 2: Rear Delt Fly -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/Fitstop.png" alt="Rear Delt Fly" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Rear Delt Fly</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -402,3 +400,4 @@ include('../includes/header.php');
 <script src="feedback.js"></script>
 
 <?php include('../includes/footer.php'); ?>
+

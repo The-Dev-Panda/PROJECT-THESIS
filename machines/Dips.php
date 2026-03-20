@@ -57,7 +57,6 @@ include('../includes/header.php');
                         <!-- Exercise 1: Parallel Bar Dips -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/DIPS.png" alt="Parallel Bar Dips" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Parallel Bar Dips</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -70,7 +69,6 @@ include('../includes/header.php');
                         <!-- Exercise 2: Vertical Knee Raise -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/DipBar.png" alt="Vertical Knee Raise" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Vertical Knee Raise</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -83,7 +81,6 @@ include('../includes/header.php');
                         <!-- Exercise 3: Straight-Leg Raise -->
                         <div class="col">
                             <article class="ex-card">
-                                <img src="../images/DipBar.png" alt="Straight-Leg Raise" loading="lazy" decoding="async">
                                 <div>
                                     <div style="font-weight:600">Straight-Leg Raise</div>
                                     <div style="font-size:13px; color:#9fb1c7">
@@ -424,3 +421,4 @@ include('../includes/header.php');
 <script src="feedback.js"></script>
 
 <?php include('../includes/footer.php'); ?>
+
