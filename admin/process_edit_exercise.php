@@ -18,10 +18,20 @@ $name = isset($_POST['name']) ? trim($_POST['name']) : '';
 $target_muscle = isset($_POST['target_muscle']) ? trim($_POST['target_muscle']) : '';
 $movement_type = isset($_POST['movement_type']) ? trim($_POST['movement_type']) : '';
 
-$movement_types = ['strength', 'cardio', 'hypertrophy', 'flexibility', 'mobility', 'other'];
+$movement_types = ['push', 'pull', 'legs', 'cardio', 'other', 'arms', 'back', 'chest', 'core', 'shoulders'];
 
-if ($exercise_id <= 0 || $name === '' || !in_array($movement_type, $movement_types, true)) {
-    header('Location: edit_exercise.php?id=' . $exercise_id . '&error=' . urlencode('Invalid exercise data.'));
+if ($exercise_id <= 0) {
+    header('Location: edit_exercise.php?id=' . $exercise_id . '&error=' . urlencode('Invalid exercise ID.'));
+    exit();
+}
+
+if ($name === '') {
+    header('Location: edit_exercise.php?id=' . $exercise_id . '&error=' . urlencode('Exercise name is required.'));
+    exit();
+}
+
+if (!in_array($movement_type, $movement_types, true)) {
+    header('Location: edit_exercise.php?id=' . $exercise_id . '&error=' . urlencode('Invalid movement type: ' . $movement_type));
     exit();
 }
 

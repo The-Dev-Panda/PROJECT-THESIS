@@ -22,7 +22,7 @@ if (!$exercise) {
     exit();
 }
 
-$movement_types = ['strength', 'cardio', 'hypertrophy', 'flexibility', 'mobility', 'other'];
+$movement_types = ['push', 'pull', 'legs', 'cardio', 'other', 'arms', 'back', 'chest', 'core', 'shoulders'];
 ?>
 <!DOCTYPE html>
 <html>

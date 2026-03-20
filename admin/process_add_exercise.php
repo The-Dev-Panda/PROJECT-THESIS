@@ -17,7 +17,7 @@ $name = isset($_POST['name']) ? trim($_POST['name']) : '';
 $target_muscle = isset($_POST['target_muscle']) ? trim($_POST['target_muscle']) : '';
 $movement_type = isset($_POST['movement_type']) ? trim($_POST['movement_type']) : '';
 
-$movement_types = ['strength', 'cardio', 'hypertrophy', 'flexibility', 'mobility', 'other'];
+$movement_types = ['push', 'pull', 'legs', 'cardio', 'other', 'arms', 'back', 'chest', 'core', 'shoulders'];
 
 if ($name === '') {
     header('Location: add_exercise.php?error=' . urlencode('Exercise name is required.'));
@@ -25,7 +25,7 @@ if ($name === '') {
 }
 
 if (!in_array($movement_type, $movement_types, true)) {
-    header('Location: add_exercise.php?error=' . urlencode('Invalid movement type.'));
+    header('Location: add_exercise.php?error=' . urlencode('Invalid movement type: ' . $movement_type));
     exit();
 }
 
