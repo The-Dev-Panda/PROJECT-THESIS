@@ -21,7 +21,7 @@
     <ul class="menu">
       <li>
         <i class="bi bi-speedometer2"></i>
-        <a href="dashboard.html">Dashboard</a>
+        <a href="staff.php">Dashboard</a>
       </li>
       <li class="active">
         <i class="bi bi-box-seam"></i>
