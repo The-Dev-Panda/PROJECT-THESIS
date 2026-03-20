@@ -24,9 +24,12 @@ $is_logged_in = !empty($_SESSION['username']);
 $username = $is_logged_in ? $_SESSION['username'] : null;
 $user_type = $is_logged_in ? ($_SESSION['user_type'] ?? 'user') : null;
 
-// Set base path if not already defined (default to root level)
+// Set base path if not already defined.
+// Root pages use '', while known one-level subfolder pages use '../'.
 if (!isset($base_path)) {
-    $base_path = '';
+    $scriptDirName = basename(str_replace('\\', '/', dirname((string)($_SERVER['PHP_SELF'] ?? ''))));
+    $oneLevelFolders = ['user', 'admin', 'staff', 'login', 'machines', 'database'];
+    $base_path = in_array(strtolower($scriptDirName), $oneLevelFolders, true) ? '../' : '';
 }
 
 // Determine dashboard link based on user type

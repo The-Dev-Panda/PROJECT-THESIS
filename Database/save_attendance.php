@@ -23,6 +23,11 @@ try {
     include('../Login/connection.php');
     $db = $pdo;
 
+    $memberRefUpper = strtoupper($memberRef);
+    if (preg_match('/^FS-\d{4}-(\d+)$/', $memberRefUpper, $matches)) {
+        $memberRef = (string)((int)$matches[1]);
+    }
+
     if (ctype_digit($memberRef)) {
         $userStmt = $db->prepare('SELECT id, username, first_name, last_name, user_type FROM users WHERE id = :id LIMIT 1');
         $userStmt->execute([':id' => (int)$memberRef]);
@@ -82,6 +87,13 @@ try {
     $allTimePointsStmt = $db->prepare("SELECT COUNT(DISTINCT date(datetime, 'localtime')) AS total FROM attendance WHERE user_id = :user_id");
     $allTimePointsStmt->execute([':user_id' => $userId]);
     $allTimePoints = (int)$allTimePointsStmt->fetchColumn();
+
+    // Keep users.points in sync with credited attendance days.
+    $syncPointsStmt = $db->prepare('UPDATE users SET points = :points WHERE id = :user_id');
+    $syncPointsStmt->execute([
+        ':points' => $allTimePoints,
+        ':user_id' => $userId
+    ]);
 
     $db->commit();
 

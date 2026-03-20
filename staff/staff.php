@@ -124,6 +124,7 @@
           <h3>Scan Attendance</h3>
           <p>Track member check-ins</p>
          <button class="action-btn" onclick="startScanner()">Scan QR Code</button>
+         <button class="action-btn" id="stopScannerBtn" onclick="stopScanner()" style="display:none; margin-left:8px;">Stop Scanner</button>
         <div id="reader" style="width:300px; margin-top:15px;"></div>
         <div style="margin-top: 12px; text-align: left;">
           <label for="manualAttendanceUser" style="display:block; margin-bottom:6px; color:#d6d6d6; font-size:13px;">Manual Attendance (Members Only)</label>
@@ -242,11 +243,11 @@
             </div>
             <div class="form-group">
               <label>Password</label>
-              <input type="password" id="regPassword" placeholder="At least 8 chars, letters + numbers" class="form-input" autocomplete="new-password">
+              <input type="password" id="regPassword" placeholder="At least 8 chars with letters and numbers" class="form-input">
             </div>
             <div class="form-group">
               <label>Confirm Password</label>
-              <input type="password" id="regConfirmPassword" placeholder="Re-enter password" class="form-input" autocomplete="new-password">
+              <input type="password" id="regConfirmPassword" placeholder="Re-enter password" class="form-input">
             </div>
           </div>
           <div class="form-actions">
@@ -722,7 +723,7 @@
         'Member created!\\n' +
         'Member ID: ' + data.member_id_display + '\\n' +
         'Username: ' + data.username + '\\n' +
-        'Password saved. Member can still change password from Forgot Password.'
+        'Password saved. Member can still change password via Forgot Password.'
       );
 
       document.getElementById("registrationForm").reset();
@@ -736,6 +737,9 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
+let activeQrScanner = null;
+let scannerRunning = false;
+
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -751,18 +755,48 @@ function resolveMemberRefFromQr(qrCodeMessage) {
     return '';
   }
 
+  // Accept plain display IDs like FS-2026-0001.
+  if (/^FS-\d{4}-\d+$/i.test(raw)) {
+    return raw;
+  }
+
+  // Decode URL-encoded payloads from third-party QR scanners/generators.
+  let decoded = raw;
+  try {
+    decoded = decodeURIComponent(raw);
+  } catch (err) {
+    decoded = raw;
+  }
+
   // Support JSON QR payloads and plain id/username payloads.
-  if (raw.startsWith('{') && raw.endsWith('}')) {
+  if (decoded.startsWith('{') && decoded.endsWith('}')) {
     try {
-      const payload = JSON.parse(raw);
-      const preferred = payload.member_ref || payload.member_id || payload.user_id || payload.id || payload.username;
+      const payload = JSON.parse(decoded);
+      const preferred = payload.member_ref || payload.member_id || payload.member_id_display || payload.user_id || payload.id || payload.username;
       return preferred ? String(preferred).trim() : '';
     } catch (err) {
-      return raw;
+      return '';
     }
   }
 
-  return raw;
+  // Accept URLs that contain member reference query params.
+  if (/^https?:\/\//i.test(decoded)) {
+    try {
+      const url = new URL(decoded);
+      const fromParams = url.searchParams.get('member_ref')
+        || url.searchParams.get('member_id')
+        || url.searchParams.get('member_id_display')
+        || url.searchParams.get('id')
+        || '';
+      if (fromParams) {
+        return String(fromParams).trim();
+      }
+    } catch (err) {
+      // Fall through to plain payload handling.
+    }
+  }
+
+  return decoded;
 }
 
 function submitAttendance(memberRef, source) {
@@ -821,13 +855,20 @@ function loadAttendanceMembers() {
 }
 
 function startScanner() {
-
   const readerDiv = document.getElementById("reader");
-  readerDiv.innerHTML = ""; 
+  const stopBtn = document.getElementById("stopScannerBtn");
 
-  const html5QrCode = new Html5Qrcode("reader");
+  if (scannerRunning) {
+    return;
+  }
 
-  html5QrCode.start(
+  readerDiv.innerHTML = "";
+
+  if (!activeQrScanner) {
+    activeQrScanner = new Html5Qrcode("reader");
+  }
+
+  activeQrScanner.start(
     { facingMode: "environment" }, 
     {
       fps: 10,
@@ -840,6 +881,8 @@ function startScanner() {
         return;
       }
 
+      stopScanner();
+
       submitAttendance(memberRef, 'qr')
         .then(data => {
           const msg = data.point_awarded
@@ -849,16 +892,58 @@ function startScanner() {
         })
         .catch(err => {
           alert(err.message || 'Unable to save attendance right now.');
-        })
-        .finally(() => {
-          html5QrCode.stop();
         });
     },
     errorMessage => {
     }
-  ).catch(err => {
+  ).then(() => {
+    scannerRunning = true;
+    if (stopBtn) {
+      stopBtn.style.display = 'inline-block';
+    }
+  }).catch(err => {
+    scannerRunning = false;
+    if (stopBtn) {
+      stopBtn.style.display = 'none';
+    }
     alert("Camera Error: " + err);
   });
+}
+
+function stopScanner() {
+  const stopBtn = document.getElementById("stopScannerBtn");
+  const readerDiv = document.getElementById("reader");
+
+  const finalize = () => {
+    scannerRunning = false;
+    if (stopBtn) {
+      stopBtn.style.display = 'none';
+    }
+    if (readerDiv) {
+      readerDiv.innerHTML = '';
+    }
+  };
+
+  if (!activeQrScanner) {
+    finalize();
+    return;
+  }
+
+  activeQrScanner
+    .stop()
+    .catch(() => {
+      // Ignore stop errors when scanner is already stopped.
+    })
+    .then(() => {
+      return activeQrScanner.clear();
+    })
+    .catch(() => {
+      // Ignore clear errors if DOM already reset.
+    })
+    .finally(() => {
+      activeQrScanner = null;
+      finalize();
+    });
 }
 
 function submitManualAttendance() {

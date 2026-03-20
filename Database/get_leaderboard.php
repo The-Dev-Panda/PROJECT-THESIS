@@ -21,12 +21,10 @@ try {
                 u.first_name,
                 u.last_name,
                 u.username,
-                COUNT(DISTINCT date(a.datetime, 'localtime')) AS score
+                COALESCE(u.points, 0) AS score
             FROM users u
-            LEFT JOIN attendance a
-              ON a.user_id = u.id
             WHERE lower(coalesce(u.user_type, '')) = 'user'
-            GROUP BY u.id, u.first_name, u.last_name, u.username
+            GROUP BY u.id, u.first_name, u.last_name, u.username, u.points
             ORDER BY score DESC, u.first_name ASC, u.last_name ASC
             LIMIT :limit
         ";

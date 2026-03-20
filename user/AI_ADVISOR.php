@@ -1,12 +1,17 @@
 <?php
-/*  KAPAG NAKALGAY NA SA PAGES NIYO
-session_start();
-
-if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'user') {
-header('Location: ../Login/Login_Page.php');
-exit();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
-*/
+
+if (isset($_GET['clear']) && $_GET['clear'] == '1') {
+    unset($_SESSION['chat_history']);
+}
+
+$aiFlash = '';
+if (isset($_SESSION['ai_flash']) && is_string($_SESSION['ai_flash'])) {
+    $aiFlash = $_SESSION['ai_flash'];
+    unset($_SESSION['ai_flash']);
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -39,31 +44,32 @@ exit();
     <div class="row mt-5"></div>
     <div class="container alert alert-info alert-dismissible fade show">
         <?php
-        //CHAT HISTORY PART
-        if (isset($_GET['clear']) && $_GET['clear'] == 1) {
-            unset($_SESSION['chat_history']);
+        if ($aiFlash !== '') {
+            echo '<div class="alert alert-primary">';
+            echo '<i class="bi bi-robot me-2"></i>';
+            echo nl2br(htmlspecialchars($aiFlash, ENT_QUOTES, 'UTF-8'));
+            echo '</div>';
         }
+
+        // Optional session chat history (not persisted in database)
         if (!empty($_SESSION['chat_history'])) {
             foreach ($_SESSION['chat_history'] as $entry) {
                 if ($entry['role'] == 'user') {
                     echo '
                 <div class="alert alert-secondary">
                     <i class="bi bi-person-fill me-2"></i>';
-                    echo $entry['message'];
-                    echo '<div class="text-muted">' . $entry['timestamp'] . '</div>';
+                    echo htmlspecialchars((string)$entry['message'], ENT_QUOTES, 'UTF-8');
+                    echo '<div class="text-muted">' . htmlspecialchars((string)$entry['timestamp'], ENT_QUOTES, 'UTF-8') . '</div>';
                     echo '</div>';
                 } elseif ($entry['role'] == 'ai') {
                     echo '
                 <div class="alert alert-info">
                     <i class="bi bi-robot me-2"></i>';
-                    echo $entry['message'];
-                    echo '<div class="text-muted">' . $entry['timestamp'] . '</div>';
+                    echo nl2br(htmlspecialchars((string)$entry['message'], ENT_QUOTES, 'UTF-8'));
+                    echo '<div class="text-muted">' . htmlspecialchars((string)$entry['timestamp'], ENT_QUOTES, 'UTF-8') . '</div>';
                     echo '</div>';
                 }
             }
-        }
-        if (!empty($_SESSION['ai_response'])) {
-            unset($_SESSION['ai_response']);
         }
         ?>
         <div class="container d-flex gap-2 align-items-center">

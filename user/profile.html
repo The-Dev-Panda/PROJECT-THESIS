@@ -444,7 +444,7 @@
 
         const qrHost = document.getElementById("qrcode");
         qrHost.innerHTML = "";
-        const qrPayload = typeof user.qr_payload === 'string' ? user.qr_payload : JSON.stringify({ member_ref: String(user.id), username: user.username });
+        const qrPayload = String(user.id || "").trim() || (typeof user.qr_payload === 'string' ? user.qr_payload : JSON.stringify({ member_ref: String(user.id), username: user.username }));
         new QRCode(qrHost, {
           text: qrPayload,
           width: 150,
