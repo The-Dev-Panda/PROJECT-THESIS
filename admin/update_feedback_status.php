@@ -37,46 +37,51 @@ function isSameOriginRequest(): bool {
     $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
         || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
     $currentScheme = $https ? 'https' : 'http';
-    $currentHost = isset($_SERVER['HTTP_HOST']) ? strtolower((string)$_SERVER['HTTP_HOST']) : '';
+    $currentHostHeader = isset($_SERVER['HTTP_HOST']) ? strtolower(trim((string)$_SERVER['HTTP_HOST'])) : '';
 
-    if ($currentHost === '') {
+    if ($currentHostHeader === '') {
         return false;
     }
 
+    $parsedCurrentHost = parse_url($currentScheme . '://' . $currentHostHeader, PHP_URL_HOST);
+    $currentHost = $parsedCurrentHost !== false ? strtolower($parsedCurrentHost) : $currentHostHeader;
+    $currentPort = isset($_SERVER['SERVER_PORT']) ? (int)$_SERVER['SERVER_PORT'] : ($https ? 443 : 80);
+
     $origin = isset($_SERVER['HTTP_ORIGIN']) ? trim((string)$_SERVER['HTTP_ORIGIN']) : '';
     if ($origin !== '') {
-        $originParts = parse_url($origin);
-        if (!is_array($originParts) || empty($originParts['host'])) {
+        $originHost = parse_url($origin, PHP_URL_HOST);
+        $originScheme = parse_url($origin, PHP_URL_SCHEME);
+        $originPort = parse_url($origin, PHP_URL_PORT);
+
+        if ($originHost === false || $originScheme === false) {
             return false;
         }
 
-        $originScheme = isset($originParts['scheme']) ? strtolower((string)$originParts['scheme']) : '';
-        $originHost = strtolower((string)$originParts['host']);
-        $originPort = isset($originParts['port']) ? (int)$originParts['port'] : null;
-        $currentPort = isset($_SERVER['SERVER_PORT']) ? (int)$_SERVER['SERVER_PORT'] : null;
-        $samePort = $originPort === null || $currentPort === null || $originPort === $currentPort;
+        $originHost = strtolower($originHost);
+        $originScheme = strtolower($originScheme);
+        $originPort = $originPort !== null ? (int)$originPort : ($originScheme === 'https' ? 443 : 80);
 
-        return $originScheme === $currentScheme && $originHost === strtolower($currentHost) && $samePort;
+        return $originScheme === $currentScheme && $originHost === $currentHost && $originPort === $currentPort;
     }
 
     $referer = isset($_SERVER['HTTP_REFERER']) ? trim((string)$_SERVER['HTTP_REFERER']) : '';
     if ($referer === '') {
-        // Allow non-browser clients and strict privacy modes to proceed if the session is valid.
-        return true;
+        return true; // no header provided, allow same-site session-based access
     }
 
-    $refererParts = parse_url($referer);
-    if (!is_array($refererParts) || empty($refererParts['host'])) {
+    $refererHost = parse_url($referer, PHP_URL_HOST);
+    $refererScheme = parse_url($referer, PHP_URL_SCHEME);
+    $refererPort = parse_url($referer, PHP_URL_PORT);
+
+    if ($refererHost === false || $refererScheme === false) {
         return false;
     }
 
-    $refererScheme = isset($refererParts['scheme']) ? strtolower((string)$refererParts['scheme']) : '';
-    $refererHost = strtolower((string)$refererParts['host']);
-    $refererPort = isset($refererParts['port']) ? (int)$refererParts['port'] : null;
-    $currentPort = isset($_SERVER['SERVER_PORT']) ? (int)$_SERVER['SERVER_PORT'] : null;
-    $samePort = $refererPort === null || $currentPort === null || $refererPort === $currentPort;
+    $refererHost = strtolower($refererHost);
+    $refererScheme = strtolower($refererScheme);
+    $refererPort = $refererPort !== null ? (int)$refererPort : ($refererScheme === 'https' ? 443 : 80);
 
-    return $refererScheme === $currentScheme && $refererHost === strtolower($currentHost) && $samePort;
+    return $refererScheme === $currentScheme && $refererHost === $currentHost && $refererPort === $currentPort;
 }
 
 $allowedRoles = ['admin', 'staff'];
