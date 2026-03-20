@@ -204,7 +204,6 @@ try {
             'desc' => $desc
         ]);
     }
-    
     sendResponse(true, 'Thank you! Your feedback has been submitted successfully');
     
 } catch (PDOException $e) {
