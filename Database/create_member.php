@@ -76,7 +76,7 @@ try {
 
     $db->beginTransaction();
 
-    $insertUserStmt = $db->prepare('INSERT INTO users (username, first_name, last_name, email, password, user_type, is_verified) VALUES (:username, :first_name, :last_name, :email, :password, :user_type, :is_verified)');
+    $insertUserStmt = $db->prepare('INSERT INTO users (username, first_name, last_name, email, password, user_type, is_verified, dpa_consent, dpa_consent_at) VALUES (:username, :first_name, :last_name, :email, :password, :user_type, :is_verified, :dpa_consent, :dpa_consent_at)');
     $insertUserStmt->execute([
         ':username' => $username,
         ':first_name' => $firstName,
@@ -84,7 +84,9 @@ try {
         ':email' => $email,
         ':password' => $passwordHash,
         ':user_type' => 'user',
-        ':is_verified' => 1
+        ':is_verified' => 1,
+        ':dpa_consent' => 0,
+        ':dpa_consent_at' => null
     ]);
 
     $userId = (int)$db->lastInsertId();

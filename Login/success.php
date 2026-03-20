@@ -16,6 +16,27 @@ if ($userType === 'admin') {
 }
 
 if ($userType === 'user') {
+    // Enforce Data Privacy Act consent before granting dashboard access
+    include('connection.php');
+    $dpaConsented = false;
+    if ($memberId > 0) {
+        try {
+            $stmt = $pdo->prepare('SELECT dpa_consent FROM users WHERE id = :id LIMIT 1');
+            $stmt->execute([':id' => $memberId]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($result && !empty($result['dpa_consent'])) {
+                $dpaConsented = true;
+            }
+        } catch (PDOException $e) {
+            // Missing field or DB issue means enforce consent page to be safe
+            $dpaConsented = false;
+        }
+    }
+    if (!$dpaConsented) {
+        header('Location: DPA_Consent.php');
+        exit();
+    }
+
     $target = '../user/user.html';
     if ($memberId > 0) {
         $target .= '?member_ref=' . urlencode((string)$memberId);

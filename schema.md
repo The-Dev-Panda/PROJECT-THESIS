@@ -10,6 +10,8 @@ CREATE TABLE "users" (
     verification_code_expiration TIMESTAMP DEFAULT NULL,   
     is_verified BOOLEAN DEFAULT FALSE,   profile_picture BLOB,   
     last_logged_in TIMESTAMP DEFAULT NULL,   
+    dpa_consent INTEGER NOT NULL DEFAULT 0,
+    dpa_consent_at TIMESTAMP DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP , 
     points INTEGER NOT NULL DEFAULT 0);
