@@ -79,6 +79,12 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link <?php echo ($current_page == 'exercises.php') ? 'active' : ''; ?>"
+                            href="exercises.php">
+                            <i class="bi bi-bar-chart-line"></i> Exercises
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link <?php echo ($current_page == 'view_feedback.php') ? 'active' : ''; ?>"
                             href="view_feedback.php">
                             <i class="bi bi-person-badge"></i> Feedbacks

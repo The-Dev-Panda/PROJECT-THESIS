@@ -61,7 +61,8 @@ function isSameOriginRequest(): bool {
 
     $referer = isset($_SERVER['HTTP_REFERER']) ? trim((string)$_SERVER['HTTP_REFERER']) : '';
     if ($referer === '') {
-        return false;
+        // Allow non-browser clients and strict privacy modes to proceed if the session is valid.
+        return true;
     }
 
     $refererParts = parse_url($referer);
