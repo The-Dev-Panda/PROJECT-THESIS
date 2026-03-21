@@ -163,10 +163,13 @@ h1, h2, h3, h4, h5 {
 .profile-container {
     background: var(--bg-surface);
     border-radius: 0;
-    padding: 16px 20px;
+    padding: 80px 30px;
     border: 1px solid #333;
     margin-bottom: 30px;
     clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .profile-content {
@@ -634,10 +637,16 @@ tbody td {
     border: 1px solid var(--warning);
 }
 
-.status-badge.low-stock {
+.status-badge.inactive {
     background: rgba(255, 59, 48, 0.2);
     color: var(--danger);
     border: 1px solid var(--danger);
+}
+
+.status-badge.low-stock {
+    background: rgba(255, 149, 0, 0.2);
+    color: var(--warning);
+    border: 1px solid var(--warning);
 }
 
 .btn-icon {
@@ -1165,6 +1174,224 @@ tbody td {
     letter-spacing: 0.5px;
 }
 
+/* ========== INVENTORY NOTIFICATION BELL ========== */
+.notif-wrapper {
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.notif-bell-btn {
+    background: rgba(255, 204, 0, 0.1);
+    border: 1.5px solid var(--hazard-yellow);
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--hazard-yellow);
+    position: relative;
+    top:-30px; 
+    padding: 9px 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, box-shadow 0.2s;
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+
+.notif-bell-btn:hover {
+    background: rgba(255, 204, 0, 0.25);
+    box-shadow: 0 0 14px rgba(255, 204, 0, 0.45);
+}
+
+.notif-badge {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 19px;
+    height: 19px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    font-family: 'Chakra Petch', sans-serif;
+    pointer-events: none;
+    border: 2px solid var(--bg-void);
+    z-index: 10;
+}
+
+.notif-badge.hidden {
+    display: none;
+}
+
+.notif-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 390px;
+    max-width: 95vw;
+    background: var(--bg-surface);
+    border: 1px solid #444;
+    border-top: 3px solid var(--hazard-yellow);
+    z-index: 99999;
+    overflow: visible;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.9);
+}
+
+.notif-panel.open {
+    display: block;
+}
+
+.notif-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 18px 11px;
+    border-bottom: 1px solid #333;
+    background: #000;
+}
+
+.notif-panel-header h4 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--hazard-yellow);
+    font-family: 'Chakra Petch', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.notif-panel-header span {
+    font-size: 11px;
+    color: #555;
+    font-family: 'Chakra Petch', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.notif-list {
+    max-height: 380px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.notif-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.notif-list::-webkit-scrollbar-track {
+    background: var(--bg-void);
+}
+
+.notif-list::-webkit-scrollbar-thumb {
+    background: var(--hazard-yellow);
+}
+
+.notif-item {
+    display: flex;
+    gap: 13px;
+    align-items: flex-start;
+    padding: 14px 18px;
+    border-bottom: 1px solid #222;
+    transition: background 0.15s;
+}
+
+.notif-item:hover {
+    background: rgba(255, 204, 0, 0.04);
+}
+
+.notif-item:last-child {
+    border-bottom: none;
+}
+
+.notif-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 59, 48, 0.15);
+    border: 1px solid rgba(255, 59, 48, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 15px;
+    color: var(--danger);
+    clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+}
+
+.notif-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-msg {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.65;
+    margin: 0 0 5px;
+}
+
+.notif-msg strong {
+    color: var(--text-primary);
+    font-family: 'Chakra Petch', sans-serif;
+    text-transform: uppercase;
+    font-size: 11.5px;
+    letter-spacing: 0.3px;
+}
+
+.notif-msg .item-highlight {
+    color: var(--hazard-yellow);
+    font-weight: 700;
+}
+
+.notif-time {
+    font-size: 10.5px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Chakra Petch', sans-serif;
+}
+
+.notif-time i {
+    color: var(--hazard-yellow);
+    margin-right: 3px;
+}
+
+.notif-empty {
+    padding: 36px 18px;
+    text-align: center;
+    font-size: 11px;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Chakra Petch', sans-serif;
+}
+
+.notif-empty i {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 10px;
+    color: #2a2a2a;
+}
+
+.notif-loader {
+    padding: 24px;
+    text-align: center;
+    font-size: 11px;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Chakra Petch', sans-serif;
+}
+
+.notif-loader i {
+    color: var(--hazard-yellow);
+    margin-right: 6px;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1400px) {
     .actions-grid,
@@ -1229,5 +1456,10 @@ tbody td {
 
     .form-grid {
         grid-template-columns: 1fr;
+    }
+
+    .notif-panel {
+        width: 320px;
+        right: -10px;
     }
 }

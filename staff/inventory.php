@@ -1,6 +1,8 @@
 <?php
+session_start();
 require_once '../login/connection.php';
 
+// Create inventory table
 $pdo->exec("CREATE TABLE IF NOT EXISTS inventory (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   item_name   VARCHAR(100) NOT NULL,
@@ -12,48 +14,70 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS inventory (
   updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )");
 
+// Create inventory_notifications table
+$pdo->exec("CREATE TABLE IF NOT EXISTS inventory_notifications (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id     INTEGER NOT NULL,
+  item_id     INTEGER NOT NULL,
+  item_name   VARCHAR(100) NOT NULL,
+  qty_sold    INTEGER NOT NULL,
+  notif_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)");
+
+// ── POST handler ──────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
   header('Content-Type: application/json');
   $action = $_POST['action'];
 
   try {
 
-    if ($action === 'add') {
-      $stmt = $pdo->prepare("INSERT INTO inventory (item_name, category, quantity, price, description, created_at, updated_at)
-                            VALUES (:name, :cat, :qty, :price, :desc, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
-      $stmt->execute([
-        ':name'  => trim($_POST['item_name']),
-        ':cat'   => trim($_POST['category']),
-        ':qty'   => (int)$_POST['quantity'],
-        ':price' => (float)$_POST['price'],
-        ':desc'  => trim($_POST['description'] ?? ''),
-      ]);
-      $id  = $pdo->lastInsertId();
-      $row = $pdo->query("SELECT * FROM inventory WHERE id = $id")->fetch(PDO::FETCH_ASSOC);
-      echo json_encode(['success' => true, 'row' => $row]);
-      exit;
-    }
-
+    // ── Update stock + log notification ───────────────────────────────────────
     if ($action === 'update_stock') {
       $id     = (int)$_POST['id'];
       $change = (int)$_POST['change'];
       $cur    = $pdo->query("SELECT quantity FROM inventory WHERE id = $id")->fetchColumn();
       $newQty = $cur + $change;
+
       if ($newQty < 0) {
         echo json_encode(['success' => false, 'message' => 'Stock cannot go below 0.']);
         exit;
       }
+
       $pdo->prepare("UPDATE inventory SET quantity = :qty, updated_at = CURRENT_TIMESTAMP WHERE id = :id")
-         ->execute([':qty' => $newQty, ':id' => $id]);
+          ->execute([':qty' => $newQty, ':id' => $id]);
+
       $row = $pdo->query("SELECT * FROM inventory WHERE id = $id")->fetch(PDO::FETCH_ASSOC);
+
+      // Log notification for every deduction
+      if ($change < 0) {
+        $userId   = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+        $qtySold  = abs($change);
+        $itemName = $row['item_name'];
+        $pdo->prepare("INSERT INTO inventory_notifications (user_id, item_id, item_name, qty_sold, notif_at)
+                       VALUES (:uid, :iid, :iname, :qty, CURRENT_TIMESTAMP)")
+            ->execute([
+              ':uid'   => $userId,
+              ':iid'   => $id,
+              ':iname' => $itemName,
+              ':qty'   => $qtySold,
+            ]);
+      }
+
       echo json_encode(['success' => true, 'row' => $row]);
       exit;
     }
 
-    if ($action === 'delete') {
-      $id = (int)$_POST['id'];
-      $pdo->prepare("DELETE FROM inventory WHERE id = :id")->execute([':id' => $id]);
-      echo json_encode(['success' => true]);
+    // ── Fetch notifications (latest 50) ───────────────────────────────────────
+    if ($action === 'get_notifications') {
+      $notifs = $pdo->query("
+        SELECT n.id, n.item_name, n.qty_sold, n.notif_at,
+               u.first_name, u.last_name, u.user_type
+        FROM   inventory_notifications n
+        LEFT JOIN users u ON u.id = n.user_id
+        ORDER  BY n.notif_at DESC
+        LIMIT  50
+      ")->fetchAll(PDO::FETCH_ASSOC);
+      echo json_encode(['success' => true, 'notifications' => $notifs]);
       exit;
     }
 
@@ -66,10 +90,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
   }
 }
 
+// ── Load inventory rows ───────────────────────────────────────────────────────
 try {
   $rows = $pdo->query("SELECT * FROM inventory ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
   $rows = [];
+}
+
+// ── Total notification count for badge ───────────────────────────────────────
+try {
+  $notifCount = (int)$pdo->query("SELECT COUNT(*) FROM inventory_notifications")->fetchColumn();
+} catch (Exception $e) {
+  $notifCount = 0;
 }
 ?>
 <!DOCTYPE html>
@@ -83,6 +115,7 @@ try {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
   <style>
+    /* ── Modals ── */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,0.5); z-index: 1000;
@@ -91,7 +124,7 @@ try {
     .modal-overlay.active { display: flex; }
     .modal-box {
       background: #fff; border-radius: 12px; padding: 30px;
-      width: 460px; max-width: 95%;
+      width: 420px; max-width: 95%;
       box-shadow: 0 10px 40px rgba(0,0,0,0.2);
       font-family: 'Poppins', sans-serif; position: relative;
       max-height: 90vh; overflow-y: auto;
@@ -106,18 +139,20 @@ try {
     .modal-field { margin-bottom: 14px; }
     .modal-field label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 5px; }
     .modal-field input,
-    .modal-field select,
     .modal-field textarea {
       width: 100%; padding: 9px 12px;
       border: 1.5px solid #ddd; border-radius: 8px;
       font-family: 'Poppins', sans-serif; font-size: 14px;
-      box-sizing: border-box; transition: border 0.2s; resize: vertical;
+      box-sizing: border-box; transition: border 0.2s;
     }
     .modal-field input:focus,
-    .modal-field select:focus,
-    .modal-field textarea:focus { outline: none; border-color: #4f8ef7; }
-    .modal-row-2 { display: flex; gap: 12px; }
-    .modal-row-2 .modal-field { flex: 1; }
+    .modal-field textarea:focus { outline: none; border-color: #e53935; }
+    .current-stock-info {
+      background: #f5f7fa; border-radius: 8px; padding: 10px 14px;
+      font-size: 13px; color: #555; margin-bottom: 18px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .current-stock-info strong { font-size: 22px; color: #1a1a2e; }
     .modal-meta {
       background: #f5f7fa; border-radius: 8px; padding: 10px 14px;
       font-size: 12px; color: #888; margin-bottom: 14px;
@@ -125,30 +160,22 @@ try {
     }
     .modal-meta span { display: flex; flex-direction: column; gap: 2px; }
     .modal-meta strong { font-size: 12px; color: #555; }
-    .stock-action-row { display: flex; gap: 10px; margin-bottom: 4px; }
-    .stock-action-row button {
-      flex: 1; padding: 9px; border: 1.5px solid #ddd; border-radius: 8px;
-      font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: all 0.2s; background: #fff; color: #555;
-    }
-    .stock-action-row button.selected-add    { background: #e6f4ea; border-color: #34a853; color: #34a853; }
-    .stock-action-row button.selected-reduce { background: #fdecea; border-color: #e53935; color: #e53935; }
-    .current-stock-info {
-      background: #f5f7fa; border-radius: 8px; padding: 10px 14px;
-      font-size: 13px; color: #555; margin-bottom: 14px;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .current-stock-info strong { font-size: 18px; color: #1a1a2e; }
     .modal-save-btn {
-      width: 100%; padding: 11px; background: #4f8ef7; color: #fff;
+      width: 100%; padding: 11px; background: #e53935; color: #fff;
       border: none; border-radius: 8px; font-family: 'Poppins', sans-serif;
       font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 4px;
     }
-    .modal-save-btn:hover { background: #2d6fe0; }
-    .modal-save-btn.green { background: #34a853; }
-    .modal-save-btn.green:hover { background: #2a8944; }
+    .modal-save-btn:hover { background: #c62828; }
     .modal-save-btn:disabled { background: #aaa; cursor: not-allowed; }
+    .sold-label {
+      display: inline-block; background: #fdecea; color: #e53935;
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px; margin-bottom: 16px;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
     .menu li a, .menu li span, .menu li { color: inherit !important; text-decoration: none !important; }
+
+    /* ── Toast ── */
     .toast {
       position: fixed; bottom: 28px; right: 28px;
       background: #1a1a2e; color: #fff;
@@ -160,6 +187,133 @@ try {
     .toast.show { opacity: 1; transform: translateY(0); }
     .toast.success { border-left: 4px solid #34a853; }
     .toast.error   { border-left: 4px solid #e53935; }
+
+    .add-btn { display: none !important; }
+
+    /* ── Bell / Notification Panel ── */
+    .notif-wrapper {
+      position: relative; display: inline-block; flex-shrink: 0;
+    }
+    .notif-bell-btn {
+      background: rgba(255, 204, 0, 0.12);
+      border: 1.5px solid #FFCC00;
+      cursor: pointer;
+      font-size: 18px; color: #FFCC00; position: relative;
+      padding: 8px 12px;
+      transition: background 0.2s, box-shadow 0.2s;
+      display: flex; align-items: center; justify-content: center;
+      clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+    }
+    .notif-bell-btn:hover {
+      background: rgba(255, 204, 0, 0.25);
+      box-shadow: 0 0 12px rgba(255, 204, 0, 0.4);
+    }
+    .notif-badge {
+      position: absolute; top: -6px; right: -6px;
+      background: #ff3b30; color: #fff;
+      font-size: 10px; font-weight: 700;
+      min-width: 18px; height: 18px;
+      border-radius: 999px; display: flex;
+      align-items: center; justify-content: center;
+      padding: 0 4px; font-family: 'Chakra Petch', sans-serif;
+      pointer-events: none;
+      border: 2px solid #0a0a0a;
+    }
+    .notif-badge.hidden { display: none; }
+
+    .notif-panel {
+      display: none;
+      position: absolute; top: calc(100% + 10px); right: 0;
+      width: 400px; max-width: 95vw;
+      background: #141414;
+      border: 1px solid #333;
+      border-top: 2px solid #FFCC00;
+      z-index: 2000;
+      overflow: hidden;
+      clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+    .notif-panel.open { display: block; }
+
+    .notif-panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid #333;
+      background: #000;
+    }
+    .notif-panel-header h4 {
+      margin: 0; font-size: 13px; font-weight: 700;
+      color: #FFCC00;
+      font-family: 'Chakra Petch', sans-serif;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .notif-panel-header span {
+      font-size: 11px; color: #666;
+      font-family: 'Chakra Petch', sans-serif;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .notif-list {
+      max-height: 360px; overflow-y: auto;
+    }
+    .notif-list::-webkit-scrollbar { width: 4px; }
+    .notif-list::-webkit-scrollbar-track { background: #0a0a0a; }
+    .notif-list::-webkit-scrollbar-thumb { background: #FFCC00; }
+
+    .notif-item {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px 18px; border-bottom: 1px solid #222;
+      transition: background 0.15s;
+    }
+    .notif-item:hover { background: rgba(255, 204, 0, 0.05); }
+    .notif-item:last-child { border-bottom: none; }
+
+    .notif-icon {
+      width: 36px; height: 36px;
+      background: rgba(255, 59, 48, 0.15);
+      border: 1px solid rgba(255, 59, 48, 0.4);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 15px; color: #ff3b30;
+      clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+    }
+
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-msg {
+      font-size: 12.5px; color: #a0a0a0; line-height: 1.6;
+      margin: 0 0 5px;
+    }
+    .notif-msg strong {
+      color: #ffffff;
+      font-family: 'Chakra Petch', sans-serif;
+      text-transform: uppercase; font-size: 11.5px;
+    }
+    .notif-msg .item-highlight { color: #FFCC00; font-weight: 700; }
+    .notif-time {
+      font-size: 10.5px; color: #555;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .notif-time i { color: #FFCC00; }
+
+    .notif-empty {
+      padding: 35px 18px; text-align: center;
+      font-size: 12px; color: #555;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      font-family: 'Chakra Petch', sans-serif;
+    }
+    .notif-empty i { font-size: 30px; display: block; margin-bottom: 10px; color: #333; }
+
+    .notif-loader {
+      padding: 24px; text-align: center;
+      font-size: 12px; color: #555;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      font-family: 'Chakra Petch', sans-serif;
+    }
+    .notif-loader i { color: #FFCC00; margin-right: 6px; }
+
+    /* ── Profile row ── */
+    .profile-container {
+      display: flex; align-items: center; justify-content: space-between;
+    }
   </style>
 </head>
 <body>
@@ -197,6 +351,25 @@ try {
           <span class="profile-streak">&#127947; Product &amp; Stock Management</span>
         </div>
       </div>
+
+      <!-- 🔔 Notification Bell -->
+      <div class="notif-wrapper" id="notifWrapper">
+        <button class="notif-bell-btn" onclick="toggleNotifPanel()" title="Notification History">
+          <i class="bi bi-bell-fill"></i>
+          <span class="notif-badge <?= $notifCount === 0 ? 'hidden' : '' ?>" id="notifBadge">
+            <?= $notifCount > 99 ? '99+' : $notifCount ?>
+          </span>
+        </button>
+        <div class="notif-panel" id="notifPanel">
+          <div class="notif-panel-header">
+            <h4><i class="bi bi-bell"></i> Notification History</h4>
+            <span id="notifPanelCount"></span>
+          </div>
+          <div class="notif-list" id="notifList">
+            <div class="notif-loader"><i class="bi bi-hourglass-split"></i> Loading...</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <section class="inventory-section">
@@ -209,7 +382,6 @@ try {
           </div>
           <button class="search-btn">Search</button>
         </div>
-        <button class="add-btn" onclick="openAddModal()"><i class="bi bi-plus-circle"></i> Add Product</button>
       </div>
 
       <div class="inventory-table">
@@ -255,8 +427,9 @@ try {
               <td class="updated-cell"><?= $row['updated_at'] ?></td>
               <td><span class="status-badge <?= $statusCls ?>"><?= $statusTxt ?></span></td>
               <td>
-                <button class="btn-icon" onclick="openEditModal(this)"><i class="bi bi-pencil"></i></button>
-                <button class="btn-icon" onclick="deleteProduct(this)"><i class="bi bi-trash"></i></button>
+                <button class="btn-icon" title="Customer Bought" onclick="openSoldModal(this)">
+                  <i class="bi bi-cart-dash"></i>
+                </button>
               </td>
             </tr>
             <?php endforeach; ?>
@@ -269,82 +442,47 @@ try {
 
 <div class="toast" id="toast"></div>
 
-<div class="modal-overlay" id="addModal">
+<!-- Customer Bought Modal -->
+<div class="modal-overlay" id="soldModal">
   <div class="modal-box">
-    <button class="modal-close" onclick="closeAddModal()"><i class="bi bi-x-lg"></i></button>
-    <h3>Add New Product</h3>
-    <span class="modal-product-id">Fields marked <span style="color:red">*</span> are required</span>
-    <div class="modal-field">
-      <label>Item Name <span style="color:red">*</span></label>
-      <input type="text" id="addItemName" placeholder="e.g. Whey Protein">
-    </div>
-    <div class="modal-row-2">
-      <div class="modal-field">
-        <label>Category <span style="color:red">*</span></label>
-        <select id="addCategory">
-          <option value="Beverage">Beverage</option>
-          <option value="Supplements">Supplements</option>
-          <option value="Nutrition">Nutrition</option>
-          <option value="Equipment">Equipment</option>
-          <option value="Apparel">Apparel</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-      <div class="modal-field">
-        <label>Price (&#8369;) <span style="color:red">*</span></label>
-        <input type="number" id="addPrice" min="0" step="0.01" placeholder="e.g. 150.00">
-      </div>
-    </div>
-    <div class="modal-field">
-      <label>Quantity <span style="color:red">*</span></label>
-      <input type="number" id="addQty" min="0" value="1">
-    </div>
-    <div class="modal-field">
-      <label>Description <span style="font-weight:400;color:#aaa;">(optional)</span></label>
-      <textarea id="addDescription" rows="2" placeholder="e.g. Chocolate flavored whey protein..."></textarea>
-    </div>
-    <button class="modal-save-btn green" id="addSaveBtn" onclick="saveNewProduct()">
-      <i class="bi bi-plus-circle"></i> Add Product
-    </button>
-  </div>
-</div>
+    <button class="modal-close" onclick="closeSoldModal()"><i class="bi bi-x-lg"></i></button>
+    <h3 id="soldItemName">Item Name</h3>
+    <span class="modal-product-id" id="soldItemId">ID: 0</span>
+    <span class="sold-label"><i class="bi bi-cart-dash"></i> Customer Purchase</span>
 
-<div class="modal-overlay" id="editModal">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeEditModal()"><i class="bi bi-x-lg"></i></button>
-    <h3 id="modalItemName">Item Name</h3>
-    <span class="modal-product-id" id="modalItemId">ID: 0</span>
     <div class="current-stock-info">
       <span>Current Stock</span>
-      <strong id="modalCurrentQty">0</strong>
+      <strong id="soldCurrentQty">0</strong>
     </div>
+
     <div class="modal-field">
-      <label>Stock Action</label>
-      <div class="stock-action-row">
-        <button id="btnAdd" onclick="selectAction('add')"><i class="bi bi-plus-circle"></i> Add Stock</button>
-        <button id="btnReduce" onclick="selectAction('reduce')"><i class="bi bi-dash-circle"></i> Customer Bought</button>
-      </div>
+      <label>How many units were bought? <span style="color:red">*</span></label>
+      <input type="number" id="soldQtyInput" min="1" value="1" placeholder="Enter quantity sold">
     </div>
+
     <div class="modal-field">
-      <label>Quantity</label>
-      <input type="number" id="modalQtyInput" min="1" value="1" placeholder="Enter quantity">
+      <label>Note <span style="font-weight:400;color:#aaa;">(optional)</span></label>
+      <input type="text" id="soldNote" placeholder="e.g. Walk-in customer, member purchase...">
     </div>
-    <div class="modal-field">
-      <label>Reason / Note <span style="font-weight:400;color:#aaa;">(optional)</span></label>
-      <input type="text" id="modalReason" placeholder="e.g. Customer purchase, Restock delivery...">
-    </div>
+
     <div class="modal-meta">
-      <span><strong>Created At</strong><span id="modalCreated">—</span></span>
-      <span><strong>Updated At</strong><span id="modalUpdated">—</span></span>
+      <span><strong>Created At</strong><span id="soldCreated">—</span></span>
+      <span><strong>Last Updated</strong><span id="soldUpdated">—</span></span>
     </div>
-    <button class="modal-save-btn" id="editSaveBtn" onclick="saveStockChange()">Save Changes</button>
+
+    <button class="modal-save-btn" id="soldSaveBtn" onclick="saveSoldChange()">
+      <i class="bi bi-check-circle"></i> Confirm Sale
+    </button>
   </div>
 </div>
 
 <script>
   let currentRow     = null;
-  let selectedAction = 'add';
+  let notifPanelOpen = false;
+  let notifLoaded    = false;
+  let badgeCount     = <?= $notifCount ?>;
 
+  // ── Toast ─────────────────────────────────────────────────────────────────────
   function showToast(msg, type = 'success') {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -352,6 +490,7 @@ try {
     setTimeout(() => { t.className = 'toast'; }, 3000);
   }
 
+  // ── Status helper ─────────────────────────────────────────────────────────────
   function getStatus(qty) {
     qty = parseInt(qty);
     if (qty === 0)  return { cls: 'inactive',  txt: 'Out of Stock' };
@@ -359,135 +498,47 @@ try {
     return                 { cls: 'active',    txt: 'Available'    };
   }
 
-  function formatPrice(num) {
-    return '&#8369;' + parseFloat(num).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
-  }
-
-  function openAddModal() {
-    document.getElementById('addItemName').value    = '';
-    document.getElementById('addCategory').value   = 'Beverage';
-    document.getElementById('addPrice').value       = '';
-    document.getElementById('addQty').value         = '1';
-    document.getElementById('addDescription').value = '';
-    document.getElementById('addModal').classList.add('active');
-  }
-
-  function closeAddModal() {
-    document.getElementById('addModal').classList.remove('active');
-  }
-
-  function saveNewProduct() {
-    const name  = document.getElementById('addItemName').value.trim();
-    const cat   = document.getElementById('addCategory').value;
-    const price = document.getElementById('addPrice').value.trim();
-    const qty   = document.getElementById('addQty').value.trim();
-    const desc  = document.getElementById('addDescription').value.trim();
-
-    if (!name)                                            { alert('Please enter an item name.');     return; }
-    if (!price || isNaN(price) || parseFloat(price) < 0) { alert('Please enter a valid price.');    return; }
-    if (!qty   || isNaN(qty)   || parseInt(qty) < 0)     { alert('Please enter a valid quantity.'); return; }
-
-    const btn = document.getElementById('addSaveBtn');
-    btn.disabled = true; btn.textContent = 'Saving...';
-
-    const fd = new FormData();
-    fd.append('action',      'add');
-    fd.append('item_name',   name);
-    fd.append('category',    cat);
-    fd.append('price',       price);
-    fd.append('quantity',    qty);
-    fd.append('description', desc);
-
-    fetch('inventory.php', { method: 'POST', body: fd })
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          appendRow(data.row);
-          closeAddModal();
-          showToast('Product "' + name + '" added successfully!', 'success');
-        } else {
-          showToast('Error: ' + (data.message || 'Could not add product.'), 'error');
-          alert('Error: ' + (data.message || 'Could not add product.'));
-        }
-      })
-      .catch((e) => alert('Server error: ' + e.message))
-      .finally(() => { btn.disabled = false; btn.innerHTML = '<i class="bi bi-plus-circle"></i> Add Product'; });
-  }
-
-  function appendRow(row) {
-    const qty    = parseInt(row.quantity);
-    const status = getStatus(qty);
-    const tbody  = document.getElementById('inventoryBody');
-    const tr     = document.createElement('tr');
-    tr.setAttribute('data-id',          row.id);
-    tr.setAttribute('data-name',        row.item_name);
-    tr.setAttribute('data-category',    row.category);
-    tr.setAttribute('data-qty',         qty);
-    tr.setAttribute('data-price',       row.price);
-    tr.setAttribute('data-description', row.description || '');
-    tr.setAttribute('data-created',     row.created_at);
-    tr.setAttribute('data-updated',     row.updated_at);
-    tr.innerHTML = `
-      <td>${row.id}</td>
-      <td>${row.item_name}</td>
-      <td>${row.category}</td>
-      <td class="qty-cell">${qty}</td>
-      <td>${formatPrice(row.price)}</td>
-      <td>${row.description || '—'}</td>
-      <td class="created-cell">${row.created_at}</td>
-      <td class="updated-cell">${row.updated_at}</td>
-      <td><span class="status-badge ${status.cls}">${status.txt}</span></td>
-      <td>
-        <button class="btn-icon" onclick="openEditModal(this)"><i class="bi bi-pencil"></i></button>
-        <button class="btn-icon" onclick="deleteProduct(this)"><i class="bi bi-trash"></i></button>
-      </td>`;
-    tbody.appendChild(tr);
-  }
-
-  function openEditModal(btn) {
+  // ── Sold Modal ────────────────────────────────────────────────────────────────
+  function openSoldModal(btn) {
     currentRow = btn.closest('tr');
-    document.getElementById('modalItemName').textContent   = currentRow.getAttribute('data-name');
-    document.getElementById('modalItemId').textContent     = 'ID: ' + currentRow.getAttribute('data-id');
-    document.getElementById('modalCurrentQty').textContent = currentRow.querySelector('.qty-cell').textContent;
-    document.getElementById('modalQtyInput').value         = 1;
-    document.getElementById('modalReason').value           = '';
-    document.getElementById('modalCreated').textContent    = currentRow.getAttribute('data-created') || '—';
-    document.getElementById('modalUpdated').textContent    = currentRow.getAttribute('data-updated') || '—';
-    selectAction('add');
-    document.getElementById('editModal').classList.add('active');
+    document.getElementById('soldItemName').textContent   = currentRow.getAttribute('data-name');
+    document.getElementById('soldItemId').textContent     = 'ID: ' + currentRow.getAttribute('data-id');
+    document.getElementById('soldCurrentQty').textContent = currentRow.querySelector('.qty-cell').textContent;
+    document.getElementById('soldQtyInput').value         = 1;
+    document.getElementById('soldNote').value             = '';
+    document.getElementById('soldCreated').textContent    = currentRow.getAttribute('data-created') || '—';
+    document.getElementById('soldUpdated').textContent    = currentRow.getAttribute('data-updated') || '—';
+    document.getElementById('soldModal').classList.add('active');
   }
 
-  function closeEditModal() {
-    document.getElementById('editModal').classList.remove('active');
+  function closeSoldModal() {
+    document.getElementById('soldModal').classList.remove('active');
     currentRow = null;
   }
 
-  function selectAction(action) {
-    selectedAction = action;
-    document.getElementById('btnAdd').className    = action === 'add'    ? 'selected-add'    : '';
-    document.getElementById('btnReduce').className = action === 'reduce' ? 'selected-reduce' : '';
-  }
-
-  function saveStockChange() {
-    const qtyInput = parseInt(document.getElementById('modalQtyInput').value);
-    if (!qtyInput || qtyInput < 1) { alert('Please enter a valid quantity (at least 1).'); return; }
-
-    const id         = currentRow.getAttribute('data-id');
-    const change     = selectedAction === 'add' ? qtyInput : -qtyInput;
-    const currentQty = parseInt(currentRow.querySelector('.qty-cell').textContent);
-
-    if (currentQty + change < 0) {
-      alert('Cannot reduce stock below 0. Current stock: ' + currentQty);
+  function saveSoldChange() {
+    const qtyInput = parseInt(document.getElementById('soldQtyInput').value);
+    if (!qtyInput || qtyInput < 1) {
+      alert('Please enter a valid quantity (at least 1).');
       return;
     }
 
-    const btn = document.getElementById('editSaveBtn');
-    btn.disabled = true; btn.textContent = 'Saving...';
+    const id         = currentRow.getAttribute('data-id');
+    const currentQty = parseInt(currentRow.querySelector('.qty-cell').textContent);
+
+    if (currentQty - qtyInput < 0) {
+      alert('Cannot sell more than current stock. Current stock: ' + currentQty);
+      return;
+    }
+
+    const btn = document.getElementById('soldSaveBtn');
+    btn.disabled  = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
 
     const fd = new FormData();
     fd.append('action', 'update_stock');
     fd.append('id',     id);
-    fd.append('change', change);
+    fd.append('change', -qtyInput);
 
     fetch('inventory.php', { method: 'POST', body: fd })
       .then(r => r.json())
@@ -504,42 +555,131 @@ try {
           currentRow.setAttribute('data-qty',     newQty);
           currentRow.setAttribute('data-updated', row.updated_at);
 
-          document.getElementById('modalCurrentQty').textContent = newQty;
-          document.getElementById('modalUpdated').textContent     = row.updated_at;
+          // Bump badge
+          badgeCount++;
+          updateBadge(badgeCount);
+          notifLoaded = false; // force reload on next panel open
 
-          showToast('Stock updated successfully!', 'success');
-          closeEditModal();
+          showToast('Sale recorded! Stock updated to ' + newQty + '.', 'success');
+          closeSoldModal();
         } else {
           alert(data.message || 'Could not update stock.');
         }
       })
       .catch(() => alert('Server error. Please try again.'))
-      .finally(() => { btn.disabled = false; btn.textContent = 'Save Changes'; });
+      .finally(() => {
+        btn.disabled  = false;
+        btn.innerHTML = '<i class="bi bi-check-circle"></i> Confirm Sale';
+      });
   }
 
-  function deleteProduct(btn) {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-    const row  = btn.closest('tr');
-    const id   = row.getAttribute('data-id');
-    const name = row.getAttribute('data-name');
+  // ── Notification Panel ────────────────────────────────────────────────────────
+  function updateBadge(count) {
+    const badge = document.getElementById('notifBadge');
+    if (count <= 0) {
+      badge.classList.add('hidden');
+    } else {
+      badge.classList.remove('hidden');
+      badge.textContent = count > 99 ? '99+' : count;
+    }
+  }
+
+  function toggleNotifPanel() {
+    notifPanelOpen = !notifPanelOpen;
+    document.getElementById('notifPanel').classList.toggle('open', notifPanelOpen);
+
+    if (notifPanelOpen) {
+      // Reset badge when panel opens
+      badgeCount = 0;
+      updateBadge(0);
+      if (!notifLoaded) loadNotifications();
+    }
+  }
+
+  function loadNotifications() {
+    const list = document.getElementById('notifList');
+    list.innerHTML = '<div class="notif-loader"><i class="bi bi-hourglass-split"></i> Loading...</div>';
 
     const fd = new FormData();
-    fd.append('action', 'delete');
-    fd.append('id', id);
+    fd.append('action', 'get_notifications');
 
     fetch('inventory.php', { method: 'POST', body: fd })
       .then(r => r.json())
       .then(data => {
-        if (data.success) {
-          row.remove();
-          showToast('Product "' + name + '" deleted.', 'success');
-        } else {
-          alert('Could not delete product.');
+        notifLoaded = true;
+        if (!data.success) {
+          list.innerHTML = '<div class="notif-empty"><i class="bi bi-exclamation-circle"></i>Could not load notifications.</div>';
+          return;
         }
+
+        const notifs = data.notifications;
+        document.getElementById('notifPanelCount').textContent =
+          notifs.length + ' record' + (notifs.length !== 1 ? 's' : '');
+
+        if (notifs.length === 0) {
+          list.innerHTML = '<div class="notif-empty"><i class="bi bi-bell-slash"></i>No notification history yet.</div>';
+          return;
+        }
+
+        list.innerHTML = notifs.map(n => {
+          const firstName = n.first_name || 'Unknown';
+          const lastName  = n.last_name  || '';
+          const fullName  = (firstName + ' ' + lastName).trim();
+          const userType  = n.user_type ? capitalize(n.user_type) : 'Staff';
+          const qty       = parseInt(n.qty_sold);
+          const timeStr   = formatTime(n.notif_at);
+
+          return `
+            <div class="notif-item">
+              <div class="notif-icon"><i class="bi bi-cart-dash-fill"></i></div>
+              <div class="notif-body">
+                <p class="notif-msg">
+                  <strong>${userType} ${escHtml(fullName)}</strong> reduced
+                  <span class="item-highlight">${escHtml(n.item_name)}</span>
+                  stock by <strong>${qty} unit${qty !== 1 ? 's' : ''}</strong>
+                  because a customer bought it.
+                </p>
+                <span class="notif-time"><i class="bi bi-clock"></i> ${timeStr}</span>
+              </div>
+            </div>`;
+        }).join('');
       })
-      .catch(() => alert('Server error. Please try again.'));
+      .catch(() => {
+        list.innerHTML = '<div class="notif-empty"><i class="bi bi-exclamation-circle"></i>Server error.</div>';
+      });
   }
 
+  function capitalize(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
+  function escHtml(str) {
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(str));
+    return d.innerHTML;
+  }
+
+  function formatTime(ts) {
+    if (!ts) return '—';
+    const d = new Date(ts.replace(' ', 'T'));
+    if (isNaN(d)) return ts;
+    return d.toLocaleString('en-PH', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true
+    });
+  }
+
+  // Close panel on outside click
+  document.addEventListener('click', function(e) {
+    const wrapper = document.getElementById('notifWrapper');
+    if (notifPanelOpen && !wrapper.contains(e.target)) {
+      notifPanelOpen = false;
+      document.getElementById('notifPanel').classList.remove('open');
+    }
+  });
+
+  // ── Search ────────────────────────────────────────────────────────────────────
   function searchProducts() {
     const query = document.querySelector('.search-input').value.trim().toLowerCase();
     document.querySelectorAll('#inventoryBody tr').forEach(function(row) {
@@ -557,8 +697,9 @@ try {
     if (e.key === 'Enter') searchProducts();
   });
 
-  document.getElementById('editModal').addEventListener('click', function(e) { if (e.target === this) closeEditModal(); });
-  document.getElementById('addModal').addEventListener('click',  function(e) { if (e.target === this) closeAddModal();  });
+  document.getElementById('soldModal').addEventListener('click', function(e) {
+    if (e.target === this) closeSoldModal();
+  });
 </script>
 </body>
 </html>
