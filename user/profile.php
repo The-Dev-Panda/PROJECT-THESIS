@@ -12,6 +12,8 @@ $contactValue = '';
 $genderValue = 'Not set';
 $fitnessLevel = 'Not set';
 $goal = 'Not set';
+$attendanceStreakDays = 0;
+$avatarInitials = 'M';
 $selectedGender = '';
 $selectedFitnessLevel = '';
 $selectedGoal = '';
@@ -58,6 +60,14 @@ try {
       $displayName = (string)$user['username'];
     }
 
+    $firstInitial = strtoupper(substr(trim((string)($user['first_name'] ?? '')), 0, 1));
+    $lastInitial = strtoupper(substr(trim((string)($user['last_name'] ?? '')), 0, 1));
+    if ($firstInitial !== '' || $lastInitial !== '') {
+      $avatarInitials = $firstInitial . $lastInitial;
+    } elseif (!empty($user['username'])) {
+      $avatarInitials = strtoupper(substr((string)$user['username'], 0, 2));
+    }
+
     if (!empty($user['email'])) {
       $emailAddress = (string)$user['email'];
     }
@@ -98,6 +108,30 @@ try {
       $selectedGoal = $goal;
     }
 
+    $attendanceStmt = $pdo->prepare("SELECT DISTINCT date(datetime, 'localtime') AS attendance_day FROM attendance WHERE user_id = :user_id ORDER BY attendance_day DESC");
+    $attendanceStmt->execute([':user_id' => $userId]);
+    $attendanceDays = $attendanceStmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+
+    if (!empty($attendanceDays)) {
+      $latestDay = DateTimeImmutable::createFromFormat('Y-m-d', (string)$attendanceDays[0]);
+      if ($latestDay instanceof DateTimeImmutable) {
+        $expectedDay = $latestDay;
+        foreach ($attendanceDays as $attendanceDay) {
+          $currentDay = DateTimeImmutable::createFromFormat('Y-m-d', (string)$attendanceDay);
+          if (!($currentDay instanceof DateTimeImmutable)) {
+            continue;
+          }
+
+          if ($currentDay->format('Y-m-d') !== $expectedDay->format('Y-m-d')) {
+            break;
+          }
+
+          $attendanceStreakDays++;
+          $expectedDay = $expectedDay->modify('-1 day');
+        }
+      }
+    }
+
     $qrPayload = json_encode([
       'member_ref' => (string)$userId,
       'username' => (string)($user['username'] ?? '')
@@ -126,6 +160,40 @@ try {
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
+    <style>
+      .profile-header-content .profile-avatar {
+        background: #ffcc00;
+        border-radius: 50%;
+      }
+
+      .profile-avatar .avatar-initials {
+        font-size: 42px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        line-height: 1;
+        color: #111111;
+      }
+
+      .onboard-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .onboard-label {
+        font-size: 11px;
+        letter-spacing: 0.7px;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #a0a0a0;
+      }
+
+      .onboard-actions {
+        display: flex;
+        align-items: flex-end;
+      }
+    </style>
   </head>
   <body>
     <div class="dashboard">
@@ -208,7 +276,7 @@ try {
           <div class="banner-bg"></div>
           <div class="profile-header-content">
             <div class="profile-avatar">
-              <img src="userimage/woman.png" alt="Profile Avatar" />
+              <span class="avatar-initials"><?php echo htmlspecialchars($avatarInitials, ENT_QUOTES, 'UTF-8'); ?></span>
             </div>
             <div class="profile-header-info">
               <h1 id="profileHeaderName"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h1>
@@ -216,7 +284,7 @@ try {
               <div class="profile-stats-mini">
                 <div class="stat-badge">
                   <i class="fas fa-fire"></i>
-                  <span>16 Day Streak</span>
+                  <span><?php echo (int)$attendanceStreakDays . ' Day' . ($attendanceStreakDays === 1 ? '' : 's') . ' Streak'; ?></span>
                 </div>
                 <div class="stat-badge">
                   <i class="fas fa-dumbbell"></i>
@@ -287,30 +355,53 @@ try {
               </div>
 
               <form id="profileOnboardingForm" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px;">
-                <input type="number" id="onboardAge" class="form-input" placeholder="Age" value="<?php echo htmlspecialchars($ageValue === null ? '' : (string)$ageValue, ENT_QUOTES, 'UTF-8'); ?>">
-                <input type="number" id="onboardHeight" class="form-input" placeholder="Height (cm)" step="0.1" min="1" value="<?php echo htmlspecialchars($heightValue, ENT_QUOTES, 'UTF-8'); ?>">
-                <input type="number" id="onboardWeight" class="form-input" placeholder="Weight (kg)" step="0.1" min="1" value="<?php echo htmlspecialchars($weightValue, ENT_QUOTES, 'UTF-8'); ?>">
-                <input type="text" id="onboardContact" class="form-input" placeholder="Contact Number" value="<?php echo htmlspecialchars($contactValue, ENT_QUOTES, 'UTF-8'); ?>">
-                <select id="onboardGender" class="form-input">
-                  <option value="">Gender</option>
-                  <option value="Male" <?php echo $selectedGender === 'Male' ? 'selected' : ''; ?>>Male</option>
-                  <option value="Female" <?php echo $selectedGender === 'Female' ? 'selected' : ''; ?>>Female</option>
-                  <option value="Prefer not to say" <?php echo $selectedGender === 'Prefer not to say' ? 'selected' : ''; ?>>Prefer not to say</option>
-                </select>
-                <select id="onboardFitnessLevel" class="form-input">
-                  <option value="">Fitness Experience</option>
-                  <option value="Beginner" <?php echo $selectedFitnessLevel === 'Beginner' ? 'selected' : ''; ?>>Beginner</option>
-                  <option value="Intermediate" <?php echo $selectedFitnessLevel === 'Intermediate' ? 'selected' : ''; ?>>Intermediate</option>
-                  <option value="Advanced" <?php echo $selectedFitnessLevel === 'Advanced' ? 'selected' : ''; ?>>Advanced</option>
-                </select>
-                <select id="onboardGoal" class="form-input">
-                  <option value="">Primary Goal</option>
-                  <option value="Weight Loss" <?php echo $selectedGoal === 'Weight Loss' ? 'selected' : ''; ?>>Weight Loss</option>
-                  <option value="Muscle Gain" <?php echo $selectedGoal === 'Muscle Gain' ? 'selected' : ''; ?>>Muscle Gain</option>
-                  <option value="Endurance" <?php echo $selectedGoal === 'Endurance' ? 'selected' : ''; ?>>Endurance</option>
-                  <option value="General Fitness" <?php echo $selectedGoal === 'General Fitness' ? 'selected' : ''; ?>>General Fitness</option>
-                </select>
-                <button type="submit" class="btn-action primary" style="border:none;">Save Profile</button>
+                <div class="onboard-field">
+                  <label class="onboard-label" for="onboardAge">Age (years)</label>
+                  <input type="number" id="onboardAge" class="form-input" placeholder="e.g. 22" value="<?php echo htmlspecialchars($ageValue === null ? '' : (string)$ageValue, ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+                <div class="onboard-field">
+                  <label class="onboard-label" for="onboardHeight">Height (cm)</label>
+                  <input type="number" id="onboardHeight" class="form-input" placeholder="e.g. 170" step="0.1" min="1" value="<?php echo htmlspecialchars($heightValue, ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+                <div class="onboard-field">
+                  <label class="onboard-label" for="onboardWeight">Weight (kg)</label>
+                  <input type="number" id="onboardWeight" class="form-input" placeholder="e.g. 65" step="0.1" min="1" value="<?php echo htmlspecialchars($weightValue, ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+                <div class="onboard-field">
+                  <label class="onboard-label" for="onboardContact">Contact Number</label>
+                  <input type="text" id="onboardContact" class="form-input" placeholder="e.g. 09xxxxxxxxx" value="<?php echo htmlspecialchars($contactValue, ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+                <div class="onboard-field">
+                  <label class="onboard-label" for="onboardGender">Gender</label>
+                  <select id="onboardGender" class="form-input">
+                    <option value="">Select gender</option>
+                    <option value="Male" <?php echo $selectedGender === 'Male' ? 'selected' : ''; ?>>Male</option>
+                    <option value="Female" <?php echo $selectedGender === 'Female' ? 'selected' : ''; ?>>Female</option>
+                    <option value="Prefer not to say" <?php echo $selectedGender === 'Prefer not to say' ? 'selected' : ''; ?>>Prefer not to say</option>
+                  </select>
+                </div>
+                <div class="onboard-field">
+                  <label class="onboard-label" for="onboardFitnessLevel">Fitness Experience</label>
+                  <select id="onboardFitnessLevel" class="form-input">
+                    <option value="">Select experience</option>
+                    <option value="Beginner" <?php echo $selectedFitnessLevel === 'Beginner' ? 'selected' : ''; ?>>Beginner</option>
+                    <option value="Intermediate" <?php echo $selectedFitnessLevel === 'Intermediate' ? 'selected' : ''; ?>>Intermediate</option>
+                    <option value="Advanced" <?php echo $selectedFitnessLevel === 'Advanced' ? 'selected' : ''; ?>>Advanced</option>
+                  </select>
+                </div>
+                <div class="onboard-field">
+                  <label class="onboard-label" for="onboardGoal">Primary Goal</label>
+                  <select id="onboardGoal" class="form-input">
+                    <option value="">Select goal</option>
+                    <option value="Weight Loss" <?php echo $selectedGoal === 'Weight Loss' ? 'selected' : ''; ?>>Weight Loss</option>
+                    <option value="Muscle Gain" <?php echo $selectedGoal === 'Muscle Gain' ? 'selected' : ''; ?>>Muscle Gain</option>
+                    <option value="Endurance" <?php echo $selectedGoal === 'Endurance' ? 'selected' : ''; ?>>Endurance</option>
+                    <option value="General Fitness" <?php echo $selectedGoal === 'General Fitness' ? 'selected' : ''; ?>>General Fitness</option>
+                  </select>
+                </div>
+                <div class="onboard-actions">
+                  <button type="submit" class="btn-action primary" style="border:none; width:100%;">Save Profile</button>
+                </div>
               </form>
             </div>
 
