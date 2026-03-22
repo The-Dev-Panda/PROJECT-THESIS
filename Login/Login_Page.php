@@ -57,7 +57,7 @@ if (isset($_SESSION["username"]) && $_SESSION["username"] != "") {
                             ?>
                             <div class="row mt-4">
                                 <input type="submit" value="Login" class="btn text-dark"
-                                    style="background-color:rgb(197, 184, 0);">
+                                    style="background-color:rgb(255, 204, 0);">
                             </div>
                         </div>
                     </form>
