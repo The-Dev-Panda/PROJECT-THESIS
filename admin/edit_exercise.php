@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../includes/security.php';
 
 if (empty($_SESSION['username']) || $_SESSION['user_type'] !== 'admin') {
     header('Location: ../Login/Login_Page.php');
@@ -49,6 +50,7 @@ $movement_types = ['push', 'pull', 'legs', 'cardio', 'other', 'arms', 'back', 'c
     <?php endif; ?>
 
     <form action="process_edit_exercise.php" method="POST" class="exercise-card p-4">
+        <?php echo fitstop_csrf_input(); ?>
         <input type="hidden" name="exercise_id" value="<?php echo (int)$exercise['exercise_id']; ?>">
 
         <div class="mb-3">

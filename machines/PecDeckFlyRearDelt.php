@@ -122,6 +122,7 @@ include('../includes/header.php');
 
                 <form style="margin-top:12px" action="../Database/submit_feedback.php" method="POST">
                     <input type="hidden" name="machine" value="Pec Deck Fly / Rear Delt Fly">
+                    <?php echo fitstop_csrf_input(); ?>
 
                     <?php if (empty($_SESSION['username'])): ?>
                     <div class="mb-3">

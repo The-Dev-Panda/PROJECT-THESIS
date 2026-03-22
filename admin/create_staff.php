@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../includes/security.php';
 
 if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     header('Location: Login_Page.php');
@@ -80,6 +81,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                 <div class="form-card">
                     <h1 class="mb-0"><i class="bi bi-person-plus-fill me-2"></i>Create New Staff</h1>
                     <form action="process_create_staff.php" method="POST">
+                        <?php echo fitstop_csrf_input(); ?>
                         <div class="row">
 
                             <div class="col-md-6 mb-3">

@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../includes/security.php';
 
 if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     header('Location: Login_Page.php');
@@ -39,6 +40,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                 <div class="form-card">
                     <h1 class="mb-0"><i class="bi bi-megaphone-fill me-2"></i>Create Announcement</h1>
                     <form action="process_create_announcement.php" method="POST" enctype="multipart/form-data">
+                        <?php echo fitstop_csrf_input(); ?>
                         <div class="mb-4">
                             <label for="title" class="form-label fw-bold">
                                 <i class="bi bi-card-heading me-2"></i>Announcement Title

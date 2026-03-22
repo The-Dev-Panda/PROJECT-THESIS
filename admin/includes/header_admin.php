@@ -1,6 +1,7 @@
 <?php
 // Detect current page
 $current_page = basename($_SERVER['PHP_SELF']);
+require_once __DIR__ . '/../../includes/security.php';
 ?>
 <!DOCTYPE html>
 <html>
@@ -92,6 +93,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     </li>
                     <li class="nav-item">
                         <form action="../../login/logout.php" method="POST" class="d-inline">
+                            <?php echo fitstop_csrf_input(); ?>
                             <button type="submit" class="nav-link border-0 bg-transparent" style="cursor: pointer;">
                                 <i class="bi bi-box-arrow-right"></i> Logout
                             </button>
