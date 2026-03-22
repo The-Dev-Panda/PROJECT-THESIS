@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/../includes/security.php';
+?>
 <!DOCTYPE html>
 <html>
 
@@ -29,6 +32,7 @@
                             <h3 class="text-center mb-4">Password Reset - <span style="color:rgb(197, 184, 0);">FitStop
                                     Gym</span></h3>
                             <form action="Process_Forgot_Password.php" method="POST">
+                                <?php echo fitstop_csrf_input(); ?>
                                 <div class="col px-4">
                                     <div class="row mb-2">
                                         <p>Please enter the email associated to your account</p>

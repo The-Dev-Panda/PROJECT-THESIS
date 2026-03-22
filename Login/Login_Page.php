@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../includes/security.php';
 if (isset($_SESSION["username"]) && $_SESSION["username"] != "") {
     header('Location: success.php');
     exit();
@@ -34,6 +35,7 @@ if (isset($_SESSION["username"]) && $_SESSION["username"] != "") {
             <div class="col-md-6 col-sm-12 d-flex justify-content-center align-items-center">
                 <div class="col-md-6 rounded border border-warning shadow p-4">
                     <form action="Process_Login.php" method="POST">
+                        <?php echo fitstop_csrf_input(); ?>
                         <div class="col" style="font-size: 1.2rem;">
                             <h3 class=" text-center text-warning m-3">FITSTOP GYM <span class="text-light">LOGIN</span>
                             </h3>
@@ -62,6 +64,7 @@ if (isset($_SESSION["username"]) && $_SESSION["username"] != "") {
                         </div>
                     </form>
                     <form action="Forgot_Password.php" method="POST">
+                        <?php echo fitstop_csrf_input(); ?>
                         <div class="col-md-4 text-center">
                             <input type="submit" value="Forgot Password?" class="btn text-light text-center"
                                 style="background-color:none;">

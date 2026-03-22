@@ -15,7 +15,7 @@
     applyTheme();
   }
 
-  /* --- Sync the toggle in settings.html if it exists --- */
+  /* --- Sync the toggle in settings.php if it exists --- */
   function syncToggle() {
     const toggle = document.getElementById("darkModeToggle");
     if (!toggle) return;

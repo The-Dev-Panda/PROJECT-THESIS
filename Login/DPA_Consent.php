@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../includes/security.php';
 if (empty($_SESSION['username']) || strtolower((string)($_SESSION['user_type'] ?? '')) !== 'user') {
     header('Location: Login_Page.php');
     exit();
@@ -28,6 +29,7 @@ try {
 } catch (Exception $e) {}
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    fitstop_validate_csrf_or_exit($_POST['csrf_token'] ?? null);
     $consentGiven = isset($_POST['consent']) && $_POST['consent'] === '1';
     if (!$consentGiven) {
         $error = 'You must accept the Terms and Conditions and data privacy consent to continue.';
@@ -85,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <hr class="divider">
 
             <form method="POST" action="DPA_Consent.php">
+                <?php echo fitstop_csrf_input(); ?>
                 <div class="check-row">
                     <input type="checkbox" id="consent" name="consent" value="1">
                     <label for="consent">

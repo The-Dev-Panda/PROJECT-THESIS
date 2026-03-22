@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════
    MEAL TRACKER — meal-tracker.js
-   Drop this before </body> in myplan.html
+  Drop this before </body> in myplan.php
 ═══════════════════════════════════════════════════ */
 
 const MT_DB = [

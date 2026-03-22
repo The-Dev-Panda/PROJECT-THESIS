@@ -34,14 +34,7 @@ try {
         throw new Exception('Invalid request payload');
     }
 
-    $memberRef = isset($input['member_ref']) ? trim((string)$input['member_ref']) : '';
-    if ($memberRef === '') {
-        $memberRef = (string)$sessionUserId;
-    }
-
-    if ($memberRef === '') {
-        throw new Exception('Member reference is required');
-    }
+    $memberRef = (string)$sessionUserId;
 
     $age = isset($input['age']) && $input['age'] !== '' ? (int)$input['age'] : null;
     $heightCm = isset($input['height_cm']) && $input['height_cm'] !== '' ? (float)$input['height_cm'] : null;
@@ -49,6 +42,15 @@ try {
     $bmi = isset($input['bmi']) && $input['bmi'] !== '' ? (float)$input['bmi'] : null;
     $fitnessLevel = isset($input['fitness_level']) ? trim((string)$input['fitness_level']) : null;
     $goal = isset($input['goal']) ? trim((string)$input['goal']) : null;
+    $contact = isset($input['contact']) ? trim((string)$input['contact']) : null;
+    $gender = isset($input['gender']) ? trim((string)$input['gender']) : null;
+
+    if ($contact === '') {
+        $contact = null;
+    }
+    if ($gender === '') {
+        $gender = null;
+    }
 
     if ($age !== null && $age < 0) {
         throw new Exception('Invalid age value');
@@ -82,14 +84,11 @@ try {
         }
     }
     $hasBmiColumn = in_array('bmi', $profileColumns, true);
+    $hasContactColumn = in_array('contact', $profileColumns, true);
+    $hasGenderColumn = in_array('gender', $profileColumns, true);
 
-    if (ctype_digit($memberRef)) {
-        $userStmt = $db->prepare('SELECT id, user_type FROM users WHERE id = :id LIMIT 1');
-        $userStmt->execute([':id' => (int)$memberRef]);
-    } else {
-        $userStmt = $db->prepare('SELECT id, user_type FROM users WHERE username = :username LIMIT 1');
-        $userStmt->execute([':username' => $memberRef]);
-    }
+    $userStmt = $db->prepare('SELECT id, user_type FROM users WHERE id = :id LIMIT 1');
+    $userStmt->execute([':id' => (int)$memberRef]);
 
     $user = $userStmt->fetch(PDO::FETCH_ASSOC);
     if (!$user) {
@@ -106,51 +105,70 @@ try {
     $exists = $existsStmt->fetch(PDO::FETCH_ASSOC);
 
     if ($exists) {
+        $updateFields = [
+            'age = :age',
+            'height_cm = :height_cm',
+            'weight_kg = :weight_kg',
+            'fitness_level = :fitness_level',
+            'goal = :goal'
+        ];
+
+        $updateParams = [
+            ':age' => $age,
+            ':height_cm' => $heightCm,
+            ':weight_kg' => $weightKg,
+            ':fitness_level' => $fitnessLevel,
+            ':goal' => $goal,
+            ':user_id' => $userId
+        ];
+
         if ($hasBmiColumn) {
-            $updateStmt = $db->prepare('UPDATE member_profiles SET age = :age, height_cm = :height_cm, weight_kg = :weight_kg, bmi = :bmi, fitness_level = :fitness_level, goal = :goal, updated_at = CURRENT_TIMESTAMP WHERE user_id = :user_id');
-            $updateStmt->execute([
-                ':age' => $age,
-                ':height_cm' => $heightCm,
-                ':weight_kg' => $weightKg,
-                ':bmi' => $bmi,
-                ':fitness_level' => $fitnessLevel,
-                ':goal' => $goal,
-                ':user_id' => $userId
-            ]);
-        } else {
-            $updateStmt = $db->prepare('UPDATE member_profiles SET age = :age, height_cm = :height_cm, weight_kg = :weight_kg, fitness_level = :fitness_level, goal = :goal, updated_at = CURRENT_TIMESTAMP WHERE user_id = :user_id');
-            $updateStmt->execute([
-                ':age' => $age,
-                ':height_cm' => $heightCm,
-                ':weight_kg' => $weightKg,
-                ':fitness_level' => $fitnessLevel,
-                ':goal' => $goal,
-                ':user_id' => $userId
-            ]);
+            $updateFields[] = 'bmi = :bmi';
+            $updateParams[':bmi'] = $bmi;
         }
+        if ($hasContactColumn) {
+            $updateFields[] = 'contact = :contact';
+            $updateParams[':contact'] = $contact;
+        }
+        if ($hasGenderColumn) {
+            $updateFields[] = 'gender = :gender';
+            $updateParams[':gender'] = $gender;
+        }
+
+        $updateSql = 'UPDATE member_profiles SET ' . implode(', ', $updateFields) . ', updated_at = CURRENT_TIMESTAMP WHERE user_id = :user_id';
+        $updateStmt = $db->prepare($updateSql);
+        $updateStmt->execute($updateParams);
     } else {
+        $insertColumns = ['user_id', 'age', 'height_cm', 'weight_kg', 'fitness_level', 'goal'];
+        $insertValues = [':user_id', ':age', ':height_cm', ':weight_kg', ':fitness_level', ':goal'];
+        $insertParams = [
+            ':user_id' => $userId,
+            ':age' => $age,
+            ':height_cm' => $heightCm,
+            ':weight_kg' => $weightKg,
+            ':fitness_level' => $fitnessLevel,
+            ':goal' => $goal
+        ];
+
         if ($hasBmiColumn) {
-            $insertStmt = $db->prepare('INSERT INTO member_profiles (user_id, age, height_cm, weight_kg, bmi, fitness_level, goal) VALUES (:user_id, :age, :height_cm, :weight_kg, :bmi, :fitness_level, :goal)');
-            $insertStmt->execute([
-                ':user_id' => $userId,
-                ':age' => $age,
-                ':height_cm' => $heightCm,
-                ':weight_kg' => $weightKg,
-                ':bmi' => $bmi,
-                ':fitness_level' => $fitnessLevel,
-                ':goal' => $goal
-            ]);
-        } else {
-            $insertStmt = $db->prepare('INSERT INTO member_profiles (user_id, age, height_cm, weight_kg, fitness_level, goal) VALUES (:user_id, :age, :height_cm, :weight_kg, :fitness_level, :goal)');
-            $insertStmt->execute([
-                ':user_id' => $userId,
-                ':age' => $age,
-                ':height_cm' => $heightCm,
-                ':weight_kg' => $weightKg,
-                ':fitness_level' => $fitnessLevel,
-                ':goal' => $goal
-            ]);
+            $insertColumns[] = 'bmi';
+            $insertValues[] = ':bmi';
+            $insertParams[':bmi'] = $bmi;
         }
+        if ($hasContactColumn) {
+            $insertColumns[] = 'contact';
+            $insertValues[] = ':contact';
+            $insertParams[':contact'] = $contact;
+        }
+        if ($hasGenderColumn) {
+            $insertColumns[] = 'gender';
+            $insertValues[] = ':gender';
+            $insertParams[':gender'] = $gender;
+        }
+
+        $insertSql = 'INSERT INTO member_profiles (' . implode(', ', $insertColumns) . ') VALUES (' . implode(', ', $insertValues) . ')';
+        $insertStmt = $db->prepare($insertSql);
+        $insertStmt->execute($insertParams);
     }
 
     echo json_encode([

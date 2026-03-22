@@ -1,3 +1,112 @@
+<?php
+require_once __DIR__ . '/auth_user.php';
+
+$displayName = 'Member';
+$emailAddress = 'Not set';
+$memberIdDisplay = 'Not set';
+$ageValue = null;
+$ageDisplay = 'Not set';
+$heightValue = '';
+$weightValue = '';
+$contactValue = '';
+$genderValue = 'Not set';
+$fitnessLevel = 'Not set';
+$goal = 'Not set';
+$selectedGender = '';
+$selectedFitnessLevel = '';
+$selectedGoal = '';
+$qrPayload = json_encode(['member_ref' => (string)($_SESSION['id'] ?? ''), 'username' => '']);
+
+try {
+  require __DIR__ . '/../Login/connection.php';
+
+  $userId = (int)($_SESSION['id'] ?? 0);
+  if ($userId > 0) {
+    $userStmt = $pdo->prepare('SELECT id, username, first_name, last_name, email FROM users WHERE id = :id LIMIT 1');
+    $userStmt->execute([':id' => $userId]);
+    $user = $userStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    $profileColumns = [];
+    $profileColumnStmt = $pdo->query('PRAGMA table_info(member_profiles)');
+    if ($profileColumnStmt) {
+      $profileColumnRows = $profileColumnStmt->fetchAll(PDO::FETCH_ASSOC);
+      foreach ($profileColumnRows as $profileColumnRow) {
+        if (isset($profileColumnRow['name'])) {
+          $profileColumns[] = (string)$profileColumnRow['name'];
+        }
+      }
+    }
+
+    $profileSelectSql = 'SELECT '
+      . (in_array('age', $profileColumns, true) ? 'age' : 'NULL AS age') . ', '
+      . (in_array('height_cm', $profileColumns, true) ? 'height_cm' : 'NULL AS height_cm') . ', '
+      . (in_array('weight_kg', $profileColumns, true) ? 'weight_kg' : 'NULL AS weight_kg') . ', '
+      . (in_array('contact', $profileColumns, true) ? 'contact' : 'NULL AS contact') . ', '
+      . (in_array('gender', $profileColumns, true) ? 'gender' : 'NULL AS gender') . ', '
+      . (in_array('fitness_level', $profileColumns, true) ? 'fitness_level' : 'NULL AS fitness_level') . ', '
+      . (in_array('goal', $profileColumns, true) ? 'goal' : 'NULL AS goal')
+      . ' FROM member_profiles WHERE user_id = :user_id LIMIT 1';
+
+    $profileStmt = $pdo->prepare($profileSelectSql);
+    $profileStmt->execute([':user_id' => $userId]);
+    $profile = $profileStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    $nameRaw = trim(((string)($user['first_name'] ?? '')) . ' ' . ((string)($user['last_name'] ?? '')));
+    if ($nameRaw !== '') {
+      $displayName = $nameRaw;
+    } elseif (!empty($user['username'])) {
+      $displayName = (string)$user['username'];
+    }
+
+    if (!empty($user['email'])) {
+      $emailAddress = (string)$user['email'];
+    }
+
+    $memberIdDisplay = 'FS-' . date('Y') . '-' . str_pad((string)$userId, 4, '0', STR_PAD_LEFT);
+
+    if (isset($profile['age']) && $profile['age'] !== null && $profile['age'] !== '') {
+      $ageValue = (int)$profile['age'];
+      if ($ageValue > 0) {
+        $ageDisplay = $ageValue . ' Years';
+      }
+    }
+
+    if (isset($profile['height_cm']) && $profile['height_cm'] !== null && $profile['height_cm'] !== '') {
+      $heightValue = (string)$profile['height_cm'];
+    }
+
+    if (isset($profile['weight_kg']) && $profile['weight_kg'] !== null && $profile['weight_kg'] !== '') {
+      $weightValue = (string)$profile['weight_kg'];
+    }
+
+    if (isset($profile['contact']) && $profile['contact'] !== null && $profile['contact'] !== '') {
+      $contactValue = (string)$profile['contact'];
+    }
+
+    if (isset($profile['gender']) && $profile['gender'] !== null && $profile['gender'] !== '') {
+      $genderValue = (string)$profile['gender'];
+      $selectedGender = (string)$profile['gender'];
+    }
+
+    if (!empty($profile['fitness_level'])) {
+      $fitnessLevel = (string)$profile['fitness_level'];
+      $selectedFitnessLevel = $fitnessLevel;
+    }
+
+    if (!empty($profile['goal'])) {
+      $goal = (string)$profile['goal'];
+      $selectedGoal = $goal;
+    }
+
+    $qrPayload = json_encode([
+      'member_ref' => (string)$userId,
+      'username' => (string)($user['username'] ?? '')
+    ]);
+  }
+} catch (Throwable $e) {
+  // Keep template defaults if profile loading fails.
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -35,56 +144,56 @@
         <!-- MENU -->
         <ul class="menu">
           <li>
-            <a href="user.html">
+            <a href="user.php">
               <i class="bi bi-grid-1x2"></i>
               <span>Dashboard</span>
             </a>
           </li>
 
           <li>
-            <a href="bmi.html">
+            <a href="bmi.php">
               <i class="bi bi-heart-pulse"></i>
               <span>BMI Tracker</span>
             </a>
           </li>
 
           <li>
-            <a href="myplan.html">
+            <a href="myplan.php">
               <i class="bi bi-clipboard-check"></i>
               <span>My Plan</span>
             </a>
           </li>
 
           <li>
-            <a href="history.html">
+            <a href="history.php">
               <i class="bi bi-clock-history"></i>
               <span>History</span>
             </a>
           </li>
 
           <li>
-            <a href="payments.html">
+            <a href="payments.php">
               <i class="bi bi-credit-card"></i>
               <span>Payments</span>
             </a>
           </li>
 
           <li class="active">
-            <a href="profile.html">
+            <a href="profile.php">
               <i class="bi bi-person"></i>
               <span>Profile</span>
             </a>
           </li>
 
           <li>
-            <a href="settings.html">
+            <a href="settings.php">
               <i class="bi bi-gear"></i>
               <span>Settings</span>
             </a>
           </li>
 
           <li>
-            <a href="logout.html">
+            <a href="logout.php">
               <i class="bi bi-box-arrow-right"></i>
               <span>Logout</span>
             </a>
@@ -102,7 +211,7 @@
               <img src="userimage/woman.png" alt="Profile Avatar" />
             </div>
             <div class="profile-header-info">
-              <h1 id="profileHeaderName">Linda Walker</h1>
+              <h1 id="profileHeaderName"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h1>
               <p class="profile-subtitle">New Member • Active Since 2026</p>
               <div class="profile-stats-mini">
                 <div class="stat-badge">
@@ -132,11 +241,11 @@
             <div class="info-grid">
               <div class="info-item">
                 <span class="info-label">Full Name</span>
-                <span class="info-value" id="profileFullName">Linda Walker</span>
+                <span class="info-value" id="profileFullName"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
               <div class="info-item">
                 <span class="info-label">Age</span>
-                <span class="info-value" id="profileAge">22 Years</span>
+                <span class="info-value" id="profileAge"><?php echo htmlspecialchars($ageDisplay, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
               <div class="info-item">
                 <span class="info-label">Birthdate</span>
@@ -144,7 +253,7 @@
               </div>
               <div class="info-item">
                 <span class="info-label">Gender</span>
-                <span class="info-value">Female</span>
+                <span class="info-value"><?php echo htmlspecialchars($genderValue, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
               <div class="info-item">
                 <span class="info-label">Address</span>
@@ -152,15 +261,15 @@
               </div>
               <div class="info-item">
                 <span class="info-label">Contact Number</span>
-                <span class="info-value">+63 912 345 6789</span>
+                <span class="info-value"><?php echo htmlspecialchars($contactValue !== '' ? $contactValue : 'Not set', ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
               <div class="info-item">
                 <span class="info-label">Email Address</span>
-                <span class="info-value" id="profileEmail">linda.walker@email.com</span>
+                <span class="info-value" id="profileEmail"><?php echo htmlspecialchars($emailAddress, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
               <div class="info-item">
                 <span class="info-label">Member ID</span>
-                <span class="info-value" id="profileMemberId">FS-2026-001</span>
+                <span class="info-value" id="profileMemberId"><?php echo htmlspecialchars($memberIdDisplay, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
             </div>
 
@@ -169,30 +278,37 @@
               <div class="info-grid-small" style="margin-bottom: 12px;">
                 <div class="info-item">
                   <span class="info-label">Fitness Experience</span>
-                  <span class="info-value" id="profileFitnessLevel">Not set</span>
+                  <span class="info-value" id="profileFitnessLevel"><?php echo htmlspecialchars($fitnessLevel, ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Primary Goal</span>
-                  <span class="info-value" id="profileGoal">Not set</span>
+                  <span class="info-value" id="profileGoal"><?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
               </div>
 
               <form id="profileOnboardingForm" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px;">
-                <input type="number" id="onboardAge" class="form-input" placeholder="Age">
-                <input type="number" id="onboardHeight" class="form-input" placeholder="Height (cm)" step="0.1" min="1">
-                <input type="number" id="onboardWeight" class="form-input" placeholder="Weight (kg)" step="0.1" min="1">
+                <input type="number" id="onboardAge" class="form-input" placeholder="Age" value="<?php echo htmlspecialchars($ageValue === null ? '' : (string)$ageValue, ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="number" id="onboardHeight" class="form-input" placeholder="Height (cm)" step="0.1" min="1" value="<?php echo htmlspecialchars($heightValue, ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="number" id="onboardWeight" class="form-input" placeholder="Weight (kg)" step="0.1" min="1" value="<?php echo htmlspecialchars($weightValue, ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="text" id="onboardContact" class="form-input" placeholder="Contact Number" value="<?php echo htmlspecialchars($contactValue, ENT_QUOTES, 'UTF-8'); ?>">
+                <select id="onboardGender" class="form-input">
+                  <option value="">Gender</option>
+                  <option value="Male" <?php echo $selectedGender === 'Male' ? 'selected' : ''; ?>>Male</option>
+                  <option value="Female" <?php echo $selectedGender === 'Female' ? 'selected' : ''; ?>>Female</option>
+                  <option value="Prefer not to say" <?php echo $selectedGender === 'Prefer not to say' ? 'selected' : ''; ?>>Prefer not to say</option>
+                </select>
                 <select id="onboardFitnessLevel" class="form-input">
                   <option value="">Fitness Experience</option>
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
+                  <option value="Beginner" <?php echo $selectedFitnessLevel === 'Beginner' ? 'selected' : ''; ?>>Beginner</option>
+                  <option value="Intermediate" <?php echo $selectedFitnessLevel === 'Intermediate' ? 'selected' : ''; ?>>Intermediate</option>
+                  <option value="Advanced" <?php echo $selectedFitnessLevel === 'Advanced' ? 'selected' : ''; ?>>Advanced</option>
                 </select>
                 <select id="onboardGoal" class="form-input">
                   <option value="">Primary Goal</option>
-                  <option value="Weight Loss">Weight Loss</option>
-                  <option value="Muscle Gain">Muscle Gain</option>
-                  <option value="Endurance">Endurance</option>
-                  <option value="General Fitness">General Fitness</option>
+                  <option value="Weight Loss" <?php echo $selectedGoal === 'Weight Loss' ? 'selected' : ''; ?>>Weight Loss</option>
+                  <option value="Muscle Gain" <?php echo $selectedGoal === 'Muscle Gain' ? 'selected' : ''; ?>>Muscle Gain</option>
+                  <option value="Endurance" <?php echo $selectedGoal === 'Endurance' ? 'selected' : ''; ?>>Endurance</option>
+                  <option value="General Fitness" <?php echo $selectedGoal === 'General Fitness' ? 'selected' : ''; ?>>General Fitness</option>
                 </select>
                 <button type="submit" class="btn-action primary" style="border:none;">Save Profile</button>
               </form>
@@ -397,107 +513,24 @@
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="lightmode.js"></script>
     <script>
-      let currentMemberRef = "";
-
-      function redirectToLogin(message) {
-        window.location.href = "../Login/Login_Page.php" + (message ? "?error=" + encodeURIComponent(message) : "");
-      }
-
-      function handleApiResponse(response) {
-        if (response.status === 401) {
-          redirectToLogin("Session expired. Please log in.");
-          return Promise.reject(new Error("Unauthorized"));
-        }
-        return response.json().then((body) => {
-          if (!body.success && body.error && body.error.toLowerCase().includes("unauthorized")) {
-            redirectToLogin(body.error);
-            return Promise.reject(new Error(body.error));
-          }
-          return body;
-        });
-      }
-
-      function getMemberRefContext() {
-        const params = new URLSearchParams(window.location.search);
-        const fromUrl = params.get("member_ref");
-        if (fromUrl) {
-          localStorage.setItem("fitstop_member_ref", fromUrl);
-          return fromUrl;
-        }
-
-        const fromStorage = localStorage.getItem("fitstop_member_ref");
-        return fromStorage || "";
-      }
-
-      function setFormValue(id, value) {
-        const el = document.getElementById(id);
-        if (!el) {
-          return;
-        }
-        el.value = value === null || value === undefined ? "" : value;
-      }
-
-      function renderProfile(data) {
-        const user = data.user || {};
-        const profile = data.profile || {};
-
-        currentMemberRef = String(user.id || "");
-        if (currentMemberRef) {
-          localStorage.setItem("fitstop_member_ref", currentMemberRef);
-        }
-
-        document.getElementById("profileHeaderName").textContent = user.full_name || "Member";
-        document.getElementById("profileFullName").textContent = user.full_name || "Member";
-        document.getElementById("profileAge").textContent = profile.age ? profile.age + " Years" : "Not set";
-        document.getElementById("profileEmail").textContent = user.email || "Not set";
-        document.getElementById("profileMemberId").textContent = user.member_id_display || "Not set";
-        document.getElementById("profileFitnessLevel").textContent = profile.fitness_level || "Not set";
-        document.getElementById("profileGoal").textContent = profile.goal || "Not set";
-
-        setFormValue("onboardAge", profile.age);
-        setFormValue("onboardHeight", profile.height_cm);
-        setFormValue("onboardWeight", profile.weight_kg);
-        setFormValue("onboardFitnessLevel", profile.fitness_level || "");
-        setFormValue("onboardGoal", profile.goal || "");
-
-        const qrHost = document.getElementById("qrcode");
-        qrHost.innerHTML = "";
-        const qrPayload = String(user.id || "").trim() || (typeof user.qr_payload === 'string' ? user.qr_payload : JSON.stringify({ member_ref: String(user.id), username: user.username }));
+      const qrHost = document.getElementById("qrcode");
+      if (qrHost) {
         new QRCode(qrHost, {
-          text: qrPayload,
+          text: <?php echo json_encode((string)$qrPayload, JSON_UNESCAPED_UNICODE); ?>,
           width: 150,
           height: 150,
         });
-      }
-
-      function loadProfile() {
-        const memberRef = getMemberRefContext();
-        const endpoint = memberRef
-          ? `../Database/get_member_profile.php?member_ref=${encodeURIComponent(memberRef)}`
-          : "../Database/get_member_profile.php";
-
-        fetch(endpoint)
-          .then(handleApiResponse)
-          .then((data) => {
-            if (!data.success) {
-              throw new Error(data.error || "Unable to load profile");
-            }
-            renderProfile(data);
-          })
-          .catch((error) => {
-            console.error(error);
-            alert("Unable to load member profile right now.");
-          });
       }
 
       document.getElementById("profileOnboardingForm").addEventListener("submit", function (event) {
         event.preventDefault();
 
         const payload = {
-          member_ref: currentMemberRef || getMemberRefContext(),
           age: document.getElementById("onboardAge").value,
           height_cm: document.getElementById("onboardHeight").value,
           weight_kg: document.getElementById("onboardWeight").value,
+          contact: document.getElementById("onboardContact").value,
+          gender: document.getElementById("onboardGender").value,
           fitness_level: document.getElementById("onboardFitnessLevel").value,
           goal: document.getElementById("onboardGoal").value
         };
@@ -509,21 +542,19 @@
           },
           body: JSON.stringify(payload)
         })
-          .then(handleApiResponse)
+          .then((response) => response.json())
           .then((data) => {
             if (!data.success) {
               throw new Error(data.error || "Failed to save profile");
             }
-            loadProfile();
             alert("Profile saved.");
+            window.location.reload();
           })
           .catch((error) => {
             console.error(error);
             alert("Unable to save profile right now.");
           });
       });
-
-      loadProfile();
     </script>
     <script>
       function downloadQR() {
@@ -540,3 +571,4 @@
     </script>
   </body>
 </html>
+
