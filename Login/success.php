@@ -37,11 +37,7 @@ if ($userType === 'user') {
         exit();
     }
 
-    $target = '../user/user.html';
-    if ($memberId > 0) {
-        $target .= '?member_ref=' . urlencode((string)$memberId);
-    }
-    header('Location: ' . $target);
+    header('Location: ../user/user.php');
     exit();
 }
 

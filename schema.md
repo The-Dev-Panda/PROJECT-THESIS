@@ -98,6 +98,8 @@ CREATE TABLE member_profiles (
   weight_kg REAL,
   fitness_level TEXT,
   goal TEXT,
+  contact TEXT,
+  gender TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

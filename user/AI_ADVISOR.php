@@ -1,7 +1,5 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/auth_user.php';
 
 if (isset($_GET['clear']) && $_GET['clear'] == '1') {
     unset($_SESSION['chat_history']);
@@ -74,6 +72,7 @@ if (isset($_SESSION['ai_flash']) && is_string($_SESSION['ai_flash'])) {
         ?>
         <div class="container d-flex gap-2 align-items-center">
             <form action="process_AI.php" method="POST" class="d-flex gap-2 flex-grow-1">
+                <?php echo fitstop_csrf_input(); ?>
                 <input type="text" name="query" placeholder="Enter your query" class="form-control" required>
                 <button type="submit" class="btn btn-success">Submit</button>
             </form>

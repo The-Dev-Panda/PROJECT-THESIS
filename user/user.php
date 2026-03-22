@@ -1,3 +1,233 @@
+<?php
+require_once __DIR__ . '/auth_user.php';
+
+$displayName = 'Member';
+$firstName = 'Member';
+$fitnessLevel = 'Not set';
+$goal = 'Primary Goal';
+$bmiBadgeClass = 'healthy';
+$bmiLabel = 'Not set';
+$bmiValueText = '--';
+$heightText = 'Not set';
+$weightText = 'Not set';
+$targetWeightText = 'Not set';
+$toGoalText = 'Not set';
+$bmiMarkerLeft = '50';
+$attendanceTitle = 'No Attendance Yet';
+$attendanceDetail = 'No check-in record found.';
+$workoutDays = [];
+
+try {
+  require __DIR__ . '/../Login/connection.php';
+
+  $userId = (int)($_SESSION['id'] ?? 0);
+  if ($userId > 0) {
+    $userStmt = $pdo->prepare('SELECT id, username, first_name, last_name, email FROM users WHERE id = :id LIMIT 1');
+    $userStmt->execute([':id' => $userId]);
+    $user = $userStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    $profileColumns = [];
+    $profileColumnStmt = $pdo->query('PRAGMA table_info(member_profiles)');
+    if ($profileColumnStmt) {
+      $profileColumnRows = $profileColumnStmt->fetchAll(PDO::FETCH_ASSOC);
+      foreach ($profileColumnRows as $profileColumnRow) {
+        if (isset($profileColumnRow['name'])) {
+          $profileColumns[] = (string)$profileColumnRow['name'];
+        }
+      }
+    }
+
+    $profileSelectSql = 'SELECT '
+      . (in_array('age', $profileColumns, true) ? 'age' : 'NULL AS age') . ', '
+      . (in_array('height_cm', $profileColumns, true) ? 'height_cm' : 'NULL AS height_cm') . ', '
+      . (in_array('weight_kg', $profileColumns, true) ? 'weight_kg' : 'NULL AS weight_kg') . ', '
+      . (in_array('fitness_level', $profileColumns, true) ? 'fitness_level' : 'NULL AS fitness_level') . ', '
+      . (in_array('goal', $profileColumns, true) ? 'goal' : 'NULL AS goal') . ', '
+      . (in_array('bmi', $profileColumns, true) ? 'bmi' : 'NULL AS bmi')
+      . ' FROM member_profiles WHERE user_id = :user_id LIMIT 1';
+
+    $profileStmt = $pdo->prepare($profileSelectSql);
+    $profileStmt->execute([':user_id' => $userId]);
+    $profile = $profileStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    $displayNameRaw = trim(((string)($user['first_name'] ?? '')) . ' ' . ((string)($user['last_name'] ?? '')));
+    if ($displayNameRaw !== '') {
+      $displayName = $displayNameRaw;
+    } elseif (!empty($user['username'])) {
+      $displayName = (string)$user['username'];
+    }
+
+    $firstName = (string)($user['first_name'] ?? '');
+    if ($firstName === '') {
+      $parts = preg_split('/\s+/', $displayName);
+      $firstName = $parts[0] ?? 'Member';
+    }
+
+    if (!empty($profile['fitness_level'])) {
+      $fitnessLevel = (string)$profile['fitness_level'];
+    }
+    if (!empty($profile['goal'])) {
+      $goal = (string)$profile['goal'];
+    }
+
+    $heightCm = isset($profile['height_cm']) && $profile['height_cm'] !== null ? (float)$profile['height_cm'] : null;
+    $weightKg = isset($profile['weight_kg']) && $profile['weight_kg'] !== null ? (float)$profile['weight_kg'] : null;
+    $bmi = isset($profile['bmi']) && $profile['bmi'] !== null ? (float)$profile['bmi'] : null;
+
+    if (($bmi === null || $bmi <= 0) && $heightCm !== null && $heightCm > 0 && $weightKg !== null && $weightKg > 0) {
+      $hM = $heightCm / 100;
+      $bmi = round($weightKg / ($hM * $hM), 1);
+    }
+
+    if ($heightCm !== null && $heightCm > 0) {
+      $heightText = rtrim(rtrim(number_format($heightCm, 1, '.', ''), '0'), '.') . ' cm';
+    }
+    if ($weightKg !== null && $weightKg > 0) {
+      $weightText = rtrim(rtrim(number_format($weightKg, 1, '.', ''), '0'), '.') . ' kg';
+    }
+
+    if ($bmi !== null && $bmi > 0) {
+      $bmiValueText = number_format($bmi, 1, '.', '');
+
+      if ($bmi < 18.5) {
+        $bmiLabel = 'Underweight';
+        $bmiBadgeClass = 'underweight';
+      } elseif ($bmi < 25) {
+        $bmiLabel = 'Healthy';
+        $bmiBadgeClass = 'healthy';
+      } elseif ($bmi < 30) {
+        $bmiLabel = 'Overweight';
+        $bmiBadgeClass = 'overweight';
+      } else {
+        $bmiLabel = 'Obese';
+        $bmiBadgeClass = 'obese';
+      }
+
+      $bmiMarkerLeft = (string)round(min(max((($bmi - 10) / 30) * 100, 2), 97), 1);
+    }
+
+    if ($heightCm !== null && $heightCm > 0 && $weightKg !== null && $weightKg > 0) {
+      $hM = $heightCm / 100;
+      $idealWeight = 21.7 * $hM * $hM;
+      $diff = $weightKg - $idealWeight;
+      $targetWeightText = round($idealWeight) . ' kg';
+      if (abs($diff) < 0.1) {
+        $toGoalText = '0 kg';
+      } else {
+        $toGoalText = ($diff > 0 ? '+' : '') . round($diff) . ' kg';
+      }
+    }
+
+    $attendanceStmt = $pdo->prepare('SELECT datetime FROM attendance WHERE user_id = :user_id ORDER BY datetime DESC LIMIT 1');
+    $attendanceStmt->execute([':user_id' => $userId]);
+    $lastAttendanceRaw = $attendanceStmt->fetchColumn();
+    if ($lastAttendanceRaw) {
+      $attendanceAt = new DateTime((string)$lastAttendanceRaw, new DateTimeZone('UTC'));
+      $attendanceAt->setTimezone(new DateTimeZone('Asia/Manila'));
+      $attendanceTitle = 'Last Attendance';
+      $attendanceDetail = $attendanceAt->format('M j, Y') . ' at ' . $attendanceAt->format('g:i A');
+    }
+
+    $workoutStmt = $pdo->prepare("SELECT
+        date(datetime(wl.logged_at, 'localtime')) AS workout_day,
+        COALESCE(e.name, 'Exercise') AS exercise_name,
+        COUNT(*) AS sets_count,
+        SUM(COALESCE(wl.reps, 0)) AS total_reps,
+        MAX(COALESCE(wl.weight, 0)) AS max_weight,
+        SUM(COALESCE(wl.weight, 0) * COALESCE(wl.reps, 0)) AS total_volume,
+        MIN(datetime(wl.logged_at, 'localtime')) AS first_log_time,
+        MAX(datetime(wl.logged_at, 'localtime')) AS last_log_time
+      FROM workout_logs wl
+      LEFT JOIN exercises e ON e.exercise_id = wl.exercise_id
+      WHERE wl.user_id = :user_id
+      GROUP BY workout_day, wl.exercise_id, e.name
+      ORDER BY workout_day DESC, exercise_name ASC");
+    $workoutStmt->execute([':user_id' => $userId]);
+    $workoutRows = $workoutStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+    $workoutByDay = [];
+    foreach ($workoutRows as $row) {
+      $day = (string)($row['workout_day'] ?? '');
+      if ($day === '') {
+        continue;
+      }
+
+      if (!isset($workoutByDay[$day])) {
+        $workoutByDay[$day] = [
+          'day' => $day,
+          'first_log_time' => (string)($row['first_log_time'] ?? ''),
+          'last_log_time' => (string)($row['last_log_time'] ?? ''),
+          'total_sets' => 0,
+          'total_volume' => 0.0,
+          'exercises' => []
+        ];
+      }
+
+      $workoutByDay[$day]['total_sets'] += (int)($row['sets_count'] ?? 0);
+      $workoutByDay[$day]['total_volume'] += (float)($row['total_volume'] ?? 0);
+
+      $currentFirst = $workoutByDay[$day]['first_log_time'];
+      $currentLast = $workoutByDay[$day]['last_log_time'];
+      $rowFirst = (string)($row['first_log_time'] ?? '');
+      $rowLast = (string)($row['last_log_time'] ?? '');
+      if ($rowFirst !== '' && ($currentFirst === '' || strcmp($rowFirst, $currentFirst) < 0)) {
+        $workoutByDay[$day]['first_log_time'] = $rowFirst;
+      }
+      if ($rowLast !== '' && ($currentLast === '' || strcmp($rowLast, $currentLast) > 0)) {
+        $workoutByDay[$day]['last_log_time'] = $rowLast;
+      }
+
+      $workoutByDay[$day]['exercises'][] = [
+        'name' => (string)($row['exercise_name'] ?? 'Exercise'),
+        'sets' => (int)($row['sets_count'] ?? 0),
+        'reps' => (int)($row['total_reps'] ?? 0),
+        'max_weight' => (float)($row['max_weight'] ?? 0)
+      ];
+    }
+
+    $dayKeys = array_keys($workoutByDay);
+    rsort($dayKeys);
+    $dayKeys = array_slice($dayKeys, 0, 5);
+    foreach ($dayKeys as $dayKey) {
+      $entry = $workoutByDay[$dayKey];
+      $dayDate = DateTime::createFromFormat('Y-m-d', $entry['day']);
+      $dayLabel = $entry['day'];
+      $daySub = '';
+
+      if ($dayDate instanceof DateTime) {
+        $today = new DateTime('now', new DateTimeZone('Asia/Manila'));
+        $yesterday = (clone $today)->modify('-1 day');
+        if ($dayDate->format('Y-m-d') === $today->format('Y-m-d')) {
+          $dayLabel = 'Today';
+        } elseif ($dayDate->format('Y-m-d') === $yesterday->format('Y-m-d')) {
+          $dayLabel = 'Yesterday';
+        } else {
+          $dayLabel = $dayDate->format('M j');
+        }
+        $daySub = $dayDate->format('l, M j, Y');
+      }
+
+      $timeRange = '';
+      if ($entry['first_log_time'] !== '' && $entry['last_log_time'] !== '') {
+        $first = new DateTime($entry['first_log_time']);
+        $last = new DateTime($entry['last_log_time']);
+        $timeRange = $first->format('g:i A') . ' - ' . $last->format('g:i A');
+      }
+
+      $workoutDays[] = [
+        'label' => $dayLabel,
+        'sub' => $daySub,
+        'time_range' => $timeRange,
+        'total_sets' => (int)$entry['total_sets'],
+        'total_volume' => round((float)$entry['total_volume'], 1),
+        'exercises' => $entry['exercises']
+      ];
+    }
+  }
+} catch (Throwable $e) {
+  // Keep template defaults if profile loading fails.
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -32,42 +262,42 @@
         </div>
         <ul class="menu">
           <li class="active">
-            <a href="user.html"
+            <a href="user.php"
               ><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a
             >
           </li>
           <li>
-            <a href="bmi.html"
+            <a href="bmi.php"
               ><i class="bi bi-heart-pulse"></i><span>BMI Tracker</span></a
             >
           </li>
           <li>
-            <a href="myplan.html"
+            <a href="myplan.php"
               ><i class="bi bi-clipboard-check"></i><span>My Plan</span></a
             >
           </li>
           <li>
-            <a href="history.html"
+            <a href="history.php"
               ><i class="bi bi-clock-history"></i><span>History</span></a
             >
           </li>
           <li>
-            <a href="payments.html"
+            <a href="payments.php"
               ><i class="bi bi-credit-card"></i><span>Payments</span></a
             >
           </li>
           <li>
-            <a href="profile.html"
+            <a href="profile.php"
               ><i class="bi bi-person"></i><span>Profile</span></a
             >
           </li>
           <li>
-            <a href="settings.html"
+            <a href="settings.php"
               ><i class="bi bi-gear"></i><span>Settings</span></a
             >
           </li>
           <li>
-            <a href="logout.html"
+            <a href="logout.php"
               ><i class="bi bi-box-arrow-right"></i><span>Logout</span></a
             >
           </li>
@@ -79,14 +309,14 @@
         <!-- TOP BAR -->
         <header class="topbar">
           <div class="welcome">
-            <h1 id="dashboardWelcome">Hey Member!</h1>
-            <p id="dashboardWelcomeSub">You are doing great so far</p>
+            <h1 id="dashboardWelcome">Hey <?php echo htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8'); ?>!</h1>
+            <p id="dashboardWelcomeSub">Goal: <?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?></p>
           </div>
           <div class="profile-container">
             <div class="profile-content">
               <div class="profile-text">
-                <strong class="profile-name" id="dashboardProfileName">Member</strong>
-                <span class="profile-streak" id="dashboardFitnessLevel">🔥 Fitness Level • Not set</span>
+                <strong class="profile-name" id="dashboardProfileName"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></strong>
+                <span class="profile-streak" id="dashboardFitnessLevel">🔥 Fitness Level • <?php echo htmlspecialchars($fitnessLevel, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
               <div class="profile-pic">
                 <img
@@ -104,8 +334,8 @@
           <div class="notification-card attendance">
             <i class="bi bi-check-circle-fill"></i>
             <div class="notification-content">
-              <h4>  ndance Confirmed</h4>
-              <p>Check-in successful • Today at 6:30 AM</p>
+              <h4><?php echo htmlspecialchars($attendanceTitle, ENT_QUOTES, 'UTF-8'); ?></h4>
+              <p><?php echo htmlspecialchars($attendanceDetail, ENT_QUOTES, 'UTF-8'); ?></p>
             </div>
           </div>
           <div class="notification-card payment">
@@ -123,35 +353,35 @@
           <div class="bmi-card main-bmi">
             <div class="bmi-header">
               <h3>Your BMI Analysis</h3>
-              <span class="bmi-badge healthy" id="dashboardBmiBadge">Healthy</span>
+              <span class="bmi-badge <?php echo htmlspecialchars($bmiBadgeClass, ENT_QUOTES, 'UTF-8'); ?>" id="dashboardBmiBadge"><?php echo htmlspecialchars($bmiLabel, ENT_QUOTES, 'UTF-8'); ?></span>
             </div>
             <div class="bmi-display">
               <div class="bmi-circle">
-                <div class="bmi-value" id="dashboardBmiValue">--</div>
+                <div class="bmi-value" id="dashboardBmiValue"><?php echo htmlspecialchars($bmiValueText, ENT_QUOTES, 'UTF-8'); ?></div>
                 <span class="bmi-unit">kg/m²</span>
               </div>
               <div class="bmi-info">
                 <div class="info-row">
                   <span class="label">Height:</span
-                  ><span class="value" id="dashboardHeight">Not set</span>
+                  ><span class="value" id="dashboardHeight"><?php echo htmlspecialchars($heightText, ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
                 <div class="info-row">
                   <span class="label">Weight:</span
-                  ><span class="value" id="dashboardWeight">Not set</span>
+                  ><span class="value" id="dashboardWeight"><?php echo htmlspecialchars($weightText, ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
                 <div class="info-row">
                   <span class="label">Target:</span
-                  ><span class="value" id="dashboardTargetWeight">Not set</span>
+                  ><span class="value" id="dashboardTargetWeight"><?php echo htmlspecialchars($targetWeightText, ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
                 <div class="info-row">
                   <span class="label">To Goal:</span
-                  ><span class="value" id="dashboardBmiToGoal">Not set</span>
+                  ><span class="value" id="dashboardBmiToGoal"><?php echo htmlspecialchars($toGoalText, ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
               </div>
             </div>
             <div class="bmi-scale">
               <div class="scale-bar">
-                <div class="scale-marker" id="dashboardBmiMarker" style="left: 50%"></div>
+                <div class="scale-marker" id="dashboardBmiMarker" style="left: <?php echo htmlspecialchars($bmiMarkerLeft, ENT_QUOTES, 'UTF-8'); ?>%"></div>
               </div>
               <div class="scale-labels">
                 <span>Underweight</span><span>Normal</span
@@ -183,105 +413,57 @@
           <div class="section-header">
             <h3>Exercise History</h3>
             <div class="filter-buttons">
-              <button class="filter-btn active">Week</button>
-              <button class="filter-btn">Month</button>
-              <button class="filter-btn">Year</button>
+              <button class="filter-btn active">Latest Workouts</button>
+              <button class="filter-btn" id="showPreviousWorkoutBtn" <?php echo count($workoutDays) <= 1 ? 'disabled' : ''; ?>>Show Previous</button>
             </div>
           </div>
 
           <div class="history-grid">
-            <div class="history-card">
-              <div class="history-date">
-                <span class="date-day">Today</span>
-                <span class="date-full">Feb 9, 2026</span>
-              </div>
-              <div class="history-workout">
-                <div class="workout-icon chest">
-                  <i class="fas fa-dumbbell"></i>
+            <?php if (count($workoutDays) === 0): ?>
+              <div class="history-card">
+                <div class="history-date">
+                  <span class="date-day">No workouts yet</span>
+                  <span class="date-full">Start logging your exercises to see history.</span>
                 </div>
-                <div class="workout-details">
-                  <h4>Chest & Triceps</h4>
-                  <p>6:30 AM - 7:45 AM</p>
-                  <div class="workout-stats-mini">
-                    <span><i class="fas fa-fire"></i> 420 cal</span>
-                    <span
-                      ><i class="fas fa-weight-hanging"></i> 2,450 kg
-                      total</span
-                    >
+                <span class="completion-badge">No data</span>
+              </div>
+            <?php else: ?>
+              <?php foreach ($workoutDays as $workoutDayIndex => $workoutDay): ?>
+                <div
+                  class="history-card"
+                  data-workout-card="1"
+                  <?php echo $workoutDayIndex === 0 ? '' : 'style="display:none" data-workout-hidden="1"'; ?>
+                >
+                  <div class="history-date">
+                    <span class="date-day"><?php echo htmlspecialchars($workoutDay['label'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="date-full"><?php echo htmlspecialchars($workoutDay['sub'], ENT_QUOTES, 'UTF-8'); ?></span>
                   </div>
-                </div>
-              </div>
-              <span class="completion-badge completed">Completed</span>
-            </div>
-
-            <div class="history-card">
-              <div class="history-date">
-                <span class="date-day">Yesterday</span>
-                <span class="date-full">Feb 8, 2026</span>
-              </div>
-              <div class="history-workout">
-                <div class="workout-icon legs">
-                  <i class="fas fa-running"></i>
-                </div>
-                <div class="workout-details">
-                  <h4>Leg Day</h4>
-                  <p>5:00 PM - 6:30 PM</p>
-                  <div class="workout-stats-mini">
-                    <span><i class="fas fa-fire"></i> 580 cal</span>
-                    <span
-                      ><i class="fas fa-weight-hanging"></i> 3,200 kg
-                      total</span
-                    >
+                  <div class="history-workout">
+                    <div class="workout-icon chest">
+                      <i class="fas fa-dumbbell"></i>
+                    </div>
+                    <div class="workout-details" style="width:100%;">
+                      <h4>Workout Summary</h4>
+                      <p><?php echo htmlspecialchars($workoutDay['time_range'] !== '' ? $workoutDay['time_range'] : 'Time not available', ENT_QUOTES, 'UTF-8'); ?></p>
+                      <div class="workout-stats-mini">
+                        <span><i class="fas fa-layer-group"></i> <?php echo (int)$workoutDay['total_sets']; ?> sets</span>
+                        <span><i class="fas fa-weight-hanging"></i> <?php echo htmlspecialchars(number_format((float)$workoutDay['total_volume'], 1), ENT_QUOTES, 'UTF-8'); ?> kg volume</span>
+                      </div>
+                      <div id="workoutDayDetail-<?php echo (int)$workoutDayIndex; ?>" style="display:none;margin-top:10px;">
+                        <?php foreach ($workoutDay['exercises'] as $exercise): ?>
+                          <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);">
+                            <span><?php echo htmlspecialchars($exercise['name'], ENT_QUOTES, 'UTF-8'); ?></span>
+                            <span style="opacity:0.9;"><?php echo (int)$exercise['sets']; ?> sets, <?php echo (int)$exercise['reps']; ?> reps, max <?php echo htmlspecialchars(number_format((float)$exercise['max_weight'], 1), ENT_QUOTES, 'UTF-8'); ?> kg</span>
+                          </div>
+                        <?php endforeach; ?>
+                      </div>
+                      <button class="notify-btn" style="margin-top:10px;" onclick="toggleWorkoutDayDetail(<?php echo (int)$workoutDayIndex; ?>)">Show workout details</button>
+                    </div>
                   </div>
+                  <span class="completion-badge completed">Completed</span>
                 </div>
-              </div>
-              <span class="completion-badge completed">Completed</span>
-            </div>
-
-            <div class="history-card">
-              <div class="history-date">
-                <span class="date-day">Feb 7</span>
-                <span class="date-full">Thursday</span>
-              </div>
-              <div class="history-workout">
-                <div class="workout-icon cardio">
-                  <i class="fas fa-heartbeat"></i>
-                </div>
-                <div class="workout-details">
-                  <h4>Cardio & Abs</h4>
-                  <p>6:00 AM - 6:45 AM</p>
-                  <div class="workout-stats-mini">
-                    <span><i class="fas fa-fire"></i> 380 cal</span>
-                    <span><i class="fas fa-clock"></i> 45 mins</span>
-                  </div>
-                </div>
-              </div>
-              <span class="completion-badge completed">Completed</span>
-            </div>
-
-            <div class="history-card">
-              <div class="history-date">
-                <span class="date-day">Feb 6</span>
-                <span class="date-full">Wednesday</span>
-              </div>
-              <div class="history-workout">
-                <div class="workout-icon back">
-                  <i class="fas fa-user"></i>
-                </div>
-                <div class="workout-details">
-                  <h4>Back & Biceps</h4>
-                  <p>7:00 AM - 8:15 AM</p>
-                  <div class="workout-stats-mini">
-                    <span><i class="fas fa-fire"></i> 465 cal</span>
-                    <span
-                      ><i class="fas fa-weight-hanging"></i> 2,890 kg
-                      total</span
-                    >
-                  </div>
-                </div>
-              </div>
-              <span class="completion-badge completed">Completed</span>
-            </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
           </div>
         </section>
 
@@ -751,11 +933,11 @@
                   <i class="fas fa-bicycle"></i>
                 </div>
                 <div class="goal-info">
-                  <span class="goal-name" id="dashboardPrimaryGoalName">Primary Goal</span>
+                  <span class="goal-name" id="dashboardPrimaryGoalName"><?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?></span>
                   <div class="progress-container">
                     <div class="progress-bar yellow" style="width: 65%"></div>
                   </div>
-                  <span class="days-count" id="dashboardPrimaryGoalHint">Set your goal in Profile</span>
+                  <span class="days-count" id="dashboardPrimaryGoalHint">From your Profile settings</span>
                 </div>
               </li>
               <li>
@@ -940,172 +1122,44 @@
         });
       });
 
-      function redirectToLogin(message) {
-        window.location.href = "../Login/Login_Page.php" + (message ? "?error=" + encodeURIComponent(message) : "");
-      }
-
-      function handleApiResponse(response) {
-        if (response.status === 401) {
-          redirectToLogin("Session expired. Please log in.");
-          return Promise.reject(new Error("Unauthorized"));
-        }
-        return response.json().then((body) => {
-          if (!body.success && body.error && body.error.toLowerCase().includes("unauthorized")) {
-            redirectToLogin(body.error);
-            return Promise.reject(new Error(body.error));
-          }
-          return body;
-        });
-      }
-
-      function getMemberRefContext() {
-        const params = new URLSearchParams(window.location.search);
-        const fromUrl = params.get("member_ref");
-        if (fromUrl) {
-          localStorage.setItem("fitstop_member_ref", fromUrl);
-          return fromUrl;
-        }
-        return localStorage.getItem("fitstop_member_ref") || "";
-      }
-
-      function classifyBmi(bmi) {
-        if (bmi < 18.5) {
-          return { label: "Underweight", className: "underweight" };
-        }
-        if (bmi < 25) {
-          return { label: "Healthy", className: "healthy" };
-        }
-        if (bmi < 30) {
-          return { label: "Overweight", className: "overweight" };
-        }
-        return { label: "Obese", className: "obese" };
-      }
-
-      function setDashboardBmi(profile) {
-        const bmiValueEl = document.getElementById("dashboardBmiValue");
-        const heightEl = document.getElementById("dashboardHeight");
-        const weightEl = document.getElementById("dashboardWeight");
-        const targetEl = document.getElementById("dashboardTargetWeight");
-        const toGoalEl = document.getElementById("dashboardBmiToGoal");
-        const markerEl = document.getElementById("dashboardBmiMarker");
-        const badgeEl = document.getElementById("dashboardBmiBadge");
-
-        const heightCm = Number(profile.height_cm);
-        const weightKg = Number(profile.weight_kg);
-        let bmi = profile.bmi !== null && profile.bmi !== undefined && profile.bmi !== ""
-          ? Number(profile.bmi)
-          : null;
-
-        if (!Number.isFinite(bmi) && Number.isFinite(heightCm) && heightCm > 0 && Number.isFinite(weightKg) && weightKg > 0) {
-          const hM = heightCm / 100;
-          bmi = Math.round((weightKg / (hM * hM)) * 10) / 10;
-        }
-
-        if (!Number.isFinite(bmi)) {
-          if (bmiValueEl) bmiValueEl.textContent = "--";
-          if (heightEl) heightEl.textContent = Number.isFinite(heightCm) && heightCm > 0 ? `${heightCm} cm` : "Not set";
-          if (weightEl) weightEl.textContent = Number.isFinite(weightKg) && weightKg > 0 ? `${weightKg} kg` : "Not set";
-          if (targetEl) targetEl.textContent = "Not set";
-          if (toGoalEl) toGoalEl.textContent = "Not set";
-          if (markerEl) markerEl.style.left = "50%";
-          if (badgeEl) {
-            badgeEl.textContent = "Not set";
-            badgeEl.className = "bmi-badge";
+      function showPreviousWorkoutDayCard() {
+        const hiddenCards = Array.from(document.querySelectorAll("[data-workout-hidden='1']"));
+        if (!hiddenCards.length) {
+          const btn = document.getElementById("showPreviousWorkoutBtn");
+          if (btn) {
+            btn.disabled = true;
           }
           return;
         }
 
-        const classification = classifyBmi(bmi);
-        const markerPct = Math.min(Math.max(((bmi - 10) / 30) * 100, 2), 97);
-        const hasMeasurements = Number.isFinite(heightCm) && heightCm > 0 && Number.isFinite(weightKg) && weightKg > 0;
+        hiddenCards[0].style.display = "block";
+        hiddenCards[0].removeAttribute("data-workout-hidden");
 
-        let targetWeightText = "Not set";
-        let toGoalText = "Not set";
-
-        if (hasMeasurements) {
-          const hM = heightCm / 100;
-          const idealWeight = 21.7 * hM * hM;
-          const diff = weightKg - idealWeight;
-          targetWeightText = `${Math.round(idealWeight)} kg`;
-          if (Math.abs(diff) < 0.1) {
-            toGoalText = "0 kg";
-          } else {
-            toGoalText = `${diff > 0 ? "+" : ""}${Math.round(diff)} kg`;
+        if (!document.querySelector("[data-workout-hidden='1']")) {
+          const btn = document.getElementById("showPreviousWorkoutBtn");
+          if (btn) {
+            btn.disabled = true;
           }
-        }
-
-        if (bmiValueEl) bmiValueEl.textContent = bmi.toFixed(1);
-        if (heightEl) heightEl.textContent = hasMeasurements ? `${heightCm} cm` : "Not set";
-        if (weightEl) weightEl.textContent = hasMeasurements ? `${weightKg} kg` : "Not set";
-        if (targetEl) targetEl.textContent = targetWeightText;
-        if (toGoalEl) toGoalEl.textContent = toGoalText;
-        if (markerEl) markerEl.style.left = `${markerPct}%`;
-        if (badgeEl) {
-          badgeEl.textContent = classification.label;
-          badgeEl.className = `bmi-badge ${classification.className}`;
         }
       }
 
-      function loadDashboardProfile() {
-        const memberRef = getMemberRefContext();
-        const endpoint = memberRef
-          ? `../Database/get_member_profile.php?member_ref=${encodeURIComponent(memberRef)}`
-          : "../Database/get_member_profile.php";
+      function toggleWorkoutDayDetail(index) {
+        const detailEl = document.getElementById(`workoutDayDetail-${index}`);
+        if (!detailEl) {
+          return;
+        }
 
-        fetch(endpoint)
-          .then(handleApiResponse)
-          .then((data) => {
-            if (!data.success) {
-              return;
-            }
+        const isHidden = detailEl.style.display === "none" || detailEl.style.display === "";
+        detailEl.style.display = isHidden ? "block" : "none";
+      }
 
-            const user = data.user || {};
-            const profile = data.profile || {};
-
-            if (user.id) {
-              localStorage.setItem("fitstop_member_ref", String(user.id));
-            }
-
-            const displayName = user.full_name || "Member";
-            const firstName = user.first_name || displayName;
-            const fitnessLevel = profile.fitness_level || "Not set";
-            const goal = profile.goal || "Primary Goal";
-
-            const welcome = document.getElementById("dashboardWelcome");
-            const welcomeSub = document.getElementById("dashboardWelcomeSub");
-            const profileName = document.getElementById("dashboardProfileName");
-            const fitnessText = document.getElementById("dashboardFitnessLevel");
-            const goalName = document.getElementById("dashboardPrimaryGoalName");
-            const goalHint = document.getElementById("dashboardPrimaryGoalHint");
-
-            if (welcome) {
-              welcome.textContent = `Hey ${firstName}!`;
-            }
-            if (welcomeSub) {
-              welcomeSub.textContent = `Goal: ${goal}`;
-            }
-            if (profileName) {
-              profileName.textContent = displayName;
-            }
-            if (fitnessText) {
-              fitnessText.textContent = `🔥 Fitness Level • ${fitnessLevel}`;
-            }
-            if (goalName) {
-              goalName.textContent = goal;
-            }
-            if (goalHint) {
-              goalHint.textContent = "From your Profile settings";
-            }
-
-            setDashboardBmi(profile);
-          })
-          .catch(() => {
-            // Keep fallback static content if profile API is unavailable.
-          });
+      const showPreviousWorkoutBtn = document.getElementById("showPreviousWorkoutBtn");
+      if (showPreviousWorkoutBtn) {
+        showPreviousWorkoutBtn.addEventListener("click", showPreviousWorkoutDayCard);
       }
 
       loadLeaderboard("weekly");
-      loadDashboardProfile();
     </script>
   </body>
 </html>
+

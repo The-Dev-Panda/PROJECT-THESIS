@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/auth_user.php'; ?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -34,56 +35,56 @@
         <!-- MENU -->
         <ul class="menu">
           <li>
-            <a href="user.html">
+            <a href="user.php">
               <i class="bi bi-grid-1x2"></i>
               <span>Dashboard</span>
             </a>
           </li>
 
           <li>
-            <a href="bmi.html">
+            <a href="bmi.php">
               <i class="bi bi-heart-pulse"></i>
               <span>BMI Tracker</span>
             </a>
           </li>
 
           <li>
-            <a href="myplan.html">
+            <a href="myplan.php">
               <i class="bi bi-clipboard-check"></i>
               <span>My Plan</span>
             </a>
           </li>
 
           <li class="active">
-            <a href="history.html">
+            <a href="history.php">
               <i class="bi bi-clock-history"></i>
               <span>History</span>
             </a>
           </li>
 
           <li>
-            <a href="payments.html">
+            <a href="payments.php">
               <i class="bi bi-credit-card"></i>
               <span>Payments</span>
             </a>
           </li>
 
           <li>
-            <a href="profile.html">
+            <a href="profile.php">
               <i class="bi bi-person"></i>
               <span>Profile</span>
             </a>
           </li>
 
           <li>
-            <a href="settings.html">
+            <a href="settings.php">
               <i class="bi bi-gear"></i>
               <span>Settings</span>
             </a>
           </li>
 
           <li>
-            <a href="logout.html">
+            <a href="logout.php">
               <i class="bi bi-box-arrow-right"></i>
               <span>Logout</span>
             </a>
@@ -223,3 +224,4 @@
     <script src="lightmode.js"></script>
   </body>
 </html>
+

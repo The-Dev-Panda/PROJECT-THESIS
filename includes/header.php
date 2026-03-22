@@ -43,7 +43,7 @@ if ($is_logged_in) {
             $dashboard_link = $base_path . 'staff/staff.php';
             break;
         case 'user':
-            $dashboard_link = $base_path . 'user/user.html';
+            $dashboard_link = $base_path . 'user/user.php';
             break;
     }
 }

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../includes/security.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -16,6 +17,8 @@ function redirectWithFlash(string $message): void
 if (empty($_SESSION['id']) || strtolower((string)($_SESSION['user_type'] ?? '')) !== 'user') {
     redirectWithFlash('Unauthorized.');
 }
+
+fitstop_validate_csrf_or_exit($_POST['csrf_token'] ?? null);
 
 $userId = (int)$_SESSION['id'];
 $query = trim((string)($_POST['query'] ?? ''));
