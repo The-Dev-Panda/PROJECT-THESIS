@@ -1,17 +1,5 @@
 const BMI_KEY = "fitstop_bmi_data";
 
-function getMemberRefContext() {
-  const params = new URLSearchParams(window.location.search);
-  const fromUrl = params.get("member_ref");
-  if (fromUrl) {
-    localStorage.setItem("fitstop_member_ref", fromUrl);
-    return fromUrl;
-  }
-
-  const fromStorage = localStorage.getItem("fitstop_member_ref");
-  return fromStorage || "";
-}
-
 function redirectToLogin(message) {
   window.location.href = "../Login/Login_Page.php" + (message ? "?error=" + encodeURIComponent(message) : "");
 }
@@ -31,10 +19,7 @@ function handleApiResponse(response) {
 }
 
 function loadProfileFromDb() {
-  const memberRef = getMemberRefContext();
-  const endpoint = memberRef
-    ? `../Database/get_member_profile.php?member_ref=${encodeURIComponent(memberRef)}`
-    : "../Database/get_member_profile.php";
+  const endpoint = "../Database/get_member_profile.php";
 
   return fetch(endpoint)
     .then(handleApiResponse)
@@ -57,15 +42,12 @@ function loadProfileFromDb() {
 }
 
 function saveProfileToDb(d) {
-  const memberRef = getMemberRefContext();
-
   return fetch("../Database/upsert_member_profile.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      member_ref: memberRef,
       height_cm: d.height,
       weight_kg: d.weight,
     }),

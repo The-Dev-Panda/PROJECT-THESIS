@@ -1,3 +1,54 @@
+<?php
+require_once __DIR__ . '/auth_user.php';
+
+$firstName = 'Member';
+$goal = 'Primary Goal';
+$fitnessLevel = 'Not set';
+$bmiValueText = '--';
+
+try {
+  require __DIR__ . '/../Login/connection.php';
+
+  $userId = (int)($_SESSION['id'] ?? 0);
+  if ($userId > 0) {
+    $userStmt = $pdo->prepare('SELECT id, username, first_name, last_name FROM users WHERE id = :id LIMIT 1');
+    $userStmt->execute([':id' => $userId]);
+    $user = $userStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    $profileStmt = $pdo->prepare('SELECT height_cm, weight_kg, fitness_level, goal, bmi FROM member_profiles WHERE user_id = :user_id LIMIT 1');
+    $profileStmt->execute([':user_id' => $userId]);
+    $profile = $profileStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    if (!empty($user['first_name'])) {
+      $firstName = (string)$user['first_name'];
+    } elseif (!empty($user['username'])) {
+      $firstName = (string)$user['username'];
+    }
+
+    if (!empty($profile['goal'])) {
+      $goal = (string)$profile['goal'];
+    }
+    if (!empty($profile['fitness_level'])) {
+      $fitnessLevel = (string)$profile['fitness_level'];
+    }
+
+    $heightCm = isset($profile['height_cm']) && $profile['height_cm'] !== null ? (float)$profile['height_cm'] : null;
+    $weightKg = isset($profile['weight_kg']) && $profile['weight_kg'] !== null ? (float)$profile['weight_kg'] : null;
+    $bmi = isset($profile['bmi']) && $profile['bmi'] !== null ? (float)$profile['bmi'] : null;
+
+    if (($bmi === null || $bmi <= 0) && $heightCm !== null && $heightCm > 0 && $weightKg !== null && $weightKg > 0) {
+      $hM = $heightCm / 100;
+      $bmi = round($weightKg / ($hM * $hM), 1);
+    }
+
+    if ($bmi !== null && $bmi > 0) {
+      $bmiValueText = number_format($bmi, 1, '.', '');
+    }
+  }
+} catch (Throwable $e) {
+  // Keep template defaults if profile loading fails.
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -34,42 +85,42 @@
         </div>
         <ul class="menu">
           <li>
-            <a href="user.html"
+            <a href="user.php"
               ><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a
             >
           </li>
           <li>
-            <a href="bmi.html"
+            <a href="bmi.php"
               ><i class="bi bi-heart-pulse"></i><span>BMI Tracker</span></a
             >
           </li>
           <li class="active">
-            <a href="myplan.html"
+            <a href="myplan.php"
               ><i class="bi bi-clipboard-check"></i><span>My Plan</span></a
             >
           </li>
           <li>
-            <a href="history.html"
+            <a href="history.php"
               ><i class="bi bi-clock-history"></i><span>History</span></a
             >
           </li>
           <li>
-            <a href="payments.html"
+            <a href="payments.php"
               ><i class="bi bi-credit-card"></i><span>Payments</span></a
             >
           </li>
           <li>
-            <a href="profile.html"
+            <a href="profile.php"
               ><i class="bi bi-person"></i><span>Profile</span></a
             >
           </li>
           <li>
-            <a href="settings.html"
+            <a href="settings.php"
               ><i class="bi bi-gear"></i><span>Settings</span></a
             >
           </li>
           <li>
-            <a href="logout.html"
+            <a href="logout.php"
               ><i class="bi bi-box-arrow-right"></i><span>Logout</span></a
             >
           </li>
@@ -81,7 +132,7 @@
         <header class="topbar">
           <div class="welcome">
             <h1>My Plan</h1>
-            <p id="myPlanWelcome">Hi Member! What is your plan today?</p>
+            <p id="myPlanWelcome">Hi <?php echo htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8'); ?>! Goal: <?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?> (<?php echo htmlspecialchars($fitnessLevel, ENT_QUOTES, 'UTF-8'); ?>)</p>
           </div>
         </header>
 
@@ -133,8 +184,8 @@
               <div class="ai-messages" id="aiMessages">
                 <div class="ai-msg">
                   <div class="ai-msg-bubble">
-                    Hey Sharien! 👋 Based on your BMI of
-                    <strong>23.87</strong> and goal to lose 5 kg, I recommend
+                    Hey <?php echo htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8'); ?>! 👋 Based on your BMI of
+                    <strong><?php echo htmlspecialchars($bmiValueText, ENT_QUOTES, 'UTF-8'); ?></strong> and goal to <?php echo htmlspecialchars(strtolower($goal), ENT_QUOTES, 'UTF-8'); ?>, I recommend
                     adding 2 cardio sessions this week. You're on track!
                   </div>
                 </div>
@@ -451,13 +502,13 @@
                 </div>
                 <div class="goal-info">
                   <span class="goal-name" id="myPlanPrimaryGoalName"
-                    >Primary Goal</span
+                    ><?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?></span
                   >
                   <div class="progress-container">
                     <div class="progress-bar yellow" style="width: 65%"></div>
                   </div>
                   <span class="days-count" id="myPlanPrimaryGoalHint"
-                    >Set your goal in Profile</span
+                    >Fitness level: <?php echo htmlspecialchars($fitnessLevel, ENT_QUOTES, 'UTF-8'); ?></span
                   >
                 </div>
               </li>
@@ -666,7 +717,7 @@
               <div class="mt-qty-group">
                 <label
                   style="
-                    font-family: &quot;Barlow Condensed&quot;, sans-serif;
+                    font-family: 'Barlow Condensed', sans-serif;
                     font-size: 0.7rem;
                     font-weight: 700;
                     letter-spacing: 2px;
@@ -816,83 +867,7 @@
         if (e.key === "Enter") sendAIMessage();
       });
 
-      function redirectToLogin(message) {
-        window.location.href =
-          "../Login/Login_Page.php" +
-          (message ? "?error=" + encodeURIComponent(message) : "");
-      }
-
-      function handleApiResponse(response) {
-        if (response.status === 401) {
-          redirectToLogin("Session expired. Please log in.");
-          return Promise.reject(new Error("Unauthorized"));
-        }
-        return response.json().then((body) => {
-          if (
-            !body.success &&
-            body.error &&
-            body.error.toLowerCase().includes("unauthorized")
-          ) {
-            redirectToLogin(body.error);
-            return Promise.reject(new Error(body.error));
-          }
-          return body;
-        });
-      }
-
-      function getMemberRefContext() {
-        const params = new URLSearchParams(window.location.search);
-        const fromUrl = params.get("member_ref");
-        if (fromUrl) {
-          localStorage.setItem("fitstop_member_ref", fromUrl);
-          return fromUrl;
-        }
-        return localStorage.getItem("fitstop_member_ref") || "";
-      }
-
-      function loadMyPlanProfile() {
-        const memberRef = getMemberRefContext();
-        const endpoint = memberRef
-          ? `../Database/get_member_profile.php?member_ref=${encodeURIComponent(memberRef)}`
-          : "../Database/get_member_profile.php";
-
-        fetch(endpoint)
-          .then(handleApiResponse)
-          .then((data) => {
-            if (!data.success) {
-              return;
-            }
-
-            const user = data.user || {};
-            const profile = data.profile || {};
-            if (user.id) {
-              localStorage.setItem("fitstop_member_ref", String(user.id));
-            }
-
-            const firstName = user.first_name || "Member";
-            const goal = profile.goal || "Primary Goal";
-            const fitnessLevel = profile.fitness_level || "Not set";
-
-            const welcome = document.getElementById("myPlanWelcome");
-            const goalName = document.getElementById("myPlanPrimaryGoalName");
-            const goalHint = document.getElementById("myPlanPrimaryGoalHint");
-
-            if (welcome) {
-              welcome.textContent = `Hi ${firstName}! Goal: ${goal} (${fitnessLevel})`;
-            }
-            if (goalName) {
-              goalName.textContent = goal;
-            }
-            if (goalHint) {
-              goalHint.textContent = `Fitness level: ${fitnessLevel}`;
-            }
-          })
-          .catch(() => {
-            // Keep fallback static content if profile API is unavailable.
-          });
-      }
-
-      loadMyPlanProfile();
     </script>
   </body>
 </html>
+

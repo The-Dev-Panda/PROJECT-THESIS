@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/../includes/security.php';
+?>
 <!DOCTYPE html>
 <html>
 
@@ -29,6 +32,7 @@
                             <h3 class="text-center mb-4">Verify Code - <span style="color:rgb(197, 184, 0);">FitStop
                                     Gym</span></h3>
                             <form action="Process_Verify_Password_Change.php" method="POST">
+                                <?php echo fitstop_csrf_input(); ?>
                                 <div class="col px-4">
                                     <div class="row mb-2">
                                         <p>Please enter the code sent to your account</p>
@@ -64,6 +68,9 @@
                                     if (isset($_GET['c'])) {
                                         if ($_GET['c'] == '2') {
                                             echo '<span class="text-danger py-2">Invalid Code</span>';
+                                        }
+                                        if ($_GET['c'] == '3') {
+                                            echo '<span class="text-danger py-2">Too many attempts. Please wait and try again.</span>';
                                         }
                                     }
                                     ?>

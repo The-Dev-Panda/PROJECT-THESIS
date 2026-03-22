@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/../includes/security.php';
+?>
 <!DOCTYPE html>
 <html>
 
@@ -33,6 +36,7 @@
                             echo $_SESSION['reset_password_email'];
                             ?></h4>
                             <form action="Process_Change_Password.php" method="POST">
+                                <?php echo fitstop_csrf_input(); ?>
                                 <div class="col px-4">
                                     <div class="row mb-2">
                                         <p>Please enter your new password</p>

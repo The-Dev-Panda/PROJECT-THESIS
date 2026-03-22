@@ -25,14 +25,7 @@ try {
 
     $sessionUserId = requireUserSession();
 
-    $memberRef = '';
-    if (isset($_GET['member_ref'])) {
-        $memberRef = trim((string)$_GET['member_ref']);
-    }
-
-    if ($memberRef === '') {
-        $memberRef = (string)$sessionUserId;
-    }
+    $memberRef = (string)$sessionUserId;
 
     $db = new PDO('sqlite:' . $dbPath);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -53,16 +46,8 @@ try {
         }
     }
     $hasBmiColumn = in_array('bmi', $profileColumns, true);
-
-    if ($memberRef === '') {
-        $fallbackStmt = $db->prepare("SELECT id FROM users WHERE lower(coalesce(user_type, '')) = 'user' ORDER BY id ASC LIMIT 1");
-        $fallbackStmt->execute();
-        $fallback = $fallbackStmt->fetch(PDO::FETCH_ASSOC);
-        if (!$fallback) {
-            throw new Exception('No member user found');
-        }
-        $memberRef = (string)$fallback['id'];
-    }
+    $hasContactColumn = in_array('contact', $profileColumns, true);
+    $hasGenderColumn = in_array('gender', $profileColumns, true);
 
     if (ctype_digit($memberRef)) {
         $userStmt = $db->prepare('SELECT id, username, first_name, last_name, email, user_type, created_at FROM users WHERE id = :id LIMIT 1');
@@ -77,9 +62,11 @@ try {
         throw new Exception('Member not found');
     }
 
-    $profileSelectSql = $hasBmiColumn
-        ? 'SELECT age, height_cm, weight_kg, fitness_level, goal, bmi, created_at, updated_at FROM member_profiles WHERE user_id = :user_id LIMIT 1'
-        : 'SELECT age, height_cm, weight_kg, fitness_level, goal, created_at, updated_at FROM member_profiles WHERE user_id = :user_id LIMIT 1';
+    $profileSelectSql = 'SELECT age, height_cm, weight_kg, fitness_level, goal, '
+        . ($hasBmiColumn ? 'bmi' : 'NULL AS bmi') . ', '
+        . ($hasContactColumn ? 'contact' : 'NULL AS contact') . ', '
+        . ($hasGenderColumn ? 'gender' : 'NULL AS gender')
+        . ', created_at, updated_at FROM member_profiles WHERE user_id = :user_id LIMIT 1';
     $profileStmt = $db->prepare($profileSelectSql);
     $profileStmt->execute([':user_id' => (int)$user['id']]);
     $profile = $profileStmt->fetch(PDO::FETCH_ASSOC);
@@ -126,6 +113,8 @@ try {
             'height_cm' => $profileHeightCm,
             'weight_kg' => $profileWeightKg,
             'bmi' => $profileBmi,
+            'contact' => $profile['contact'] ?? null,
+            'gender' => $profile['gender'] ?? null,
             'fitness_level' => $profile['fitness_level'],
             'goal' => $profile['goal'],
             'created_at' => $profile['created_at'],

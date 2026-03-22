@@ -1,8 +1,10 @@
 <?php
+require_once __DIR__ . '/../includes/security.php';
 
 // Process login form submission.
 // Note: this file must not output debug data to the browser.
 if (isset($_POST["username"])) {
+    fitstop_validate_csrf_or_exit($_POST['csrf_token'] ?? null);
     $username = $_POST['username'];
     $password = $_POST['password'];
     date_default_timezone_set('Asia/Manila');
@@ -12,7 +14,10 @@ if (isset($_POST["username"])) {
     $stmt->execute(['username' => $username]);
     $user = $stmt->fetch();
     if ($user && password_verify($password, $user['password'])) {
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        session_regenerate_id(true);
         $_SESSION['username'] = $username;
         $_SESSION['id'] = (int)$user['id'];
         $_SESSION['user_type'] = $user['user_type'];
