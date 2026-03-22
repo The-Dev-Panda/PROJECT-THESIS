@@ -3,13 +3,13 @@ header('Content-Type: application/json');
 
 $dbPath = __DIR__ . '/DB.sqlite';
 
-function requireUserSession() {
+function requireStaffSession() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    if (empty($_SESSION['id']) || empty($_SESSION['user_type']) || strtolower($_SESSION['user_type']) !== 'user') {
+    if (empty($_SESSION['id']) || empty($_SESSION['user_type']) || strtolower($_SESSION['user_type']) !== 'staff') {
         http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Unauthorized access. Please login as member.']);
+        echo json_encode(['success' => false, 'error' => 'Unauthorized access. Please login as staff.']);
         exit();
     }
     return (int)$_SESSION['id'];
@@ -20,7 +20,7 @@ try {
         throw new Exception('Database file not found');
     }
 
-    $sessionUserId = requireUserSession();
+    $staffId = requireStaffSession();
 
     $input = json_decode(file_get_contents('php://input'), true);
     if (!is_array($input)) {
@@ -84,11 +84,8 @@ try {
             $customerName = $memberRef;
         }
 
-        if ($userId !== $sessionUserId) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'Forbidden: member mismatch']);
-            exit();
-        }
+        // Member ID found; staff member is creating transaction for this member
+        // No ownership check needed since staff can process transactions for any member
     }
 
     $status = 'Confirmed';
@@ -99,7 +96,7 @@ try {
         $desc .= " | Notes: " . $notes;
     }
 
-    $insertStmt = $db->prepare('INSERT INTO transactions (receipt_number, customer_type, user_id, customer_name, amount, payment_method, status, "desc") VALUES (:receipt_number, :customer_type, :user_id, :customer_name, :amount, :payment_method, :status, :desc)');
+    $insertStmt = $db->prepare('INSERT INTO transactions (receipt_number, customer_type, user_id, customer_name, amount, payment_method, staff_id, status, "desc") VALUES (:receipt_number, :customer_type, :user_id, :customer_name, :amount, :payment_method, :staff_id, :status, :desc)');
     $insertStmt->execute([
         ':receipt_number' => $receiptNumber,
         ':customer_type' => $customerType,
@@ -107,6 +104,7 @@ try {
         ':customer_name' => $customerName !== '' ? $customerName : null,
         ':amount' => $amount,
         ':payment_method' => $paymentMethod,
+        ':staff_id' => $staffId,
         ':status' => $status,
         ':desc' => $desc
     ]);
