@@ -49,7 +49,7 @@ function timeAgo($datetime)
 }
 ?>
 
-?>
+
 <!DOCTYPE html>
 <html>
 

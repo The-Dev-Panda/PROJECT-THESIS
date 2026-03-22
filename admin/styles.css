@@ -5,7 +5,9 @@
 }
 body {
     font-family: 'Chakra Petch';
-    background-color: #f8f9fa;
+    background-color: #000000;
+    background: url(...) no-repeat center center;
+    
 }
 .navbar {
     background-color: #ffffff;
@@ -93,6 +95,7 @@ body {
 .stat-number {
     font-size: 32px;
     font-weight: bold;
+    color:#f8f9fa;
     margin: 0.5rem 0;
 }
 .stat-label {
@@ -102,6 +105,7 @@ body {
 .chart-container {
     background: white;
     border-radius: 10px;
+    color: #000000;
     padding: 1.5rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-bottom: 1.5rem;
@@ -136,6 +140,8 @@ body {
     background-color: #fff;
     border-color: #dee2e6;
 }
+
+
 
 /* ANNOUNCEMENT PART */
 .form-card {
