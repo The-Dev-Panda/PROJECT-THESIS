@@ -31,7 +31,7 @@ body {
     background: var(--bg-void);
     color: var(--text-primary);
     font-family: 'DM Sans', sans-serif;
-    overflow-x: hidden;
+    overflow-x: clip;
     min-height: 100vh;
 }
 
@@ -133,6 +133,8 @@ body {
     margin-bottom: 28px;
     padding-bottom: 20px;
     border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 200;
 }
 
 .topbar-left h1 {
@@ -154,6 +156,8 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    position: relative;
+    z-index: 200;
 }
 
 .topbar-badge {
@@ -862,7 +866,12 @@ tbody td {
 .registration-section { margin-bottom: 40px; }
 
 /* ── NOTIFICATION BELL ── */
-.notif-wrapper { position: relative; display: inline-block; flex-shrink: 0; }
+.notif-wrapper {
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+    z-index: 300;
+}
 
 .notif-bell-btn {
     background: var(--bg-card);
@@ -873,6 +882,8 @@ tbody td {
     padding: 9px 12px;
     display: flex; align-items: center; justify-content: center;
     transition: background 0.2s;
+    position: relative;
+    z-index: 300;
 }
 
 .notif-bell-btn:hover { background: var(--hazard-dim); }
@@ -890,7 +901,8 @@ tbody td {
     padding: 0 3px;
     font-family: 'Chakra Petch', sans-serif;
     border: 2px solid var(--bg-void);
-    z-index: 10;
+    z-index: 310;
+    pointer-events: none;
 }
 
 .notif-badge.hidden { display: none; }

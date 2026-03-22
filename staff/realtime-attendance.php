@@ -36,10 +36,34 @@ try {
         $weekly[$idx] = (int)$row['cnt'];
     }
 
+    $membersCheckedIn = (int)$pdo->query("
+        SELECT COUNT(DISTINCT user_id)
+        FROM attendance
+        WHERE DATE(datetime) = DATE('now', 'localtime')
+    ")->fetchColumn();
+
+    $newRegistrations = (int)$pdo->query("
+        SELECT COUNT(*)
+        FROM transactions
+        WHERE DATE(transaction_date) = DATE('now', 'localtime')
+    ")->fetchColumn();
+
+    $pendingNotifications = (int)$pdo->query("
+        SELECT COUNT(*)
+        FROM transactions
+        WHERE status != 'completed'
+    ")->fetchColumn();
+
     echo json_encode([
         'success' => true,
         'records' => $records,
         'weekly'  => $weekly,
+        'stats'   => [
+            'members_checked_in'    => $membersCheckedIn,
+            'new_registrations'     => $newRegistrations,
+            'equipment_issues'      => 0,
+            'pending_notifications' => $pendingNotifications,
+        ],
     ]);
 
 } catch (Exception $e) {

@@ -1,3 +1,50 @@
+<?php
+session_start();
+require_once '../login/connection.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    header('Content-Type: application/json');
+    $action = $_POST['action'];
+
+    try {
+
+        if ($action === 'get_notifications') {
+
+            $txRows = $pdo->query("
+                SELECT
+                    id, receipt_number, customer_type, user_id,
+                    customer_name, amount, payment_method, staff_id,
+                    transaction_date, status, created_at, `desc`
+                FROM transactions
+                ORDER BY transaction_date DESC, created_at DESC
+                LIMIT 50
+            ")->fetchAll(PDO::FETCH_ASSOC);
+
+            $stockRows = $pdo->query("
+                SELECT id, item_name, category, quantity, price,
+                       description, created_at, updated_at
+                FROM inventory
+                WHERE quantity <= 10
+                ORDER BY quantity ASC, updated_at DESC
+            ")->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode([
+                'success'      => true,
+                'transactions' => $txRows,
+                'low_stock'    => $stockRows,
+            ]);
+            exit;
+        }
+
+        echo json_encode(['success' => false, 'message' => 'Unknown action']);
+        exit;
+
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'DB error: ' . $e->getMessage()]);
+        exit;
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +58,8 @@
 <body>
 
 <div class="dashboard">
+
+  <!-- ══════════ SIDEBAR ══════════ -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <img src="staffimage/FIT-STOP LOGO.png" alt="Fit-Stop Logo" class="logo-img">
@@ -80,8 +129,8 @@
           </button>
           <div class="notif-panel" id="notifPanel">
             <div class="notif-panel-header">
-              <h4><i class="bi bi-exclamation-triangle" style="margin-right:6px;"></i>Inventory Alerts</h4>
-              <span id="notifPanelCount">0 alerts</span>
+              <h4><i class="bi bi-bell-fill" style="margin-right:6px;"></i>Notifications</h4>
+              <span id="notifPanelCount">—</span>
             </div>
             <div class="notif-list" id="notifList">
               <div class="notif-loader" id="notifLoader">
@@ -112,28 +161,28 @@
         <div class="stat-box">
           <div class="stat-icon members"><i class="bi bi-people-fill"></i></div>
           <div class="stat-info">
-            <span class="stat-value">47</span>
+            <span class="stat-value" id="stat-checked-in">—</span>
             <span class="stat-label">Members Checked In</span>
           </div>
         </div>
         <div class="stat-box">
           <div class="stat-icon registrations"><i class="bi bi-person-check-fill"></i></div>
           <div class="stat-info">
-            <span class="stat-value">5</span>
+            <span class="stat-value" id="stat-registrations">—</span>
             <span class="stat-label">New Registrations</span>
           </div>
         </div>
         <div class="stat-box">
           <div class="stat-icon equipment"><i class="bi bi-tools"></i></div>
           <div class="stat-info">
-            <span class="stat-value">2</span>
+            <span class="stat-value" id="stat-equipment">—</span>
             <span class="stat-label">Equipment Issues</span>
           </div>
         </div>
         <div class="stat-box">
           <div class="stat-icon notifications"><i class="bi bi-bell-fill"></i></div>
           <div class="stat-info">
-            <span class="stat-value">12</span>
+            <span class="stat-value" id="stat-notifications">—</span>
             <span class="stat-label">Pending Notifications</span>
           </div>
         </div>
@@ -807,7 +856,7 @@ function displayReceipt(receipt) {
       <p style="margin:5px 0;"><strong>Type:</strong> ${receipt.customerType === 'member' ? 'Member' : 'Walk-In'}</p>
       <p style="margin:5px 0;"><strong>Paid For:</strong> ${receipt.paidFor || '-'}</p>
       <p style="margin:5px 0;"><strong>Payment:</strong> ${receipt.method}</p>
-      <p style="margin:5px 0;"><strong>Status:</strong> <span style="color:#22d07a;">checkmark ${receipt.status}</span></p>
+      <p style="margin:5px 0;"><strong>Status:</strong> <span style="color:#22d07a;">&#10003; ${receipt.status}</span></p>
       ${noteInfo}
     </div>
     <div style="border-top:1px dashed #333;padding-top:14px;">
@@ -944,29 +993,35 @@ function loadRealtimeAttendance() {
         return;
       }
 
+      if (data.stats) {
+        document.getElementById('stat-checked-in').textContent    = data.stats.members_checked_in;
+        document.getElementById('stat-registrations').textContent = data.stats.new_registrations;
+        document.getElementById('stat-equipment').textContent     = data.stats.equipment_issues;
+        document.getElementById('stat-notifications').textContent = data.stats.pending_notifications;
+      }
+
       const records = Array.isArray(data.records) ? data.records : [];
 
       if (records.length === 0) {
         list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">No check-ins today yet.</div>';
-        return;
-      }
-
-      list.innerHTML = records.map(rec => {
-        const name     = rec.display_name || ('User #' + rec.user_id);
-        const initials = name.substring(0, 2).toUpperCase();
-        const ago      = timeAgo(rec.datetime);
-        return `
-          <div class="attendance-item">
-            <div class="member-info">
-              <div class="member-avatar">${escapeHtml(initials)}</div>
-              <div>
-                <strong>${escapeHtml(name)}</strong>
-                <span class="time">${escapeHtml(ago)}</span>
+      } else {
+        list.innerHTML = records.map(rec => {
+          const name     = rec.display_name || ('User #' + rec.user_id);
+          const initials = name.substring(0, 2).toUpperCase();
+          const ago      = timeAgo(rec.datetime);
+          return `
+            <div class="attendance-item">
+              <div class="member-info">
+                <div class="member-avatar">${escapeHtml(initials)}</div>
+                <div>
+                  <strong>${escapeHtml(name)}</strong>
+                  <span class="time">${escapeHtml(ago)}</span>
+                </div>
               </div>
-            </div>
-            <span class="check-in-badge">Check-In</span>
-          </div>`;
-      }).join('');
+              <span class="check-in-badge">Check-In</span>
+            </div>`;
+        }).join('');
+      }
 
       if (Array.isArray(data.weekly)) {
         const days     = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -983,7 +1038,7 @@ function loadRealtimeAttendance() {
         });
       }
     })
-    .catch(err => {
+    .catch(() => {
       const list = document.getElementById('realtimeAttendanceList');
       if (list) list.innerHTML = `<div style="padding:16px;color:var(--danger);font-size:12px;font-family:'Chakra Petch',sans-serif;">Failed to reach server. Check that realtime-attendance.php exists in the Staff folder.</div>`;
     });
@@ -1023,7 +1078,7 @@ function loadNotificationHistory() {
   const count = document.getElementById('notifPanelCount');
   list.innerHTML = '<div class="notif-loader"><i class="bi bi-hourglass-split"></i> Loading...</div>';
 
-  fetch('../Database/get_notifications.php')
+  fetch('staff.php', { method: 'POST', body: (() => { const f = new FormData(); f.append('action','get_notifications'); return f; })() })
     .then(r => r.json())
     .then(data => {
       notifLoaded = true;
@@ -1100,7 +1155,7 @@ function loadNotificationHistory() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  fetch('../Database/get_notifications.php')
+  fetch('staff.php', { method: 'POST', body: (() => { const f = new FormData(); f.append('action','get_notifications'); return f; })() })
     .then(r => r.json())
     .then(data => {
       if (!data.success) return;
