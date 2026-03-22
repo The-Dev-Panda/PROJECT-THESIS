@@ -8,7 +8,7 @@
 <body>
   <form id="logoutForm" action="../Login/logout.php" method="POST" style="display:none;"></form>
   <script>
-    document.getElementById('logoutForm').submit();
+    document.getElementById('Login_Page.php').submit();
   </script>
 </body>
 </html>
