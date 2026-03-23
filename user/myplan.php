@@ -255,12 +255,14 @@ if (count($smartSuggestions) < 3) {
   $smartSuggestions[] = 'Use the AI quick prompts to get a specific workout and meal recommendation for your current stats.';
 }
 ?>
+<?php $activePage = 'myplan'; ?>
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Plan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-OERcA2zY1OHt4q4Fv8B+U7MeM3NnN3KK2eEbV5t8JSaI1zlzW3URy9Bv1WTRi7v8Q" crossorigin="anonymous">
     <link rel="stylesheet" href="user.css" />
     <link rel="stylesheet" href="meal-tracker.css" />
     <link
@@ -393,64 +395,7 @@ if (count($smartSuggestions) < 3) {
 
   <body>
     <div class="dashboard">
-      <!-- SIDEBAR -->
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <img
-            src="userimage/FIT-STOP LOGO.png"
-            alt="Fit-Stop Logo"
-            class="logo-img"
-          />
-          <span class="logo-text">Fit-Stop</span>
-        </div>
-        <ul class="menu">
-          <li>
-            <a href="user.php"
-              ><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a
-            >
-          </li>
-          <li>
-            <a href="bmi.php"
-              ><i class="bi bi-heart-pulse"></i><span>BMI Tracker</span></a
-            >
-          </li>
-          <li class="active">
-            <a href="myplan.php"
-              ><i class="bi bi-clipboard-check"></i><span>My Plan</span></a
-            >
-          </li>
-          <li>
-            <a href="history.php"
-              ><i class="bi bi-clock-history"></i><span>History</span></a
-            >
-          </li>
-          <li>
-            <a href="payments.php"
-              ><i class="bi bi-credit-card"></i><span>Payments</span></a
-            >
-          </li>
-          <li>
-            <a href="AI_ADVISOR.php"
-              ><i class="bi bi-robot"></i><span>AI Advisor</span></a
-            >
-          </li>
-          <li>
-            <a href="profile.php"
-              ><i class="bi bi-person"></i><span>Profile</span></a
-            >
-          </li>
-          <li>
-            <a href="settings.php"
-              ><i class="bi bi-gear"></i><span>Settings</span></a
-            >
-          </li>
-          <li>
-            <a href="logout.php"
-              ><i class="bi bi-box-arrow-right"></i><span>Logout</span></a
-            >
-          </li>
-        </ul>
-      </aside>
+      <?php include __DIR__ . '/includes/sidebar.php'; ?>
 
       <!-- MAIN CONTENT -->
       <main class="main-content">
@@ -807,6 +752,7 @@ if (count($smartSuggestions) < 3) {
     <!-- Toast -->
     <div id="mtToast">✓ Food added!</div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+EQG7wp9vY1Qtu2w1P7QHCMkHPlJ8" crossorigin="anonymous"></script>
     <script src="lightmode.js"></script>
     <script>
       window.MT_CONFIG = {
