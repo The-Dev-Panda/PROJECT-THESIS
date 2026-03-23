@@ -120,6 +120,7 @@ try {
     );
 
     $progressSummary = '';
+    $availableExercisesSummary = '';
     if ($intent === 'progress') {
         $attendance7Stmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE user_id = :user_id AND datetime(datetime, 'localtime') >= datetime('now', 'localtime', '-6 days')");
         $attendance7Stmt->execute([':user_id' => $userId]);
@@ -168,6 +169,49 @@ try {
             . ', top_exercises_30d=' . (empty($topExerciseChunks) ? 'none' : implode('; ', $topExerciseChunks));
     }
 
+    if ($intent === 'workout' || $intent === 'progress' || strpos($normalizedQuery, 'exercise') !== false) {
+        $exerciseStmt = $pdo->query('SELECT name, target_muscle, movement_type FROM exercises ORDER BY name ASC LIMIT 120');
+        $exerciseRows = $exerciseStmt ? ($exerciseStmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+
+        if (!empty($exerciseRows)) {
+            $movementBuckets = [];
+            $exerciseNameList = [];
+
+            foreach ($exerciseRows as $row) {
+                $name = trim((string)($row['name'] ?? ''));
+                if ($name === '') {
+                    continue;
+                }
+
+                $movementType = trim((string)($row['movement_type'] ?? 'General'));
+                if ($movementType === '') {
+                    $movementType = 'General';
+                }
+
+                $targetMuscle = trim((string)($row['target_muscle'] ?? ''));
+                $label = $targetMuscle !== '' ? ($name . ' [' . $targetMuscle . ']') : $name;
+
+                if (!isset($movementBuckets[$movementType])) {
+                    $movementBuckets[$movementType] = [];
+                }
+                $movementBuckets[$movementType][] = $label;
+                $exerciseNameList[] = $name;
+            }
+
+            $movementChunks = [];
+            foreach ($movementBuckets as $type => $items) {
+                $movementChunks[] = $type . ': ' . implode(', ', array_slice($items, 0, 8));
+            }
+
+            $availableExercisesSummary = 'Available exercises in system (' . count($exerciseNameList) . '): '
+                . implode(' | ', $movementChunks)
+                . '. Full exercise name list: '
+                . implode(', ', array_slice($exerciseNameList, 0, 120));
+        } else {
+            $availableExercisesSummary = 'Available exercises in system: none found in exercises table.';
+        }
+    }
+
     $contextBlocks = [$profileSummary, 'Intent: ' . $intent];
     if ($needsCaution) {
         $contextBlocks[] = 'Caution flag: The user may have a medical risk signal. Add one caution line advising consultation with a licensed professional.';
@@ -175,9 +219,14 @@ try {
     if ($progressSummary !== '') {
         $contextBlocks[] = $progressSummary;
     }
+    if ($availableExercisesSummary !== '') {
+        $contextBlocks[] = $availableExercisesSummary;
+    }
 
     $systemPrompt = "You are a gym AI advisor for members. You SUPPLEMENT personal trainers, never replace them. "
         . "Do not provide medical diagnosis. Refuse unsafe/illegal requests (steroids, illegal drugs, self-harm, eating-disorder behaviors, extreme rapid weight loss). "
+        . "When suggesting workouts, strongly prefer exercises from the provided Available exercises in system list. "
+        . "If an exercise is not in that list, clearly label it as an optional substitute and provide listed alternatives. "
         . "Avoid extreme dieting advice. Keep answers concise and practical. "
         . "Output plain text in this exact structure:\n"
         . "1) Quick answer (1-2 sentences)\n"

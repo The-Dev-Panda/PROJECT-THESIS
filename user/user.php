@@ -16,6 +16,7 @@ $bmiMarkerLeft = '50';
 $attendanceTitle = 'No Attendance Yet';
 $attendanceDetail = 'No check-in record found.';
 $workoutDays = [];
+$profileInitials = 'MM';
 
 try {
   require __DIR__ . '/../Login/connection.php';
@@ -227,6 +228,36 @@ try {
 } catch (Throwable $e) {
   // Keep template defaults if profile loading fails.
 }
+
+$initialParts = [];
+if (isset($user) && is_array($user)) {
+  $firstInitialSource = trim((string)($user['first_name'] ?? ''));
+  $lastInitialSource = trim((string)($user['last_name'] ?? ''));
+  if ($firstInitialSource !== '') {
+    $initialParts[] = strtoupper(substr($firstInitialSource, 0, 1));
+  }
+  if ($lastInitialSource !== '') {
+    $initialParts[] = strtoupper(substr($lastInitialSource, 0, 1));
+  }
+}
+
+if (count($initialParts) < 2) {
+  $nameParts = preg_split('/\s+/', trim($displayName));
+  if (is_array($nameParts)) {
+    foreach ($nameParts as $part) {
+      if ($part !== '') {
+        $initialParts[] = strtoupper(substr($part, 0, 1));
+      }
+      if (count($initialParts) >= 2) {
+        break;
+      }
+    }
+  }
+}
+
+if (!empty($initialParts)) {
+  $profileInitials = implode('', array_slice($initialParts, 0, 2));
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -317,18 +348,18 @@ try {
             <h1 id="dashboardWelcome">Hey <?php echo htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8'); ?>!</h1>
             <p id="dashboardWelcomeSub">Goal: <?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?></p>
           </div>
-          <div class="profile-container">
+          <div class="profile-container" style="margin-left:auto;">
             <div class="profile-content">
               <div class="profile-text">
                 <strong class="profile-name" id="dashboardProfileName"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></strong>
                 <span class="profile-streak" id="dashboardFitnessLevel">🔥 Fitness Level • <?php echo htmlspecialchars($fitnessLevel, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
               <div class="profile-pic">
-                <img
-                  src="userimage/andrea.jpg"
-                  alt="User Profile"
+                <span
                   class="profile-image"
-                />
+                  aria-label="User initials"
+                  style="display:flex;align-items:center;justify-content:center;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:16px;background:#ffcc00;color:#111;border:2px solid rgba(255,255,255,0.18);"
+                ><?php echo htmlspecialchars($profileInitials, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
             </div>
           </div>
