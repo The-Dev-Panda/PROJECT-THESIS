@@ -66,11 +66,19 @@ try {
     $pointCheckStmt->execute([':user_id' => $userId]);
     $alreadyCreditedToday = (bool)$pointCheckStmt->fetchColumn();
 
-    $insertStmt = $db->prepare('INSERT INTO attendance (user_id, datetime) VALUES (:user_id, CURRENT_TIMESTAMP)');
-    $insertStmt->execute([':user_id' => $userId]);
-    $attendanceId = (int)$db->lastInsertId();
-
-    $pointAwarded = !$alreadyCreditedToday;
+    try {
+        $insertStmt = $db->prepare('INSERT INTO attendance (user_id, datetime) VALUES (:user_id, CURRENT_TIMESTAMP)');
+        $insertStmt->execute([':user_id' => $userId]);
+        $attendanceId = (int)$db->lastInsertId();
+        $pointAwarded = !$alreadyCreditedToday;
+    } catch (PDOException $insertEx) {
+        // Handle UNIQUE constraint on daily attendance (idx_attendance_user_day)
+        if (strpos($insertEx->getMessage(), 'UNIQUE constraint failed') !== false) {
+            $db->rollBack();
+            throw new Exception('Attendance already recorded for today');
+        }
+        throw $insertEx;
+    }
 
     $dailyStmt = $db->prepare("SELECT COUNT(*) AS total FROM attendance WHERE user_id = :user_id AND date(datetime, 'localtime') = date('now', 'localtime')");
     $dailyStmt->execute([':user_id' => $userId]);
