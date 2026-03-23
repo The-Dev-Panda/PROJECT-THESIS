@@ -4,8 +4,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once '../load_env.php';
-require_once '../Login/connection.php';
+require_once __DIR__ . '/../load_env.php';
+require_once __DIR__ . '/../Login/connection.php';
 
 function redirectWithFlash(string $message): void
 {
@@ -18,7 +18,11 @@ if (empty($_SESSION['id']) || strtolower((string)($_SESSION['user_type'] ?? ''))
     redirectWithFlash('Unauthorized.');
 }
 
-fitstop_validate_csrf_or_exit($_POST['csrf_token'] ?? null);
+$sessionToken = $_SESSION['csrf_token'] ?? '';
+$requestToken = $_POST['csrf_token'] ?? null;
+if (!is_string($sessionToken) || !is_string($requestToken) || $requestToken === '' || !hash_equals($sessionToken, $requestToken)) {
+    redirectWithFlash('Session expired or invalid request token. Please refresh the page and try again.');
+}
 
 $userId = (int)$_SESSION['id'];
 $query = trim((string)($_POST['query'] ?? ''));
@@ -96,6 +100,12 @@ if ($intent === 'general') {
 }
 
 try {
+    $apiUrl = trim((string)($_ENV['API_URL'] ?? ''));
+    $apiToken = trim((string)($_ENV['API_BEARER_TOKEN'] ?? ''));
+    if ($apiUrl === '' || $apiToken === '') {
+        redirectWithFlash('AI advisor configuration is incomplete. Please contact admin.');
+    }
+
     $profileStmt = $pdo->prepare('SELECT age, height_cm, weight_kg, fitness_level, goal FROM member_profiles WHERE user_id = :user_id LIMIT 1');
     $profileStmt->execute([':user_id' => $userId]);
     $profile = $profileStmt->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -211,7 +221,7 @@ try {
 
     $curl = curl_init();
     curl_setopt_array($curl, [
-        CURLOPT_URL => (string)($_ENV['API_URL'] ?? ''),
+        CURLOPT_URL => $apiUrl,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_ENCODING => '',
         CURLOPT_MAXREDIRS => 10,
@@ -222,7 +232,7 @@ try {
         CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
         CURLOPT_HTTPHEADER => [
             'Content-Type: application/json',
-            'Authorization: Bearer ' . (string)($_ENV['API_BEARER_TOKEN'] ?? '')
+            'Authorization: Bearer ' . $apiToken
         ],
     ]);
 
@@ -231,7 +241,26 @@ try {
     $httpCode = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
     curl_close($curl);
 
-    if ($rawResponse === false || $curlError !== '' || $httpCode >= 400) {
+    if ($rawResponse === false || $curlError !== '') {
+        redirectWithFlash('AI advisor is temporarily unavailable. Please try again in a moment.');
+    }
+
+    if ($httpCode >= 400) {
+        $apiErrorData = json_decode((string)$rawResponse, true);
+        $apiErrorMessage = trim((string)($apiErrorData['error']['message'] ?? ''));
+
+        if ($httpCode === 401) {
+            redirectWithFlash('AI advisor configuration error: API key is invalid or expired. Please contact admin.');
+        }
+
+        if ($httpCode === 429) {
+            redirectWithFlash('AI advisor is currently busy (rate limit reached). Please try again in a minute.');
+        }
+
+        if ($apiErrorMessage !== '') {
+            redirectWithFlash('AI advisor error: ' . $apiErrorMessage);
+        }
+
         redirectWithFlash('AI advisor is temporarily unavailable. Please try again in a moment.');
     }
 

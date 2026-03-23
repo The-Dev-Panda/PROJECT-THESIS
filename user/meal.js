@@ -186,6 +186,9 @@ const MT_DB = [
 ];
 
 const MT_DB_NORM = MT_DB.map((i) => ({ ...i, key: i.n.toLowerCase() }));
+const MT_CONFIG = window.MT_CONFIG || {};
+const MT_API_BASE = MT_CONFIG.apiBase || "../Database";
+const MT_CSRF_TOKEN = MT_CONFIG.csrfToken || "";
 
 let mtCurrentBase = null,
   mtCurrentMatches = [],
@@ -202,6 +205,8 @@ const MT_DAYS = [
 const MT_MEALS = ["Breakfast", "Lunch", "Snack", "Dinner"];
 const mtTodayIdx = new Date().getDay();
 const mtTodayName = MT_DAYS[mtTodayIdx];
+const mtNow = new Date();
+const mtTodayDate = `${mtNow.getFullYear()}-${String(mtNow.getMonth() + 1).padStart(2, "0")}-${String(mtNow.getDate()).padStart(2, "0")}`;
 
 const mtStore = {};
 MT_DAYS.forEach((d) => {
@@ -211,7 +216,7 @@ MT_DAYS.forEach((d) => {
 
 let mtFoodInput, mtSuggestDiv, mtPreview, mtStatusEl, mtAddBtn, mtQtyInput;
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   mtFoodInput = document.getElementById("mtFoodName");
   mtSuggestDiv = document.getElementById("mtSuggestions");
   mtPreview = document.getElementById("mtNutritionPreview");
@@ -272,8 +277,115 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("click", (e) => {
     if (!e.target.closest("#mtSuggestWrap")) mtHideSugg();
   });
+
+  await mtLoadWeekFromServer();
   mtRenderAll();
 });
+
+function mtDayNameFromDate(isoDate) {
+  if (!isoDate || typeof isoDate !== "string") {
+    return null;
+  }
+
+  const parts = isoDate.split("-");
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  const d = new Date(year, month - 1, day);
+  return MT_DAYS[d.getDay()] || null;
+}
+
+function mtApiUrl(path) {
+  return `${MT_API_BASE}/${path}`;
+}
+
+async function mtLoadWeekFromServer() {
+  try {
+    const res = await fetch(mtApiUrl("get_meal_logs.php?days=7"), {
+      credentials: "same-origin",
+    });
+    const data = await res.json();
+    if (!data || data.success !== true || !Array.isArray(data.items)) {
+      return;
+    }
+
+    MT_DAYS.forEach((d) => {
+      MT_MEALS.forEach((m) => {
+        mtStore[d][m] = [];
+      });
+    });
+
+    data.items.forEach((item) => {
+      const dayName = mtDayNameFromDate(item.logged_date);
+      if (!dayName || !mtStore[dayName] || !mtStore[dayName][item.meal_type]) {
+        return;
+      }
+
+      mtStore[dayName][item.meal_type].push({
+        id: parseInt(item.meal_id, 10) || null,
+        name: item.food_name,
+        qty: Number(item.quantity) || 0,
+        cal: Number(item.calories) || 0,
+        p: Number(item.protein) || 0,
+        c: Number(item.carbs) || 0,
+        f: Number(item.fat) || 0,
+        loggedDate: item.logged_date || "",
+      });
+    });
+  } catch (_) {
+    // Keep local state fallback if endpoint is unavailable.
+  }
+}
+
+async function mtSaveMealToServer(payload) {
+  const res = await fetch(mtApiUrl("save_meal_log.php"), {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      ...payload,
+      csrf_token: MT_CSRF_TOKEN,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data || data.success !== true) {
+    throw new Error((data && data.error) || "Failed to save meal log.");
+  }
+
+  return data;
+}
+
+async function mtDeleteMealFromServer(mealId) {
+  const res = await fetch(mtApiUrl("delete_meal_log.php"), {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      meal_id: mealId,
+      csrf_token: MT_CSRF_TOKEN,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data || data.success !== true) {
+    throw new Error((data && data.error) || "Failed to delete meal log.");
+  }
+
+  return data;
+}
 
 function mtFuzzyMatch(q) {
   const query = q.toLowerCase().trim();
@@ -360,18 +472,39 @@ function mtUpdatePreview() {
   mtStatusEl.className = "match";
 }
 
-function mtAddFood() {
+async function mtAddFood() {
   if (!mtCurrentBase) return;
   const meal = document.getElementById("mtMealType").value;
   const qty = mtGetQty();
-  mtStore[mtTodayName][meal].push({
+  const newMeal = {
     name: mtCurrentBase.n,
     qty,
     cal: Math.round(mtCurrentBase.cal * qty),
     p: Math.round(mtCurrentBase.p * qty),
     c: Math.round(mtCurrentBase.c * qty),
     f: Math.round(mtCurrentBase.f * qty),
-  });
+    loggedDate: mtTodayDate,
+  };
+
+  try {
+    const saved = await mtSaveMealToServer({
+      logged_date: mtTodayDate,
+      meal_type: meal,
+      food_name: newMeal.name,
+      quantity: newMeal.qty,
+      calories: newMeal.cal,
+      protein: newMeal.p,
+      carbs: newMeal.c,
+      fat: newMeal.f,
+    });
+    newMeal.id = Number(saved.meal_id) || null;
+  } catch (err) {
+    mtStatusEl.textContent = err.message || "Could not save meal log.";
+    mtStatusEl.className = "warn";
+    return;
+  }
+
+  mtStore[mtTodayName][meal].push(newMeal);
   mtFoodInput.value = "";
   mtQtyInput.value = 1;
   mtHidePreview();
@@ -389,11 +522,44 @@ function mtAddFood() {
   setTimeout(() => (t.style.display = "none"), 1800);
 }
 
-function mtRemoveFood(meal, idx) {
+async function mtRemoveFood(meal, idx) {
+  const existing = mtStore[mtTodayName][meal][idx] || null;
+  if (!existing) {
+    return;
+  }
+
+  if (existing.id) {
+    try {
+      await mtDeleteMealFromServer(existing.id);
+    } catch (err) {
+      mtStatusEl.textContent = err.message || "Could not remove meal.";
+      mtStatusEl.className = "warn";
+      return;
+    }
+  }
+
   mtStore[mtTodayName][meal].splice(idx, 1);
   mtRenderAll();
 }
-function mtClearToday() {
+
+async function mtClearToday() {
+  const todayItems = [];
+  MT_MEALS.forEach((m) => {
+    mtStore[mtTodayName][m].forEach((item) => {
+      if (item && item.id) {
+        todayItems.push(item.id);
+      }
+    });
+  });
+
+  for (const mealId of todayItems) {
+    try {
+      await mtDeleteMealFromServer(mealId);
+    } catch (_) {
+      // Continue clearing locally even if one delete fails.
+    }
+  }
+
   MT_MEALS.forEach((m) => (mtStore[mtTodayName][m] = []));
   mtRenderAll();
 }

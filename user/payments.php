@@ -15,6 +15,13 @@
       rel="stylesheet"
     />
     <link
+
+          <li>
+            <a href="AI_ADVISOR.php">
+              <i class="bi bi-robot"></i>
+              <span>AI Advisor</span>
+            </a>
+          </li>
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
