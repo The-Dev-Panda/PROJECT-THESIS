@@ -1,4 +1,18 @@
-<?php require_once __DIR__ . '/auth_user.php'; $activePage = 'bmi'; ?>
+<?php
+require_once __DIR__ . '/auth_user.php';
+$activePage = 'bmi';
+$firstName = 'Member';
+$goal = 'Primary Goal';
+
+if (!empty($_SESSION['id'])) {
+  if (!empty($_SESSION['first_name'])) {
+    $firstName = trim((string)$_SESSION['first_name']);
+  }
+  if (!empty($_SESSION['goal'])) {
+    $goal = trim((string)$_SESSION['goal']);
+  }
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -30,8 +44,8 @@
         <!-- TOP BAR -->
         <header class="topbar">
           <div class="welcome">
-            <h1>Hey Linda!</h1>
-            <p>You are doing great so far</p>
+            <h1 id="dashboardWelcome">Hey <?php echo htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8'); ?>!</h1>
+            <p id="dashboardWelcomeSub">Goal: <?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?></p>
           </div>
         
         </header>
