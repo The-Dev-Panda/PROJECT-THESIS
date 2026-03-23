@@ -55,10 +55,11 @@ include('includes/header.php');
  * TEAM DATA STRUCTURE
  * 
  * Organized array for easy maintenance
- * Each member has: name, icon, description
+ * Each member has: name, image, icon, description
  */
 $founder = [
     'name' => 'ERIC ENRIQUEZ',
+    'image' => 'founder.png',
     'title' => 'FOUNDER & HEAD COACH',
     'bio' => '"Lorem, ipsum dolor sit amet consectetur adipisicing elit. Odit, quod! Consequatur optio vitae quasi. Velit consequatur at, quod eaque ducimus quibusdam est excepturi iure enim fugiat, consectetur nisi, nostrum maxime!."',
     'socials' => [
@@ -70,26 +71,25 @@ $founder = [
 $staff_members = [
     [
         'name' => 'Jhon Dela Torre',
+        'image' => 'jhon_dela_torre.jpg',
         'icon' => 'fa-dumbbell',
         'bio' => 'Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, sint doloribus in impedit sequi neque necessitatibus possimus voluptas odit expedita est quidem ut autem beatae ab dolor eaque dicta repellendus!'
     ],
     [
         'name' => 'Dennsy Vega',
+        'image' => 'dennsy_vega.png',
         'icon' => 'fa-heart-pulse',
         'bio' => 'Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, sint doloribus in impedit sequi neque necessitatibus possimus voluptas odit expedita est quidem ut autem beatae ab dolor eaque dicta repellendus!'
-    ],
-    [
-        'name' => 'Kurt Ramos',
-        'icon' => 'fa-clipboard-check',
-        'bio' => 'Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, sint doloribus in impedit sequi neque necessitatibus possimus voluptas odit expedita est quidem ut autem beatae ab dolor eaque dicta repellendus!'
-    ],
+    ],  
     [
         'name' => 'Celerio Raymund',
+        'image' => 'celerio_raymund.jpg',
         'icon' => 'fa-nutrition-leaf',
         'bio' => 'Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, sint doloribus in impedit sequi neque necessitatibus possimus voluptas odit expedita est quidem ut autem beatae ab dolor eaque dicta repellendus!'
     ],
     [
         'name' => 'Charles Carillo',
+        'image' => 'charles_carillo.jpg',
         'icon' => 'fa-headset',
         'bio' => 'Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, sint doloribus in impedit sequi neque necessitatibus possimus voluptas odit expedita est quidem ut autem beatae ab dolor eaque dicta repellendus!'
     ]
@@ -155,9 +155,7 @@ $staff_members = [
                             <!-- Profile Image -->
                             <div class="col-md-5 text-center">
                                 <div class="profile-img-container" style="width: 200px; height: 200px;">
-                                    <div class="profile-img d-flex align-items-center justify-content-center bg-black">
-                                        <i class="fa-solid fa-user-secret fa-4x text-muted"></i>
-                                    </div>
+                                    <img src='images/<?php echo htmlspecialchars($founder["image"]); ?>' alt='<?php echo htmlspecialchars($founder["name"]); ?>' class="profile-img">
                                 </div>
                             </div>
                             
@@ -209,11 +207,9 @@ $staff_members = [
                 ?>
                 <div class="col-md-4 col-lg-4">
                     <div class="feature-card text-center h-100 p-4">
-                        <!-- Icon Placeholder -->
+                        <!-- Profile Image -->
                         <div class="profile-img-container">
-                            <div class="profile-img d-flex align-items-center justify-content-center bg-black">
-                                <i class="fa-solid <?php echo htmlspecialchars($member['icon']); ?> fa-2x text-muted"></i>
-                            </div>
+                            <img src='images/<?php echo htmlspecialchars($member["image"]); ?>' alt='<?php echo htmlspecialchars($member["name"]); ?>' class="profile-img">
                         </div>
                         
                         <!-- Member Info -->
