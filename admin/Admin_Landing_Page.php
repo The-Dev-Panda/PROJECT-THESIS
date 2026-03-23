@@ -162,7 +162,7 @@ $verification = $stmt->fetch();
                 </div>
             </a>
 
-            <a href="transactions.php" style="text-decoration: none; color: inherit;">
+            <a href="transaction.php" style="text-decoration: none; color: inherit;">
                 <div class="stat-box">
                     <div class="stat-icon equipment">
                         <i class="bi bi-currency-dollar"></i>
