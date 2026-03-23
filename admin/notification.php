@@ -260,7 +260,5 @@ function timeAgo($datetime) {
             }
         }
     </script>
-
-    <?php include('includes/footer_admin.php') ?>
 </body>
 </html>
