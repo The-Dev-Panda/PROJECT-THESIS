@@ -2,8 +2,9 @@
 session_start();
 require_once __DIR__ . '/../includes/security.php';
 require_once '../login/connection.php';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-  fitstop_validate_csrf_or_exit($_POST['csrf_token'] ?? null);
+    fitstop_validate_csrf_or_exit($_POST['csrf_token'] ?? null);
     header('Content-Type: application/json');
     $action = $_POST['action'];
 
@@ -12,79 +13,136 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if ($action === 'update_stock') {
             $id     = (int)$_POST['id'];
             $change = (int)$_POST['change'];
-
             $cur    = $pdo->query("SELECT quantity FROM inventory WHERE id = $id")->fetchColumn();
             $newQty = $cur + $change;
-
             if ($newQty < 0) {
                 echo json_encode(['success' => false, 'message' => 'Stock cannot go below 0.']);
                 exit;
             }
-
             $pdo->prepare("UPDATE inventory SET quantity = :qty, updated_at = CURRENT_TIMESTAMP WHERE id = :id")
                 ->execute([':qty' => $newQty, ':id' => $id]);
-
             $row = $pdo->query("SELECT * FROM inventory WHERE id = $id")->fetch(PDO::FETCH_ASSOC);
-
-            // Record a transaction row for every stock deduction (customer purchase)
             if ($change < 0) {
-                $qtySold  = abs($change);
-                $itemName = $row['item_name'];
-                $price    = (float)$row['price'];
-                $total    = $price * $qtySold;
-                $staffId  = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
-
-                // Generate receipt number: INV-YYYYMMDD-itemId-rand
+                $qtySold   = abs($change);
+                $itemName  = $row['item_name'];
+                $price     = (float)$row['price'];
+                $total     = $price * $qtySold;
+                $staffId   = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
                 $receiptNo = 'INV-' . date('Ymd') . '-' . $id . '-' . rand(100, 999);
-
                 $pdo->prepare("
                     INSERT INTO transactions
                         (receipt_number, customer_type, customer_name, amount,
                          payment_method, staff_id, transaction_date, status, `desc`)
-                    VALUES
-                        (:rn, 'inventory', :cname, :amount,
-                         'Inventory Deduction', :staff, CURRENT_TIMESTAMP, 'completed', :desc)
+                    VALUES (:rn, 'inventory', 'Customer Purchase', :amount,
+                            'Inventory Deduction', :staff, CURRENT_TIMESTAMP, 'completed', :desc)
                 ")->execute([
                     ':rn'     => $receiptNo,
-                    ':cname'  => 'Customer Purchase',
                     ':amount' => $total,
                     ':staff'  => $staffId,
                     ':desc'   => "Sold {$qtySold}x {$itemName}",
                 ]);
             }
-
             echo json_encode(['success' => true, 'row' => $row]);
             exit;
         }
 
-        // ── Fetch notification history from transactions + low-stock inventory
-        if ($action === 'get_notifications') {
+        if ($action === 'submit_sales_form') {
+            $staffId    = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+            $saleDate   = $_POST['sale_date'] ?? date('Y-m-d');
+            $nonMember  = (int)($_POST['non_member'] ?? 0);
+            $member     = (int)($_POST['member'] ?? 0);
+            $special    = (int)($_POST['special'] ?? 0);
+            $monthly    = (int)($_POST['monthly'] ?? 0);
+            $lessWater  = (float)($_POST['less_water'] ?? 0);
+            $entryTotal = ($nonMember * 60) + ($member * 50) + ($special * 40);
 
-            // Recent transactions (latest 50)
+            $soldItems  = json_decode($_POST['sold_items'] ?? '[]', true);
+            if (!is_array($soldItems)) $soldItems = [];
+
+            $itemsTotal = 0;
+            $updatedRows = [];
+
+            foreach ($soldItems as $item) {
+                $invId    = (int)($item['id'] ?? 0);
+                $qty      = (int)($item['qty'] ?? 0);
+                $price    = (float)($item['price'] ?? 0);
+                $name     = trim($item['name'] ?? '');
+                if ($invId <= 0 || $qty <= 0) continue;
+
+                $cur    = (int)$pdo->query("SELECT quantity FROM inventory WHERE id = $invId")->fetchColumn();
+                $newQty = max(0, $cur - $qty);
+                $pdo->prepare("UPDATE inventory SET quantity = :q, updated_at = CURRENT_TIMESTAMP WHERE id = :id")
+                    ->execute([':q' => $newQty, ':id' => $invId]);
+
+                $total       = $price * $qty;
+                $itemsTotal += $total;
+                $receiptNo   = 'SALE-' . date('Ymd') . '-' . $invId . '-' . rand(100, 999);
+
+                $pdo->prepare("
+                    INSERT INTO transactions
+                        (receipt_number, customer_type, customer_name, amount,
+                         payment_method, staff_id, transaction_date, status, `desc`)
+                    VALUES (:rn, 'inventory', 'Walk-in Sale', :amt,
+                            'Cash', :si, CURRENT_TIMESTAMP, 'completed', :desc)
+                ")->execute([
+                    ':rn'   => $receiptNo,
+                    ':amt'  => $total,
+                    ':si'   => $staffId,
+                    ':desc' => "Daily Sale: {$qty}x {$name} @ ₱{$price} = ₱{$total}",
+                ]);
+
+                $updatedRow  = $pdo->query("SELECT * FROM inventory WHERE id = $invId")->fetch(PDO::FETCH_ASSOC);
+                $updatedRows[] = $updatedRow;
+            }
+
+            if ($entryTotal > 0 || $nonMember > 0 || $member > 0 || $special > 0 || $monthly > 0) {
+                $entryDesc = [];
+                if ($nonMember > 0) $entryDesc[] = "{$nonMember}x Non-Member(₱60)";
+                if ($member > 0)    $entryDesc[] = "{$member}x Member(₱50)";
+                if ($special > 0)   $entryDesc[] = "{$special}x Special(₱40)";
+                if ($monthly > 0)   $entryDesc[] = "{$monthly}x Monthly";
+                $pdo->prepare("
+                    INSERT INTO transactions
+                        (receipt_number, customer_type, customer_name, amount,
+                         payment_method, staff_id, transaction_date, status, `desc`)
+                    VALUES (:rn, 'entry', 'Daily Entry Fees', :amt,
+                            'Cash', :si, CURRENT_TIMESTAMP, 'completed', :desc)
+                ")->execute([
+                    ':rn'  => 'ENTRY-' . date('Ymd') . '-' . rand(1000, 9999),
+                    ':amt' => $entryTotal,
+                    ':si'  => $staffId,
+                    ':desc'=> 'Entry Fees: ' . implode(', ', $entryDesc),
+                ]);
+            }
+
+            $grandTotal = $entryTotal + $itemsTotal - $lessWater;
+
+            echo json_encode([
+                'success'      => true,
+                'entry_total'  => $entryTotal,
+                'items_total'  => $itemsTotal,
+                'grand_total'  => $grandTotal,
+                'updated_rows' => $updatedRows,
+            ]);
+            exit;
+        }
+
+        if ($action === 'get_notifications') {
             $txRows = $pdo->query("
-                SELECT
-                    id, receipt_number, customer_type, user_id,
+                SELECT id, receipt_number, customer_type, user_id,
                     customer_name, amount, payment_method, staff_id,
                     transaction_date, status, created_at, `desc`
                 FROM transactions
                 ORDER BY transaction_date DESC, created_at DESC
                 LIMIT 50
             ")->fetchAll(PDO::FETCH_ASSOC);
-
-            // Low / out-of-stock items
             $stockRows = $pdo->query("
                 SELECT id, item_name, category, quantity, price,
                        description, created_at, updated_at
-                FROM inventory
-                WHERE quantity <= 10
+                FROM inventory WHERE quantity <= 10
                 ORDER BY quantity ASC, updated_at DESC
             ")->fetchAll(PDO::FETCH_ASSOC);
-
-            echo json_encode([
-                'success'      => true,
-                'transactions' => $txRows,
-                'low_stock'    => $stockRows,
-            ]);
+            echo json_encode(['success' => true, 'transactions' => $txRows, 'low_stock' => $stockRows]);
             exit;
         }
 
@@ -99,17 +157,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
 try {
     $rows = $pdo->query("SELECT * FROM inventory ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
-} catch (Exception $e) {
-    $rows = [];
-}
+} catch (Exception $e) { $rows = []; }
 
 try {
     $txCount    = (int)$pdo->query("SELECT COUNT(*) FROM transactions")->fetchColumn();
     $stockCount = (int)$pdo->query("SELECT COUNT(*) FROM inventory WHERE quantity <= 10")->fetchColumn();
     $notifCount = $txCount + $stockCount;
-} catch (Exception $e) {
-    $notifCount = 0;
-}
+} catch (Exception $e) { $notifCount = 0; }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -134,115 +188,184 @@ try {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-top: 2px solid var(--hazard);
-      padding: 30px;
-      width: 440px; max-width: 95%;
-      position: relative;
-      max-height: 90vh; overflow-y: auto;
+      padding: 30px; width: 440px; max-width: 95%;
+      position: relative; max-height: 90vh; overflow-y: auto;
     }
-
     .modal-box h3 {
       font-family: 'Chakra Petch', sans-serif;
       font-size: 16px; font-weight: 700;
       text-transform: uppercase; letter-spacing: 1px;
       color: var(--text-primary); margin-bottom: 4px;
     }
-
     .modal-product-id {
       font-size: 11px; color: var(--text-muted);
       margin-bottom: 20px; display: block;
       font-family: 'Courier New', monospace;
     }
-
     .modal-close {
       position: absolute; top: 14px; right: 16px;
-      background: none; border: none;
-      font-size: 18px; cursor: pointer;
-      color: var(--text-muted); transition: color 0.2s;
+      background: none; border: none; font-size: 18px;
+      cursor: pointer; color: var(--text-muted); transition: color 0.2s;
     }
     .modal-close:hover { color: var(--hazard); }
-
     .modal-field { margin-bottom: 16px; }
     .modal-field label {
       display: block; font-size: 10.5px; font-weight: 700;
       color: var(--text-muted); margin-bottom: 7px;
       text-transform: uppercase; letter-spacing: 0.8px;
     }
-    .modal-field input,
-    .modal-field textarea {
+    .modal-field input, .modal-field textarea {
       width: 100%; padding: 11px 14px;
       border: 1px solid var(--border);
-      background: var(--bg-surface);
-      color: var(--text-primary);
+      background: var(--bg-surface); color: var(--text-primary);
       font-family: 'DM Sans', sans-serif; font-size: 13.5px;
       box-sizing: border-box; transition: border-color 0.2s;
     }
-    .modal-field input:focus,
-    .modal-field textarea:focus {
+    .modal-field input:focus, .modal-field textarea:focus {
       outline: none; border-color: var(--hazard);
       box-shadow: 0 0 0 1px var(--hazard);
     }
-
     .current-stock-info {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--hazard);
-      padding: 12px 16px;
-      font-size: 13px; color: var(--text-muted);
-      margin-bottom: 20px;
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-left: 3px solid var(--hazard); padding: 12px 16px;
+      font-size: 13px; color: var(--text-muted); margin-bottom: 20px;
       display: flex; justify-content: space-between; align-items: center;
     }
     .current-stock-info strong {
       font-family: 'Chakra Petch', sans-serif;
       font-size: 28px; color: var(--text-primary);
     }
-
     .modal-meta {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
+      background: var(--bg-surface); border: 1px solid var(--border);
       padding: 10px 14px; font-size: 11px; color: var(--text-muted);
-      margin-bottom: 16px;
-      display: flex; justify-content: space-between; gap: 10px;
+      margin-bottom: 16px; display: flex; justify-content: space-between; gap: 10px;
     }
     .modal-meta span { display: flex; flex-direction: column; gap: 3px; }
     .modal-meta strong { font-size: 10.5px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; }
-
     .modal-save-btn {
-      width: 100%; padding: 13px;
-      background: var(--hazard); color: #000;
-      border: none;
-      font-family: 'Chakra Petch', sans-serif;
-      font-size: 13px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 1px;
-      cursor: pointer; transition: all 0.2s; margin-top: 4px;
+      width: 100%; padding: 13px; background: var(--hazard); color: #000;
+      border: none; font-family: 'Chakra Petch', sans-serif;
+      font-size: 13px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; cursor: pointer; transition: all 0.2s; margin-top: 4px;
     }
     .modal-save-btn:hover { background: #e6b800; box-shadow: 0 0 18px rgba(255,204,0,0.4); }
     .modal-save-btn:disabled { background: #444; color: #777; cursor: not-allowed; box-shadow: none; }
-
     .sold-label {
       display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(255,71,87,0.12);
-      border: 1px solid rgba(255,71,87,0.3);
-      color: var(--danger);
-      font-size: 10.5px; font-weight: 700;
-      padding: 4px 12px; margin-bottom: 18px;
-      letter-spacing: 0.5px; text-transform: uppercase;
-      font-family: 'Chakra Petch', sans-serif;
+      background: rgba(255,71,87,0.12); border: 1px solid rgba(255,71,87,0.3);
+      color: var(--danger); font-size: 10.5px; font-weight: 700;
+      padding: 4px 12px; margin-bottom: 18px; letter-spacing: 0.5px;
+      text-transform: uppercase; font-family: 'Chakra Petch', sans-serif;
     }
 
-    /* ── Toast ── */
+    /* ── Sales Modal ── */
+    .sales-modal-box {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-top: 2px solid var(--hazard); padding: 0;
+      width: 720px; max-width: 96%; position: relative;
+      max-height: 92vh; overflow-y: auto;
+    }
+    .sales-modal-header {
+      padding: 18px 26px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; background: var(--bg-card); z-index: 10;
+    }
+    .sales-modal-header h3 {
+      font-family: 'Chakra Petch', sans-serif; font-size: 14px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-primary); margin: 0;
+    }
+    .sales-modal-header .sub { font-size: 11px; color: var(--text-muted); font-family: 'Courier New', monospace; margin-top: 3px; }
+    .sales-modal-body { padding: 22px 26px; }
+
+    .sf-section { margin-bottom: 22px; }
+    .sf-section-title {
+      font-family: 'Chakra Petch', sans-serif; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.5px; color: var(--hazard);
+      padding: 5px 0 8px; border-bottom: 1px solid var(--border);
+      margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .sf-section-title.danger { color: var(--danger); }
+
+    .sf-table { width: 100%; border-collapse: collapse; }
+    .sf-table th {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.7px; color: var(--text-muted);
+      padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left;
+    }
+    .sf-table th.r { text-align: right; }
+    .sf-table td {
+      padding: 7px 10px; font-size: 13px; color: var(--text-primary);
+      border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle;
+    }
+    .sf-table tr:last-child td { border-bottom: none; }
+    .sf-table .rate { color: var(--text-muted); font-family: 'Courier New', monospace; font-size: 12.5px; }
+    .sf-table .tot {
+      font-family: 'Chakra Petch', sans-serif; font-size: 13px;
+      font-weight: 600; color: var(--hazard); text-align: right;
+    }
+    .sf-table .id-col { color: var(--text-muted); font-family: monospace; font-size: 11px; }
+
+    .sf-input {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      color: var(--text-primary); font-family: 'DM Sans', sans-serif;
+      font-size: 13px; padding: 6px 10px; width: 76px; text-align: center;
+      transition: border-color 0.2s;
+    }
+    .sf-input:focus { outline: none; border-color: var(--hazard); box-shadow: 0 0 0 1px var(--hazard); }
+    .sf-input:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .sf-totals {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      padding: 14px 18px; margin-bottom: 18px;
+    }
+    .sf-trow {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 5px 0; font-size: 13px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .sf-trow:last-child { border-bottom: none; }
+    .sf-trow.grand {
+      padding-top: 10px; margin-top: 4px;
+      border-top: 1px solid var(--border); border-bottom: none;
+    }
+    .sf-trow .tl { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .sf-trow .tv { font-family: 'Chakra Petch', sans-serif; font-size: 14px; font-weight: 600; color: var(--hazard); }
+    .sf-trow.grand .tl { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .sf-trow.grand .tv { font-size: 22px; }
+    .sf-trow.exp .tv { color: var(--danger); }
+
+    .sf-submit {
+      width: 100%; padding: 14px; background: var(--hazard); color: #000;
+      border: none; font-family: 'Chakra Petch', sans-serif;
+      font-size: 13px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.2px; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .sf-submit:hover { background: #e6b800; box-shadow: 0 0 20px rgba(255,204,0,0.35); }
+    .sf-submit:disabled { background: #333; color: #666; cursor: not-allowed; box-shadow: none; }
+
+    .sf-success {
+      display: none; background: rgba(34,208,122,0.08);
+      border: 1px solid rgba(34,208,122,0.25); border-left: 3px solid var(--success);
+      padding: 13px 18px; margin-bottom: 18px;
+      font-family: 'Chakra Petch', sans-serif; font-size: 13px; color: var(--success);
+      align-items: center; gap: 10px;
+    }
+    .sf-success.show { display: flex; }
+
+    .stock-oos { opacity: 0.45; }
+
     .toast {
       position: fixed; bottom: 28px; right: 28px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      color: var(--text-primary);
-      padding: 13px 22px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-primary); padding: 13px 22px;
       font-family: 'DM Sans', sans-serif; font-size: 13px;
       opacity: 0; transform: translateY(10px);
       transition: all 0.3s; z-index: 9999; pointer-events: none;
     }
     .toast.show { opacity: 1; transform: translateY(0); }
     .toast.success { border-left: 3px solid var(--success); }
-    .toast.error   { border-left: 3px solid var(--danger); }
+    .toast.error   { border-left: 3px solid var(--danger);  }
 
     .add-btn { display: none !important; }
   </style>
@@ -268,15 +391,18 @@ try {
       <li onclick="window.location.href='members.php'" style="cursor:pointer;">
         <i class="bi bi-people"></i><span>Members</span>
       </li>
-      <li onclick="window.location.href='logout.php'" style="cursor:pointer;">
-        <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+      <li onclick="document.getElementById('logoutForm').submit()" style="cursor:pointer">
+        <i class="bi bi-box-arrow-right"></i>
+        <span>Logout</span>
       </li>
+      <form id="logoutForm" action="../../login/logout.php" method="POST" style="display:none;">
+        <?php echo fitstop_csrf_input(); ?>
+      </form>
     </ul>
   </aside>
 
   <main class="main-content">
 
-    <!-- TOPBAR -->
     <div class="topbar">
       <div class="topbar-left">
         <h1>Inventory Module</h1>
@@ -288,7 +414,12 @@ try {
           Active Staff Member
         </div>
 
-        <!-- NOTIFICATION BELL -->
+        <!-- Daily Sales Button -->
+        <button class="notif-bell-btn" onclick="openSalesModal()" title="Daily Sales / Counter Logsheet"
+          style="margin-right:6px;position:relative;">
+          <i class="bi bi-receipt"></i>
+        </button>
+
         <div class="notif-wrapper" id="notifWrapper">
           <button class="notif-bell-btn" onclick="toggleNotifPanel()" title="Notification History">
             <i class="bi bi-bell-fill"></i>
@@ -306,11 +437,9 @@ try {
             </div>
           </div>
         </div>
-
       </div>
     </div>
 
-    <!-- PROFILE CONTAINER -->
     <div class="profile-container" style="margin-bottom:28px;">
       <div class="profile-content">
         <div class="profile-text">
@@ -336,16 +465,9 @@ try {
         <table>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Item Name</th>
-              <th>Category</th>
-              <th>Quantity</th>
-              <th>Price</th>
-              <th>Description</th>
-              <th>Created At</th>
-              <th>Updated At</th>
-              <th>Status</th>
-              <th>Actions</th>
+              <th>ID</th><th>Item Name</th><th>Category</th><th>Quantity</th>
+              <th>Price</th><th>Description</th><th>Created At</th><th>Updated At</th>
+              <th>Status</th><th>Actions</th>
             </tr>
           </thead>
           <tbody id="inventoryBody">
@@ -356,15 +478,14 @@ try {
               else                { $statusCls = 'active';    $statusTxt = 'Available'; }
               $priceFormatted = '&#8369;' . number_format((float)$row['price'], 2);
             ?>
-            <tr
-              data-id="<?= $row['id'] ?>"
-              data-name="<?= htmlspecialchars($row['item_name']) ?>"
-              data-category="<?= htmlspecialchars($row['category']) ?>"
-              data-qty="<?= $qty ?>"
-              data-price="<?= $row['price'] ?>"
-              data-description="<?= htmlspecialchars($row['description'] ?? '') ?>"
-              data-created="<?= $row['created_at'] ?>"
-              data-updated="<?= $row['updated_at'] ?>">
+            <tr data-id="<?= $row['id'] ?>"
+                data-name="<?= htmlspecialchars($row['item_name']) ?>"
+                data-category="<?= htmlspecialchars($row['category']) ?>"
+                data-qty="<?= $qty ?>"
+                data-price="<?= $row['price'] ?>"
+                data-description="<?= htmlspecialchars($row['description'] ?? '') ?>"
+                data-created="<?= $row['created_at'] ?>"
+                data-updated="<?= $row['updated_at'] ?>">
               <td style="color:var(--text-muted);font-family:monospace;"><?= $row['id'] ?></td>
               <td style="color:var(--text-primary);font-weight:600;"><?= htmlspecialchars($row['item_name']) ?></td>
               <td><?= htmlspecialchars($row['category']) ?></td>
@@ -385,7 +506,6 @@ try {
         </table>
       </div>
     </section>
-
   </main>
 </div>
 
@@ -398,30 +518,194 @@ try {
     <h3 id="soldItemName">Item Name</h3>
     <span class="modal-product-id" id="soldItemId">ID: 0</span>
     <span class="sold-label"><i class="bi bi-cart-dash"></i> Customer Purchase</span>
-
     <div class="current-stock-info">
       <span>Current Stock</span>
       <strong id="soldCurrentQty">0</strong>
     </div>
-
     <div class="modal-field">
       <label>Units sold <span style="color:var(--danger)">*</span></label>
-      <input type="number" id="soldQtyInput" min="1" value="1" placeholder="Enter quantity sold" class="form-input">
+      <input type="number" id="soldQtyInput" min="1" value="1" placeholder="Enter quantity sold">
     </div>
-
     <div class="modal-field">
       <label>Note <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
-      <input type="text" id="soldNote" placeholder="e.g. Walk-in customer, member purchase..." class="form-input">
+      <input type="text" id="soldNote" placeholder="e.g. Walk-in customer, member purchase...">
     </div>
-
     <div class="modal-meta">
       <span><strong>Created At</strong><span id="soldCreated">—</span></span>
       <span><strong>Last Updated</strong><span id="soldUpdated">—</span></span>
     </div>
-
     <button class="modal-save-btn" id="soldSaveBtn" onclick="saveSoldChange()">
       <i class="bi bi-check-circle"></i> Confirm Sale
     </button>
+  </div>
+</div>
+
+<!-- ===== DAILY SALES / COUNTER LOGSHEET MODAL ===== -->
+<div class="modal-overlay" id="salesModal">
+  <div class="sales-modal-box">
+    <div class="sales-modal-header">
+      <div>
+        <h3><i class="bi bi-receipt" style="color:var(--hazard);margin-right:8px;"></i>Daily Counter Logsheet</h3>
+        <div class="sub">Items are pulled from inventory · Sales auto-recorded to transaction log</div>
+      </div>
+      <button onclick="closeSalesModal()"
+        style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="sales-modal-body">
+
+      <div class="sf-success" id="sfSuccess">
+        <i class="bi bi-check-circle-fill"></i>
+        <span id="sfSuccessMsg">Recorded!</span>
+      </div>
+
+      <!-- Reset tally button -->
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+        <button onclick="resetTally()"
+          style="background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);
+                 color:var(--danger);font-family:'Chakra Petch',sans-serif;
+                 font-size:10.5px;font-weight:700;text-transform:uppercase;
+                 letter-spacing:0.8px;padding:5px 14px;cursor:pointer;">
+          <i class="bi bi-arrow-counterclockwise"></i> Reset Today's Tally
+        </button>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <label style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);white-space:nowrap;">
+          Sale Date
+        </label>
+        <input type="date" id="sfDate" value="<?= date('Y-m-d') ?>"
+          style="background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary);
+                 font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 12px;">
+      </div>
+
+      <!-- ENTRY FEES (fixed) -->
+      <div class="sf-section">
+        <div class="sf-section-title"><i class="bi bi-person-badge"></i> Entry Fees</div>
+        <table class="sf-table">
+          <thead>
+            <tr><th>Category</th><th>No. of Persons</th><th>Amount</th><th class="r">This Entry</th><th class="r" style="color:var(--hazard);">Today's Tally</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Non-Member</td>
+              <td><input type="number" class="sf-input sf-entry" data-rate="60" id="sfNonMember" min="0" value="0"></td>
+              <td class="rate">&#8369;60</td>
+              <td class="tot" id="sfNonMemberTot">&#8369;0.00</td>
+              <td class="tot sf-entry-tally" id="sfNonMemberTally" data-tally="0">—</td>
+            </tr>
+            <tr>
+              <td>Member</td>
+              <td><input type="number" class="sf-input sf-entry" data-rate="50" id="sfMember" min="0" value="0"></td>
+              <td class="rate">&#8369;50</td>
+              <td class="tot" id="sfMemberTot">&#8369;0.00</td>
+              <td class="tot sf-entry-tally" id="sfMemberTally" data-tally="0">—</td>
+            </tr>
+            <tr>
+              <td>Special Rate</td>
+              <td><input type="number" class="sf-input sf-entry" data-rate="40" id="sfSpecial" min="0" value="0"></td>
+              <td class="rate">&#8369;40</td>
+              <td class="tot" id="sfSpecialTot">&#8369;0.00</td>
+              <td class="tot sf-entry-tally" id="sfSpecialTally" data-tally="0">—</td>
+            </tr>
+            <tr>
+              <td>Monthly</td>
+              <td><input type="number" class="sf-input sf-entry" data-rate="0" id="sfMonthly" min="0" value="0"></td>
+              <td class="rate">&#8369;650/750</td>
+              <td class="tot" id="sfMonthlyTot">&#8369;0.00</td>
+              <td class="tot sf-entry-tally" id="sfMonthlyTally" data-tally="0">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ITEMS (dynamic from DB) -->
+      <div class="sf-section">
+        <div class="sf-section-title"><i class="bi bi-box-seam"></i> Items Sold — from Inventory</div>
+        <table class="sf-table">
+          <thead>
+            <tr><th>ID</th><th>Item</th><th>In Stock</th><th>Add Qty</th><th>Price</th><th class="r">This Entry</th><th class="r" style="color:var(--hazard);">Today's Tally</th></tr>
+          </thead>
+          <tbody id="sfItemsBody">
+            <?php foreach ($rows as $item):
+              $stock = (int)$item['quantity'];
+              $oos   = $stock === 0;
+              $scls  = $oos ? 'status-badge inactive' : ($stock <= 10 ? 'status-badge low-stock' : 'status-badge active');
+            ?>
+            <tr class="<?= $oos ? 'stock-oos' : '' ?>"
+                data-inv-id="<?= $item['id'] ?>"
+                data-price="<?= (float)$item['price'] ?>"
+                data-stock="<?= $stock ?>"
+                data-name="<?= htmlspecialchars($item['item_name']) ?>"
+                data-tally="0">
+              <td class="id-col"><?= $item['id'] ?></td>
+              <td style="font-weight:600;color:var(--text-primary);">
+                <?= htmlspecialchars($item['item_name']) ?>
+                <span style="font-size:10.5px;color:var(--text-muted);font-weight:400;margin-left:4px;">
+                  <?= htmlspecialchars($item['category']) ?>
+                </span>
+              </td>
+              <td><span class="<?= $scls ?> sf-stock-badge" style="font-size:10px;padding:2px 7px;"><?= $stock ?></span></td>
+              <td>
+                <input type="number" class="sf-input sf-item-qty"
+                  min="0" max="<?= $stock ?>" value="0"
+                  <?= $oos ? 'disabled' : '' ?>>
+              </td>
+              <td class="rate">&#8369;<?= number_format((float)$item['price'], 2) ?></td>
+              <td class="tot sf-item-tot">&#8369;0.00</td>
+              <td class="tot sf-item-tally" style="color:var(--hazard);font-size:13px;">—</td>
+            </tr>
+            <?php endforeach; ?>
+            <?php if (empty($rows)): ?>
+            <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;">No inventory items.</td></tr>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- LESS EXPENSES -->
+      <div class="sf-section">
+        <div class="sf-section-title danger"><i class="bi bi-dash-circle"></i> Less Expenses</div>
+        <table class="sf-table">
+          <thead><tr><th>Description</th><th>Amount (&#8369;)</th><th></th><th></th><th></th><th></th><th></th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Water</td>
+              <td><input type="number" class="sf-input" id="sfWater" min="0" value="0" step="0.01"
+
+                style="width:100px;"></td>
+              <td colspan="4"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TOTALS -->
+      <div class="sf-totals">
+        <div class="sf-trow">
+          <span class="tl">Entry Fees Total</span>
+          <span class="tv" id="sfEntryTot">&#8369;0.00</span>
+        </div>
+        <div class="sf-trow">
+          <span class="tl">Items Total</span>
+          <span class="tv" id="sfItemsTot">&#8369;0.00</span>
+        </div>
+        <div class="sf-trow exp">
+          <span class="tl">Less Expenses (Water)</span>
+          <span class="tv" id="sfExpTot">&#8369;0.00</span>
+        </div>
+        <div class="sf-trow grand">
+          <span class="tl">Grand Total</span>
+          <span class="tv" id="sfGrandTot">&#8369;0.00</span>
+        </div>
+      </div>
+
+      <button class="sf-submit" id="sfSubmitBtn" onclick="submitSalesForm()">
+        <i class="bi bi-check-circle-fill"></i> Submit & Record to Log
+      </button>
+
+    </div>
   </div>
 </div>
 
@@ -431,15 +715,17 @@ let notifPanelOpen = false;
 let notifLoaded    = false;
 const csrfToken    = <?php echo json_encode(fitstop_csrf_token()); ?>;
 
-// ── Toast ─────────────────────────────────────────────────────────────────────
+function fmt(n) {
+  return '&#8369;' + parseFloat(n || 0).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
 function showToast(msg, type = 'success') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className   = 'toast ' + type + ' show';
-  setTimeout(() => { t.className = 'toast'; }, 3000);
+  setTimeout(() => { t.className = 'toast'; }, 3500);
 }
 
-// ── Status helper ─────────────────────────────────────────────────────────────
 function getStatus(qty) {
   qty = parseInt(qty);
   if (qty === 0)  return { cls: 'inactive',  txt: 'Out of Stock' };
@@ -447,7 +733,6 @@ function getStatus(qty) {
   return                 { cls: 'active',    txt: 'Available'    };
 }
 
-// ── Sold Modal ────────────────────────────────────────────────────────────────
 function openSoldModal(btn) {
   currentRow = btn.closest('tr');
   document.getElementById('soldItemName').textContent   = currentRow.getAttribute('data-name');
@@ -459,7 +744,6 @@ function openSoldModal(btn) {
   document.getElementById('soldUpdated').textContent    = currentRow.getAttribute('data-updated') || '—';
   document.getElementById('soldModal').classList.add('active');
 }
-
 function closeSoldModal() {
   document.getElementById('soldModal').classList.remove('active');
   currentRow = null;
@@ -468,23 +752,18 @@ function closeSoldModal() {
 function saveSoldChange() {
   const qtyInput = parseInt(document.getElementById('soldQtyInput').value);
   if (!qtyInput || qtyInput < 1) { alert('Please enter a valid quantity (at least 1).'); return; }
-
   const id         = currentRow.getAttribute('data-id');
   const currentQty = parseInt(currentRow.querySelector('.qty-cell').textContent);
-
-  if (currentQty - qtyInput < 0) {
-    alert('Cannot sell more than current stock. Current stock: ' + currentQty);
-    return;
-  }
+  if (currentQty - qtyInput < 0) { alert('Cannot sell more than current stock: ' + currentQty); return; }
 
   const btn = document.getElementById('soldSaveBtn');
   btn.disabled  = true;
   btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
 
   const fd = new FormData();
-  fd.append('action', 'update_stock');
-  fd.append('id',     id);
-  fd.append('change', -qtyInput);
+  fd.append('action',     'update_stock');
+  fd.append('id',         id);
+  fd.append('change',     -qtyInput);
   fd.append('csrf_token', csrfToken);
 
   fetch('inventory.php', { method: 'POST', body: fd })
@@ -494,21 +773,45 @@ function saveSoldChange() {
         const row    = data.row;
         const newQty = parseInt(row.quantity);
         const status = getStatus(newQty);
-
         currentRow.querySelector('.qty-cell').textContent     = newQty;
         currentRow.querySelector('.updated-cell').textContent = row.updated_at;
         currentRow.querySelector('.status-badge').textContent = status.txt;
         currentRow.querySelector('.status-badge').className   = 'status-badge ' + status.cls;
-        currentRow.setAttribute('data-qty',     newQty);
+        currentRow.setAttribute('data-qty', newQty);
         currentRow.setAttribute('data-updated', row.updated_at);
 
-        // Force reload on next panel open + bump badge
+        // Update the sales modal tally for this item
+        const itemId  = currentRow.getAttribute('data-id');
+        const sfRow   = document.querySelector(`#sfItemsBody tr[data-inv-id="${itemId}"]`);
+        if (sfRow) {
+          const soldQty   = qtyInput;
+          const price     = parseFloat(sfRow.dataset.price) || 0;
+          const prevTally = parseInt(sfRow.dataset.tally) || 0;
+          const newTally  = prevTally + soldQty;
+          sfRow.dataset.tally = newTally;
+          sfRow.dataset.stock = newQty;
+
+          const tallyCell = sfRow.querySelector('.sf-item-tally');
+          if (tallyCell) {
+            tallyCell.innerHTML = `<span style="font-weight:700;">${newTally}</span>
+              <span style="font-size:10.5px;color:var(--text-muted);display:block;">${fmt(newTally * price)}</span>`;
+          }
+          const stockBadge = sfRow.querySelector('.sf-stock-badge');
+          if (stockBadge) {
+            stockBadge.textContent = newQty;
+            stockBadge.className   = 'sf-stock-badge status-badge ' + status.cls;
+            stockBadge.style.cssText = 'font-size:10px;padding:2px 7px;';
+          }
+          const qtyInp = sfRow.querySelector('.sf-item-qty');
+          if (qtyInp) { qtyInp.max = newQty; qtyInp.disabled = newQty === 0; }
+          if (newQty === 0) sfRow.classList.add('stock-oos');
+          else sfRow.classList.remove('stock-oos');
+        }
+
         notifLoaded = false;
         const badge = document.getElementById('notifBadge');
-        const cur   = parseInt(badge.textContent) || 0;
-        badge.textContent = cur + 1;
+        badge.textContent = (parseInt(badge.textContent) || 0) + 1;
         badge.classList.remove('hidden');
-
         showToast('Sale recorded! Stock updated to ' + newQty + '.', 'success');
         closeSoldModal();
       } else {
@@ -516,13 +819,208 @@ function saveSoldChange() {
       }
     })
     .catch(() => alert('Server error. Please try again.'))
-    .finally(() => {
-      btn.disabled  = false;
-      btn.innerHTML = '<i class="bi bi-check-circle"></i> Confirm Sale';
-    });
+    .finally(() => { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle"></i> Confirm Sale'; });
 }
 
-// ── Notification Panel ────────────────────────────────────────────────────────
+function openSalesModal() {
+  sfRecalc();
+  document.getElementById('sfSuccess').classList.remove('show');
+  document.getElementById('salesModal').classList.add('active');
+}
+function closeSalesModal() {
+  document.getElementById('salesModal').classList.remove('active');
+}
+
+function sfRecalc() {
+  let entryTotal = 0;
+  document.querySelectorAll('.sf-entry').forEach(inp => {
+    const count = parseInt(inp.value) || 0;
+    const rate  = parseFloat(inp.dataset.rate) || 0;
+    const tot   = count * rate;
+    entryTotal += tot;
+    const el = document.getElementById(inp.id + 'Tot');
+    if (el) el.innerHTML = fmt(tot);
+  });
+  document.getElementById('sfEntryTot').innerHTML = fmt(entryTotal);
+
+  let itemsTotal = 0;
+  document.querySelectorAll('#sfItemsBody tr[data-inv-id]').forEach(row => {
+    const inp  = row.querySelector('.sf-item-qty');
+    const cell = row.querySelector('.sf-item-tot');
+    if (!inp || !cell) return;
+    const qty   = parseInt(inp.value) || 0;
+    const price = parseFloat(row.dataset.price) || 0;
+    const tot   = qty * price;
+    itemsTotal += tot;
+    cell.innerHTML = fmt(tot);
+  });
+  document.getElementById('sfItemsTot').innerHTML = fmt(itemsTotal);
+
+  const water = parseFloat(document.getElementById('sfWater').value) || 0;
+  document.getElementById('sfExpTot').innerHTML   = fmt(water);
+  document.getElementById('sfGrandTot').innerHTML = fmt(entryTotal + itemsTotal - water);
+}
+
+document.addEventListener('input', function(e) {
+  if (e.target.classList.contains('sf-entry') ||
+      e.target.classList.contains('sf-item-qty') ||
+      e.target.id === 'sfWater') {
+    sfRecalc();
+  }
+});
+
+document.querySelectorAll('.sf-item-qty').forEach(inp => {
+  inp.addEventListener('change', function() {
+    const row   = this.closest('tr');
+    const stock = parseInt(row.dataset.stock) || 0;
+    let val = parseInt(this.value) || 0;
+    if (val < 0) val = 0;
+    if (val > stock) { val = stock; this.value = stock; showToast('Max stock is ' + stock + ' units.', 'error'); }
+    this.value = val;
+    sfRecalc();
+  });
+});
+
+function submitSalesForm() {
+  const soldItems = [];
+  document.querySelectorAll('#sfItemsBody tr[data-inv-id]').forEach(row => {
+    const qty = parseInt(row.querySelector('.sf-item-qty')?.value) || 0;
+    if (qty <= 0) return;
+    soldItems.push({
+      id:    row.dataset.invId,
+      name:  row.dataset.name,
+      qty:   qty,
+      price: parseFloat(row.dataset.price),
+    });
+  });
+
+  const entryTot = parseFloat(document.getElementById('sfEntryTot').innerHTML.replace(/[^\d.]/g,'')) || 0;
+  const itemsTot = parseFloat(document.getElementById('sfItemsTot').innerHTML.replace(/[^\d.]/g,'')) || 0;
+  if (entryTot === 0 && itemsTot === 0) {
+    alert('Please enter at least one entry count or item quantity sold.');
+    return;
+  }
+
+  const btn = document.getElementById('sfSubmitBtn');
+  btn.disabled  = true;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+
+  const fd = new FormData();
+  fd.append('action',      'submit_sales_form');
+  fd.append('csrf_token',  csrfToken);
+  fd.append('sale_date',   document.getElementById('sfDate').value);
+  fd.append('non_member',  document.getElementById('sfNonMember').value);
+  fd.append('member',      document.getElementById('sfMember').value);
+  fd.append('special',     document.getElementById('sfSpecial').value);
+  fd.append('monthly',     document.getElementById('sfMonthly').value);
+  fd.append('less_water',  document.getElementById('sfWater').value);
+  fd.append('sold_items',  JSON.stringify(soldItems));
+
+  fetch('inventory.php', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        // Update inventory table rows with new quantities
+        if (Array.isArray(data.updated_rows)) {
+          data.updated_rows.forEach(row => {
+            const tr = document.querySelector(`#inventoryBody tr[data-id="${row.id}"]`);
+            if (!tr) return;
+            const newQty = parseInt(row.quantity);
+            const status = getStatus(newQty);
+            tr.querySelector('.qty-cell').textContent     = newQty;
+            tr.querySelector('.updated-cell').textContent = row.updated_at;
+            tr.querySelector('.status-badge').textContent = status.txt;
+            tr.querySelector('.status-badge').className   = 'status-badge ' + status.cls;
+            tr.setAttribute('data-qty',     newQty);
+            tr.setAttribute('data-updated', row.updated_at);
+
+            const sfRow = document.querySelector(`#sfItemsBody tr[data-inv-id="${row.id}"]`);
+            if (sfRow) {
+              sfRow.dataset.stock = newQty;
+              const stockBadge = sfRow.querySelector('.sf-stock-badge');
+              if (stockBadge) {
+                stockBadge.textContent = newQty;
+                stockBadge.className   = 'sf-stock-badge status-badge ' + status.cls;
+                stockBadge.style.cssText = 'font-size:10px;padding:2px 7px;';
+              }
+              const qtyInp = sfRow.querySelector('.sf-item-qty');
+              if (qtyInp) {
+                const addedQty = parseInt(qtyInp.value) || 0;
+
+                // Accumulate tally
+                const prevTally = parseInt(sfRow.dataset.tally) || 0;
+                const newTally  = prevTally + addedQty;
+                sfRow.dataset.tally = newTally;
+
+                const tallyCell = sfRow.querySelector('.sf-item-tally');
+                if (tallyCell && newTally > 0) {
+                  const price = parseFloat(sfRow.dataset.price) || 0;
+                  tallyCell.innerHTML = `<span style="font-weight:700;">${newTally}</span>
+                    <span style="font-size:10.5px;color:var(--text-muted);display:block;">
+                      ${fmt(newTally * price)}
+                    </span>`;
+                }
+
+                qtyInp.value    = 0;
+                qtyInp.max      = newQty;
+                qtyInp.disabled = newQty === 0;
+              }
+              if (newQty === 0) sfRow.classList.add('stock-oos');
+              else sfRow.classList.remove('stock-oos');
+            }
+          });
+        }
+
+        const successBar = document.getElementById('sfSuccess');
+        document.getElementById('sfSuccessMsg').innerHTML =
+          'Recorded! Entry: ' + fmt(data.entry_total) +
+          ' · Items: ' + fmt(data.items_total) +
+          ' · <strong>Grand Total: ' + fmt(data.grand_total) + '</strong>';
+        successBar.classList.add('show');
+        successBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        // Accumulate entry fee tallies
+        const entryMap = {
+          sfNonMember: { tallyId: 'sfNonMemberTally', rate: 60 },
+          sfMember:    { tallyId: 'sfMemberTally',    rate: 50 },
+          sfSpecial:   { tallyId: 'sfSpecialTally',   rate: 40 },
+          sfMonthly:   { tallyId: 'sfMonthlyTally',   rate: 0  },
+        };
+        Object.entries(entryMap).forEach(([inputId, cfg]) => {
+          const inp  = document.getElementById(inputId);
+          const cell = document.getElementById(cfg.tallyId);
+          if (!inp || !cell) return;
+          const added    = parseInt(inp.value) || 0;
+          const prevTally = parseInt(cell.dataset.tally) || 0;
+          const newTally  = prevTally + added;
+          cell.dataset.tally = newTally;
+          if (newTally > 0) {
+            cell.innerHTML = `<span style="font-weight:700;">${newTally}</span>
+              <span style="font-size:10.5px;color:var(--text-muted);display:block;">
+                ${cfg.rate > 0 ? fmt(newTally * cfg.rate) : '(see rate)'}
+              </span>`;
+          }
+          inp.value = 0;
+        });
+
+        document.querySelectorAll('.sf-item-qty').forEach(i => i.value = 0);
+        document.getElementById('sfWater').value = 0;
+        sfRecalc();
+
+        notifLoaded = false;
+        const badge = document.getElementById('notifBadge');
+        badge.textContent = (parseInt(badge.textContent) || 0) + soldItems.length + 1;
+        badge.classList.remove('hidden');
+
+        showToast('Daily sales submitted! Grand Total: ' + fmt(data.grand_total), 'success');
+      } else {
+        alert('Error: ' + (data.message || 'Could not submit.'));
+      }
+    })
+    .catch(e => alert('Server error: ' + e.message))
+    .finally(() => { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Submit & Record to Log'; });
+}
+
 function escHtml(str) {
   const d = document.createElement('div');
   d.appendChild(document.createTextNode(str || ''));
@@ -533,10 +1031,7 @@ function formatTs(ts) {
   if (!ts) return '—';
   const d = new Date(ts.replace(' ', 'T'));
   if (isNaN(d)) return ts;
-  return d.toLocaleString('en-PH', {
-    month:'short', day:'numeric', year:'numeric',
-    hour:'2-digit', minute:'2-digit', hour12:true
-  });
+  return d.toLocaleString('en-PH', { month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true });
 }
 
 function toggleNotifPanel() {
@@ -557,99 +1052,79 @@ function loadNotifications() {
   const list  = document.getElementById('notifList');
   const count = document.getElementById('notifPanelCount');
   list.innerHTML = '<div class="notif-loader"><i class="bi bi-hourglass-split"></i> Loading...</div>';
-
   const fd = new FormData();
   fd.append('action', 'get_notifications');
   fd.append('csrf_token', csrfToken);
-
   fetch('inventory.php', { method: 'POST', body: fd })
     .then(r => r.json())
     .then(data => {
       notifLoaded = true;
-
-      if (!data.success) {
-        list.innerHTML = '<div class="notif-empty"><i class="bi bi-exclamation-circle"></i>Could not load history.</div>';
-        return;
-      }
-
+      if (!data.success) { list.innerHTML = '<div class="notif-empty"><i class="bi bi-exclamation-circle"></i>Could not load.</div>'; return; }
       const transactions = Array.isArray(data.transactions) ? data.transactions : [];
       const lowStock     = Array.isArray(data.low_stock)    ? data.low_stock    : [];
       const total        = transactions.length + lowStock.length;
-
       if (count) count.textContent = total + ' record' + (total !== 1 ? 's' : '');
+      if (total === 0) { list.innerHTML = '<div class="notif-empty"><i class="bi bi-bell-slash"></i>No notifications yet.</div>'; return; }
 
-      if (total === 0) {
-        list.innerHTML = '<div class="notif-empty"><i class="bi bi-bell-slash"></i>No notifications yet.</div>';
-        return;
-      }
-
-      // ── Transaction rows ──────────────────────────────────────────────────
       const txHtml = transactions.length ? `
-        <div style="padding:8px 16px;background:#000;font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1.5px;font-family:'Chakra Petch',sans-serif;">
-          Recent Transactions
-        </div>` + transactions.map(t => {
-          const who    = t.customer_name || (t.customer_type === 'member' ? 'Member #' + (t.user_id||'?') : 'Walk-In');
+        <div style="padding:8px 16px;background:#000;font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1.5px;font-family:'Chakra Petch',sans-serif;">Recent Transactions</div>
+        ` + transactions.map(t => {
           const amount = parseFloat(t.amount || 0).toFixed(2);
-          const method = t.payment_method || '—';
-          const status = t.status || 'paid';
           const ts     = formatTs(t.transaction_date || t.created_at);
           const note   = t.desc || '';
-          return `
-            <div class="notif-item">
-              <div class="notif-icon" style="background:rgba(34,208,122,0.12);border-color:rgba(34,208,122,0.3);color:var(--success);">
-                <i class="bi bi-receipt"></i>
-              </div>
-              <div class="notif-body">
-                <p class="notif-msg">
-                  <strong>${escHtml(t.receipt_number || 'Receipt')}</strong><br>
-                  <span class="item-highlight">₱${escHtml(amount)}</span>
-                  · ${escHtml(who)}
-                  · ${escHtml(method)}
-                  ${note ? '· ' + escHtml(note) : ''}
-                  · <span style="text-transform:capitalize;">${escHtml(status)}</span>
-                </p>
-                <span class="notif-time"><i class="bi bi-clock"></i> ${ts}</span>
-              </div>
-            </div>`;
+          return `<div class="notif-item">
+            <div class="notif-icon" style="background:rgba(34,208,122,0.12);border-color:rgba(34,208,122,0.3);color:var(--success);"><i class="bi bi-receipt"></i></div>
+            <div class="notif-body">
+              <p class="notif-msg"><strong>${escHtml(t.receipt_number || 'Receipt')}</strong><br>
+              <span class="item-highlight">&#8369;${escHtml(amount)}</span> · ${escHtml(t.customer_name || 'Customer')} · ${escHtml(t.payment_method || '—')}
+              ${note ? '· ' + escHtml(note) : ''}</p>
+              <span class="notif-time"><i class="bi bi-clock"></i> ${ts}</span>
+            </div>
+          </div>`;
         }).join('') : '';
 
-      // ── Low-stock rows ────────────────────────────────────────────────────
       const stockHtml = lowStock.length ? `
-        <div style="padding:8px 16px;background:#000;font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1.5px;font-family:'Chakra Petch',sans-serif;">
-          Inventory Alerts
-        </div>` + lowStock.map(i => {
+        <div style="padding:8px 16px;background:#000;font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1.5px;font-family:'Chakra Petch',sans-serif;">Inventory Alerts</div>
+        ` + lowStock.map(i => {
           const qty  = parseInt(i.quantity);
           const ts   = formatTs(i.updated_at);
-          const iconC  = qty === 0 ? 'var(--danger)'  : 'var(--warning)';
-          const bgC    = qty === 0 ? 'rgba(255,71,87,0.12)'  : 'rgba(255,159,67,0.12)';
-          const bdC    = qty === 0 ? 'rgba(255,71,87,0.3)'   : 'rgba(255,159,67,0.3)';
-          const icon   = qty === 0 ? 'bi-x-circle-fill'      : 'bi-exclamation-triangle-fill';
-          const label  = qty === 0
+          const iconC = qty === 0 ? 'var(--danger)' : 'var(--warning)';
+          const bgC   = qty === 0 ? 'rgba(255,71,87,0.12)' : 'rgba(255,159,67,0.12)';
+          const bdC   = qty === 0 ? 'rgba(255,71,87,0.3)'  : 'rgba(255,159,67,0.3)';
+          const icon  = qty === 0 ? 'bi-x-circle-fill' : 'bi-exclamation-triangle-fill';
+          const label = qty === 0
             ? '<span style="color:var(--danger);font-weight:700;">OUT OF STOCK</span>'
             : '<span style="color:var(--warning);font-weight:700;">Low Stock</span>';
-          return `
-            <div class="notif-item">
-              <div class="notif-icon" style="background:${bgC};border-color:${bdC};color:${iconC};">
-                <i class="bi ${icon}"></i>
-              </div>
-              <div class="notif-body">
-                <p class="notif-msg">
-                  <strong>${escHtml(i.item_name)}</strong> — ${escHtml(i.category)}<br>
-                  Stock: <span class="item-highlight">${qty} unit${qty !== 1 ? 's' : ''}</span> — ${label}
-                </p>
-                <span class="notif-time"><i class="bi bi-clock"></i> Updated: ${ts}</span>
-              </div>
-            </div>`;
+          return `<div class="notif-item">
+            <div class="notif-icon" style="background:${bgC};border-color:${bdC};color:${iconC};"><i class="bi ${icon}"></i></div>
+            <div class="notif-body">
+              <p class="notif-msg"><strong>${escHtml(i.item_name)}</strong> — ${escHtml(i.category)}<br>
+              Stock: <span class="item-highlight">${qty} unit${qty !== 1 ? 's' : ''}</span> — ${label}</p>
+              <span class="notif-time"><i class="bi bi-clock"></i> Updated: ${ts}</span>
+            </div>
+          </div>`;
         }).join('') : '';
 
       list.innerHTML = txHtml + stockHtml;
     })
-    .catch(() => {
-      list.innerHTML = '<div class="notif-empty"><i class="bi bi-wifi-off"></i>Server error.</div>';
-    });
+    .catch(() => { list.innerHTML = '<div class="notif-empty"><i class="bi bi-wifi-off"></i>Server error.</div>'; });
 }
 
-// ── Search ────────────────────────────────────────────────────────────────────
+function resetTally() {
+  if (!confirm('Reset today\'s tally? This only clears the display — recorded transactions are kept.')) return;
+  document.querySelectorAll('#sfItemsBody tr[data-inv-id]').forEach(row => {
+    row.dataset.tally = 0;
+    const cell = row.querySelector('.sf-item-tally');
+    if (cell) cell.innerHTML = '—';
+  });
+  ['sfNonMemberTally','sfMemberTally','sfSpecialTally','sfMonthlyTally'].forEach(id => {
+    const cell = document.getElementById(id);
+    if (cell) { cell.dataset.tally = 0; cell.innerHTML = '—'; }
+  });
+  document.getElementById('sfSuccess').classList.remove('show');
+  showToast('Tally reset.', 'success');
+}
+
 function searchProducts() {
   const q = document.querySelector('.search-input').value.trim().toLowerCase();
   document.querySelectorAll('#inventoryBody tr').forEach(row => {
@@ -662,10 +1137,8 @@ function searchProducts() {
 document.querySelector('.search-btn').addEventListener('click', searchProducts);
 document.querySelector('.search-input').addEventListener('input', searchProducts);
 document.querySelector('.search-input').addEventListener('keydown', e => { if (e.key === 'Enter') searchProducts(); });
-
-document.getElementById('soldModal').addEventListener('click', function(e) {
-  if (e.target === this) closeSoldModal();
-});
+document.getElementById('soldModal').addEventListener('click', function(e) { if (e.target === this) closeSoldModal(); });
+document.getElementById('salesModal').addEventListener('click', function(e) { if (e.target === this) closeSalesModal(); });
 </script>
 
 </body>

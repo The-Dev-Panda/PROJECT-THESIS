@@ -10,6 +10,37 @@ if (isset($_SESSION['ai_flash']) && is_string($_SESSION['ai_flash'])) {
     $aiFlash = $_SESSION['ai_flash'];
     unset($_SESSION['ai_flash']);
 }
+
+$quickPrompts = [
+    'Build a safe 45-minute workout I can do today based on my goal.',
+    'Suggest a post-workout meal and include simple portion sizes.',
+    'Give me a recovery plan for tonight with sleep and hydration targets.',
+    'Review my progress this week and share 3 practical improvements.'
+];
+
+$custom_js = <<<'JS'
+<script>
+(function() {
+    const form = document.getElementById('aiAdvisorForm');
+    const input = document.getElementById('aiAdvisorQuery');
+    if (!form || !input) {
+        return;
+    }
+
+    document.querySelectorAll('.ai-quick-prompt').forEach((button) => {
+        button.addEventListener('click', function() {
+            const prompt = this.getAttribute('data-prompt') || '';
+            if (prompt.trim() === '') {
+                return;
+            }
+
+            input.value = prompt;
+            form.submit();
+        });
+    });
+})();
+</script>
+JS;
 ?>
 <!DOCTYPE html>
 <html>
@@ -71,9 +102,9 @@ if (isset($_SESSION['ai_flash']) && is_string($_SESSION['ai_flash'])) {
         }
         ?>
         <div class="container d-flex gap-2 align-items-center">
-            <form action="process_AI.php" method="POST" class="d-flex gap-2 flex-grow-1">
+            <form action="process_AI.php" method="POST" class="d-flex gap-2 flex-grow-1" id="aiAdvisorForm">
                 <?php echo fitstop_csrf_input(); ?>
-                <input type="text" name="query" placeholder="Enter your query" class="form-control" required>
+                <input type="text" name="query" id="aiAdvisorQuery" placeholder="Enter your query" class="form-control" maxlength="500" required>
                 <button type="submit" class="btn btn-success">Submit</button>
             </form>
             <a href="AI_ADVISOR.php?clear=1" class="btn btn-sm btn-danger"
@@ -81,8 +112,15 @@ if (isset($_SESSION['ai_flash']) && is_string($_SESSION['ai_flash'])) {
                 <i class="bi bi-trash"></i>
             </a>
         </div>
+        <div class="container mt-3">
+            <div class="small text-muted mb-2">Quick prompts</div>
+            <div class="d-flex flex-wrap gap-2" id="aiQuickPromptList">
+                <?php foreach ($quickPrompts as $prompt): ?>
+                    <button type="button" class="btn btn-outline-secondary btn-sm ai-quick-prompt" data-prompt="<?php echo htmlspecialchars($prompt, ENT_QUOTES, 'UTF-8'); ?>">
+                        <?php echo htmlspecialchars($prompt, ENT_QUOTES, 'UTF-8'); ?>
+                    </button>
+                <?php endforeach; ?>
+            </div>
+        </div>
     </div>
     <?php include('../includes/footer.php') ?>
-</body>
-
-</html>

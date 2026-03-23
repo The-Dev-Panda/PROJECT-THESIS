@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once '../login/connection.php';
+require_once '../includes/security.php';
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
@@ -95,10 +97,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <i class="bi bi-gear"></i>
         <span>Settings</span>
       </li>
-      <li id="logoutBtn">
+    <li onclick="document.getElementById('logoutForm').submit()" style="cursor:pointer">
         <i class="bi bi-box-arrow-right"></i>
+        <?php echo fitstop_csrf_input(); ?>
         <span>Logout</span>
       </li>
+      <form id="logoutForm" action="../../login/logout.php" method="POST" style="display: none;">
+        <?php echo fitstop_csrf_input(); ?>
+        <button type="submit" class="nav-link border-0 bg-transparent" style="cursor: pointer;">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+      </form>
     </ul>
   </aside>
 
@@ -625,6 +634,7 @@ document.querySelectorAll(".menu li").forEach(item => {
       const form = document.createElement("form");
       form.action = "../Login/logout.php";
       form.method = "POST";
+      <?php echo fitstop_csrf_input(); ?> 
       document.body.appendChild(form);
       form.submit();
       return;
