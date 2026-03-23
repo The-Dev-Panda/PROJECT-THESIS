@@ -32,26 +32,28 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
 
 </head>
 
-<body class="bg-dark">
+<body>
     <?php include('includes/header_admin.php') ?>
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1><i class="bi bi-person-plus-fill"></i> Create Staff</h1>
+                <p>Add new staff member to the system</p>
+            </div>
+        </div>
     <?php if (isset($_GET['success'])) {
         //DISPLAY SUCCESS MESSAGE
         echo '
-        <div class="container">
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i>
-                Staff member created successfully!
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+         <div style="background: rgba(34, 208, 122, 0.1); border: 1px solid var(--success); color: var(--success); padding: 10px 14px; margin-bottom: 20px; font-size: 12px; text-transform: uppercase;">
+                <i class="bi bi-check-circle"></i> Staff member created successfully!
             </div>
-        </div>
         ';
     }
     if (isset($_GET['error'])) {
         //DISPLAY ERROR MESSAGE
         echo '
-        <div class="container">
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>';
+        <div style="background: rgba(255, 71, 87, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 10px 14px; margin-bottom: 20px; font-size: 12px; text-transform: uppercase;">
+                <i class="bi bi-exclamation-triangle"></i> ';
         if ($_GET['error'] == 'username_exists') {
             echo 'Username already exists!';
         }
@@ -70,80 +72,64 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
         ;
         echo '
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        </div>
+            </div></div>
         ';
     } ?>
 
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="form-card">
-                    <h1 class="mb-0"><i class="bi bi-person-plus-fill me-2"></i>Create New Staff</h1>
-                    <form action="process_create_staff.php" method="POST">
-                        <?php echo fitstop_csrf_input(); ?>
-                        <div class="row">
+    <section>
+        <h2><i class="bi bi-person-plus"></i> Staff Information</h2>
 
-                            <div class="col-md-6 mb-3">
-                                <label for="username" class="form-label fw-bold">
-                                    <i class="bi bi-person me-2"></i>Username
-                                </label>
-                                <input type="text" class="form-control" id="username" name="username" required>
-                            </div>
+        <div class="registration-card">
+            <form action="process_create_staff.php" method="POST">
+                <?php echo fitstop_csrf_input(); ?>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" class="form-input" name="username" required>
+                    </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label for="email" class="form-label fw-bold">
-                                    <i class="bi bi-envelope me-2"></i>Email
-                                </label>
-                                <input type="email" class="form-control" id="email" name="email" required>
-                            </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" class="form-input" name="email" required>
+                    </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label for="first_name" class="form-label fw-bold">
-                                    <i class="bi bi-person-badge me-2"></i>First Name
-                                </label>
-                                <input type="text" class="form-control" id="first_name" name="first_name" required>
-                            </div>
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" class="form-input" name="first_name" required>
+                    </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label for="last_name" class="form-label fw-bold">
-                                    <i class="bi bi-person-badge me-2"></i>Last Name
-                                </label>
-                                <input type="text" class="form-control" id="last_name" name="last_name" required>
-                            </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" class="form-input" name="last_name" required>
+                    </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label for="password" class="form-label fw-bold">
-                                    <i class="bi bi-lock me-2"></i>Password
-                                </label>
-                                <input type="password" class="form-control" id="password" name="password" required
-                                    minlength="6">
-                                <small class="form-label">Minimum 6 characters</small>
-                            </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" class="form-input" name="password" required minlength="6">
+                        <small
+                            style="color: var(--text-muted); font-size: 10.5px; margin-top: 5px; display: block;">Minimum
+                            6 characters</small>
+                    </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label for="confirm_password" class="form-label fw-bold">
-                                    <i class="bi bi-lock-fill me-2"></i>Confirm Password
-                                </label>
-                                <input type="password" class="form-control" id="confirm_password"
-                                    name="confirm_password" required minlength="6">
-                            </div>
-                        </div>
-
-                        <div class="d-flex gap-2 justify-content-end mt-4">
-                            <a href="admin_dashboard.php" class="btn btn-secondary">
-                                <i class="bi bi-x-circle me-2"></i>Cancel
-                            </a>
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-person-plus-fill me-2"></i>Create Staff
-                            </button>
-                        </div>
-                    </form>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" class="form-input" name="confirm_password" required minlength="6">
+                    </div>
                 </div>
-            </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="window.location.href='Admin_Landing_Page.php'">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        <i class="bi bi-person-plus-fill"></i> Create Staff
+                    </button>
+                </div>
+            </form>
         </div>
+    </section>
     </div>
-    <?php include('includes/footer_admin.php') ?>
+    <?php //include('includes/footer_admin.php') ?>
 </body>
 
 </html>

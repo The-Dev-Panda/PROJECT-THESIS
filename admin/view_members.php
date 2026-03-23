@@ -59,37 +59,51 @@ function timeAgo($datetime)
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
-
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../staff/staff.css">
 
-    <link href="../styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
 </head>
 
-<body class="bg-dark">
+<body>
     <?php include('includes/header_admin.php') ?>
-    <div class="container py-5">
-        <div class="members-card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">
-                    Showing
-                    <?php echo min($offset + 1, $total_records); ?>-
-                    <?php echo min($offset + $records_per_page, $total_records); ?> of
-                    <?php echo $total_records; ?> members
-                </h5>
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1><i class="bi bi-person-badge"></i> Members</h1>
+                <p>Manage gym member accounts</p>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-badge">
+                    <i class="bi bi-people-fill"></i>
+                    <span><?php echo $total_records; ?> Total Members</span>
+                </div>
+            </div>
+        </div>
+        <!-- Members Table Section -->
+        <section>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 style="margin: 0; border: none; padding: 0;">
+                    <i class="bi bi-list-ul"></i> All Members
+                    <span style="color: var(--text-muted); font-size: 11px; margin-left: 10px;">
+                        Showing
+                        <?php echo min($offset + 1, $total_records); ?>-<?php echo min($offset + $records_per_page, $total_records); ?>
+                        of <?php echo $total_records; ?>
+                    </span>
+                </h2>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-hover">
+            <div class="inventory-table">
+                <table>
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -109,14 +123,15 @@ function timeAgo($datetime)
                                 $email = htmlspecialchars($member['email']);
                                 $last_login = timeAgo($member['last_logged_in']);
                                 $joined = date('M d, Y', strtotime($member['created_at']));
+
                                 $status_badge = $member['is_verified']
-                                    ? "<span class='badge bg-success'>Active</span>"
-                                    : "<span class='badge bg-warning'>Not Verified</span>";
+                                    ? "<span class='status-badge active'>Verified</span>"
+                                    : "<span class='status-badge maintenance'>Not Verified</span>";
 
                                 echo "
                                 <tr>
                                     <td>
-                                        <i class='bi bi-person-circle me-2'></i>
+                                        <i class='bi bi-person-circle' style='color: var(--hazard); margin-right: 8px;'></i>
                                         <strong>$full_name</strong>
                                     </td>
                                     <td>@$username</td>
@@ -130,7 +145,7 @@ function timeAgo($datetime)
                         } else {
                             echo "
                             <tr>
-                                <td colspan='6' class='text-center text-muted py-4'>No members found</td>
+                                <td colspan='7' style='text-align: center; padding: 40px; color: var(--text-muted);'>No members found</td>
                             </tr>
                             ";
                         }
@@ -140,59 +155,33 @@ function timeAgo($datetime)
             </div>
 
             <!-- Pagination -->
-            <?php
-            if ($total_pages > 1) {
-                echo "<nav aria-label='Member pagination'>";
-                echo "<ul class='pagination justify-content-center mb-0'>";
+            <?php if ($total_pages > 1): ?>
+                <div style="margin-top: 20px; text-align: center;">
+                    <?php if ($page > 1): ?>
+                        <a href="?page=<?php echo $page - 1; ?>"
+                            style="padding: 8px 12px; margin: 0 3px; background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
+                            <i class="bi bi-chevron-left"></i> Prev
+                        </a>
+                    <?php endif; ?>
 
-                // Previous Button
-                $prev_disabled = ($page <= 1) ? 'disabled' : '';
-                $prev_page = $page - 1;
-                echo "<li class='page-item $prev_disabled'>";
-                echo "<a class='page-link' href='?page=$prev_page' tabindex='-1'>";
-                echo "<i class='bi bi-chevron-left'></i> Previous";
-                echo "</a></li>";
+                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                        <a href="?page=<?php echo $i; ?>"
+                            style="padding: 8px 12px; margin: 0 3px; background: <?php echo ($i == $page) ? 'var(--hazard)' : 'var(--bg-card)'; ?>; color: <?php echo ($i == $page) ? '#000' : 'var(--text-muted)'; ?>; border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
+                            <?php echo $i; ?>
+                        </a>
+                    <?php endfor; ?>
 
-                // Page Numbers
-                $start_page = max(1, $page - 2);
-                $end_page = min($total_pages, $page + 2);
-
-                // First page
-                if ($start_page > 1) {
-                    echo "<li class='page-item'><a class='page-link' href='?page=1'>1</a></li>";
-                    if ($start_page > 2) {
-                        echo "<li class='page-item disabled'><span class='page-link'>...</span></li>";
-                    }
-                }
-
-                // Page number buttons
-                for ($i = $start_page; $i <= $end_page; $i++) {
-                    $active = ($i == $page) ? 'active' : '';
-                    echo "<li class='page-item $active'><a class='page-link' href='?page=$i'>$i</a></li>";
-                }
-
-                // Last page
-                if ($end_page < $total_pages) {
-                    if ($end_page < $total_pages - 1) {
-                        echo "<li class='page-item disabled'><span class='page-link'>...</span></li>";
-                    }
-                    echo "<li class='page-item'><a class='page-link' href='?page=$total_pages'>$total_pages</a></li>";
-                }
-
-                // Next Button
-                $next_disabled = ($page >= $total_pages) ? 'disabled' : '';
-                $next_page = $page + 1;
-                echo "<li class='page-item $next_disabled'>";
-                echo "<a class='page-link' href='?page=$next_page'>";
-                echo "Next <i class='bi bi-chevron-right'></i>";
-                echo "</a></li>";
-
-                echo "</ul></nav>";
-            }
-            ?>
-        </div>
+                    <?php if ($page < $total_pages): ?>
+                        <a href="?page=<?php echo $page + 1; ?>"
+                            style="padding: 8px 12px; margin: 0 3px; background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </a>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </section>
     </div>
-    <?php include('includes/footer_admin.php') ?>
+    <?php //include('includes/footer_admin.php') ?>
 </body>
 
 </html>

@@ -61,19 +61,34 @@ function timeAgo($datetime)
 
 </head>
 
-<body class="bg-dark">
+<body>
     <?php include('includes/header_admin.php') ?>
-    <div class="container py-5">
-        <div class="staff-card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">Active Staff: <?php echo count($staff_members); ?></h5>
-                <a href="create_staff.php" class="btn btn-success">
-                    <i class="bi bi-person-plus me-2"></i>Add New Staff
+
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1><i class="bi bi-people"></i> Staff Members</h1>
+                <p>Manage gym staff accounts</p>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-badge">
+                    <i class="bi bi-person-check"></i>
+                    <span><?php echo count($staff_members); ?> Active</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Staff Table Section -->
+        <section>
+            <div class="inventory-header">
+                <a href="create_staff.php" class="add-btn">
+                    <i class="bi bi-person-plus"></i> Add New Staff
                 </a>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-hover">
+            <div class="inventory-table">
+                <table>
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -81,6 +96,7 @@ function timeAgo($datetime)
                             <th>Email</th>
                             <th>Last Login</th>
                             <th>Joined</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -96,20 +112,25 @@ function timeAgo($datetime)
                                 echo "
                             <tr>
                                 <td>
-                                    <i class='bi bi-person-circle me-2'></i>
+                                    <i class='bi bi-person-circle' style='color: var(--hazard); margin-right: 8px;'></i>
                                     <strong>$full_name</strong>
                                 </td>
                                 <td>$username</td>
                                 <td>$email</td>
                                 <td>$last_login</td>
                                 <td>$joined</td>
+                                <td>
+                                <a href='process_delete_staff.php?id={$staff['id']}' class='btn-icon' onclick='return confirm(\"Are you sure you want to remove this staff member?\")'>
+                                    <i class='bi bi-trash'></i>
+                                </a>
+                            </td>
                             </tr>
                             ";
                             }
                         } else {
                             echo "
                         <tr>
-                            <td colspan='5' class='text-center text-muted py-4'>No staff members found</td>
+                            <td colspan='5' style='text-align: center; padding: 40px; color: var(--text-muted);'>No staff members found</td>
                         </tr>
                         ";
                         }
@@ -117,7 +138,7 @@ function timeAgo($datetime)
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
     </div>
     <?php include('includes/footer_admin.php') ?>
 </body>

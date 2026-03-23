@@ -35,7 +35,7 @@ if (!in_array($movement_type, $movement_types, true)) {
 try {
     $checkStmt = $pdo->prepare('SELECT COUNT(*) FROM exercises WHERE lower(name) = lower(:name)');
     $checkStmt->execute(['name' => $name]);
-    if ((int)$checkStmt->fetchColumn() > 0) {
+    if ((int) $checkStmt->fetchColumn() > 0) {
         header('Location: add_exercise.php?error=' . urlencode('Exercise name already exists.'));
         exit();
     }
@@ -45,6 +45,13 @@ try {
         'name' => $name,
         'target_muscle' => $target_muscle === '' ? null : $target_muscle,
         'movement_type' => $movement_type
+    ]);
+    $stmt = $pdo->prepare("INSERT INTO notification_history (name, description, remarks, category) VALUES (:name, :description, :remarks, :category)");
+    $stmt->execute([
+        'name' => 'EXERCISE ADDED',
+        'description' => "Exercise '$name'",
+        'remarks' => "Added by " . $_SESSION['username'],
+        'category' => 'Exercises'
     ]);
 
     header('Location: exercises.php?success=' . urlencode('Exercise added successfully.'));

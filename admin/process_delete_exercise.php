@@ -28,9 +28,9 @@ try {
         header('Location: exercises.php?error=' . urlencode('Cannot delete exercise with logged workout history.'));
         exit();
     }
-
     $deleteStmt = $pdo->prepare('DELETE FROM exercises WHERE exercise_id = :id');
     $deleteStmt->execute(['id' => $exercise_id]);
+    
 
     header('Location: exercises.php?success=' . urlencode('Exercise deleted successfully.'));
     exit();
