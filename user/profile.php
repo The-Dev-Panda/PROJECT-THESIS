@@ -246,6 +246,13 @@ try {
             </a>
           </li>
 
+          <li>
+            <a href="AI_ADVISOR.php">
+              <i class="bi bi-robot"></i>
+              <span>AI Advisor</span>
+            </a>
+          </li>
+
           <li class="active">
             <a href="profile.php">
               <i class="bi bi-person"></i>

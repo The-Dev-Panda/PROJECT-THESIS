@@ -110,3 +110,21 @@ ON attendance(user_id, datetime);
 
 CREATE INDEX IF NOT EXISTS idx_users_type_points
 ON users(user_type, points);
+
+CREATE TABLE meal_logs (
+    meal_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    logged_date TEXT NOT NULL,
+    meal_type TEXT NOT NULL,
+    food_name TEXT NOT NULL,
+    quantity REAL NOT NULL,
+    calories INTEGER NOT NULL,
+    protein REAL NOT NULL,
+    carbs REAL NOT NULL,
+    fat REAL NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_meal_logs_user_date
+ON meal_logs(user_id, logged_date);
