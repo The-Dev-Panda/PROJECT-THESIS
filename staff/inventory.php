@@ -97,14 +97,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// ── Load inventory rows ───────────────────────────────────────────────────────
 try {
     $rows = $pdo->query("SELECT * FROM inventory ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     $rows = [];
 }
 
-// ── Badge: count recent transactions + low-stock items ───────────────────────
 try {
     $txCount    = (int)$pdo->query("SELECT COUNT(*) FROM transactions")->fetchColumn();
     $stockCount = (int)$pdo->query("SELECT COUNT(*) FROM inventory WHERE quantity <= 10")->fetchColumn();
@@ -124,7 +122,6 @@ try {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
   <style>
-    /* ── Modals ── */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,0.7); z-index: 1000;
