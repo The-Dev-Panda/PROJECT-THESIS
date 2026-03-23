@@ -79,13 +79,6 @@ try {
             </a>
           </li>
 
-          <li>
-            <a href="AI_ADVISOR.php">
-              <i class="bi bi-robot"></i>
-              <span>AI Advisor</span>
-            </a>
-          </li>
-
           <li class="active">
             <a href="payments.php">
               <i class="bi bi-credit-card"></i>
@@ -93,6 +86,13 @@ try {
             </a>
           </li>
 
+          <li>
+            <a href="AI_ADVISOR.php">
+              <i class="bi bi-robot"></i>
+              <span>AI Advisor</span>
+            </a>
+          </li>
+          
           <li>
             <a href="profile.php">
               <i class="bi bi-person"></i>
