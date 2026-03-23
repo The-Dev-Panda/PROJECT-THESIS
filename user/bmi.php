@@ -1,14 +1,28 @@
 <?php
 require_once __DIR__ . '/auth_user.php';
+require __DIR__ . '/../Login/connection.php';
 $activePage = 'bmi';
 $firstName = 'Member';
+$goal = 'Primary Goal';
 
-if (!empty($_SESSION['id'])) {
-  if (!empty($_SESSION['first_name'])) {
-    $firstName = trim((string)$_SESSION['first_name']);
+$userId = (int)($_SESSION['id'] ?? 0);
+if ($userId > 0) {
+  $stmt = $pdo->prepare('SELECT first_name, last_name FROM users WHERE id = :id LIMIT 1');
+  $stmt->execute([':id' => $userId]);
+  $user = $stmt->fetch(PDO::FETCH_ASSOC);
+  if ($user) {
+    if (!empty($user['first_name'])) {
+      $firstName = trim((string)$user['first_name']);
+    } elseif (!empty($user['last_name'])) {
+      $firstName = trim((string)$user['last_name']);
+    }
   }
-  if (!empty($_SESSION['goal'])) {
-    $goal = trim((string)$_SESSION['goal']);
+
+  $profileStmt = $pdo->prepare('SELECT goal FROM member_profiles WHERE user_id = :user_id LIMIT 1');
+  $profileStmt->execute([':user_id' => $userId]);
+  $profile = $profileStmt->fetch(PDO::FETCH_ASSOC);
+  if ($profile && !empty($profile['goal'])) {
+    $goal = trim((string)$profile['goal']);
   }
 }
 ?>
@@ -119,33 +133,7 @@ if (!empty($_SESSION['id'])) {
  
   </section>
  
-  <!-- Exercise History -->
-  <div class="history-grid">
-    <div class="history-card">
-      <div class="history-date"><span class="date-day">Feb 7</span><span class="date-full">Thursday</span></div>
-      <div class="history-workout">
-        <div class="workout-icon cardio"><i class="fas fa-heartbeat"></i></div>
-        <div class="workout-details">
-          <h4>Cardio &amp; Abs</h4>
-          <p>6:00 AM - 6:45 AM</p>
-          <div class="workout-stats-mini"><span><i class="fas fa-fire"></i> 380 cal</span><span><i class="fas fa-clock"></i> 45 mins</span></div>
-        </div>
-      </div>
-      <span class="completion-badge completed">Completed</span>
-    </div>
-    <div class="history-card">
-      <div class="history-date"><span class="date-day">Feb 6</span><span class="date-full">Wednesday</span></div>
-      <div class="history-workout">
-        <div class="workout-icon back"><i class="fas fa-user"></i></div>
-        <div class="workout-details">
-          <h4>Back &amp; Biceps</h4>
-          <p>7:00 AM - 8:15 AM</p>
-          <div class="workout-stats-mini"><span><i class="fas fa-fire"></i> 465 cal</span><span><i class="fas fa-weight-hanging"></i> 2,890 kg total</span></div>
-        </div>
-      </div>
-      <span class="completion-badge completed">Completed</span>
-    </div>
-  </div>
+
  
 </main>
  
