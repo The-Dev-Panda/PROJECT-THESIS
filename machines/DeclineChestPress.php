@@ -110,6 +110,7 @@ include('../includes/header.php');
 
                 <form style="margin-top:12px" action="../Database/submit_feedback.php" method="POST">
                     <input type="hidden" name="machine" value="Decline Chest Press">
+                    <?php echo fitstop_csrf_input(); ?>
 
                     <?php if (empty($_SESSION['username'])): ?>
                     <div class="mb-3">

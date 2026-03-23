@@ -126,6 +126,7 @@ include('../includes/header.php');
 
                 <form style="margin-top:12px" action="../Database/submit_feedback.php" method="POST">
                     <input type="hidden" name="machine" value="<?php echo htmlspecialchars($machine_name, ENT_QUOTES, 'UTF-8'); ?>">
+                    <?php echo fitstop_csrf_input(); ?>
 
                     <?php if (empty($_SESSION['username'])): ?>
                     <div class="mb-3">

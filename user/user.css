@@ -9763,27 +9763,34 @@ body.light-mode .toggle-track {
   align-items: center;
   gap: 14px;
   padding: 12px 4px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   transition: background 0.15s;
   border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .ranking-row:last-child {
   border-bottom: none;
 }
 .ranking-row:hover {
-  background: #fafafa;
+  background: rgba(255, 255, 255, 0.08);
 }
 .ranking-row.highlight {
-  background: #fffbeb;
+  background: rgba(255, 204, 0, 0.14);
   border-left: 3px solid #f59e0b;
+  padding-left: 10px;
+}
+
+.ranking-row.current-user {
+  background: #ffcc00;
+  border-left: 3px solid #111111;
   padding-left: 10px;
 }
 
 .rank-num {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: #cbd5e1;
   width: 20px;
   text-align: center;
   flex-shrink: 0;
@@ -9799,14 +9806,14 @@ body.light-mode .toggle-track {
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-  background: linear-gradient(135deg, #7c3aed20, #06b6d420);
+  background: linear-gradient(135deg, #4b5563, #1f2937);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1rem;
-  color: #7c3aed;
+  color: #f8fafc;
   font-weight: 600;
-  border: 2px solid #ede9fe;
+  border: 2px solid rgba(148, 163, 184, 0.6);
 }
 
 .rank-info {
@@ -9815,12 +9822,12 @@ body.light-mode .toggle-track {
 .rank-info .rname {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #1a1a2e;
+  color: #f8fafc;
   display: block;
 }
 .rank-info .rsub {
   font-size: 0.72rem;
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 
 .rank-score {
@@ -9833,7 +9840,7 @@ body.light-mode .toggle-track {
 .rank-score .rscore {
   font-size: 0.88rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: #facc15;
 }
 .rank-score .rbadge {
   font-size: 0.65rem;
@@ -9853,6 +9860,25 @@ body.light-mode .toggle-track {
 .rbadge.same {
   background: #f3f4f6;
   color: #6b7280;
+}
+
+.ranking-row.current-user .rank-num,
+.ranking-row.current-user .rank-num.top,
+.ranking-row.current-user .rank-info .rname,
+.ranking-row.current-user .rank-info .rsub,
+.ranking-row.current-user .rank-score .rscore,
+.ranking-row.current-user .rank-score .rbadge {
+  color: #111111;
+}
+
+.ranking-row.current-user .rank-avatar {
+  background: #111111;
+  color: #ffcc00;
+  border-color: #111111;
+}
+
+.ranking-row.current-user .rank-score .rbadge.same {
+  background: rgba(17, 17, 17, 0.12);
 }
 
 /* QR Card */

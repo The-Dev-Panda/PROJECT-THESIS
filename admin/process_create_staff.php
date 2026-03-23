@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../includes/security.php';
 
 if(empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin'){
     header('Location: Login_Page.php');
@@ -12,6 +13,7 @@ if(empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin'){
 include("../Login/connection.php");
 
 if($_SERVER["REQUEST_METHOD"] == "POST"){
+    fitstop_validate_csrf_or_exit($_POST['csrf_token'] ?? null);
     $username = $_POST['username'];
     $email = $_POST['email'];
     $first_name = $_POST['first_name'];

@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../includes/security.php';
 
 // Helper function to send JSON response
 function sendResponse($success, $message, $redirect = null) {
@@ -87,6 +88,8 @@ $sessionUserId = isset($_SESSION['id']) ? (int)$_SESSION['id'] : 0;
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     sendResponse(false, 'Invalid request method');
 }
+
+fitstop_validate_csrf_or_exit($_POST['csrf_token'] ?? null);
 
 if (!isSameOriginRequest()) {
     sendResponse(false, 'Invalid request origin');

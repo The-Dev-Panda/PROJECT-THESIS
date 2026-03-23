@@ -1,7 +1,9 @@
 <?php
 session_start();
+require_once __DIR__ . '/../includes/security.php';
 require_once '../login/connection.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+  fitstop_validate_csrf_or_exit($_POST['csrf_token'] ?? null);
     header('Content-Type: application/json');
     $action = $_POST['action'];
 
@@ -430,6 +432,7 @@ try {
 let currentRow     = null;
 let notifPanelOpen = false;
 let notifLoaded    = false;
+const csrfToken    = <?php echo json_encode(fitstop_csrf_token()); ?>;
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -485,6 +488,7 @@ function saveSoldChange() {
   fd.append('action', 'update_stock');
   fd.append('id',     id);
   fd.append('change', -qtyInput);
+  fd.append('csrf_token', csrfToken);
 
   fetch('inventory.php', { method: 'POST', body: fd })
     .then(r => r.json())
@@ -559,6 +563,7 @@ function loadNotifications() {
 
   const fd = new FormData();
   fd.append('action', 'get_notifications');
+  fd.append('csrf_token', csrfToken);
 
   fetch('inventory.php', { method: 'POST', body: fd })
     .then(r => r.json())

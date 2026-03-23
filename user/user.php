@@ -982,6 +982,8 @@ try {
 
     <script src="lightmode.js"></script>
     <script>
+      const currentLeaderboardUserId = <?php echo (int)($_SESSION['id'] ?? 0); ?>;
+
       /* ── Star Rating ── */
       function setRating(n) {
         document.querySelectorAll(".star-btn").forEach((btn, i) => {
@@ -1072,7 +1074,10 @@ try {
         list.innerHTML = rankings
           .map((entry) => {
             const rankClass = entry.rank <= 3 ? "top" : "";
-            const rowClass = entry.rank === 1 ? "ranking-row highlight" : "ranking-row";
+            const isCurrentUser = Number(entry.user_id || 0) === Number(currentLeaderboardUserId || 0);
+            const rowClass = ["ranking-row", entry.rank === 1 ? "highlight" : "", isCurrentUser ? "current-user" : ""]
+              .filter(Boolean)
+              .join(" ");
             const initials = leaderboardEscapeHtml(leaderboardInitials(entry.name));
             const name = leaderboardEscapeHtml(entry.name);
             const score = Number(entry.score || 0).toLocaleString();
