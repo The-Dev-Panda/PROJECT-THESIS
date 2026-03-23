@@ -1,4 +1,20 @@
-<?php require_once __DIR__ . '/auth_user.php'; ?>
+<?php require_once __DIR__ . '/auth_user.php'; 
+
+$transactions = [];
+try {
+    $dbPath = __DIR__ . '/../Database/DB.sqlite';
+    if (file_exists($dbPath)) {
+        $db = new PDO('sqlite:' . $dbPath);
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        $stmt = $db->prepare('SELECT receipt_number, amount, payment_method, status, "desc", created_at FROM transactions WHERE user_id = :user_id ORDER BY created_at DESC');
+        $stmt->execute([':user_id' => $_SESSION['id']]);
+        $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Exception $e) {
+    // Database error - continue without transactions
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -15,13 +31,6 @@
       rel="stylesheet"
     />
     <link
-
-          <li>
-            <a href="AI_ADVISOR.php">
-              <i class="bi bi-robot"></i>
-              <span>AI Advisor</span>
-            </a>
-          </li>
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
@@ -67,6 +76,13 @@
             <a href="history.php">
               <i class="bi bi-clock-history"></i>
               <span>History</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="AI_ADVISOR.php">
+              <i class="bi bi-robot"></i>
+              <span>AI Advisor</span>
             </a>
           </li>
 
@@ -157,46 +173,24 @@
             <h4><i class="bi bi-receipt"></i> E-Receipts & Payment History</h4>
             <hr class="section-divider" />
 
-            <div class="receipt-entry">
-              <div class="receipt-icon">
-                <i class="fas fa-file-invoice-dollar"></i>
+            <?php if (empty($transactions)): ?>
+              <p style="text-align: center; color: #999; padding: 20px;">No transactions found.</p>
+            <?php else: ?>
+              <?php foreach ($transactions as $transaction): ?>
+              <div class="receipt-entry">
+                <div class="receipt-icon">
+                  <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div class="receipt-info">
+                  <span class="rname"><?php echo htmlspecialchars($transaction['desc'] ?? 'Payment'); ?></span>
+                  <span class="rdate"><?php echo htmlspecialchars($transaction['created_at'] ?? date('M d, Y')); ?> &nbsp;•&nbsp; <?php echo htmlspecialchars($transaction['payment_method'] ?? 'N/A'); ?></span>
+                </div>
+                <span class="receipt-amount">₱<?php echo number_format((float)$transaction['amount'], 2); ?></span>
               </div>
-              <div class="receipt-info">
-                <span class="rname">Monthly Membership</span>
-                <span class="rdate"
-                  >Jan 15, 2025 &nbsp;•&nbsp; Auto-renewed</span
-                >
-              </div>
-              <span class="receipt-amount">₱49.99</span>
-            </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
 
-            <div class="receipt-entry">
-              <div class="receipt-icon">
-                <i class="fas fa-file-invoice-dollar"></i>
-              </div>
-              <div class="receipt-info">
-                <span class="rname">Personal Training Session</span>
-                <span class="rdate">Jan 22, 2025 &nbsp;•&nbsp; 1 session</span>
-              </div>
-              <span class="receipt-amount">₱35.00</span>
-            </div>
-
-            <div class="receipt-entry">
-              <div class="receipt-icon">
-                <i class="fas fa-file-invoice-dollar"></i>
-              </div>
-              <div class="receipt-info">
-                <span class="rname">Monthly Membership</span>
-                <span class="rdate"
-                  >Feb 15, 2025 &nbsp;•&nbsp; Auto-renewed</span
-                >
-              </div>
-              <span class="receipt-amount">₱49.99</span>
-            </div>
-
-            <a class="view-all-link"
-              >Download all receipts <i class="fas fa-download"></i
-            ></a>
+            <a class="view-all-link">Download all receipts <i class="fas fa-download"></i></a>
           </div>
           <!-- TERMS & POLICY -->
           <div class="profile-card terms-card">
