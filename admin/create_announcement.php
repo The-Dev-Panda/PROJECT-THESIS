@@ -39,6 +39,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
 
             <div class="registration-card">
                 <form action="process_create_announcement.php" method="POST" enctype="multipart/form-data">
+                    <?php echo fitstop_csrf_input(); ?>
                     <div class="form-grid">
                         <div class="form-group" style="grid-column: span 3;">
                             <label>Announcement Title</label>

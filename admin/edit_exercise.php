@@ -59,6 +59,7 @@ $movement_types = ['push', 'pull', 'legs', 'cardio', 'other', 'arms', 'back', 'c
 
         <div class="registration-card">
             <form action="process_edit_exercise.php" method="POST">
+                <?php echo fitstop_csrf_input(); ?>
                 <input type="hidden" name="exercise_id" value="<?php echo (int)$exercise['exercise_id']; ?>">
 
                 <div class="form-grid">

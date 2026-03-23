@@ -297,6 +297,7 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
                             style="filter: invert(1);"></button>
                     </div>
                     <form method="POST">
+                        <?php echo fitstop_csrf_input(); ?>
                         <input type="hidden" name="item_id" id="edit_item_id">
                         <div class="modal-body">
                             <div class="form-group">
@@ -359,6 +360,7 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
                             style="filter: invert(1);"></button>
                     </div>
                     <form method="POST">
+                        <?php echo fitstop_csrf_input(); ?>
                         <div class="modal-body">
                             <div class="form-group">
                                 <label>Item Name</label>

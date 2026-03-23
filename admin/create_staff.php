@@ -81,6 +81,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
 
         <div class="registration-card">
             <form action="process_create_staff.php" method="POST">
+                <?php echo fitstop_csrf_input(); ?>
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Username</label>
