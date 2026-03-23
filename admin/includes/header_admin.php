@@ -6,12 +6,12 @@ require_once __DIR__ . '/../../includes/security.php';
 
 <head>
 
-<link rel="stylesheet" href="../staff/staff.css">
+    <link rel="stylesheet" href="../staff/staff.css">
 
-<link href="../styles.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="../styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 </head>
 <!-- Sidebar -->
 <div class="sidebar">
@@ -79,4 +79,9 @@ require_once __DIR__ . '/../../includes/security.php';
 </div>
 
 <!-- Hidden logout form -->
-<form id="logoutForm" action="../../login/logout.php" method="POST" style="display: none;"></form>
+<form id="logoutForm" action="../../login/logout.php" method="POST" style="display: none;">
+    <?php echo fitstop_csrf_input(); ?>
+    <button type="submit" class="nav-link border-0 bg-transparent" style="cursor: pointer;">
+        <i class="bi bi-box-arrow-right"></i> Logout
+    </button>
+</form>
