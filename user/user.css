@@ -214,6 +214,8 @@ h5 {
   height: 100vh;
   position: fixed;
   overflow-x: hidden;
+  background-color: #1e1e1e; /* sidebar background */
+  color: #fff; /* sidebar text color */
 }
 
 /* HEADER */
@@ -249,17 +251,17 @@ h5 {
   min-height: 0;
 }
 
-/* VERTICAL SCROLLBAR STYLING (YELLOW) */
+/* VERTICAL SCROLLBAR STYLING (YELLOW THUMB, TRACK MATCH SIDEBAR) */
 .top-menu::-webkit-scrollbar {
   width: 8px;
 }
 
 .top-menu::-webkit-scrollbar-track {
-  background: #1e1e1e; /* track background */
+  background: inherit; /* match sidebar background dynamically */
 }
 
 .top-menu::-webkit-scrollbar-thumb {
-  background-color: #FFD700; /* yellow scrollbar */
+  background-color: #FFD700; /* yellow thumb */
   border-radius: 4px;
 }
 
@@ -294,6 +296,7 @@ h5 {
   padding: 10px 15px;
   text-decoration: none;
   box-sizing: border-box;
+  color: inherit; /* text color stays same as sidebar */
 }
 
 /* TEXT CONTROL */
@@ -303,7 +306,7 @@ h5 {
 
 /* KEEP ORIGINAL HOVER COLOR */
 .menu li a:hover {
-  /* your existing hover color */
+  background-color: rgba(255,255,255,0.1); /* subtle hover */
 }
 
 /* PROFILE CONTAINER FIX */
@@ -319,7 +322,7 @@ h5 {
 
 /* ACTIVE ITEM */
 .menu li.active {
-  background: #ddd; /* existing active style */
+  background: rgba(255,255,255,0.2); /* subtle active highlight */
 }
 
 /* RESPONSIVE */
@@ -355,8 +358,7 @@ h5 {
     margin-left: 260px;
     width: calc(100% - 260px);
   }
-}w
- 
+}
 /* ========== TOPBAR ========== */
 .topbar {
   display: flex;
