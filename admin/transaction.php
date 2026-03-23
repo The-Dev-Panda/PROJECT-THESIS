@@ -32,7 +32,12 @@ $total_records = $total_stmt->fetch()['total'];
 $total_pages = ceil($total_records / $records_per_page);
 
 // Get transactions
-$query = "SELECT * FROM transactions $where_clause ORDER BY transaction_date DESC LIMIT :limit OFFSET :offset";
+$query = "SELECT t.*, u.username as staff_username 
+          FROM transactions t 
+          LEFT JOIN users u ON t.staff_id = u.id 
+          $where_clause 
+          ORDER BY t.transaction_date DESC 
+          LIMIT :limit OFFSET :offset";
 $stmt = $pdo->prepare($query);
 foreach ($params as $key => $value) {
     $stmt->bindValue(":$key", $value);
