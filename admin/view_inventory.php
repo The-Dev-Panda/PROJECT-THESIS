@@ -23,6 +23,13 @@ if (isset($_POST['add_item'])) {
         'price' => $price,
         'description' => $description
     ]);
+    $stmt = $pdo->prepare("INSERT INTO notification_history (name, description, remarks, category) VALUES (:name, :description, :remarks, :category)");
+    $stmt->execute([
+        'name' => 'ITEM ADDED',
+        'description' => "Item Name: $item_name, Category: $category, Quantity: $quantity, Price: $price, Description: $description",
+        'remarks' => "BY ADMIN",
+        'category' => 'Inventory'
+    ]);
 
     header('Location: view_inventory.php?success=added');
     exit();
@@ -46,6 +53,13 @@ if (isset($_POST['update_item'])) {
         'description' => $description,
         'id' => $id
     ]);
+    $stmt = $pdo->prepare("INSERT INTO notification_history (name, description, remarks, category) VALUES (:name, :description, :remarks, :category)");
+    $stmt->execute([
+        'name' => 'ITEM UPDATED',
+        'description' => "Item Name: $item_name, Category: $category, Quantity: $quantity, Price: $price, Description: $description",
+        'remarks' => "BY ADMIN",
+        'category' => 'Inventory'
+    ]);
 
     header('Location: view_inventory.php?success=updated');
     exit();
@@ -54,9 +68,23 @@ if (isset($_POST['update_item'])) {
 // Handle Delete Item
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
+
+    $get_item = $pdo->prepare("SELECT item_name, category, quantity FROM inventory WHERE id = :id");
+    $get_item->execute(['id' => $id]);
+    $item = $get_item->fetch();
+    $item_name = $item['item_name'];
+    $category = $item['category'];
+    $quantity = $item['quantity'];
+
+    $notif = $pdo->prepare("INSERT INTO notification_history (name, description, remarks, category) VALUES (:name, :description, :remarks, :category)");
+    $notif->execute([
+        'name' => 'INVENTORY ITEM DELETED',
+        'description' => "Item '$item_name' ($quantity units) from category '$category' has been removed",
+        'remarks' => "Deleted by " . $_SESSION['username'],
+        'category' => 'Inventory'
+    ]);
     $stmt = $pdo->prepare("DELETE FROM inventory WHERE id = :id");
     $stmt->execute(['id' => $id]);
-
     header('Location: view_inventory.php?success=deleted');
     exit();
 }
@@ -110,7 +138,7 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
 
 <head>
     <meta charset="utf-8">
-    <title></title>
+    <title>View Inventory</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -130,19 +158,22 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
 
 </head>
 
-<body class="bg-dark">
+<body>
     <?php include('includes/header_admin.php') ?>
-    <div class="page-header">
-        <div class="container py-5">
-            <h1 class="mb-0"><i class="bi bi-box-seam me-2"></i>Manage Inventory</h1>
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1><i class="bi bi-box-seam"></i> Inventory</h1>
+                <p>Manage equipment stock & status</p>
+            </div>
         </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="container pb-5">
+        <!-- Main Content -->
         <!-- Success Messages -->
         <?php if (isset($_GET['success'])): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div
+                style="background: rgba(34, 208, 122, 0.1); border: 1px solid var(--success); color: var(--success); padding: 10px 14px; margin-bottom: 20px; font-size: 12px; text-transform: uppercase;">
+                <i class="bi bi-check-circle"></i>
                 <?php
                 if ($_GET['success'] == 'added')
                     echo 'Item added successfully!';
@@ -154,20 +185,19 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
-
         <!-- Search and Filter Bar -->
-        <div class="inventory-card mb-4">
-            <div class="row align-items-center">
-                <div class="col-md-5">
-                    <form method="GET" class="d-flex">
-                        <input type="text" name="search" class="form-control me-2" placeholder="Search items..."
-                            value="<?php echo htmlspecialchars($search); ?>">
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
-                    </form>
-                </div>
-                <div class="col-md-4">
+        <section>
+            <div class="inventory-header">
+                <div class="search-container">
+                    <div class="search-wrapper">
+                        <i class="bi bi-search search-icon"></i>
+                        <form method="GET" style="width: 100%;">
+                            <input type="text" name="search" class="search-input" placeholder="Search items..."
+                                value="<?php echo htmlspecialchars($search); ?>">
+                        </form>
+                    </div>
                     <form method="GET">
-                        <select name="category" class="form-select" onchange="this.form.submit()">
+                        <select name="category" class="search-input" onchange="this.form.submit()">
                             <option value="">All Categories</option>
                             <?php foreach ($categories as $cat): ?>
                                 <option value="<?php echo htmlspecialchars($cat); ?>" <?php echo ($category_filter == $cat) ? 'selected' : ''; ?>>
@@ -177,18 +207,14 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
                         </select>
                     </form>
                 </div>
-                <div class="col-md-3 text-end">
-                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addItemModal">
-                        <i class="bi bi-plus-circle"></i> Add New Item
-                    </button>
-                </div>
+                <button class="add-btn" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                    <i class="bi bi-plus-circle"></i> Add Item
+                </button>
             </div>
-        </div>
 
-        <!-- Inventory Table -->
-        <div class="inventory-card">
-            <div class="table-responsive">
-                <table class="table table-hover">
+            <!-- Inventory Table -->
+            <div class="inventory-table">
+                <table>
                     <thead>
                         <tr>
                             <th>Item Name</th>
@@ -202,40 +228,30 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
                     <tbody>
                         <?php if (count($items) > 0): ?>
                             <?php foreach ($items as $item): ?>
-                                <tr
-                                    class="<?php echo ($item['quantity'] == 0) ? 'out-of-stock' : (($item['quantity'] < 10) ? 'low-stock' : ''); ?>">
-                                    <td><strong>
-                                            <?php echo htmlspecialchars($item['item_name']); ?>
-                                        </strong></td>
-                                    <td><span class="badge bg-secondary">
-                                            <?php echo htmlspecialchars($item['category']); ?>
-                                        </span></td>
+                                <tr>
+                                    <td><strong><?php echo htmlspecialchars($item['item_name']); ?></strong></td>
+                                    <td><span
+                                            style="padding: 4px 11px; font-size: 10px; background: rgba(255,255,255,0.1); border: 1px solid var(--border);"><?php echo htmlspecialchars($item['category']); ?></span>
+                                    </td>
                                     <td>
                                         <?php if ($item['quantity'] == 0): ?>
-                                            <span class="badge bg-danger">Out of Stock</span>
+                                            <span class="status-badge inactive">Out of Stock</span>
                                         <?php elseif ($item['quantity'] < 10): ?>
-                                            <span class="badge bg-warning text-dark">
-                                                <?php echo $item['quantity']; ?> (Low)
-                                            </span>
+                                            <span class="status-badge low-stock"><?php echo $item['quantity']; ?> Low</span>
                                         <?php else: ?>
-                                            <span class="badge bg-success">
-                                                <?php echo $item['quantity']; ?>
-                                            </span>
+                                            <span class="status-badge active"><?php echo $item['quantity']; ?></span>
                                         <?php endif; ?>
                                     </td>
-                                    <td>Php
-                                        <?php echo number_format($item['price'], 2); ?>
+                                    <td>₱<?php echo number_format($item['price'], 2); ?></td>
+                                    <td><?php echo htmlspecialchars(substr($item['description'], 0, 50)) . (strlen($item['description']) > 50 ? '...' : ''); ?>
                                     </td>
                                     <td>
-                                        <?php echo htmlspecialchars(substr($item['description'], 0, 50)) . (strlen($item['description']) > 50 ? '...' : ''); ?>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-primary"
+                                        <button class="btn-icon"
                                             onclick="editItem(<?php echo htmlspecialchars(json_encode($item)); ?>)">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-sm btn-danger"
-                                            onclick="return confirm('Are you sure you want to delete this item?')">
+                                        <a href="?delete=<?php echo $item['id']; ?>" class="btn-icon"
+                                            onclick="return confirm('Are you sure?')">
                                             <i class="bi bi-trash"></i>
                                         </a>
                                     </td>
@@ -243,7 +259,8 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">No items found</td>
+                                <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">No
+                                    items found</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -252,118 +269,160 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
 
             <!-- Pagination -->
             <?php if ($total_pages > 1): ?>
-                <nav aria-label="Inventory pagination" class="mt-3">
-                    <ul class="pagination justify-content-center mb-0">
-                        <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
-                            <a class="page-link"
-                                href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&category=<?php echo urlencode($category_filter); ?>">
-                                <i class="bi bi-chevron-left"></i> Previous
-                            </a>
-                        </li>
-                        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                            <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
-                                <a class="page-link"
-                                    href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&category=<?php echo urlencode($category_filter); ?>">
-                                    <?php echo $i; ?>
-                                </a>
-                            </li>
-                        <?php endfor; ?>
-                        <li class="page-item <?php echo ($page >= $total_pages) ? 'disabled' : ''; ?>">
-                            <a class="page-link"
-                                href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&category=<?php echo urlencode($category_filter); ?>">
-                                Next <i class="bi bi-chevron-right"></i>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <!-- Add Item Modal -->
-    <div class="modal fade" id="addItemModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add New Item</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div style="margin-top: 20px; text-align: center;">
+                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                        <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&category=<?php echo urlencode($category_filter); ?>"
+                            style="padding: 8px 12px; margin: 0 3px; background: <?php echo ($i == $page) ? 'var(--hazard)' : 'var(--bg-card)'; ?>; 
+                           color: <?php echo ($i == $page) ? '#000' : 'var(--text-muted)'; ?>; border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
+                            <?php echo $i; ?>
+                        </a>
+                    <?php endfor; ?>
                 </div>
-                <form method="POST">
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Item Name</label>
-                            <input type="text" name="item_name" class="form-control" required>
-                        </div>
+            <?php endif; ?>
+        </section>
+        <!-- Edit Item Modal -->
+        <div class="modal fade" id="editItemModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content" style="background: var(--bg-surface); border: 1px solid var(--border);">
+                    <div class="modal-header" style="border-bottom: 1px solid var(--border);">
+                        <h5 class="modal-title"
+                            style="color: var(--hazard); text-transform: uppercase; font-family: 'Chakra Petch', sans-serif;">
+                            Edit Item</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            style="filter: invert(1);"></button>
+                    </div>
+                    <form method="POST">
+                        <input type="hidden" name="item_id" id="edit_item_id">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Item Name</label>
+                                <input type="text" name="item_name" id="edit_item_name" class="form-input" required>
+                            </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <select class="form-select" id="category_select" onchange="handleCategoryChange()">
+                            <div class="form-group" style="margin-top: 15px;">
+                                <label>Category</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <select class="form-input" id="edit_category_select"
+                                        onchange="handleEditCategoryChange()">
                                         <option value="">-- Select Existing --</option>
-                                        <?php
-                                        $cat_stmt = $pdo->query("SELECT DISTINCT category FROM inventory WHERE category IS NOT NULL AND category != '' ORDER BY category");
-                                        $existing_categories = $cat_stmt->fetchAll(PDO::FETCH_COLUMN);
-
-                                        foreach ($existing_categories as $cat) {
-                                            echo "<option value='" . htmlspecialchars($cat) . "'>" . htmlspecialchars($cat) . "</option>";
-                                        }
-                                        ?>
+                                        <?php foreach ($categories as $cat): ?>
+                                            <option value="<?php echo htmlspecialchars($cat); ?>">
+                                                <?php echo htmlspecialchars($cat); ?>
+                                            </option>
+                                        <?php endforeach; ?>
                                     </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <input type="text" name="category" id="category_input" class="form-control"
-                                        placeholder="Or type new category" required>
+                                    <input type="text" name="category" id="edit_category" class="form-input"
+                                        placeholder="Or type new" required>
                                 </div>
                             </div>
-                            <small class="text-muted">Select existing or type a new category</small>
-                        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Quantity</label>
-                            <input type="number" name="quantity" class="form-control" min="0" required>
+                            <div class="form-group" style="margin-top: 15px;">
+                                <label>Quantity</label>
+                                <input type="number" name="quantity" id="edit_quantity" class="form-input" min="0"
+                                    required>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 15px;">
+                                <label>Price</label>
+                                <input type="number" name="price" id="edit_price" class="form-input" step="0.01" min="0"
+                                    required>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 15px;">
+                                <label>Description</label>
+                                <textarea name="description" id="edit_description" class="form-input"
+                                    rows="3"></textarea>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Price</label>
-                            <input type="number" name="price" class="form-control" step="0.01" min="0" required>
+                        <div class="modal-footer" style="border-top: 1px solid var(--border);">
+                            <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" name="update_item" class="btn-primary">Update Item</button>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea name="description" class="form-control" rows="3"></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" name="add_item" class="btn btn-success">Add Item</button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+        <!-- Add Item Modal -->
+        <div class="modal fade" id="addItemModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content" style="background: var(--bg-surface); border: 1px solid var(--border);">
+                    <div class="modal-header" style="border-bottom: 1px solid var(--border);">
+                        <h5 class="modal-title"
+                            style="color: var(--hazard); text-transform: uppercase; font-family: 'Chakra Petch', sans-serif;">
+                            Add New Item</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            style="filter: invert(1);"></button>
+                    </div>
+                    <form method="POST">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Item Name</label>
+                                <input type="text" name="item_name" class="form-input" required>
+                            </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function handleCategoryChange() {
-            const select = document.getElementById('category_select');
-            const input = document.getElementById('category_input');
+                            <div class="form-group" style="margin-top: 15px;">
+                                <label>Category</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <select class="form-input" id="category_select" onchange="handleCategoryChange()">
+                                        <option value="">-- Select Existing --</option>
+                                        <?php foreach ($categories as $cat): ?>
+                                            <option value="<?php echo htmlspecialchars($cat); ?>">
+                                                <?php echo htmlspecialchars($cat); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <input type="text" name="category" id="category_input" class="form-input"
+                                        placeholder="Or type new" required>
+                                </div>
+                            </div>
 
-            if (select.value !== '') {
-                input.value = '';
-                input.value = select.value;
+                            <div class="form-group" style="margin-top: 15px;">
+                                <label>Quantity</label>
+                                <input type="number" name="quantity" class="form-input" min="0" required>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 15px;">
+                                <label>Price</label>
+                                <input type="number" name="price" class="form-input" step="0.01" min="0" required>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 15px;">
+                                <label>Description</label>
+                                <textarea name="description" class="form-input" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="border-top: 1px solid var(--border);">
+                            <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" name="add_item" class="btn-primary">Add Item</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            function handleCategoryChange() {
+                const select = document.getElementById('category_select');
+                const input = document.getElementById('category_input');
+
+                if (select.value !== '') {
+                    input.value = '';
+                    input.value = select.value;
+                }
             }
-        }
-        function editItem(item) {
-            document.getElementById('edit_item_id').value = item.id;
-            document.getElementById('edit_item_name').value = item.item_name;
-            document.getElementById('edit_category').value = item.category;
-            document.getElementById('edit_quantity').value = item.quantity;
-            document.getElementById('edit_price').value = item.price;
-            document.getElementById('edit_description').value = item.description;
+            function editItem(item) {
+                document.getElementById('edit_item_id').value = item.id;
+                document.getElementById('edit_item_name').value = item.item_name;
+                document.getElementById('edit_category').value = item.category;
+                document.getElementById('edit_quantity').value = item.quantity;
+                document.getElementById('edit_price').value = item.price;
+                document.getElementById('edit_description').value = item.description;
 
-            new bootstrap.Modal(document.getElementById('editItemModal')).show();
-        }
-    </script>
-    <?php include('includes/footer_admin.php') ?>
+                new bootstrap.Modal(document.getElementById('editItemModal')).show();
+            }
+        </script>
+        <?php //include('includes/footer_admin.php') ?>
 </body>
 
 </html>

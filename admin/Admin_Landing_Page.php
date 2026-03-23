@@ -2,377 +2,488 @@
 session_start();
 
 if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
-    header('Location: ../Login/Login_Page.php');
+    header('Location: Login_Page.php');
     exit();
 }
+date_default_timezone_set('Asia/Manila');
+
+include("../Login/connection.php");
+
+// Get statistics
+$stats = [];
+
+// Total Members
+$stmt = $pdo->query("SELECT COUNT(*) as total FROM users WHERE user_type = 'user'");
+$stats['total_members'] = $stmt->fetch()['total'];
+
+// Active Staff
+$stmt = $pdo->query("SELECT COUNT(*) as total FROM users WHERE user_type = 'staff'");
+$stats['total_staff'] = $stmt->fetch()['total'];
+
+// Total Revenue (from transactions)
+$stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions");
+$stats['total_revenue'] = $stmt->fetch()['total'];
+
+// Unread Notifications
+$stmt = $pdo->query("SELECT COUNT(*) as total FROM notification_history WHERE is_read = 0");
+$stats['unread_notifications'] = $stmt->fetch()['total'];
+
+// Member Growth (last 6 months)
+$member_growth = [];
+for ($i = 5; $i >= 0; $i--) {
+    $date = date('Y-m', strtotime("-$i months"));
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM users WHERE user_type = 'user' AND strftime('%Y-%m', created_at) = :date");
+    $stmt->execute(['date' => $date]);
+    $count = $stmt->fetch()['count'];
+    $member_growth[] = [
+        'month' => date('M', strtotime("-$i months")),
+        'count' => $count
+    ];
+}
+
+// Revenue by Month (last 6 months)
+$revenue_by_month = [];
+for ($i = 5; $i >= 0; $i--) {
+    $date = date('Y-m', strtotime("-$i months"));
+    $stmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', transaction_date) = :date");
+    $stmt->execute(['date' => $date]);
+    $total = $stmt->fetch()['total'];
+    $revenue_by_month[] = [
+        'month' => date('M', strtotime("-$i months")),
+        'total' => $total
+    ];
+}
+
+// Low Stock Items
+$stmt = $pdo->query("SELECT item_name, quantity FROM inventory WHERE quantity < 10 ORDER BY quantity ASC LIMIT 5");
+$low_stock = $stmt->fetchAll();
+
+// Recent Feedback
+$stmt = $pdo->query("SELECT about, status FROM feedback ORDER BY created_at DESC LIMIT 5");
+$recent_feedback = $stmt->fetchAll();
+
+// Daily Check-ins (last 7 days) - from attendance table
+$checkin_activity = [];
+for ($i = 6; $i >= 0; $i--) {
+    $date = date('Y-m-d', strtotime("-$i days"));
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM attendance WHERE DATE(datetime) = :date");
+    $stmt->execute(['date' => $date]);
+    $count = $stmt->fetch()['count'];
+    $checkin_activity[] = [
+        'day' => date('D', strtotime("-$i days")),
+        'count' => $count
+    ];
+}
+
+// Top Exercises
+$stmt = $pdo->query("SELECT e.name, COUNT(w.log_id) as usage_count 
+                     FROM workout_logs w 
+                     JOIN exercises e ON w.exercise_id = e.exercise_id 
+                     GROUP BY e.exercise_id 
+                     ORDER BY usage_count DESC 
+                     LIMIT 5");
+$top_exercises = $stmt->fetchAll();
+
+// Payment Methods Distribution
+$stmt = $pdo->query("SELECT payment_method, COUNT(*) as count FROM transactions GROUP BY payment_method");
+$payment_methods = $stmt->fetchAll();
+
+// Recent Transactions
+$stmt = $pdo->query("SELECT customer_name, amount, payment_method, transaction_date FROM transactions ORDER BY transaction_date DESC LIMIT 5");
+$recent_transactions = $stmt->fetchAll();
+
+// User Verification Status
+$stmt = $pdo->query("SELECT 
+    SUM(CASE WHEN is_verified = 1 THEN 1 ELSE 0 END) as verified,
+    SUM(CASE WHEN is_verified = 0 THEN 1 ELSE 0 END) as not_verified
+    FROM users WHERE user_type = 'user'");
+$verification = $stmt->fetch();
 ?>
+
 <!DOCTYPE html>
 <html>
 
 <head>
     <meta charset="utf-8">
-    <title>Analytics</title>
-    <meta name="description" content="">
+    <title>Analytics Dashboard - FITSTOP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-        crossorigin="anonymous"></script>
-
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../staff/staff.css">
 
     <link href="../styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
-<body class="bg-dark">
+<body>
     <?php include('includes/header_admin.php') ?>
-    <div class="dashboard-header">
-        <div class="container">
-            <h1 class="mb-2">Welcome back,
-                <?php
-                echo $_SESSION["username"] ?? '';
-                ?>
-            </h1>
-            <p class="mb-0">Here's what's happening with your gym today.</p>
-        </div>
-    </div>
 
-    <!-- Main Content -->
-    <div class="container pb-5">
-        <!-- Stats Cards -->
-        <div class="row">
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="stat-label">Total Members</p>
-                            <h2 class="stat-number">1,247</h2>
-                            <small class="text-success"><i class="bi bi-arrow-up"></i> 12% from last month</small>
-                        </div>
-                        <div class="stat-icon border border-warning">
-                            <i class="bi bi-person-badge"></i>
-                        </div>
-                    </div>
-                </div>
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1><i class="bi bi-graph-up"></i> Analytics Dashboard</h1>
+                <p>Real-time insights and performance metrics</p>
             </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="stat-label">Active Staff</p>
-                            <h2 class="stat-number">24</h2>
-                            <small class="text-muted"><i class="bi bi-dash"></i> No change</small>
-                        </div>
-                        <div class="stat-icon border border-warning">
-                            <i class="bi bi-people"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="stat-label">Revenue (MTD)</p>
-                            <h2 class="stat-number">$28.5K</h2>
-                            <small class="text-success"><i class="bi bi-arrow-up"></i> 8% from last month</small>
-                        </div>
-                        <div class="stat-icon border border-warning">
-                            <i class="bi bi-currency-dollar"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="stat-label">Check-ins Today</p>
-                            <h2 class="stat-number">142</h2>
-                            <small class="text-success"><i class="bi bi-arrow-up"></i> 5% from yesterday</small>
-                        </div>
-                        <div class="stat-icon border border-warning">
-                            <i class="bi bi-door-open"></i>
-                        </div>
-                    </div>
+            <div class="topbar-right">
+                <div class="topbar-badge">
+                    <div class="topbar-dot"></div>
+                    <span>Live Data</span>
                 </div>
             </div>
         </div>
-        <div class="row">
-            <div class="col-md-8">
-                <div class="chart-container">
-                    <h5 class="mb-3">Member Growth</h5>
-                    <canvas id="memberChart" height="80"></canvas>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="chart-container">
-                    <h5 class="mb-3">Membership Types</h5>
-                    <canvas id="membershipChart" height="200"></canvas>
-                </div>
-            </div>
-        </div>
-        <?php
-        include("../Login/connection.php");
 
-        // Pagination settings
-        $records_per_page = 10;
-        $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
-        $offset = ($page - 1) * $records_per_page;
-
-        // Get total number of users
-        $total_query = $pdo->query("SELECT COUNT(*) as total FROM users WHERE user_type = 'user'");
-        $total_records = $total_query->fetch()['total'];
-        $total_pages = ceil($total_records / $records_per_page);
-
-        // Get users for current page
-        $stmt = $pdo->prepare("SELECT username, first_name, last_name, email, last_logged_in, is_verified 
-                       FROM users 
-                       WHERE user_type = 'user' 
-                       ORDER BY last_logged_in DESC 
-                       LIMIT :limit OFFSET :offset");
-        $stmt->bindValue(':limit', $records_per_page, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-        $stmt->execute();
-        $users = $stmt->fetchAll();
-
-        // Function to format last logged in time
-        function timeAgo($datetime)
-        {
-            if (!$datetime)
-                return 'Never';
-
-            $time = strtotime($datetime);
-            $diff = time() - $time;
-
-            if ($diff < 60)
-                return 'Just now';
-            if ($diff < 3600)
-                return floor($diff / 60) . ' minutes ago';
-            if ($diff < 86400)
-                return floor($diff / 3600) . ' hours ago';
-            if ($diff < 604800)
-                return floor($diff / 86400) . ' days ago';
-
-            return date('M d, Y', $time);
-        }
-        ?>
-
-        <!-- Recent Member Activity Section -->
-        <div class="row">
-            <div class="col-md-12">
-                <div class="chart-container">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0">Recent Member Activity</h5>
-                        <span class="text-muted">Showing
-                            <?php echo min($offset + 1, $total_records); ?>-
-                            <?php echo min($offset + $records_per_page, $total_records); ?> of
-                            <?php echo $total_records; ?> members
-                        </span>
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <a href="view_members.php" style="text-decoration: none; color: inherit;">
+                <div class="stat-box">
+                    <div class="stat-icon members">
+                        <i class="bi bi-people-fill"></i>
                     </div>
+                    <div>
+                        <div class="stat-value"><?php echo $stats['total_members']; ?></div>
+                        <div class="stat-label">Total Members</div>
+                    </div>
+                </div>
+            </a>
 
-                    <div class="table-responsive">
-                        <table class="table table-hover">
+            <a href="view_staff.php" style="text-decoration: none; color: inherit;">
+                <div class="stat-box">
+                    <div class="stat-icon registrations">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <div>
+                        <div class="stat-value"><?php echo $stats['total_staff']; ?></div>
+                        <div class="stat-label">Active Staff</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="transactions.php" style="text-decoration: none; color: inherit;">
+                <div class="stat-box">
+                    <div class="stat-icon equipment">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div>
+                        <div class="stat-value">₱<?php echo number_format($stats['total_revenue'], 0); ?></div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="notification.php" style="text-decoration: none; color: inherit;">
+                <div class="stat-box">
+                    <div class="stat-icon notifications">
+                        <i class="bi bi-bell-fill"></i>
+                    </div>
+                    <div>
+                        <div class="stat-value"><?php echo $stats['unread_notifications']; ?></div>
+                        <div class="stat-label">Unread Notifications</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        </section>
+        <!-- Charts Row 1 -->
+        <section>
+            <h2><i class="bi bi-bar-chart-line"></i> Growth & Revenue Trends</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <!-- Member Growth Chart -->
+                <div class="registration-card">
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <i class="bi bi-graph-up-arrow"></i> Member Growth (6 Months)
+                    </h3>
+                    <div style="position: relative; height: 250px;">
+                        <canvas id="memberGrowthChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Revenue Chart -->
+                <div class="registration-card">
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <i class="bi bi-cash-stack"></i> Revenue by Month
+                    </h3>
+                    <div style="position: relative; height: 250px;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Row 2 -->
+        <section>
+            <h2><i class="bi bi-activity"></i> Activity & Usage</h2>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
+                <!-- Daily Check-ins -->
+                <div class="registration-card">
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <i class="bi bi-calendar-check"></i> Daily Check-ins (Last 7 Days)
+                    </h3>
+                    <canvas id="checkinActivityChart" style="max-height: 250px;"></canvas>
+                </div>
+
+                <!-- User Verification Pie -->
+                <div class="registration-card">
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <i class="bi bi-shield-check"></i> Member Verification
+                    </h3>
+                    <canvas id="verificationChart" style="max-height: 250px;"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Tables Row -->
+        <section>
+            <h2><i class="bi bi-table"></i> Recent Activity & Insights</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <!-- Low Stock Items -->
+                <div class="registration-card">
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <i class="bi bi-exclamation-triangle"></i> Low Stock Alert
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <?php foreach ($low_stock as $item): ?>
+                            <div
+                                style="display: flex; justify-content: space-between; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
+                                <span
+                                    style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($item['item_name']); ?></span>
+                                <span class="status-badge low-stock"><?php echo $item['quantity']; ?> left</span>
+                            </div>
+                        <?php endforeach; ?>
+                        <?php if (empty($low_stock)): ?>
+                            <div style="text-align: center; padding: 20px; color: var(--text-muted);">All items well stocked
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Top Exercises -->
+                <div class="registration-card">
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <i class="bi bi-trophy"></i> Most Popular Exercises
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <?php foreach ($top_exercises as $exercise): ?>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
+                                <span
+                                    style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($exercise['name']); ?></span>
+                                <span
+                                    style="color: var(--hazard); font-family: 'Chakra Petch', sans-serif; font-weight: 700;"><?php echo $exercise['usage_count']; ?>
+                                    logs</span>
+                            </div>
+                        <?php endforeach; ?>
+                        <?php if (empty($top_exercises)): ?>
+                            <div style="text-align: center; padding: 20px; color: var(--text-muted);">No workout logs yet
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Transactions & Feedback -->
+        <section>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <!-- Recent Transactions -->
+                <div class="registration-card">
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <i class="bi bi-receipt"></i> Recent Transactions
+                    </h3>
+                    <div class="inventory-table">
+                        <table>
                             <thead>
                                 <tr>
-                                    <th>Member</th>
-                                    <th>Email</th>
-                                    <th>Username</th>
-                                    <th>Last Login</th>
-                                    <th>Status</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Date</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if (count($users) > 0): ?>
-                                    <?php foreach ($users as $user): ?>
-                                        <tr>
-                                            <td>
-                                                <i class="bi bi-person-circle me-2"></i>
-                                                <?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?>
-                                            </td>
-                                            <td>
-                                                <?php echo htmlspecialchars($user['email']); ?>
-                                            </td>
-                                            <td>@
-                                                <?php echo htmlspecialchars($user['username']); ?>
-                                            </td>
-                                            <td>
-                                                <?php echo timeAgo($user['last_logged_in']); ?>
-                                            </td>
-                                            <td>
-                                                <?php if ($user['is_verified']): ?>
-                                                    <span class="badge bg-success">Active</span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-warning">Not Verified</span>
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
+                                <?php foreach ($recent_transactions as $txn): ?>
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">No members found</td>
+                                        <td><?php echo htmlspecialchars($txn['customer_name']); ?></td>
+                                        <td>₱<?php echo number_format($txn['amount'], 2); ?></td>
+                                        <td><?php echo htmlspecialchars($txn['payment_method']); ?></td>
+                                        <td><?php echo date('M d, Y', strtotime($txn['transaction_date'])); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                <?php if (empty($recent_transactions)): ?>
+                                    <tr>
+                                        <td colspan="4" style="text-align: center; color: var(--text-muted);">No
+                                            transactions</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
+                </div>
 
-                    <!-- Pagination -->
-                    <?php if ($total_pages > 1): ?>
-                        <nav aria-label="Member pagination">
-                            <ul class="pagination justify-content-center mb-0">
-                                <!-- Previous Button -->
-                                <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
-                                    <a class="page-link" href="?page=<?php echo $page - 1; ?>" tabindex="-1">
-                                        <i class="bi bi-chevron-left"></i> Previous
-                                    </a>
-                                </li>
-
-                                <!-- Page Numbers -->
-                                <?php
-                                // Show max 5 page numbers at a time
-                                $start_page = max(1, $page - 2);
-                                $end_page = min($total_pages, $page + 2);
-
-                                // First page
-                                if ($start_page > 1): ?>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page=1">1</a>
-                                    </li>
-                                    <?php if ($start_page > 2): ?>
-                                        <li class="page-item disabled"><span class="page-link">...</span></li>
-                                    <?php endif; ?>
-                                <?php endif; ?>
-
-                                <!-- Page number buttons -->
-                                <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
-                                    <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
-                                        <a class="page-link" href="?page=<?php echo $i; ?>">
-                                            <?php echo $i; ?>
-                                        </a>
-                                    </li>
-                                <?php endfor; ?>
-
-                                <!-- Last page -->
-                                <?php if ($end_page < $total_pages): ?>
-                                    <?php if ($end_page < $total_pages - 1): ?>
-                                        <li class="page-item disabled"><span class="page-link">...</span></li>
-                                    <?php endif; ?>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page=<?php echo $total_pages; ?>">
-                                            <?php echo $total_pages; ?>
-                                        </a>
-                                    </li>
-                                <?php endif; ?>
-
-                                <!-- Next Button -->
-                                <li class="page-item <?php echo ($page >= $total_pages) ? 'disabled' : ''; ?>">
-                                    <a class="page-link" href="?page=<?php echo $page + 1; ?>">
-                                        Next <i class="bi bi-chevron-right"></i>
-                                    </a>
-                                </li>
-                            </ul>
-                        </nav>
-                    <?php endif; ?>
+                <!-- Recent Feedback -->
+                <div class="registration-card">
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <i class="bi bi-chat-dots"></i> Recent Feedback
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <?php foreach ($recent_feedback as $fb): ?>
+                            <?php
+                            $statusClass = 'maintenance';
+                            if ($fb['status'] === 'resolved')
+                                $statusClass = 'active';
+                            if ($fb['status'] === 'closed')
+                                $statusClass = 'inactive';
+                            ?>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
+                                <span
+                                    style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($fb['about']); ?></span>
+                                <span
+                                    class="status-badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($fb['status']); ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                        <?php if (empty($recent_feedback)): ?>
+                            <div style="text-align: center; padding: 20px; color: var(--text-muted);">No feedback yet</div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
-        </div>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <?php
-        include("../Login/connection.php");
-
-        $member_growth = [];
-        $months = [];
-        for ($i = 11; $i >= 0; $i--) {
-            $date = date('Y-m', strtotime("-$i months"));
-            $month_name = date('M', strtotime("-$i months"));
-
-            $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM users WHERE user_type = 'user' AND strftime('%Y-%m', created_at) <= :date");
-            $stmt->execute(['date' => $date]);
-            $count = $stmt->fetch()['count'];
-
-            $months[] = $month_name;
-            $member_growth[] = $count;
-        }
-
-        // Get user distribution by type (Admin, Staff, User)
-        $stmt = $pdo->query("SELECT user_type, COUNT(*) as count FROM users GROUP BY user_type");
-        $user_type_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $type_labels = [];
-        $type_counts = [];
-        $colors = ['#3498db', '#17a2b8', '#343a40', '#28a745', '#ffc107'];
-        $color_index = 0;
-
-        foreach ($user_type_data as $data) {
-            $type_labels[] = ucfirst($data['user_type']);
-            $type_counts[] = $data['count'];
-        }
-        ?>
-
-        <script>
-            // Member Growth Chart - Using real database data
-            const memberCtx = document.getElementById('memberChart').getContext('2d');
-            new Chart(memberCtx, {
-                type: 'line',
-                data: {
-                    labels: <?php echo json_encode($months); ?>,
-                    datasets: [{
-                        label: 'Members',
-                        data: <?php echo json_encode($member_growth); ?>,
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-
-            // User Types Distribution Chart
-            const membershipCtx = document.getElementById('membershipChart').getContext('2d');
-            new Chart(membershipCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: <?php echo json_encode($type_labels); ?>,
-                    datasets: [{
-                        data: <?php echo json_encode($type_counts); ?>,
-                        backgroundColor: ['#3498db', '#28a745', '#ffc107'],
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-        </script>
+        </section>
     </div>
-    <?php include('includes/footer_admin.php') ?>
+
+    <script>
+        // Chart.js Default Config
+        Chart.defaults.color = '#999';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.07)';
+        Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+        // Member Growth Chart
+        new Chart(document.getElementById('memberGrowthChart'), {
+            type: 'line',
+            data: {
+                labels: <?php echo json_encode(array_column($member_growth, 'month')); ?>,
+                datasets: [{
+                    label: 'New Members',
+                    data: <?php echo json_encode(array_column($member_growth, 'count')); ?>,
+                    borderColor: '#FFCC00',
+                    backgroundColor: 'rgba(255, 204, 0, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+        // Revenue Chart
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'bar',
+            data: {
+                labels: <?php echo json_encode(array_column($revenue_by_month, 'month')); ?>,
+                datasets: [{
+                    label: 'Revenue',
+                    data: <?php echo json_encode(array_column($revenue_by_month, 'total')); ?>,
+                    backgroundColor: 'rgba(255, 204, 0, 0.7)',
+                    borderColor: '#FFCC00',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return '₱' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return 'Revenue: ₱' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        // Daily Check-ins Chart
+        console.log('Check-in data:', <?php echo json_encode($checkin_activity); ?>);
+
+        new Chart(document.getElementById('checkinActivityChart'), {
+            type: 'line',
+            data: {
+                labels: <?php echo json_encode(array_column($checkin_activity, 'day')); ?>,
+                datasets: [{
+                    label: 'Member Check-ins',
+                    data: <?php echo json_encode(array_column($checkin_activity, 'count')); ?>,
+                    borderColor: '#22d07a',
+                    backgroundColor: 'rgba(34, 208, 122, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: true }
+                }
+            }
+        });
+
+        // Verification Pie Chart
+        new Chart(document.getElementById('verificationChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Verified', 'Not Verified'],
+                datasets: [{
+                    data: [<?php echo $verification['verified']; ?>, <?php echo $verification['not_verified']; ?>],
+                    backgroundColor: ['#22d07a', '#ff9f43'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 15, font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>

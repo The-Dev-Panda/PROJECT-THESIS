@@ -8,7 +8,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] !== 'admin') {
 
 include('../Login/connection.php');
 
-$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
 $records_per_page = 10;
 $offset = ($page - 1) * $records_per_page;
 
@@ -36,8 +36,8 @@ $where_clause = count($where) > 0 ? 'WHERE ' . implode(' AND ', $where) : '';
 
 $total_stmt = $pdo->prepare("SELECT COUNT(*) as total FROM exercises $where_clause");
 $total_stmt->execute($params);
-$total_records = (int)$total_stmt->fetch(PDO::FETCH_ASSOC)['total'];
-$total_pages = max(1, (int)ceil($total_records / $records_per_page));
+$total_records = (int) $total_stmt->fetch(PDO::FETCH_ASSOC)['total'];
+$total_pages = max(1, (int) ceil($total_records / $records_per_page));
 
 $query = "SELECT exercise_id, name, target_muscle, movement_type FROM exercises $where_clause ORDER BY name ASC LIMIT :limit OFFSET :offset";
 $stmt = $pdo->prepare($query);
@@ -56,114 +56,158 @@ $allowedMovementTypes = ['strength', 'cardio', 'hypertrophy', 'flexibility', 'mo
 ?>
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
-    <title>Exercise Library</title>
+    <title>Exercise Library - FITSTOP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+
+    <link rel="stylesheet" href="../staff/staff.css">
+
     <link href="../styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 </head>
-<body class="bg-dark">
-<?php include('includes/header_admin.php'); ?>
-<div class="container pb-5">
-    <div class="page-header my-4">
-        <h1 class="text-white">Exercise Library</h1>
-        <p class="text-muted">Manage exercises used in workout logging and member programs.</p>
-    </div>
 
-    <?php if (!empty($_GET['success'])): ?>
-        <div class="alert alert-success"><?php echo htmlspecialchars($_GET['success']); ?></div>
-    <?php endif; ?>
-    <?php if (!empty($_GET['error'])): ?>
-        <div class="alert alert-danger"><?php echo htmlspecialchars($_GET['error']); ?></div>
-    <?php endif; ?>
+<body>
+    <?php include('includes/header_admin.php'); ?>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <form method="GET" class="row g-2 align-items-end" style="width:100%;">
-            <div class="col-sm-4">
-                <label class="form-label text-light">Search</label>
-                <input type="text" name="search" class="form-control" placeholder="Exercise name" value="<?php echo htmlspecialchars($search); ?>">
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1><i class="bi bi-bar-chart-line"></i> Exercise Library</h1>
+                <p>Manage exercises for workout logging and member programs</p>
             </div>
-            <div class="col-sm-3">
-                <label class="form-label text-light">Target Muscle</label>
-                <select name="target_muscle" class="form-select">
-                    <option value="">All</option>
-                    <?php foreach ($target_list as $target): ?>
-                        <option value="<?php echo htmlspecialchars($target); ?>" <?php echo ($target_muscle == $target) ? 'selected' : ''; ?>><?php echo htmlspecialchars($target); ?></option>
-                    <?php endforeach; ?>
-                </select>
+            <div class="topbar-right">
+                <div class="topbar-badge">
+                    <i class="bi bi-lightning-fill"></i>
+                    <span><?php echo $total_records; ?> Exercises</span>
+                </div>
             </div>
-            <div class="col-sm-3">
-                <label class="form-label text-light">Movement Type</label>
-                <select name="movement_type" class="form-select">
-                    <option value="">All</option>
-                    <?php foreach ($movement_list as $movement): ?>
-                        <option value="<?php echo htmlspecialchars($movement); ?>" <?php echo ($movement_type == $movement) ? 'selected' : ''; ?>><?php echo htmlspecialchars($movement); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-sm-2">
-                <button type="submit" class="btn btn-warning w-100">Filter</button>
-            </div>
-        </form>
-    </div>
+        </div>
 
-    <div class="mb-3 text-end">
-        <a href="add_exercise.php" class="btn btn-success"><i class="bi bi-plus-circle me-1"></i>Add Exercise</a>
-    </div>
+        <!-- Success/Error Messages -->
+        <?php if (!empty($_GET['success'])): ?>
+            <div
+                style="background: rgba(34, 208, 122, 0.1); border: 1px solid var(--success); color: var(--success); padding: 10px 14px; margin-bottom: 20px; font-size: 12px; text-transform: uppercase;">
+                <i class="bi bi-check-circle"></i> <?php echo htmlspecialchars($_GET['success']); ?>
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($_GET['error'])): ?>
+            <div
+                style="background: rgba(255, 71, 87, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 10px 14px; margin-bottom: 20px; font-size: 12px; text-transform: uppercase;">
+                <i class="bi bi-exclamation-triangle"></i> <?php echo htmlspecialchars($_GET['error']); ?>
+            </div>
+        <?php endif; ?>
 
-    <div class="table-responsive exercise-card">
-        <table class="table table-hover table-dark align-middle">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Target Muscle</th>
-                    <th>Movement Type</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (count($exercises) > 0): ?>
-                    <?php foreach ($exercises as $row): ?>
+        <!-- Filters Section -->
+        <section>
+            <div class="inventory-header">
+                <form method="GET" class="search-container">
+                    <div class="search-wrapper" style="min-width: 200px;">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" name="search" class="search-input" placeholder="Search exercises..."
+                            value="<?php echo htmlspecialchars($search); ?>">
+                    </div>
+                    <select name="target_muscle" class="search-input" style="min-width: 200px;">
+                        <option value="">All Muscles</option>
+                        <?php foreach ($target_list as $target): ?>
+                            <option value="<?php echo htmlspecialchars($target); ?>" <?php echo ($target_muscle == $target) ? 'selected' : ''; ?>><?php echo htmlspecialchars($target); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <select name="movement_type" class="search-input" style="min-width: 200px;">
+                        <option value="">All Types</option>
+                        <?php foreach ($movement_list as $movement): ?>
+                            <option value="<?php echo htmlspecialchars($movement); ?>" <?php echo ($movement_type == $movement) ? 'selected' : ''; ?>><?php echo htmlspecialchars($movement); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="submit" class="search-btn">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                </form>
+                <a href="add_exercise.php" class="add-btn">
+                    <i class="bi bi-plus-circle"></i> Add Exercise
+                </a>
+            </div>
+
+            <!-- Exercise Table -->
+            <div class="inventory-table">
+                <table>
+                    <thead>
                         <tr>
-                            <td><?php echo (int)$row['exercise_id']; ?></td>
-                            <td><?php echo htmlspecialchars($row['name']); ?></td>
-                            <td><?php echo htmlspecialchars($row['target_muscle']); ?></td>
-                            <td><?php echo htmlspecialchars($row['movement_type']); ?></td>
-                            <td>
-                                <a class="btn btn-sm btn-outline-primary me-1" href="edit_exercise.php?id=<?php echo (int)$row['exercise_id']; ?>">Edit</a>
-                                <a class="btn btn-sm btn-outline-danger" href="process_delete_exercise.php?id=<?php echo (int)$row['exercise_id']; ?>" onclick="return confirm('Delete this exercise? This cannot be reversed.');">Delete</a>
-                            </td>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Target Muscle</th>
+                            <th>Movement Type</th>
+                            <th>Actions</th>
                         </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr><td colspan="5" class="text-center">No exercises found.</td></tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                    </thead>
+                    <tbody>
+                        <?php if (count($exercises) > 0): ?>
+                            <?php foreach ($exercises as $row): ?>
+                                <tr>
+                                    <td><?php echo (int) $row['exercise_id']; ?></td>
+                                    <td><strong><?php echo htmlspecialchars($row['name']); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($row['target_muscle']); ?></td>
+                                    <td>
+                                        <span
+                                            style="padding: 4px 11px; font-size: 10px; background: rgba(255,255,255,0.1); border: 1px solid var(--border); text-transform: uppercase;">
+                                            <?php echo htmlspecialchars($row['movement_type']); ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a class="btn-icon" href="edit_exercise.php?id=<?php echo (int) $row['exercise_id']; ?>">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a class="btn-icon"
+                                            href="process_delete_exercise.php?id=<?php echo (int) $row['exercise_id']; ?>"
+                                            onclick="return confirm('Delete this exercise? This cannot be reversed.');">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">No
+                                    exercises found</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <?php if ($total_pages > 1): ?>
+                <div style="margin-top: 20px; text-align: center;">
+                    <?php if ($page > 1): ?>
+                        <a href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&target_muscle=<?php echo urlencode($target_muscle); ?>&movement_type=<?php echo urlencode($movement_type); ?>"
+                            style="padding: 8px 12px; margin: 0 3px; background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
+                            <i class="bi bi-chevron-left"></i> Prev
+                        </a>
+                    <?php endif; ?>
+
+                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                        <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&target_muscle=<?php echo urlencode($target_muscle); ?>&movement_type=<?php echo urlencode($movement_type); ?>"
+                            style="padding: 8px 12px; margin: 0 3px; background: <?php echo ($i == $page) ? 'var(--hazard)' : 'var(--bg-card)'; ?>; color: <?php echo ($i == $page) ? '#000' : 'var(--text-muted)'; ?>; border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
+                            <?php echo $i; ?>
+                        </a>
+                    <?php endfor; ?>
+
+                    <?php if ($page < $total_pages): ?>
+                        <a href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&target_muscle=<?php echo urlencode($target_muscle); ?>&movement_type=<?php echo urlencode($movement_type); ?>"
+                            style="padding: 8px 12px; margin: 0 3px; background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </a>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </section>
     </div>
 
-    <?php if ($total_pages > 1): ?>
-        <nav aria-label="page navigation">
-            <ul class="pagination justify-content-center mt-3">
-                <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
-                    <a class="page-link" href="?page=<?php echo max(1, $page - 1); ?>&search=<?php echo urlencode($search); ?>&target_muscle=<?php echo urlencode($target_muscle); ?>&movement_type=<?php echo urlencode($movement_type); ?>">Previous</a>
-                </li>
-                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                    <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
-                        <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&target_muscle=<?php echo urlencode($target_muscle); ?>&movement_type=<?php echo urlencode($movement_type); ?>"><?php echo $i; ?></a>
-                    </li>
-                <?php endfor; ?>
-                <li class="page-item <?php echo ($page >= $total_pages) ? 'disabled' : ''; ?>">
-                    <a class="page-link" href="?page=<?php echo min($total_pages, $page + 1); ?>&search=<?php echo urlencode($search); ?>&target_muscle=<?php echo urlencode($target_muscle); ?>&movement_type=<?php echo urlencode($movement_type); ?>">Next</a>
-                </li>
-            </ul>
-        </nav>
-    <?php endif; ?>
-</div>
 </body>
+
 </html>
