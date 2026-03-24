@@ -89,12 +89,12 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                         </div>
                     <?php endif; ?>
 
-                    <div class="form-actions">
-                        <button type="button" class="btn-secondary"
+                    <div class="form-actions row">
+                        <button type="button" class="btn-secondary col-sm-12 col-xl-2"
                             onclick="window.location.href='create_announcement.php'">
                             <i class="bi bi-x-circle"></i> Cancel
                         </button>
-                        <button type="submit" class="btn-primary">
+                        <button type="submit" class="btn-primary  col-sm-12 col-xl-2">
                             <i class="bi bi-megaphone-fill"></i> Publish Announcement
                         </button>
                     </div>
@@ -168,7 +168,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                         $date = date('M j, Y \a\t g:i A', strtotime($announcement['created_at']));
 
                         echo "
-            <div class=' col-3 registration-card' style='margin: 1%'>
+            <div class=' col-sm-12 col-xl-3 registration-card' style='margin: 1%; aspect-ratio: 4/5'>
                 $image_html
                 <div style='border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;'>
                     <h3 style='font-family: \"Chakra Petch\", sans-serif; font-size: 20px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px;'>$title</h3>

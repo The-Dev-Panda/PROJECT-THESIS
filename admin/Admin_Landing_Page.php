@@ -110,7 +110,7 @@ $verification = $stmt->fetch();
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 </head>
 
 <body>
@@ -131,105 +131,109 @@ $verification = $stmt->fetch();
             </div>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-            <a href="view_members.php" style="text-decoration: none; color: inherit;">
-                <div class="stat-box">
-                    <div class="stat-icon members">
-                        <i class="bi bi-people-fill"></i>
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a href="view_members.php" class="text-decoration-none text-dark">
+                    <div class="stat-box h-100">
+                        <div class="stat-icon members"><i class="bi bi-people-fill"></i></div>
+                        <div>
+                            <div class="stat-value"><?php echo $stats['total_members']; ?></div>
+                            <div class="stat-label">Total Members</div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="stat-value"><?php echo $stats['total_members']; ?></div>
-                        <div class="stat-label">Total Members</div>
-                    </div>
-                </div>
-            </a>
-
-            <a href="view_staff.php" style="text-decoration: none; color: inherit;">
-                <div class="stat-box">
-                    <div class="stat-icon registrations">
-                        <i class="bi bi-person-badge"></i>
-                    </div>
-                    <div>
-                        <div class="stat-value"><?php echo $stats['total_staff']; ?></div>
-                        <div class="stat-label">Active Staff</div>
-                    </div>
-                </div>
-            </a>
-
-            <a href="transaction.php" style="text-decoration: none; color: inherit;">
-                <div class="stat-box">
-                    <div class="stat-icon equipment">
-                        <i class="bi bi-currency-dollar"></i>
-                    </div>
-                    <div>
-                        <div class="stat-value">₱<?php echo number_format($stats['total_revenue'], 2); ?></div>
-                        <div class="stat-label">Total Revenue</div>
-                    </div>
-                </div>
-            </a>
-
-            <a href="notification.php" style="text-decoration: none; color: inherit;">
-                <div class="stat-box">
-                    <div class="stat-icon notifications">
-                        <i class="bi bi-bell-fill"></i>
-                    </div>
-                    <div>
-                        <div class="stat-value"><?php echo $stats['unread_notifications']; ?></div>
-                        <div class="stat-label">Unread Notifications</div>
-                    </div>
-                </div>
-            </a>
-        </div>
-        </section>
-        <!-- Charts Row 1 -->
-        <section>
-            <h2><i class="bi bi-bar-chart-line"></i> Growth & Revenue Trends</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <!-- Member Growth Chart -->
-                <div class="registration-card">
-                    <h3
-                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
-                        <i class="bi bi-graph-up-arrow"></i> Member Growth (6 Months)
-                    </h3>
-                    <div style="position: relative; height: 250px;">
-                        <canvas id="memberGrowthChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Revenue Chart -->
-                <div class="registration-card">
-                    <h3
-                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
-                        <i class="bi bi-cash-stack"></i> Revenue by Month
-                    </h3>
-                    <div style="position: relative; height: 250px;">
-                        <canvas id="revenueChart"></canvas>
-                    </div>
-                </div>
+                </a>
             </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a href="view_staff.php" class="text-decoration-none text-dark">
+                    <div class="stat-box h-100">
+                        <div class="stat-icon registrations"><i class="bi bi-person-badge"></i></div>
+                        <div>
+                            <div class="stat-value"><?php echo $stats['total_staff']; ?></div>
+                            <div class="stat-label">Active Staff</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a href="transaction.php" class="text-decoration-none text-dark">
+                    <div class="stat-box h-100">
+                        <div class="stat-icon equipment"><i class="bi bi-currency-dollar"></i></div>
+                        <div>
+                            <div class="stat-value">₱<?php echo number_format($stats['total_revenue'], 2); ?></div>
+                            <div class="stat-label">Total Revenue</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a href="notification.php" class="text-decoration-none text-dark">
+                    <div class="stat-box h-100">
+                        <div class="stat-icon notifications"><i class="bi bi-bell-fill"></i></div>
+                        <div>
+                            <div class="stat-value"><?php echo $stats['unread_notifications']; ?></div>
+                            <div class="stat-label">Unread Notifications</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        <!-- Charts Row 1 -->
+        <section class="container=fluid">
+            <h2><i class="bi bi-bar-chart-line"></i> Growth & Revenue Trends</h2>
+            <div class="row g-3">
+                <div class="col-12 col-lg-6">
+                    <!-- Member Growth Chart -->
+                    <div class="registration-card">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                            <i class="bi bi-graph-up-arrow"></i> Member Growth (6 Months)
+                        </h3>
+                        <div style="position: relative; height: 250px;">
+                            <canvas id="memberGrowthChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-6">
+
+                    <!-- Revenue Chart -->
+                    <div class="registration-card">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                            <i class="bi bi-cash-stack"></i> Revenue by Month
+                        </h3>
+                        <div style="position: relative; height: 250px;">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
         </section>
 
         <!-- Charts Row 2 -->
         <section>
             <h2><i class="bi bi-activity"></i> Activity & Usage</h2>
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
-                <!-- Daily Check-ins -->
-                <div class="registration-card">
-                    <h3
-                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
-                        <i class="bi bi-calendar-check"></i> Daily Check-ins (Last 7 Days)
-                    </h3>
-                    <canvas id="checkinActivityChart" style="max-height: 250px;"></canvas>
+            <div class="row g-3">
+                <div class="col-12 col-lg-8">
+                    <!-- Daily Check-ins -->
+                    <div class="registration-card">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                            <i class="bi bi-calendar-check"></i> Daily Check-ins (Last 7 Days)
+                        </h3>
+                        <canvas id="checkinActivityChart" style="max-height: 250px;"></canvas>
+                    </div>
                 </div>
-
-                <!-- User Verification Pie -->
-                <div class="registration-card">
-                    <h3
-                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
-                        <i class="bi bi-shield-check"></i> Member Verification
-                    </h3>
-                    <canvas id="verificationChart" style="max-height: 250px;"></canvas>
+                <div class="col-12 col-lg-4">
+                    <!-- User Verification Pie -->
+                    <div class="registration-card">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                            <i class="bi bi-shield-check"></i> Member Verification
+                        </h3>
+                        <canvas id="verificationChart" style="max-height: 250px;"></canvas>
+                    </div>
                 </div>
             </div>
         </section>
@@ -237,50 +241,56 @@ $verification = $stmt->fetch();
         <!-- Data Tables Row -->
         <section>
             <h2><i class="bi bi-table"></i> Recent Activity & Insights</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <!-- Low Stock Items -->
-                <div class="registration-card">
-                    <h3
-                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
-                        <i class="bi bi-exclamation-triangle"></i> Low Stock Alert
-                    </h3>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <?php foreach ($low_stock as $item): ?>
-                            <div
-                                style="display: flex; justify-content: space-between; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
-                                <span
-                                    style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($item['item_name']); ?></span>
-                                <span class="status-badge low-stock"><?php echo $item['quantity']; ?> left</span>
-                            </div>
-                        <?php endforeach; ?>
-                        <?php if (empty($low_stock)): ?>
-                            <div style="text-align: center; padding: 20px; color: var(--text-muted);">All items well stocked
-                            </div>
-                        <?php endif; ?>
+            <div class="row g-3">
+                <div class="col-12 col-lg-6">
+                    <!-- Low Stock Items -->
+                    <div class="registration-card">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                            <i class="bi bi-exclamation-triangle"></i> Low Stock Alert
+                        </h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <?php foreach ($low_stock as $item): ?>
+                                <div
+                                    style="display: flex; justify-content: space-between; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
+                                    <span
+                                        style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($item['item_name']); ?></span>
+                                    <span class="status-badge low-stock"><?php echo $item['quantity']; ?> left</span>
+                                </div>
+                            <?php endforeach; ?>
+                            <?php if (empty($low_stock)): ?>
+                                <div style="text-align: center; padding: 20px; color: var(--text-muted);">All items well
+                                    stocked
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Top Exercises -->
-                <div class="registration-card">
-                    <h3
-                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
-                        <i class="bi bi-trophy"></i> Most Popular Exercises
-                    </h3>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <?php foreach ($top_exercises as $exercise): ?>
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
-                                <span
-                                    style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($exercise['name']); ?></span>
-                                <span
-                                    style="color: var(--hazard); font-family: 'Chakra Petch', sans-serif; font-weight: 700;"><?php echo $exercise['usage_count']; ?>
-                                    logs</span>
-                            </div>
-                        <?php endforeach; ?>
-                        <?php if (empty($top_exercises)): ?>
-                            <div style="text-align: center; padding: 20px; color: var(--text-muted);">No workout logs yet
-                            </div>
-                        <?php endif; ?>
+                <div class="col-12 col-lg-6">
+                    <!-- Top Exercises -->
+                    <div class="registration-card">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                            <i class="bi bi-trophy"></i> Most Popular Exercises
+                        </h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <?php foreach ($top_exercises as $exercise): ?>
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
+                                    <span
+                                        style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($exercise['name']); ?></span>
+                                    <span
+                                        style="color: var(--hazard); font-family: 'Chakra Petch', sans-serif; font-weight: 700;"><?php echo $exercise['usage_count']; ?>
+                                        logs</span>
+                                </div>
+                            <?php endforeach; ?>
+                            <?php if (empty($top_exercises)): ?>
+                                <div style="text-align: center; padding: 20px; color: var(--text-muted);">No workout
+                                    logs
+                                    yet
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -288,69 +298,74 @@ $verification = $stmt->fetch();
 
         <!-- Recent Transactions & Feedback -->
         <section>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <!-- Recent Transactions -->
-                <div class="registration-card">
-                    <h3
-                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
-                        <i class="bi bi-receipt"></i> Recent Transactions
-                    </h3>
-                    <div class="inventory-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Customer</th>
-                                    <th>Amount</th>
-                                    <th>Method</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($recent_transactions as $txn): ?>
+            <div class="row">
+                <div class="col-12 col-lg-6">
+                    <!-- Recent Transactions -->
+                    <div class="registration-card">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                            <i class="bi bi-receipt"></i> Recent Transactions
+                        </h3>
+                        <div class="table-responsive inventory-table">
+                            <table>
+                                <thead>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($txn['customer_name']); ?></td>
-                                        <td>₱<?php echo number_format($txn['amount'], 2); ?></td>
-                                        <td><?php echo htmlspecialchars($txn['payment_method']); ?></td>
-                                        <td><?php echo date('M d, Y', strtotime($txn['transaction_date'])); ?></td>
+                                        <th>Customer</th>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th>Date</th>
                                     </tr>
-                                <?php endforeach; ?>
-                                <?php if (empty($recent_transactions)): ?>
-                                    <tr>
-                                        <td colspan="4" style="text-align: center; color: var(--text-muted);">No
-                                            transactions</td>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($recent_transactions as $txn): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($txn['customer_name']); ?></td>
+                                            <td>₱<?php echo number_format($txn['amount'], 2); ?></td>
+                                            <td><?php echo htmlspecialchars($txn['payment_method']); ?></td>
+                                            <td><?php echo date('M d, Y', strtotime($txn['transaction_date'])); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    <?php if (empty($recent_transactions)): ?>
+                                        <tr>
+                                            <td colspan="4" style="text-align: center; color: var(--text-muted);">No
+                                                transactions</td>
+                                        </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Recent Feedback -->
-                <div class="registration-card">
-                    <h3
-                        style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
-                        <i class="bi bi-chat-dots"></i> Recent Feedback
-                    </h3>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <?php foreach ($recent_feedback as $fb): ?>
-                            <?php
-                            $statusClass = 'maintenance';
-                            if ($fb['status'] === 'resolved')
-                                $statusClass = 'active';
-                            if ($fb['status'] === 'closed')
-                                $statusClass = 'inactive';
-                            ?>
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
-                                <span
-                                    style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($fb['about']); ?></span>
-                                <span
-                                    class="status-badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($fb['status']); ?></span>
-                            </div>
-                        <?php endforeach; ?>
-                        <?php if (empty($recent_feedback)): ?>
-                            <div style="text-align: center; padding: 20px; color: var(--text-muted);">No feedback yet</div>
-                        <?php endif; ?>
+                <div class="col-12 col-lg-6">
+                    <!-- Recent Feedback -->
+                    <div class="registration-card">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                            <i class="bi bi-chat-dots"></i> Recent Feedback
+                        </h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <?php foreach ($recent_feedback as $fb): ?>
+                                <?php
+                                $statusClass = 'maintenance';
+                                if ($fb['status'] === 'resolved')
+                                    $statusClass = 'active';
+                                if ($fb['status'] === 'closed')
+                                    $statusClass = 'inactive';
+                                ?>
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
+                                    <span
+                                        style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($fb['about']); ?></span>
+                                    <span
+                                        class="status-badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($fb['status']); ?></span>
+                                </div>
+                            <?php endforeach; ?>
+                            <?php if (empty($recent_feedback)): ?>
+                                <div style="text-align: center; padding: 20px; color: var(--text-muted);">No feedback
+                                    yet
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
