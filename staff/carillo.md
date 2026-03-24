@@ -7,7 +7,7 @@
         ':datetime' => date('Y-m-d H:i:s'),
         ':remarks' => 'Successfully added by' . $_SESSION['username'],
         ':is_read' => 0,
-        ':category' => 'membership'
+        ':category' => 'membership' //change rin to ano category siya
     ]);
 
     dagdag mo nalang to saan mo sa tingin dapat magnotify sa admin
