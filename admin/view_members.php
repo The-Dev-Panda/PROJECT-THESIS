@@ -16,7 +16,7 @@ $sort_order = isset($_GET['order']) ? $_GET['order'] : 'DESC';
 
 // Pagination
 $records_per_page = 10;
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $offset = ($page - 1) * $records_per_page;
 
 // Allowed sort columns
@@ -109,39 +109,67 @@ function timeAgo($datetime)
 }
 
 // Helper function to generate sort URL
-function getSortUrl($column, $current_sort, $current_order, $search, $status, $time, $page) {
+function getSortUrl($column, $current_sort, $current_order, $search, $status, $time, $page)
+{
     $new_order = 'ASC';
     if ($current_sort === $column && $current_order === 'ASC') {
         $new_order = 'DESC';
     }
     $params = "sort=$column&order=$new_order";
-    if ($search) $params .= "&search=" . urlencode($search);
-    if ($status) $params .= "&status=$status";
-    if ($time) $params .= "&time=$time";
-    if ($page > 1) $params .= "&page=$page";
+    if ($search)
+        $params .= "&search=" . urlencode($search);
+    if ($status)
+        $params .= "&status=$status";
+    if ($time)
+        $params .= "&time=$time";
+    if ($page > 1)
+        $params .= "&page=$page";
     return "?$params";
 }
 
 // Helper function to get sort icon
-function getSortIcon($column, $current_sort, $current_order) {
+function getSortIcon($column, $current_sort, $current_order)
+{
     if ($current_sort !== $column) {
         return '<i class="bi bi-arrow-down-up" style="opacity: 0.3; font-size: 10px;"></i>';
     }
-    return $current_order === 'ASC' 
-        ? '<i class="bi bi-arrow-up" style="color: var(--hazard); font-size: 10px;"></i>' 
+    return $current_order === 'ASC'
+        ? '<i class="bi bi-arrow-up" style="color: var(--hazard); font-size: 10px;"></i>'
         : '<i class="bi bi-arrow-down" style="color: var(--hazard); font-size: 10px;"></i>';
 }
 
 // Build pagination URL
-function getPaginationUrl($page_num, $search, $status, $time, $sort, $order) {
+function getPaginationUrl($page_num, $search, $status, $time, $sort, $order)
+{
     $params = "page=$page_num";
-    if ($search) $params .= "&search=" . urlencode($search);
-    if ($status) $params .= "&status=$status";
-    if ($time) $params .= "&time=$time";
-    if ($sort !== 'created_at') $params .= "&sort=$sort";
-    if ($order !== 'DESC') $params .= "&order=$order";
+    if ($search)
+        $params .= "&search=" . urlencode($search);
+    if ($status)
+        $params .= "&status=$status";
+    if ($time)
+        $params .= "&time=$time";
+    if ($sort !== 'created_at')
+        $params .= "&sort=$sort";
+    if ($order !== 'DESC')
+        $params .= "&order=$order";
     return "?$params";
 }
+
+//stats bar
+//new members today
+$stmt = $pdo->query("
+    SELECT COUNT(*) as total FROM users WHERE user_type = 'user'AND DATE(created_at) = DATE('now')");
+$new_today = $stmt->fetch()['total'];
+//new members this month
+$stmt = $pdo->query("
+    SELECT COUNT(*) as total FROM users WHERE user_type = 'user'AND strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')
+");
+$new_month = $stmt->fetch()['total'];
+//active members (logged in last 7 days)
+$stmt = $pdo->query("
+    SELECT COUNT(*) as total FROM users WHERE user_type = 'user'AND last_logged_in >= DATE('now', '-7 days')
+");
+$active_members = $stmt->fetch()['total'];
 ?>
 
 <!DOCTYPE html>
@@ -151,20 +179,21 @@ function getPaginationUrl($page_num, $search, $status, $time, $sort, $order) {
     <meta charset="utf-8">
     <title>View Members | FITSTOP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
-    
+
     <style>
         .sortable-header {
             cursor: pointer;
             user-select: none;
             transition: color 0.2s;
         }
+
         .sortable-header:hover {
             color: var(--hazard);
         }
@@ -173,7 +202,7 @@ function getPaginationUrl($page_num, $search, $status, $time, $sort, $order) {
 
 <body>
     <?php include('includes/header_admin.php') ?>
-    
+
     <div class="main-content">
         <!-- Topbar -->
         <div class="topbar">
@@ -181,13 +210,51 @@ function getPaginationUrl($page_num, $search, $status, $time, $sort, $order) {
                 <h1><i class="bi bi-person-badge"></i> Members</h1>
                 <p>Manage gym member accounts</p>
             </div>
-            <div class="topbar-right">
-                <div class="topbar-badge">
-                    <i class="bi bi-people-fill"></i>
-                    <span><?php echo $total_records; ?> Total Members</span>
+        </div>
+        <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="stat-box">
+                <div class="stat-icon members">
+                    <i class="bi bi-person"></i>
+                </div>
+                <div>
+                    <div class="stat-value">
+                        <?php echo number_format(isset($total_records) ? $total_records : 0, 0); ?>
+                    </div>
+                    <div class="stat-label">Total Members</div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon registrations">
+                    <i class="bi bi-person"></i>
+                </div>
+                <div>
+                    <div class="stat-value"><?php echo number_format(isset($new_today) ? $new_today : 0, 0); ?>
+                    </div>
+                    <div class="stat-label">New Members Today</div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon registrations">
+                    <i class="bi bi-person"></i>
+                </div>
+                <div>
+                    <div class="stat-value"><?php echo number_format(isset($new_month) ? $new_month : 0, 0); ?>
+                    </div>
+                    <div class="stat-label">New Members This Month</div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon registrations">
+                    <i class="bi bi-person" style="color: var(--success);"></i>
+                </div>
+                <div>
+                    <div class="stat-value"><?php echo number_format(isset($active_members) ? $active_members : 0, 0); ?>
+                    </div>
+                    <div class="stat-label">Active Members (logged in last 7 days)</div>
                 </div>
             </div>
         </div>
+
 
         <!-- Search & Filter Section -->
         <section>
@@ -195,31 +262,35 @@ function getPaginationUrl($page_num, $search, $status, $time, $sort, $order) {
                 <form method="GET" class="search-container">
                     <div class="search-wrapper" style="flex: 2;">
                         <i class="bi bi-search search-icon"></i>
-                        <input type="text" name="search" class="search-input" placeholder="Search members..." value="<?php echo htmlspecialchars($search); ?>" style="min-width: 200px;">
+                        <input type="text" name="search" class="search-input" placeholder="Search members..."
+                            value="<?php echo htmlspecialchars($search); ?>" style="min-width: 200px;">
                     </div>
-                    
+
                     <select name="status" class="search-input" style="min-width: 150px;">
                         <option value="">All Status</option>
-                        <option value="verified" <?php echo $status_filter === 'verified' ? 'selected' : ''; ?>>Verified</option>
-                        <option value="not_verified" <?php echo $status_filter === 'not_verified' ? 'selected' : ''; ?>>Not Verified</option>
+                        <option value="verified" <?php echo $status_filter === 'verified' ? 'selected' : ''; ?>>Verified
+                        </option>
+                        <option value="not_verified" <?php echo $status_filter === 'not_verified' ? 'selected' : ''; ?>>
+                            Not Verified</option>
                     </select>
-                    
+
                     <select name="time" class="search-input" style="min-width: 180px;">
                         <option value="">All Time</option>
                         <option value="today" <?php echo $time_filter === 'today' ? 'selected' : ''; ?>>Today</option>
                         <option value="week" <?php echo $time_filter === 'week' ? 'selected' : ''; ?>>Last 7 Days</option>
-                        <option value="month" <?php echo $time_filter === 'month' ? 'selected' : ''; ?>>Last 30 Days</option>
+                        <option value="month" <?php echo $time_filter === 'month' ? 'selected' : ''; ?>>Last 30 Days
+                        </option>
                         <option value="year" <?php echo $time_filter === 'year' ? 'selected' : ''; ?>>Last Year</option>
                     </select>
-                    
+
                     <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
                     <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
-                    
+
                     <button type="submit" class="search-btn">
                         <i class="bi bi-funnel"></i> Filter
                     </button>
                 </form>
-                
+
                 <?php if ($search || $status_filter || $time_filter): ?>
                     <a href="view_members.php" class="btn-secondary" style="padding: 11px 22px; text-decoration: none;">
                         <i class="bi bi-x-circle"></i> Clear Filters
@@ -232,7 +303,9 @@ function getPaginationUrl($page_num, $search, $status, $time, $sort, $order) {
                 <h2 style="margin: 0; border: none; padding: 0; font-size: 11px;">
                     <i class="bi bi-list-ul"></i> All Members
                     <span style="color: var(--text-muted); margin-left: 10px;">
-                        Showing <?php echo min($offset + 1, $total_records); ?>-<?php echo min($offset + $records_per_page, $total_records); ?> of <?php echo $total_records; ?>
+                        Showing
+                        <?php echo min($offset + 1, $total_records); ?>-<?php echo min($offset + $records_per_page, $total_records); ?>
+                        of <?php echo $total_records; ?>
                     </span>
                 </h2>
             </div>
@@ -241,22 +314,28 @@ function getPaginationUrl($page_num, $search, $status, $time, $sort, $order) {
                 <table>
                     <thead>
                         <tr>
-                            <th class="sortable-header" onclick="window.location.href='<?php echo getSortUrl('first_name', $sort_by, $sort_order, $search, $status_filter, $time_filter, $page); ?>'">
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('first_name', $sort_by, $sort_order, $search, $status_filter, $time_filter, $page); ?>'">
                                 Name <?php echo getSortIcon('first_name', $sort_by, $sort_order); ?>
                             </th>
-                            <th class="sortable-header" onclick="window.location.href='<?php echo getSortUrl('username', $sort_by, $sort_order, $search, $status_filter, $time_filter, $page); ?>'">
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('username', $sort_by, $sort_order, $search, $status_filter, $time_filter, $page); ?>'">
                                 Username <?php echo getSortIcon('username', $sort_by, $sort_order); ?>
                             </th>
-                            <th class="sortable-header" onclick="window.location.href='<?php echo getSortUrl('email', $sort_by, $sort_order, $search, $status_filter, $time_filter, $page); ?>'">
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('email', $sort_by, $sort_order, $search, $status_filter, $time_filter, $page); ?>'">
                                 Email <?php echo getSortIcon('email', $sort_by, $sort_order); ?>
                             </th>
-                            <th class="sortable-header" onclick="window.location.href='<?php echo getSortUrl('last_logged_in', $sort_by, $sort_order, $search, $status_filter, $time_filter, $page); ?>'">
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('last_logged_in', $sort_by, $sort_order, $search, $status_filter, $time_filter, $page); ?>'">
                                 Last Login <?php echo getSortIcon('last_logged_in', $sort_by, $sort_order); ?>
                             </th>
-                            <th class="sortable-header" onclick="window.location.href='<?php echo getSortUrl('is_verified', $sort_by, $sort_order, $search, $status_filter, $time_filter, $page); ?>'">
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('is_verified', $sort_by, $sort_order, $search, $status_filter, $time_filter, $page); ?>'">
                                 Status <?php echo getSortIcon('is_verified', $sort_by, $sort_order); ?>
                             </th>
-                            <th class="sortable-header" onclick="window.location.href='<?php echo getSortUrl('created_at', $sort_by, $sort_order, $search, $status_filter, $time_filter, $page); ?>'">
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('created_at', $sort_by, $sort_order, $search, $status_filter, $time_filter, $page); ?>'">
                                 Joined <?php echo getSortIcon('created_at', $sort_by, $sort_order); ?>
                             </th>
                             <th>Actions</th>
@@ -286,7 +365,8 @@ function getPaginationUrl($page_num, $search, $status, $time, $sort, $order) {
                                     <td><?php echo $status_badge; ?></td>
                                     <td><?php echo $joined; ?></td>
                                     <td>
-                                        <a href='delete_member.php?id=<?php echo $member['id']; ?>' class='btn-icon' onclick='return confirm("Are you sure you want to remove this member?")'>
+                                        <a href='delete_member.php?id=<?php echo $member['id']; ?>' class='btn-icon'
+                                            onclick='return confirm("Are you sure you want to remove this member?")'>
                                             <i class='bi bi-trash'></i>
                                         </a>
                                     </td>
@@ -331,14 +411,15 @@ function getPaginationUrl($page_num, $search, $status, $time, $sort, $order) {
 
             <?php if ($search || $status_filter || $time_filter || $sort_by !== 'created_at' || $sort_order !== 'DESC'): ?>
                 <div style="margin-top: 16px; text-align: center;">
-                    <a href="view_members.php" style="color: var(--text-muted); text-decoration: none; font-size: 11px; text-transform: uppercase; font-family: 'Chakra Petch', sans-serif;">
+                    <a href="view_members.php"
+                        style="color: var(--text-muted); text-decoration: none; font-size: 11px; text-transform: uppercase; font-family: 'Chakra Petch', sans-serif;">
                         <i class="bi bi-arrow-counterclockwise"></i> Reset All Filters
                     </a>
                 </div>
             <?php endif; ?>
         </section>
     </div>
-    
+
 </body>
 
 </html>
