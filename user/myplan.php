@@ -622,7 +622,139 @@ if (count($smartSuggestions) < 3) {
             </div>
           </div>
         </section>
+<?php
+$workoutMode = $_GET['mode'] ?? 'moderate';
+$selectedLevel = $_GET['level'] ?? $fitnessLower;
 
+$sets = 3;
+$multiplier = 1;
+
+if ($workoutMode === 'light') {
+  $sets = 2;
+  $multiplier = 0.8;
+} elseif ($workoutMode === 'heavy') {
+  $sets = 5;
+  $multiplier = 1.3;
+}
+
+if ($selectedLevel === 'advanced') {
+  $sets += 1;
+} elseif ($selectedLevel === 'beginner') {
+  $sets = max(2, $sets - 1);
+}
+
+$exercisePlan = [
+  ['name' => 'Chest Press', 'machine' => 'SeatedChestPress.php', 'cal' => 8],
+  ['name' => 'Lat Pulldown', 'machine' => 'LatPulldownSeatedCableRow.php', 'cal' => 8],
+  ['name' => 'Leg Press', 'machine' => 'LegPressHackSquat.php', 'cal' => 10],
+  ['name' => 'Shoulder Press', 'machine' => 'ShoulderPress.php', 'cal' => 7],
+  ['name' => 'Preacher Curl', 'machine' => 'PreacherCurl.php', 'cal' => 6],
+  ['name' => 'Treadmill', 'machine' => 'Treadmill.php', 'cal' => 12],
+];
+
+$totalBurn = 0;
+foreach ($exercisePlan as &$ex) {
+  $ex['burn'] = round($ex['cal'] * $sets * $multiplier);
+  $totalBurn += $ex['burn'];
+}
+unset($ex);
+
+$targetBurn = 300;
+if ($workoutMode === 'light') $targetBurn = 200;
+if ($workoutMode === 'heavy') $targetBurn = 600;
+?>
+
+<style>
+.plan-select {
+  background:#0f0f0f;
+  border:1px solid #383838;
+  color:#fff;
+  border-radius:8px;
+  padding:8px 10px;
+  font-size:0.85rem;
+  outline:none;
+}
+.plan-select:focus {
+  border-color:#ffcc00;
+}
+
+.plan-mode-btn.active {
+  background:#ffcc00;
+  color:#111 !important;
+  border-color:#ffcc00;
+}
+</style>
+
+<!-- ── WORKOUT PLAN ── -->
+<section class="diet-schedule-section" id="workoutPlan">
+  <div class="section-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <h3>Workout Plan</h3>
+
+    <form method="GET" action="#workoutPlan" style="display:flex; gap:10px;">
+      <input type="hidden" name="mode" value="<?php echo htmlspecialchars($workoutMode); ?>">
+      <select name="level" class="plan-select" onchange="this.form.submit()">
+        <option value="beginner" <?php echo $selectedLevel==='beginner'?'selected':''; ?>>Beginner</option>
+        <option value="intermediate" <?php echo $selectedLevel==='intermediate'?'selected':''; ?>>Intermediate</option>
+        <option value="advanced" <?php echo $selectedLevel==='advanced'?'selected':''; ?>>Advanced</option>
+      </select>
+    </form>
+  </div>
+
+  <div style="margin-bottom:10px;">
+    <a href="?mode=light&level=<?php echo urlencode($selectedLevel); ?>#workoutPlan" class="btn-outline plan-mode-btn <?php echo $workoutMode==='light'?'active':''; ?>">Light</a>
+    <a href="?mode=moderate&level=<?php echo urlencode($selectedLevel); ?>#workoutPlan" class="btn-outline plan-mode-btn <?php echo $workoutMode==='moderate'?'active':''; ?>">Moderate</a>
+    <a href="?mode=heavy&level=<?php echo urlencode($selectedLevel); ?>#workoutPlan" class="btn-outline plan-mode-btn <?php echo $workoutMode==='heavy'?'active':''; ?>">Heavy</a>
+  </div>
+
+  <div class="diet-calendar">
+    <?php foreach ($exercisePlan as $ex): ?>
+    <div class="diet-day active">
+      <div class="day-header">
+        <span class="day-name"><?php echo $ex['name']; ?></span>
+        <span class="day-calories"><?php echo $ex['burn']; ?> cal</span>
+      </div>
+
+      <div class="meals">
+        <div class="meal-item completed">
+          <span class="meal-time">Sets</span>
+          <span class="meal-name"><?php echo $sets; ?> sets</span>
+          <span class="meal-cal">Target</span>
+        </div>
+
+        <div class="meal-item">
+          <span class="meal-time">Machine</span>
+          <span class="meal-name">
+            <a href="<?php echo $ex['machine']; ?>">View Guide</a>
+          </span>
+          <span class="meal-cal">Open</span>
+        </div>
+      </div>
+    </div>
+    <?php endforeach; ?>
+  </div>
+
+  <div class="nutrition-summary">
+    <div class="nutrition-card">
+      <div class="nutrition-icon">
+        <i class="fas fa-fire"></i>
+      </div>
+      <div class="nutrition-info">
+        <span class="nutrition-label">Calories Burned</span>
+        <span class="nutrition-value"><?php echo $totalBurn; ?> cal</span>
+      </div>
+    </div>
+
+    <div class="nutrition-card">
+      <div class="nutrition-icon">
+        <i class="fas fa-bullseye"></i>
+      </div>
+      <div class="nutrition-info">
+        <span class="nutrition-label">Target Goal</span>
+        <span class="nutrition-value"><?php echo $targetBurn; ?> cal</span>
+      </div>
+    </div>
+  </div>
+</section>
         <!-- ════════════════════════════════════════════
            MEAL TRACKER — NEW UI (dark/yellow)
            ════════════════════════════════════════════ -->
