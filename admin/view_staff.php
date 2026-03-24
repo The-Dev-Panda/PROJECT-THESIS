@@ -131,7 +131,7 @@ function getSortIcon($column, $current_sort, $current_order) {
                 <form method="GET" class="search-container">
                     <div class="search-wrapper" style="flex: 1;">
                         <i class="bi bi-search search-icon"></i>
-                        <input type="text" name="search" class="search-input" placeholder="Search staff by name, username, or email..." value="<?php echo htmlspecialchars($search); ?>">
+                        <input type="text" name="search" class="search-input" maxlength="30" placeholder="Search staff by name, username, or email..." value="<?php echo htmlspecialchars($search); ?>">
                     </div>
                     <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
                     <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">

@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Handle Add Item
 if (isset($_POST['add_item'])) {
     $item_name = $_POST['item_name'];
-    $category = $_POST['category'];
+    $category = strtoupper($_POST['category']);
     $quantity = $_POST['quantity'];
     $price = $_POST['price'];
     $description = $_POST['description'];
@@ -37,7 +37,7 @@ if (isset($_POST['add_item'])) {
 if (isset($_POST['update_item'])) {
     $id = $_POST['item_id'];
     $item_name = $_POST['item_name'];
-    $category = $_POST['category'];
+    $category = strtoupper($_POST['category']);
     $quantity = $_POST['quantity'];
     $price = $_POST['price'];
     $description = $_POST['description'];
@@ -176,7 +176,7 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
                     <div class="search-wrapper">
                         <i class="bi bi-search search-icon"></i>
                         <form method="GET" style="width: 100%;">
-                            <input type="text" name="search" class="search-input" placeholder="Search items..."
+                            <input type="text" name="search" class="search-input" maxlength="30" placeholder="Search items..."
                                 value="<?php echo htmlspecialchars($search); ?>">
                         </form>
                     </div>
@@ -277,11 +277,11 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
                     </div>
                     <form method="POST">
                         <?php echo fitstop_csrf_input(); ?>
-                        <input type="hidden" name="item_id" id="edit_item_id">
+                        <input type="hidden" name="item_id" id="edit_item_id" maxlength="30">
                         <div class="modal-body">
                             <div class="form-group">
                                 <label>Item Name</label>
-                                <input type="text" name="item_name" id="edit_item_name" class="form-input" required>
+                                <input type="text" name="item_name" id="edit_item_name"  maxlength="30" class="form-input" required>
                             </div>
 
                             <div class="form-group" style="margin-top: 15px;">
@@ -296,27 +296,27 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
-                                    <input type="text" name="category" id="edit_category" class="form-input"
+                                    <input type="text" name="category" id="edit_category"  maxlength="30" class="form-input"
                                         placeholder="Or type new" required>
                                 </div>
                             </div>
 
                             <div class="form-group" style="margin-top: 15px;">
                                 <label>Quantity</label>
-                                <input type="number" name="quantity" id="edit_quantity" class="form-input" min="0"
+                                <input type="number" name="quantity" id="edit_quantity"  maxlength="30" class="form-input" min="0"
                                     required>
                             </div>
 
                             <div class="form-group" style="margin-top: 15px;">
                                 <label>Price</label>
-                                <input type="number" name="price" id="edit_price" class="form-input" step="0.01" min="0"
+                                <input type="number" name="price" id="edit_price"  maxlength="30" class="form-input" step="0.01" min="0"
                                     required>
                             </div>
 
                             <div class="form-group" style="margin-top: 15px;">
                                 <label>Description</label>
                                 <textarea name="description" id="edit_description" class="form-input"
-                                    rows="3"></textarea>
+                                    rows="2"></textarea>
                             </div>
                         </div>
                         <div class="modal-footer" style="border-top: 1px solid var(--border);">
@@ -391,6 +391,15 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
             function handleCategoryChange() {
                 const select = document.getElementById('category_select');
                 const input = document.getElementById('category_input');
+
+                if (select.value !== '') {
+                    input.value = '';
+                    input.value = select.value;
+                }
+            }
+            function handleEditCategoryChange() {
+                const select = document.getElementById('edit_category_select');
+                const input = document.getElementById('edit_category');
 
                 if (select.value !== '') {
                     input.value = '';
