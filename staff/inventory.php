@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $itemName  = $row['item_name'];
                 $price     = (float)$row['price'];
                 $total     = $price * $qtySold;
-                $staffId   = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+                $staffId   = isset($_SESSION['id']) ? (int)$_SESSION['id'] : (isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null);
                 $receiptNo = 'INV-' . date('Ymd') . '-' . $id . '-' . rand(100, 999);
                 $pdo->prepare("
                     INSERT INTO transactions
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
 
         if ($action === 'submit_sales_form') {
-            $staffId    = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+            $staffId    = isset($_SESSION['id']) ? (int)$_SESSION['id'] : (isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null);
             $saleDate   = $_POST['sale_date'] ?? date('Y-m-d');
             $nonMember  = (int)($_POST['non_member'] ?? 0);
             $member     = (int)($_POST['member'] ?? 0);
