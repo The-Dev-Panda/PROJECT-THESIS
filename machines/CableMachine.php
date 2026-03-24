@@ -47,6 +47,60 @@ include('../includes/header.php');
                             aria-label="View photo 2">
                         <img src="../images/CableStack.jpg" alt="Cable Machine Photo" loading="lazy" decoding="async">
                     </button>
+                    <button type="button"
+                            data-src="https://drive.google.com/file/d/1jrDkVIgglQ8eao8DtfohEAmelZSK52bN/preview"
+                            data-type="video"
+                            aria-label="Play video 1">
+                        <img src="../images/CableMachine-Pullups.png" alt="Cable Machine Video" loading="lazy" decoding="async">
+                    </button>
+                    <button type="button"
+                            data-src="https://drive.google.com/file/d/1F8UKIkBvwQU__gpCUL4WdJXbLSRRpu49/preview"
+                            data-type="video"
+                            aria-label="Play video 2">
+                        <img src="../images/CableMachine-Pullups.png" alt="Cable Machine Video" loading="lazy" decoding="async">
+                    </button>
+                    <button type="button"
+                            data-src="https://drive.google.com/file/d/1qi8o1d-YCxjBnIJJoqWnclOeUAw4Q8uX/preview"
+                            data-type="video"
+                            aria-label="Play video 3">
+                        <img src="../images/CableMachine-Pullups.png" alt="Cable Machine Video" loading="lazy" decoding="async">
+                    </button>
+                    <button type="button"
+                            data-src="https://drive.google.com/file/d/1t_3Qzv3AqMelmCWXO24ASMSEN5H2uO69/preview"
+                            data-type="video"
+                            aria-label="Play video 4">
+                        <img src="../images/CableMachine-Pullups.png" alt="Cable Machine Video" loading="lazy" decoding="async">
+                    </button>
+                    <button type="button"
+                            data-src="https://drive.google.com/file/d/1AyYcJ-JKfTzBT2SfCV0mlt3DuL714I8N/preview"
+                            data-type="video"
+                            aria-label="Play video 5">
+                        <img src="../images/CableMachine-Pullups.png" alt="Cable Machine Video" loading="lazy" decoding="async">
+                    </button>
+                    <button type="button"
+                            data-src="https://drive.google.com/file/d/1v3fA4qz-XlQwYIp_HaU0uvS7mvMEPrBB/preview"
+                            data-type="video"
+                            aria-label="Play video 6">
+                        <img src="../images/CableMachine-Pullups.png" alt="Cable Machine Video" loading="lazy" decoding="async">
+                    </button>
+                    <button type="button"
+                            data-src="https://drive.google.com/file/d/1A6mL5HNHiTJqyjafr-vjIEbCL6XAVW2P/preview"
+                            data-type="video"
+                            aria-label="Play video 7">
+                        <img src="../images/CableMachine-Pullups.png" alt="Cable Machine Video" loading="lazy" decoding="async">
+                    </button>
+                    <button type="button"
+                            data-src="https://drive.google.com/file/d/1f6tMfsAvc8UvyyEC3XmGhWjCK1Tsg1tE/preview"
+                            data-type="video"
+                            aria-label="Play video 8">
+                        <img src="../images/CableMachine-Pullups.png" alt="Cable Machine Video" loading="lazy" decoding="async">
+                    </button>
+                    <button type="button"
+                            data-src="https://drive.google.com/file/d/1-uWJe8uWOhCSr2RSZEJaiei3c1I-gVaT/preview"
+                            data-type="video"
+                            aria-label="Play video 9">
+                        <img src="../images/CableMachine-Pullups.png" alt="Cable Machine Video" loading="lazy" decoding="async">
+                    </button>
                 </div>
 
                 <!-- Exercises Section -->

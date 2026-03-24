@@ -41,6 +41,24 @@ include('../includes/header.php');
                             aria-label="View photo 1">
                         <img src="../images/LatPulldown-CableRow.png" alt="Lat Pulldown / Seated Cable Row Photo" loading="lazy" decoding="async">
                     </button>
+                    <button type="button"
+                            data-src="https://drive.google.com/file/d/1-T8N1zoSe0wGjq4QuuEDpAUUZvwwzAeu/preview"
+                            data-type="video"
+                            aria-label="Play video 1">
+                        <img src="../images/LatPulldown-CableRow.png" alt="Lat Pulldown / Seated Cable Row Video" loading="lazy" decoding="async">
+                    </button>
+                    <button type="button"
+                            data-src="https://drive.google.com/file/d/1pBMfDjKrEDDMDBXswyHJa9KMUkyIqprb/preview"
+                            data-type="video"
+                            aria-label="Play video 2">
+                        <img src="../images/LatPulldown-CableRow.png" alt="Lat Pulldown / Seated Cable Row Video" loading="lazy" decoding="async">
+                    </button>
+                    <button type="button"
+                            data-src="https://drive.google.com/file/d/1ORjqadorjZrhXnhkVIUmBoGgs7yiEicm/preview"
+                            data-type="video"
+                            aria-label="Play video 3">
+                        <img src="../images/LatPulldown-CableRow.png" alt="Lat Pulldown / Seated Cable Row Video" loading="lazy" decoding="async">
+                    </button>
                 </div>
 
                 <!-- Exercises Section -->
