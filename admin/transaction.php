@@ -216,6 +216,7 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
                             <th>Payment Method</th>
                             <th>Date</th>
                             <th>Staff</th>
+                            <th>Description</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -233,6 +234,7 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
                                     <td><?php echo htmlspecialchars($txn['payment_method']); ?></td>
                                     <td><?php echo date('M d, Y g:i A', strtotime($txn['transaction_date'])); ?></td>
                                     <td><?php echo htmlspecialchars($txn['staff_id'] ?? 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($txn['desc']); ?></td>
                                     <td>
                                         <button class="btn-icon"
                                             onclick="viewTransaction(<?php echo htmlspecialchars(json_encode($txn)); ?>)">
