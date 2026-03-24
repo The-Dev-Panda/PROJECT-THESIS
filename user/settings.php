@@ -293,7 +293,7 @@
       action: () =>
         showModal(
           "Terms & Privacy Policy",
-          "By using Fit-Stop you agree to our Terms of Service and Privacy Policy. We do not sell your data.",
+          "By using this platform, you agree that we may collect, process, and store your membership data, health metrics, workout logs, and payment records. These details will be used for gym services, progress tracking, reporting, and loyalty programs. We will protect your personal data with role-based access, secure systems, and limited visibility to only authorized staff. We do not share your personal fitness data outside the organization without your explicit consent. All traffic must be encrypted, and all members must confirm this consent before system access.",
         ),
     },
   ];
