@@ -28,13 +28,6 @@ if (isset($_POST['add_item'])) {
         'price' => $price,
         'description' => $description
     ]);
-    $stmt = $pdo->prepare("INSERT INTO notification_history (name, description, remarks, category) VALUES (:name, :description, :remarks, :category)");
-    $stmt->execute([
-        'name' => 'ITEM ADDED',
-        'description' => "Item Name: $item_name, Category: $category, Quantity: $quantity, Price: $price, Description: $description",
-        'remarks' => "BY ADMIN",
-        'category' => 'Inventory'
-    ]);
 
     header('Location: view_inventory.php?success=added');
     exit();
@@ -58,13 +51,6 @@ if (isset($_POST['update_item'])) {
         'description' => $description,
         'id' => $id
     ]);
-    $stmt = $pdo->prepare("INSERT INTO notification_history (name, description, remarks, category) VALUES (:name, :description, :remarks, :category)");
-    $stmt->execute([
-        'name' => 'ITEM UPDATED',
-        'description' => "Item Name: $item_name, Category: $category, Quantity: $quantity, Price: $price, Description: $description",
-        'remarks' => "BY ADMIN",
-        'category' => 'Inventory'
-    ]);
 
     header('Location: view_inventory.php?success=updated');
     exit();
@@ -80,14 +66,7 @@ if (isset($_GET['delete'])) {
     $item_name = $item['item_name'];
     $category = $item['category'];
     $quantity = $item['quantity'];
-
-    $notif = $pdo->prepare("INSERT INTO notification_history (name, description, remarks, category) VALUES (:name, :description, :remarks, :category)");
-    $notif->execute([
-        'name' => 'INVENTORY ITEM DELETED',
-        'description' => "Item '$item_name' ($quantity units) from category '$category' has been removed",
-        'remarks' => "Deleted by " . $_SESSION['username'],
-        'category' => 'Inventory'
-    ]);
+    
     $stmt = $pdo->prepare("DELETE FROM inventory WHERE id = :id");
     $stmt->execute(['id' => $id]);
     header('Location: view_inventory.php?success=deleted');
@@ -143,7 +122,7 @@ $categories = $pdo->query("SELECT DISTINCT category FROM inventory ORDER BY cate
 
 <head>
     <meta charset="utf-8">
-    <title>View Inventory</title>
+    <title>Inventory | FITSTOP</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 

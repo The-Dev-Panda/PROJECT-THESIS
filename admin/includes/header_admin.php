@@ -7,14 +7,14 @@ require_once __DIR__ . '/../../includes/security.php';
 <head>
 
     <link rel="stylesheet" href="../staff/staff.css">
-
+    <link rel="icon" href="../images/Fitstop.png" type="image/x-icon"/>
     <link href="../styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 </head>
 <!-- Sidebar -->
-<!-- Notification Bell (floating bottom-right of sidebar) -->
+<!-- Notification Bell -->
 <div style="position: fixed; bottom: 20px; left: calc(var(--sidebar-w) - 70px); z-index: 1001;">
     <div class="notif-wrapper">
         <button class="notif-bell-btn" id="notifBellBtn">
@@ -93,8 +93,8 @@ require_once __DIR__ . '/../../includes/security.php';
         </div>
     </div>
 </div>
+<!-- Headers -->
 <div class="sidebar">
-
     <div class="sidebar-header">
         <!-- LOGO --><!--  <img src="../images/Fitstop.png" alt="FITSTOP" class="logo-img">  -->
         <span class="logo-text">FITSTOP<span style="color: red !important">-ADMIN</span></span>
@@ -167,6 +167,11 @@ require_once __DIR__ . '/../../includes/security.php';
             onclick="window.location.href='view_members.php'">
             <i class="bi bi-person-badge"></i>
             <span>Members</span>
+        </li>
+        <li class="<?php echo ($current_page == 'membership.php') ? 'active' : ''; ?>"
+            onclick="window.location.href='membership.php'">
+            <i class="bi bi-clipboard-check"></i>
+            <span>Membership</span>
         </li>
         <li class="<?php echo ($current_page == 'exercises.php') ? 'active' : ''; ?>"
             onclick="window.location.href='exercises.php'">

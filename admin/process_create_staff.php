@@ -52,13 +52,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
             'email' => $email,
             'password' => $hashed_password
         ]);
-        $stmt = $pdo->prepare("INSERT INTO notification_history (name, description, remarks, category) VALUES (:name, :description, :remarks, :category)");
-        $stmt->execute([
-            'name' => 'STAFF CREATED',
-            'description' => "$username, $first_name, $last_name, $email",
-            'remarks' => "BY ADMIN",
-            'category' => 'Accounts'
-        ]);
         header('Location: create_staff.php?success=created');
         exit();
         

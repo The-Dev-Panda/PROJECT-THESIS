@@ -9,15 +9,15 @@ try {
         throw new Exception('Invalid request payload');
     }
 
-    $fullName = isset($input['full_name']) ? trim((string)$input['full_name']) : '';
-    $email = isset($input['email']) ? trim((string)$input['email']) : '';
-    $age = isset($input['age']) && $input['age'] !== '' ? (int)$input['age'] : null;
-    $heightCm = isset($input['height_cm']) && $input['height_cm'] !== '' ? (float)$input['height_cm'] : null;
-    $weightKg = isset($input['weight_kg']) && $input['weight_kg'] !== '' ? (float)$input['weight_kg'] : null;
-    $fitnessLevel = isset($input['fitness_level']) ? trim((string)$input['fitness_level']) : null;
-    $goal = isset($input['goal']) ? trim((string)$input['goal']) : null;
-    $password = isset($input['password']) ? (string)$input['password'] : '';
-    $confirmPassword = isset($input['confirm_password']) ? (string)$input['confirm_password'] : '';
+    $fullName = isset($input['full_name']) ? trim((string) $input['full_name']) : '';
+    $email = isset($input['email']) ? trim((string) $input['email']) : '';
+    $age = isset($input['age']) && $input['age'] !== '' ? (int) $input['age'] : null;
+    $heightCm = isset($input['height_cm']) && $input['height_cm'] !== '' ? (float) $input['height_cm'] : null;
+    $weightKg = isset($input['weight_kg']) && $input['weight_kg'] !== '' ? (float) $input['weight_kg'] : null;
+    $fitnessLevel = isset($input['fitness_level']) ? trim((string) $input['fitness_level']) : null;
+    $goal = isset($input['goal']) ? trim((string) $input['goal']) : null;
+    $password = isset($input['password']) ? (string) $input['password'] : '';
+    $confirmPassword = isset($input['confirm_password']) ? (string) $input['confirm_password'] : '';
 
     if ($fullName === '' || $email === '') {
         throw new Exception('Full name and email are required');
@@ -89,7 +89,19 @@ try {
         ':dpa_consent_at' => null
     ]);
 
-    $userId = (int)$db->lastInsertId();
+    //ADMIN NOTIFICATION
+    $sql = "INSERT INTO notification_history (name, description, datetime, remarks, is_read, category) VALUES (:name, :description, :datetime, :remarks, :is_read, :category)";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([
+        ':name' => 'New Member',
+        ':description' => 'username: ' . $username, //change nalang, kung ano dapat malaman ng admin
+        ':datetime' => date('Y-m-d H:i:s'),
+        ':remarks' => 'Successfully added by' . $_SESSION['username'],
+        ':is_read' => 0,
+        ':category' => 'membership'
+    ]);
+
+    $userId = (int) $db->lastInsertId();
 
     $insertProfileStmt = $db->prepare('INSERT INTO member_profiles (user_id, age, height_cm, weight_kg, fitness_level, goal) VALUES (:user_id, :age, :height_cm, :weight_kg, :fitness_level, :goal)');
     $insertProfileStmt->execute([
@@ -103,7 +115,7 @@ try {
 
     $db->commit();
 
-    $memberIdDisplay = 'FS-' . date('Y') . '-' . str_pad((string)$userId, 4, '0', STR_PAD_LEFT);
+    $memberIdDisplay = 'FS-' . date('Y') . '-' . str_pad((string) $userId, 4, '0', STR_PAD_LEFT);
 
     echo json_encode([
         'success' => true,
@@ -111,7 +123,7 @@ try {
         'username' => $username,
         'member_id_display' => $memberIdDisplay,
         'qr_payload' => json_encode([
-            'member_ref' => (string)$userId,
+            'member_ref' => (string) $userId,
             'username' => $username
         ])
     ]);

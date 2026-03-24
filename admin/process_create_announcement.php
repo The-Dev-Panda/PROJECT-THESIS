@@ -38,13 +38,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             'image' => $image_data,
             'created_by' => $created_by
         ]);
-        $stmt = $pdo->prepare("INSERT INTO notification_history (name, description, remarks, category) VALUES (:name, :description, :remarks, :category)");
-        $stmt->execute([
-            'name' => 'ANNOUNCEMENT CREATED',
-            'description' => $description,
-            'remarks' => $created_by,
-            'category' => 'Announcements'
-        ]);
 
         header('Location: create_announcement.php?success=created');
         exit();

@@ -48,17 +48,36 @@ $stmt->execute();
 $transactions = $stmt->fetchAll();
 
 // Calculate stats
+
+//growth
+$stmt = $pdo->query("
+    SELECT 
+        SUM(CASE WHEN DATE(transaction_date) = DATE('now') THEN amount ELSE 0 END) AS today,
+        SUM(CASE WHEN DATE(transaction_date) = DATE('now','-1 day') THEN amount ELSE 0 END) AS yesterday
+    FROM transactions
+    WHERE status = 'completed'
+");
+$data = $stmt->fetch();
+
+$growth = ($data['yesterday'] > 0)
+    ? (($data['today'] - $data['yesterday']) / $data['yesterday']) * 100 : 0;
+
+//total revenue
 $total_revenue_stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions");
 $total_revenue = $total_revenue_stmt->fetch()['total'];
-
+//revenue today
 $today_revenue_stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE DATE(transaction_date) = DATE('now')");
 $today_revenue = $today_revenue_stmt->fetch()['total'];
-
+//revenue this month
 $month_revenue_stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', transaction_date) = strftime('%Y-%m', 'now')");
 $month_revenue = $month_revenue_stmt->fetch()['total'];
-
+//transactions all time
 $total_count_stmt = $pdo->query("SELECT COUNT(*) as total FROM transactions");
 $total_count = $total_count_stmt->fetch()['total'];
+//Transaction today only
+$total_count_stmt_td = $pdo->query("SELECT COUNT(*) as total FROM transactions WHERE DATE(transaction_date) = DATE('now')");
+$total_count_td = $total_count_stmt_td->fetch()['total'];
+
 ?>
 
 <!DOCTYPE html>
@@ -66,7 +85,7 @@ $total_count = $total_count_stmt->fetch()['total'];
 
 <head>
     <meta charset="utf-8">
-    <title>Transactions - FITSTOP</title>
+    <title>Transactions | FITSTOP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
@@ -104,7 +123,7 @@ $total_count = $total_count_stmt->fetch()['total'];
         </div>
 
         <!-- Stats Grid -->
-        <div class="stats-grid">
+        <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
             <div class="stat-box">
                 <div class="stat-icon members">
                     <i class="bi bi-calendar-day"></i>
@@ -121,7 +140,7 @@ $total_count = $total_count_stmt->fetch()['total'];
                 </div>
                 <div>
                     <div class="stat-value">₱<?php echo number_format($month_revenue, 0); ?></div>
-                    <div class="stat-label">This Month</div>
+                    <div class="stat-label">Revenue This Month</div>
                 </div>
             </div>
 
@@ -131,7 +150,7 @@ $total_count = $total_count_stmt->fetch()['total'];
                 </div>
                 <div>
                     <div class="stat-value">₱<?php echo number_format($total_revenue, 0); ?></div>
-                    <div class="stat-label">All Time Revenue</div>
+                    <div class="stat-label">Revenue All Time</div>
                 </div>
             </div>
 
@@ -142,6 +161,24 @@ $total_count = $total_count_stmt->fetch()['total'];
                 <div>
                     <div class="stat-value"><?php echo $total_count; ?></div>
                     <div class="stat-label">Total Transactions</div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon notifications">
+                    <i class="bi bi-receipt-cutoff bi-success"></i>
+                </div>
+                <div>
+                    <div class="stat-value"><?php echo $total_count_td; ?></div>
+                    <div class="stat-label">Transactions (Today)</div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon registrations" style="color: var(--success);">
+                    <i class="bi bi-currency-exchange"></i>
+                </div>
+                <div>
+                    <div class="stat-value"><?php echo ($growth >= 0 ? "<small class='text-success'>▲ " : "<small class='text-danger'>▼") . number_format(abs($growth), 2) . "%</small>";; ?></div>
+                    <div class="stat-label">Growth</div>
                 </div>
             </div>
         </div>
@@ -179,6 +216,7 @@ $total_count = $total_count_stmt->fetch()['total'];
                             <th>Payment Method</th>
                             <th>Date</th>
                             <th>Staff</th>
+                            <th>Description</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -196,6 +234,7 @@ $total_count = $total_count_stmt->fetch()['total'];
                                     <td><?php echo htmlspecialchars($txn['payment_method']); ?></td>
                                     <td><?php echo date('M d, Y g:i A', strtotime($txn['transaction_date'])); ?></td>
                                     <td><?php echo htmlspecialchars($txn['staff_id'] ?? 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($txn['desc']); ?></td>
                                     <td>
                                         <button class="btn-icon"
                                             onclick="viewTransaction(<?php echo htmlspecialchars(json_encode($txn)); ?>)">
