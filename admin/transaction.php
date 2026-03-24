@@ -8,30 +8,70 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
 
 include("../Login/connection.php");
 
+// Get filter and sort parameters
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$payment_method = isset($_GET['payment_method']) ? trim($_GET['payment_method']) : '';
+$time_filter = isset($_GET['time']) ? $_GET['time'] : '';
+$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'transaction_date';
+$sort_order = isset($_GET['order']) ? $_GET['order'] : 'DESC';
+
 // Pagination
 $records_per_page = 10;
 $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $offset = ($page - 1) * $records_per_page;
 
-// Search
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+// Allowed sort columns
+$allowed_sort = ['id', 'receipt_number', 'customer_name', 'customer_type', 'amount', 'payment_method', 'transaction_date'];
+if (!in_array($sort_by, $allowed_sort)) {
+    $sort_by = 'transaction_date';
+}
 
-// Build query
-$where_clause = "";
+// Validate sort order
+$sort_order = ($sort_order === 'ASC') ? 'ASC' : 'DESC';
+
+// Build WHERE clause
+$where_conditions = [];
 $params = [];
 
+// Search filter
 if ($search !== '') {
-    $where_clause = "WHERE customer_name LIKE :search OR receipt_number LIKE :search";
+    $where_conditions[] = "(t.customer_name LIKE :search OR t.receipt_number LIKE :search)";
     $params['search'] = "%$search%";
 }
 
+// Payment method filter
+if ($payment_method !== '') {
+    $where_conditions[] = "t.payment_method = :payment_method";
+    $params['payment_method'] = $payment_method;
+}
+
+// Time filter
+if ($time_filter) {
+    switch ($time_filter) {
+        case 'today':
+            $where_conditions[] = "DATE(t.transaction_date) = DATE('now')";
+            break;
+        case 'week':
+            $where_conditions[] = "t.transaction_date >= DATE('now', '-7 days')";
+            break;
+        case 'month':
+            $where_conditions[] = "t.transaction_date >= DATE('now', '-30 days')";
+            break;
+        case 'year':
+            $where_conditions[] = "t.transaction_date >= DATE('now', '-365 days')";
+            break;
+    }
+}
+
+$where_clause = count($where_conditions) > 0 ? "WHERE " . implode(" AND ", $where_conditions) : "";
+
 // Get total records
-$total_stmt = $pdo->prepare("SELECT COUNT(*) as total FROM transactions $where_clause");
-$total_stmt->execute($params);
-$total_records = $total_stmt->fetch()['total'];
+$total_query = $pdo->prepare("SELECT COUNT(*) as total FROM transactions t $where_clause");
+$total_query->execute($params);
+$total_records = $total_query->fetch()['total'];
 $total_pages = ceil($total_records / $records_per_page);
 
-// Get transactions
+// Get transactions with sorting
 $query = "SELECT 
             t.*, 
             u.first_name, 
@@ -39,7 +79,7 @@ $query = "SELECT
           FROM transactions t
           LEFT JOIN users u ON t.staff_id = u.id
           $where_clause
-          ORDER BY t.transaction_date DESC
+          ORDER BY t.$sort_by $sort_order
           LIMIT :limit OFFSET :offset";
 $stmt = $pdo->prepare($query);
 
@@ -51,9 +91,11 @@ $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $transactions = $stmt->fetchAll();
 
-// Calculate stats
+// Get payment methods for filter dropdown
+$payment_methods_stmt = $pdo->query("SELECT DISTINCT payment_method FROM transactions WHERE payment_method IS NOT NULL ORDER BY payment_method");
+$payment_methods = $payment_methods_stmt->fetchAll(PDO::FETCH_COLUMN);
 
-//growth
+// Calculate stats
 $stmt = $pdo->query("
     SELECT 
         SUM(CASE WHEN DATE(transaction_date) = DATE('now') THEN amount ELSE 0 END) AS today,
@@ -66,22 +108,67 @@ $data = $stmt->fetch();
 $growth = ($data['yesterday'] > 0)
     ? (($data['today'] - $data['yesterday']) / $data['yesterday']) * 100 : 0;
 
-//total revenue
 $total_revenue_stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions");
 $total_revenue = $total_revenue_stmt->fetch()['total'];
-//revenue today
+
 $today_revenue_stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE DATE(transaction_date) = DATE('now')");
 $today_revenue = $today_revenue_stmt->fetch()['total'];
-//revenue this month
+
 $month_revenue_stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', transaction_date) = strftime('%Y-%m', 'now')");
 $month_revenue = $month_revenue_stmt->fetch()['total'];
-//transactions all time
+
 $total_count_stmt = $pdo->query("SELECT COUNT(*) as total FROM transactions");
 $total_count = $total_count_stmt->fetch()['total'];
-//Transaction today only
+
 $total_count_stmt_td = $pdo->query("SELECT COUNT(*) as total FROM transactions WHERE DATE(transaction_date) = DATE('now')");
 $total_count_td = $total_count_stmt_td->fetch()['total'];
 
+// Helper function to generate sort URL
+function getSortUrl($column, $current_sort, $current_order, $search, $payment_method, $time, $page)
+{
+    $new_order = 'ASC';
+    if ($current_sort === $column && $current_order === 'ASC') {
+        $new_order = 'DESC';
+    }
+    $params = "sort=$column&order=$new_order";
+    if ($search)
+        $params .= "&search=" . urlencode($search);
+    if ($payment_method)
+        $params .= "&payment_method=" . urlencode($payment_method);
+    if ($time)
+        $params .= "&time=$time";
+    if ($page > 1)
+        $params .= "&page=$page";
+    return "?$params";
+}
+
+// Helper function to get sort icon
+function getSortIcon($column, $current_sort, $current_order)
+{
+    if ($current_sort !== $column) {
+        return '<i class="bi bi-arrow-down-up" style="opacity: 0.3; font-size: 10px;"></i>';
+    }
+    return $current_order === 'ASC'
+        ? '<i class="bi bi-arrow-up" style="color: var(--hazard); font-size: 10px;"></i>'
+        : '<i class="bi bi-arrow-down" style="color: var(--hazard); font-size: 10px;"></i>';
+}
+
+// Build pagination URL
+function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $order)
+{
+    $params = "page=$page_num";
+    if ($search)
+        $params .= "&search=" . urlencode($search);
+    if ($payment_method)
+        $params .= "&payment_method=" . urlencode($payment_method);
+    if ($time)
+        $params .= "&time=$time";
+    if ($sort !== 'transaction_date')
+        $params .= "&sort=$sort";
+    if ($order !== 'DESC')
+        $params .= "&order=$order";
+    return "?$params";
+}
 ?>
 
 <!DOCTYPE html>
@@ -92,20 +179,20 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
     <title>Transactions | FITSTOP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-        crossorigin="anonymous"></script>
-
-    <link rel="stylesheet" href="../staff/staff.css">
-
-    <link href="../styles.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
+    <style>
+        .sortable-header {
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s;
+        }
+
+        .sortable-header:hover {
+            color: var(--hazard);
+        }
+    </style>
 </head>
 
 <body>
@@ -127,7 +214,7 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
         </div>
 
         <!-- Stats Grid -->
-        <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
+        <div class="stats-grid" style="grid-template-columns: repeat(auto, 1fr);">
             <div class="stat-box">
                 <div class="stat-icon members">
                     <i class="bi bi-calendar-day"></i>
@@ -167,6 +254,7 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
                     <div class="stat-label">Total Transactions</div>
                 </div>
             </div>
+
             <div class="stat-box">
                 <div class="stat-icon notifications">
                     <i class="bi bi-receipt-cutoff bi-success"></i>
@@ -176,36 +264,61 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
                     <div class="stat-label">Transactions (Today)</div>
                 </div>
             </div>
+
             <div class="stat-box">
-                <div class="stat-icon registrations" style="color: var(--success);">
+                <div class="stat-icon registrations"
+                    style="color: <?php echo $growth >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">
                     <i class="bi bi-currency-exchange"></i>
                 </div>
                 <div>
                     <div class="stat-value">
-                        <?php echo ($growth >= 0 ? "<small class='text-success'>▲ " : "<small class='text-danger'>▼") . number_format(abs($growth), 2) . "%</small>";
-                        ; ?>
+                        <?php echo ($growth >= 0 ? "<small style='color: var(--success);'>▲ " : "<small style='color: var(--danger);'>▼ ") . number_format(abs($growth), 2) . "%</small>"; ?>
                     </div>
                     <div class="stat-label">Growth</div>
                 </div>
             </div>
         </div>
 
-        <!-- Search -->
+        <!-- Search & Filter Section -->
         <section>
             <div class="inventory-header">
-                <div class="search-container">
-                    <div class="search-wrapper" style="flex: 1;">
+                <form method="GET" class="search-container">
+                    <div class="search-wrapper" style="flex: 2;">
                         <i class="bi bi-search search-icon"></i>
-                        <form method="GET" style="width: 100%;">
-                            <input type="text" name="search" class="search-input" maxlength="30"
-                                placeholder="Search customer or receipt number..."
-                                value="<?php echo htmlspecialchars($search); ?>">
-                        </form>
+                        <input type="text" name="search" class="search-input" maxlength="30" style="min-width: 300px;"
+                            placeholder="Search customer or receipt..."
+                            value="<?php echo htmlspecialchars($search); ?>">
                     </div>
-                </div>
-                <?php if ($search): ?>
+
+                    <select name="payment_method" class="search-input" style="min-width: 250px;">
+                        <option value="">All Payment Methods</option>
+                        <?php foreach ($payment_methods as $method): ?>
+                            <option value="<?php echo htmlspecialchars($method); ?>" <?php echo $payment_method === $method ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($method); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+
+                    <select name="time" class="search-input" style="min-width: 180px;">
+                        <option value="">All Time</option>
+                        <option value="today" <?php echo $time_filter === 'today' ? 'selected' : ''; ?>>Today</option>
+                        <option value="week" <?php echo $time_filter === 'week' ? 'selected' : ''; ?>>Last 7 Days</option>
+                        <option value="month" <?php echo $time_filter === 'month' ? 'selected' : ''; ?>>Last 30 Days
+                        </option>
+                        <option value="year" <?php echo $time_filter === 'year' ? 'selected' : ''; ?>>Last Year</option>
+                    </select>
+
+                    <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
+                    <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
+
+                    <button type="submit" class="search-btn">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                </form>
+
+                <?php if ($search || $payment_method || $time_filter): ?>
                     <a href="transaction.php" class="btn-secondary" style="padding: 11px 22px; text-decoration: none;">
-                        <i class="bi bi-x-circle"></i> Clear
+                        <i class="bi bi-x-circle"></i> Clear Filters
                     </a>
                 <?php endif; ?>
             </div>
@@ -215,14 +328,38 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Receipt #</th>
-                            <th>Customer</th>
-                            <th>Type</th>
-                            <th>Amount</th>
-                            <th>Payment Method</th>
-                            <th>Date</th>
-                            <th>Staff</th>
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('id', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                                ID <?php echo getSortIcon('id', $sort_by, $sort_order); ?>
+                            </th>
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('receipt_number', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                                Receipt # <?php echo getSortIcon('receipt_number', $sort_by, $sort_order); ?>
+                            </th>
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('customer_name', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                                Customer <?php echo getSortIcon('customer_name', $sort_by, $sort_order); ?>
+                            </th>
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('customer_type', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                                Type <?php echo getSortIcon('customer_type', $sort_by, $sort_order); ?>
+                            </th>
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('amount', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                                Amount <?php echo getSortIcon('amount', $sort_by, $sort_order); ?>
+                            </th>
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('payment_method', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                                Payment Method <?php echo getSortIcon('payment_method', $sort_by, $sort_order); ?>
+                            </th>
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('transaction_date', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                                Date <?php echo getSortIcon('transaction_date', $sort_by, $sort_order); ?>
+                            </th>
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('staff_id', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                                Staff <?php echo getSortIcon('staff_id', $sort_by, $sort_order); ?>
+                            </th>
                             <th>Description</th>
                             <th>Actions</th>
                         </tr>
@@ -240,8 +377,9 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
                                     </td>
                                     <td><?php echo htmlspecialchars($txn['payment_method']); ?></td>
                                     <td><?php echo date('M d, Y g:i A', strtotime($txn['transaction_date'])); ?></td>
-                                    <td><?php echo htmlspecialchars($txn['first_name'] . ' ' . $txn['last_name'] ?? 'N/A'); ?></td>
-                                    <td><?php echo htmlspecialchars($txn['desc']); ?></td>
+                                    <td><?php echo htmlspecialchars(($txn['first_name'] ?? '') . ' ' . ($txn['last_name'] ?? '')); ?>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($txn['desc'] ?? ''); ?></td>
                                     <td>
                                         <button class="btn-icon"
                                             onclick="viewTransaction(<?php echo htmlspecialchars(json_encode($txn)); ?>)">
@@ -252,8 +390,9 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">No
-                                    transactions found</td>
+                                <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                    <?php echo ($search || $payment_method || $time_filter) ? 'No transactions match your filters' : 'No transactions found'; ?>
+                                </td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -264,26 +403,34 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
             <?php if ($total_pages > 1): ?>
                 <div style="margin-top: 20px; text-align: center;">
                     <?php if ($page > 1): ?>
-                        <a href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>"
+                        <a href="<?php echo getPaginationUrl($page - 1, $search, $payment_method, $time_filter, $sort_by, $sort_order); ?>"
                             style="padding: 8px 12px; margin: 0 3px; background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
                             <i class="bi bi-chevron-left"></i> Prev
                         </a>
                     <?php endif; ?>
 
                     <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                        <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>"
-                            style="padding: 8px 12px; margin: 0 3px; background: <?php echo ($i == $page) ? 'var(--hazard)' : 'var(--bg-card)'; ?>; 
-                           color: <?php echo ($i == $page) ? '#000' : 'var(--text-muted)'; ?>; border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
+                        <a href="<?php echo getPaginationUrl($i, $search, $payment_method, $time_filter, $sort_by, $sort_order); ?>"
+                            style="padding: 8px 12px; margin: 0 3px; background: <?php echo ($i == $page) ? 'var(--hazard)' : 'var(--bg-card)'; ?>; color: <?php echo ($i == $page) ? '#000' : 'var(--text-muted)'; ?>; border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
                             <?php echo $i; ?>
                         </a>
                     <?php endfor; ?>
 
                     <?php if ($page < $total_pages): ?>
-                        <a href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>"
+                        <a href="<?php echo getPaginationUrl($page + 1, $search, $payment_method, $time_filter, $sort_by, $sort_order); ?>"
                             style="padding: 8px 12px; margin: 0 3px; background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
                             Next <i class="bi bi-chevron-right"></i>
                         </a>
                     <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($search || $payment_method || $time_filter || $sort_by !== 'transaction_date' || $sort_order !== 'DESC'): ?>
+                <div style="margin-top: 16px; text-align: center;">
+                    <a href="transaction.php"
+                        style="color: var(--text-muted); text-decoration: none; font-size: 11px; text-transform: uppercase; font-family: 'Chakra Petch', sans-serif;">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset All Filters
+                    </a>
                 </div>
             <?php endif; ?>
         </section>
@@ -339,7 +486,7 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
                     </div>
                     <div style="display: grid; grid-template-columns: 150px 1fr; gap: 10px; padding: 12px; background: var(--bg-card); border: 1px solid var(--border);">
                         <strong style="color: var(--text-muted); font-size: 11px; text-transform: uppercase;">Staff Name:</strong>
-                        <span style="color: var(--text-primary);">${txn.first_name + ' ' + txn.last_name || 'N/A'}</span>
+                        <span style="color: var(--text-primary);">${(txn.first_name || '') + ' ' + (txn.last_name || '') || 'N/A'}</span>
                     </div>
                     ${txn.desc ? `
                     <div style="display: grid; grid-template-columns: 150px 1fr; gap: 10px; padding: 12px; background: var(--bg-card); border: 1px solid var(--border);">
