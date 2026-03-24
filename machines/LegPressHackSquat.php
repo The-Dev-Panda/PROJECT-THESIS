@@ -41,6 +41,12 @@ include('../includes/header.php');
                             aria-label="View photo 1">
                         <img src="../images/HackSquat-LegPress.png" alt="Leg Press / Hack Squat Photo" loading="lazy" decoding="async">
                     </button>
+                    <button type="button"
+                            data-src="https://drive.google.com/file/d/1wyVqHgPYONgme8-fBn0pbZQs-CBMeb3U/preview"
+                            data-type="video"
+                            aria-label="Play video 1">
+                        <img src="../images/HackSquat-LegPress.png" alt="Leg Press / Hack Squat Video" loading="lazy" decoding="async">
+                    </button>
                 </div>
 
                 <!-- Exercises Section -->

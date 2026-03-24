@@ -41,6 +41,18 @@ include('../includes/header.php');
                             aria-label="View photo 1">
                         <img src="../images/MachineRow.png" alt="Machine Row Photo" loading="lazy" decoding="async">
                     </button>
+                    <button type="button" 
+                            data-src="https://drive.google.com/file/d/1-ctBTotDDGFX83cFJKpDvzx5VFGgpJGj/preview" 
+                            data-type="video" 
+                            aria-label="Play video 1">
+                        <img src="../images/MachineRow.png" alt="Machine Row Video" loading="lazy" decoding="async">
+                    </button>
+                    <button type="button" 
+                            data-src="https://drive.google.com/file/d/1sFrMSYK4PsX9vdSStPwiyizeidomav82/preview" 
+                            data-type="video" 
+                            aria-label="Play video 2">
+                        <img src="../images/MachineRow.png" alt="Machine Row Video" loading="lazy" decoding="async">
+                    </button>
                         
                 </div>
                 
