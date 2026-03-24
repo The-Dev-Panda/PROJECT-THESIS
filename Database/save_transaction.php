@@ -7,12 +7,14 @@ function requireStaffSession() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    if (empty($_SESSION['id']) || empty($_SESSION['user_type']) || strtolower($_SESSION['user_type']) !== 'staff') {
+    $sessionStaffId = $_SESSION['id'] ?? $_SESSION['user_id'] ?? null;
+    if (empty($sessionStaffId) || empty($_SESSION['user_type']) || strtolower((string)$_SESSION['user_type']) !== 'staff') {
         http_response_code(401);
         echo json_encode(['success' => false, 'error' => 'Unauthorized access. Please login as staff.']);
         exit();
     }
-    return (int)$_SESSION['id'];
+
+    return (int)$sessionStaffId;
 }
 
 try {
@@ -30,9 +32,6 @@ try {
     $customerType = isset($input['customer_type']) ? trim((string)$input['customer_type']) : '';
     $memberRef = isset($input['member_ref']) ? trim((string)$input['member_ref']) : '';
 
-    if ($customerType === 'member' && $memberRef === '') {
-        $memberRef = (string)$sessionUserId;
-    }
     $customerName = isset($input['customer_name']) ? trim((string)$input['customer_name']) : '';
     $amount = isset($input['amount']) ? (float)$input['amount'] : 0;
     $paymentMethod = isset($input['payment_method']) ? trim((string)$input['payment_method']) : '';
@@ -69,15 +68,23 @@ try {
     $userId = null;
     if ($customerType === 'member' && $memberRef !== '') {
         if (ctype_digit($memberRef)) {
-            $userStmt = $db->prepare('SELECT id FROM users WHERE id = :id LIMIT 1');
+            $userStmt = $db->prepare('SELECT id, username, first_name, last_name FROM users WHERE id = :id LIMIT 1');
             $userStmt->execute([':id' => (int)$memberRef]);
         } else {
-            $userStmt = $db->prepare('SELECT id FROM users WHERE username = :username LIMIT 1');
+            $userStmt = $db->prepare('SELECT id, username, first_name, last_name FROM users WHERE username = :username LIMIT 1');
             $userStmt->execute([':username' => $memberRef]);
         }
         $user = $userStmt->fetch(PDO::FETCH_ASSOC);
         if ($user) {
             $userId = (int)$user['id'];
+
+            if ($customerName === '') {
+                $firstName = trim((string)($user['first_name'] ?? ''));
+                $lastName = trim((string)($user['last_name'] ?? ''));
+                $fullName = trim($firstName . ' ' . $lastName);
+                $username = trim((string)($user['username'] ?? ''));
+                $customerName = $fullName !== '' ? $fullName : ($username !== '' ? $username : $memberRef);
+            }
         }
 
         if ($customerName === '') {
