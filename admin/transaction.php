@@ -9,7 +9,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
 include("../Login/connection.php");
 
 // Pagination
-$records_per_page = 15;
+$records_per_page = 10;
 $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $offset = ($page - 1) * $records_per_page;
 
@@ -177,7 +177,10 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
                     <i class="bi bi-currency-exchange"></i>
                 </div>
                 <div>
-                    <div class="stat-value"><?php echo ($growth >= 0 ? "<small class='text-success'>▲ " : "<small class='text-danger'>▼") . number_format(abs($growth), 2) . "%</small>";; ?></div>
+                    <div class="stat-value">
+                        <?php echo ($growth >= 0 ? "<small class='text-success'>▲ " : "<small class='text-danger'>▼") . number_format(abs($growth), 2) . "%</small>";
+                        ; ?>
+                    </div>
                     <div class="stat-label">Growth</div>
                 </div>
             </div>
@@ -190,7 +193,7 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
                     <div class="search-wrapper" style="flex: 1;">
                         <i class="bi bi-search search-icon"></i>
                         <form method="GET" style="width: 100%;">
-                            <input type="text" name="search" class="search-input"
+                            <input type="text" name="search" class="search-input" maxlength="30"
                                 placeholder="Search customer or receipt number..."
                                 value="<?php echo htmlspecialchars($search); ?>">
                         </form>

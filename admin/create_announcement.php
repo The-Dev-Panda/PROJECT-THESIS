@@ -43,8 +43,8 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                     <div class="form-grid">
                         <div class="form-group" style="grid-column: span 3;">
                             <label>Announcement Title</label>
-                            <input type="text" class="form-input" name="title" placeholder="Enter announcement title"
-                                required>
+                            <input type="text" class="form-input" name="title" maxlength="50"
+                                placeholder="Enter announcement title" required>
                         </div>
 
                         <div class="form-group" style="grid-column: span 3;">
@@ -55,11 +55,16 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
 
                         <div class="form-group" style="grid-column: span 3;">
                             <label>Announcement Image (Optional)</label>
-                            <input type="file" class="form-input" name="image" accept="image/png, image/jpeg, image/jpg"
-                                onchange="previewImage(event)">
+                            <input id="fileInput" type="file" class="form-input" name="image"
+                                accept="image/png, image/jpeg, image/jpg" onchange="previewImage(event)">
+                            <img id="imagePreview" style="display:none; max-width:200px;">
                             <small
                                 style="color: var(--text-muted); font-size: 10.5px; margin-top: 5px; display: block;">PNG,
                                 JPG, JPEG (Max 5MB)</small>
+                            <button type="button" class="btn-secondary" id="clearBtn" onclick="clearImage()"
+                                style="display:none;">
+                                <i class="bi bi-x-circle"></i> Remove Image
+                            </button>
                         </div>
                     </div>
 
@@ -121,9 +126,21 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                     reader.onload = function (e) {
                         preview.src = e.target.result;
                         preview.style.display = 'block';
+                        clearBtn.style.display = 'inline-block';
                     };
                     reader.readAsDataURL(file);
                 }
+
+            }
+            function clearImage() {
+                const fileInput = document.getElementById('fileInput');
+                const preview = document.getElementById('imagePreview');
+                const clearBtn = document.getElementById('clearBtn');
+
+                fileInput.value = ''; // remove selected file
+                preview.src = '';
+                preview.style.display = 'none';
+                clearBtn.style.display = 'none';
             }
         </script>
         <section class="announcement-preview-section">

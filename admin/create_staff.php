@@ -85,35 +85,35 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Username</label>
-                        <input type="text" class="form-input" name="username" required>
+                        <input type="text" class="form-input" maxlength="50" name="username" required>
                     </div>
 
                     <div class="form-group">
                         <label>Email</label>
-                        <input type="email" class="form-input" name="email" required>
+                        <input type="email" class="form-input" maxlength="50" name="email" required>
                     </div>
 
                     <div class="form-group">
                         <label>First Name</label>
-                        <input type="text" class="form-input" name="first_name" required>
+                        <input type="text" class="form-input" maxlength="50" name="first_name" required>
                     </div>
 
                     <div class="form-group">
                         <label>Last Name</label>
-                        <input type="text" class="form-input" name="last_name" required>
+                        <input type="text" class="form-input" maxlength="50" name="last_name" required>
                     </div>
 
                     <div class="form-group">
                         <label>Password</label>
-                        <input type="password" class="form-input" name="password" required minlength="6">
+                        <input type="password" class="form-input" maxlength="50" name="password" required minlength="8">
                         <small
                             style="color: var(--text-muted); font-size: 10.5px; margin-top: 5px; display: block;">Minimum
-                            6 characters</small>
+                            8 characters</small>
                     </div>
 
                     <div class="form-group">
                         <label>Confirm Password</label>
-                        <input type="password" class="form-input" name="confirm_password" required minlength="6">
+                        <input type="password" class="form-input" maxlength="50" name="confirm_password" required minlength="8">
                     </div>
                 </div>
 

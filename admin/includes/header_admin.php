@@ -175,7 +175,7 @@ require_once __DIR__ . '/../../includes/security.php';
         </li>
         <li class="<?php echo ($current_page == 'exercises.php') ? 'active' : ''; ?>"
             onclick="window.location.href='exercises.php'">
-            <i class="bi bi-bar-chart-line"></i>
+            <i class="bi bi-person-walking"></i>
             <span>Exercises</span>
         </li>
         <li class="<?php echo ($current_page == 'view_feedback.php') ? 'active' : ''; ?>"

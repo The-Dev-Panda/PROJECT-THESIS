@@ -107,7 +107,7 @@ $allowedMovementTypes = ['strength', 'cardio', 'hypertrophy', 'flexibility', 'mo
                 <form method="GET" class="search-container">
                     <div class="search-wrapper" style="min-width: 200px;">
                         <i class="bi bi-search search-icon"></i>
-                        <input type="text" name="search" class="search-input" placeholder="Search exercises..."
+                        <input type="text" name="search" class="search-input" placeholder="Search exercises..." maxlength="30"
                             value="<?php echo htmlspecialchars($search); ?>">
                     </div>
                     <select name="target_muscle" class="search-input" style="min-width: 200px;">

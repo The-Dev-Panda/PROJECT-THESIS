@@ -262,7 +262,7 @@ $active_members = $stmt->fetch()['total'];
                 <form method="GET" class="search-container">
                     <div class="search-wrapper" style="flex: 2;">
                         <i class="bi bi-search search-icon"></i>
-                        <input type="text" name="search" class="search-input" placeholder="Search members..."
+                        <input type="text" name="search" class="search-input" placeholder="Search members..." maxlength="30"
                             value="<?php echo htmlspecialchars($search); ?>" style="min-width: 200px;">
                     </div>
 
