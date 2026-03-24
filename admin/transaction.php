@@ -32,13 +32,17 @@ $total_records = $total_stmt->fetch()['total'];
 $total_pages = ceil($total_records / $records_per_page);
 
 // Get transactions
-$query = "SELECT t.*, u.username as staff_username 
-          FROM transactions t 
-          LEFT JOIN users u ON t.staff_id = u.id 
-          $where_clause 
-          ORDER BY t.transaction_date DESC 
+$query = "SELECT 
+            t.*, 
+            u.first_name, 
+            u.last_name
+          FROM transactions t
+          LEFT JOIN users u ON t.staff_id = u.id
+          $where_clause
+          ORDER BY t.transaction_date DESC
           LIMIT :limit OFFSET :offset";
 $stmt = $pdo->prepare($query);
+
 foreach ($params as $key => $value) {
     $stmt->bindValue(":$key", $value);
 }
@@ -236,7 +240,7 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
                                     </td>
                                     <td><?php echo htmlspecialchars($txn['payment_method']); ?></td>
                                     <td><?php echo date('M d, Y g:i A', strtotime($txn['transaction_date'])); ?></td>
-                                    <td><?php echo htmlspecialchars($txn['staff_id'] ?? 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($txn['first_name'] . ' ' . $txn['last_name'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($txn['desc']); ?></td>
                                     <td>
                                         <button class="btn-icon"
@@ -334,8 +338,8 @@ $total_count_td = $total_count_stmt_td->fetch()['total'];
                         <span style="color: var(--text-primary);">${new Date(txn.transaction_date).toLocaleString()}</span>
                     </div>
                     <div style="display: grid; grid-template-columns: 150px 1fr; gap: 10px; padding: 12px; background: var(--bg-card); border: 1px solid var(--border);">
-                        <strong style="color: var(--text-muted); font-size: 11px; text-transform: uppercase;">Staff ID:</strong>
-                        <span style="color: var(--text-primary);">${txn.staff_id || 'N/A'}</span>
+                        <strong style="color: var(--text-muted); font-size: 11px; text-transform: uppercase;">Staff Name:</strong>
+                        <span style="color: var(--text-primary);">${txn.first_name + ' ' + txn.last_name || 'N/A'}</span>
                     </div>
                     ${txn.desc ? `
                     <div style="display: grid; grid-template-columns: 150px 1fr; gap: 10px; padding: 12px; background: var(--bg-card); border: 1px solid var(--border);">
