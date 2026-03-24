@@ -12,7 +12,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
 
 <head>
     <meta charset="utf-8">
-    <title>Announcements</title>
+    <title>Announcements | FITSTOP</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -127,30 +127,31 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
             }
         </script>
         <section class="announcement-preview-section">
-            <h2><i class="bi bi-clock-history"></i> Recent Announcements</h2>
+            <div class="row justify-content-center g-2">
+                <h2><i class="bi bi-clock-history"></i> Recent Announcements</h2>
 
-            <?php
-            include("../Login/connection.php");
+                <?php
+                include("../Login/connection.php");
 
-            $stmt = $pdo->query("SELECT * FROM announcements ORDER BY created_at DESC LIMIT 5");
-            $announcements = $stmt->fetchAll();
+                $stmt = $pdo->query("SELECT * FROM announcements ORDER BY created_at DESC LIMIT 5");
+                $announcements = $stmt->fetchAll();
 
-            if (count($announcements) > 0) {
-                foreach ($announcements as $announcement) {
-                    $image_html = '';
-                    if ($announcement['image']) {
-                        $image_src = 'data:image/jpeg;base64,' . base64_encode($announcement['image']);
-                        $image_alt = $announcement['title'];
-                        $image_html = "<img src='$image_src' style='width: 100%; border-radius: 2px; margin-bottom: 24px; border: 1px solid var(--border);' alt='$image_alt'>";
-                    }
+                if (count($announcements) > 0) {
+                    foreach ($announcements as $announcement) {
+                        $image_html = '';
+                        if ($announcement['image']) {
+                            $image_src = 'data:image/jpeg;base64,' . base64_encode($announcement['image']);
+                            $image_alt = $announcement['title'];
+                            $image_html = "<img src='$image_src' style='width: 100%; border-radius: 2px; margin-bottom: 24px; border: 1px solid var(--border);' alt='$image_alt'>";
+                        }
 
-                    $title = $announcement['title'];
-                    $description = $announcement['description'];
-                    $created_by = $announcement['created_by'];
-                    $date = date('M j, Y \a\t g:i A', strtotime($announcement['created_at']));
+                        $title = $announcement['title'];
+                        $description = $announcement['description'];
+                        $created_by = $announcement['created_by'];
+                        $date = date('M j, Y \a\t g:i A', strtotime($announcement['created_at']));
 
-                    echo "
-            <div class='registration-card' style='margin-bottom: 24px;'>
+                        echo "
+            <div class=' col-3 registration-card' style='margin: 1%'>
                 $image_html
                 <div style='border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;'>
                     <h3 style='font-family: \"Chakra Petch\", sans-serif; font-size: 20px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px;'>$title</h3>
@@ -161,16 +162,17 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                 <p style='color: var(--text-sub); font-size: 14px; line-height: 1.7; margin: 0;'>$description</p>
             </div>
             ";
-                }
-            } else {
-                echo "
+                    }
+                } else {
+                    echo "
         <div class='registration-card' style='text-align: center; padding: 60px 20px;'>
             <h3 style='font-family: \"Chakra Petch\", sans-serif; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; font-size: 14px; margin-bottom: 10px;'>No announcements yet</h3>
             <p style='color: var(--text-muted); font-size: 12px;'>Check back later for updates</p>
         </div>
         ";
-            }
-            ?>
+                }
+                ?>
+            </div>
         </section>
     </div>
     <?php //include('includes/footer_admin.php') ?>

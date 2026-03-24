@@ -16,14 +16,9 @@ if (isset($_GET['id'])) {
     $staff = $get_staff->fetch();
     $staff_name = $staff['first_name'] . ' ' . $staff['last_name'];
     $staff_username = $staff['username'];
-    
-    $stmt = $pdo->prepare("INSERT INTO notification_history (name, description, remarks, category) VALUES (:name, :description, :remarks, :category)");
-    $notif->execute([
-        'name' => 'STAFF DELETED',
-        'description' => "Staff member $staff_name (@$staff_username) has been removed from the system",
-        'remarks' => "Deleted by " . $_SESSION['username'],
-        'category' => 'Accounts'
-    ]);
+    //STAFF USERNAME PLACEHOLDER
+
+
     $stmt = $pdo->prepare("DELETE FROM users WHERE id = :id AND user_type = 'staff'");
     $stmt->execute(['id' => $id]);
     header('Location: view_staff.php?success=deleted');

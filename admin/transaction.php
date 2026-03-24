@@ -66,7 +66,7 @@ $total_count = $total_count_stmt->fetch()['total'];
 
 <head>
     <meta charset="utf-8">
-    <title>Transactions - FITSTOP</title>
+    <title>Transactions | FITSTOP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 

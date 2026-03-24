@@ -12,7 +12,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
 
 <head>
     <meta charset="utf-8">
-    <title>Create New Staff</title>
+    <title>New Staff | FITSTOP</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
