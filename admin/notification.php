@@ -90,16 +90,10 @@ function timeAgo($datetime) {
 
     <div class="main-content">
         <!-- Topbar -->
-        <div class="topbar">
-            <div class="topbar-left">
+        <div class="topbar row">
+            <div class="topbar-left col-sm-12 col-xl-6">
                 <h1><i class="bi bi-bell-fill"></i> Notifications</h1>
                 <p>Manage system notifications and alerts</p>
-            </div>
-            <div class="topbar-right">
-                <div class="topbar-badge">
-                    <i class="bi bi-exclamation-circle"></i>
-                    <span><?php echo count($unread_notifications); ?> Unread</span>
-                </div>
             </div>
         </div>
 

@@ -587,7 +587,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           <h4>Kevin Barretto</h4>
           <p class="member-id">#MB2024001</p>
           <div class="member-details">
-            <span><i class="bi bi-award"></i> Gold Plan</span>
             <span><i class="bi bi-fire"></i> 45-day streak</span>
           </div>
           <div class="member-stats">
@@ -601,7 +600,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           <h4>Charles Carillo</h4>
           <p class="member-id">#MB2024002</p>
           <div class="member-details">
-            <span><i class="bi bi-award"></i> Silver Plan</span>
             <span><i class="bi bi-fire"></i> 28-day streak</span>
           </div>
           <div class="member-stats">
@@ -615,7 +613,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           <h4>Sharien Salarda</h4>
           <p class="member-id">#MB2024003</p>
           <div class="member-details">
-            <span><i class="bi bi-award"></i> Gold Plan</span>
             <span><i class="bi bi-fire"></i> 92-day streak</span>
           </div>
           <div class="member-stats">
@@ -629,7 +626,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           <h4>Lance Chua</h4>
           <p class="member-id">#MB2024004</p>
           <div class="member-details">
-            <span><i class="bi bi-award"></i> Bronze Plan</span>
             <span><i class="bi bi-fire"></i> 15-day streak</span>
           </div>
           <div class="member-stats">
@@ -667,40 +663,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <p style="color:var(--text-muted);font-size:14px;">System settings will be configured here.</p>
       </div>
     </section>
-
-    <!-- NOTIFICATIONS -->
-    <section class="notifications-section">
-      <h2>Pending Notifications</h2>
-      <div class="notifications-list">
-        <div class="notification-item priority-high">
-          <i class="bi bi-exclamation-triangle-fill"></i>
-          <div>
-            <strong>Equipment Maintenance Required</strong>
-            <p>Stationary Bike #EQ003 needs immediate attention</p>
-            <span class="notification-time">30 mins ago</span>
-          </div>
-        </div>
-        <div class="notification-item priority-medium">
-          <i class="bi bi-calendar-event"></i>
-          <div>
-            <strong>Membership Renewal Reminder</strong>
-            <p>5 members' subscriptions expiring in 3 days</p>
-            <span class="notification-time">1 hour ago</span>
-          </div>
-        </div>
-        <div class="notification-item priority-low">
-          <i class="bi bi-box-seam"></i>
-          <div>
-            <strong>Inventory Low Stock Alert</strong>
-            <p>Rowing Machine quantity below minimum threshold</p>
-            <span class="notification-time">2 hours ago</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-  </main>
-</div>
+    </div>
 
 <!-- RECEIPT MODAL -->
 <div id="receiptModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
