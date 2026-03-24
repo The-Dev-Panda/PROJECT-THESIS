@@ -48,6 +48,18 @@ include('../includes/header.php');
                             aria-label="View photo 2">
                         <img src="../images/LegExtHamCurl2.png" alt="Leg Extension Machine Photo" loading="lazy" decoding="async">
                     </button>
+                    <button type="button" 
+                            data-src="https://drive.google.com/file/d/1-IuLuMSmSWL0DJUIei-OVT6xaHGDvAd8/preview" 
+                            data-type="video" 
+                            aria-label="Play video 1">
+                        <img src="../images/LegExtension-HamstringCurl.png" alt="Leg Extension Machine Video" loading="lazy" decoding="async">
+                    </button>
+                    <button type="button" 
+                            data-src="https://drive.google.com/file/d/14uyv95KtXMPcBFvnlIFPYamx2mepoSUH/preview" 
+                            data-type="video" 
+                            aria-label="Play video 2">
+                        <img src="../images/LegExtension-HamstringCurl.png" alt="Leg Extension Machine Video" loading="lazy" decoding="async">
+                    </button>
                 </div>
                 
                 <!-- Exercises Section -->

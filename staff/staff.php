@@ -11,10 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     try {
 
         if ($action === 'get_notifications') {
-
             $txRows = $pdo->query("
-                SELECT
-                    id, receipt_number, customer_type, user_id,
+                SELECT id, receipt_number, customer_type, user_id,
                     customer_name, amount, payment_method, staff_id,
                     transaction_date, status, created_at, `desc`
                 FROM transactions
@@ -38,6 +36,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
+        if ($action === 'get_members') {
+            $members = $pdo->query("
+                SELECT id, username, first_name, last_name, email
+                FROM users
+                WHERE user_type = 'user'
+                ORDER BY first_name ASC, last_name ASC
+            ")->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(['success' => true, 'members' => $members]);
+            exit;
+        }
+
         echo json_encode(['success' => false, 'message' => 'Unknown action']);
         exit;
 
@@ -56,6 +65,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
   <link rel="stylesheet" href="staff.css">
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    .member-select-wrap {
+      position: relative;
+    }
+    .member-search-input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1px solid var(--border);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13.5px;
+      box-sizing: border-box;
+    }
+    .member-search-input:focus {
+      outline: none;
+      border-color: var(--hazard);
+    }
+    .member-dropdown-list {
+      display: none;
+      position: absolute;
+      top: 100%; left: 0; right: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-top: none;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 500;
+    }
+    .member-dropdown-list.open { display: block; }
+    .member-dropdown-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .member-dropdown-item:hover { background: rgba(255,204,0,0.08); color: var(--hazard); }
+    .member-dropdown-item .member-id-tag {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-family: monospace;
+      margin-left: 6px;
+    }
+    .member-dropdown-empty {
+      padding: 12px 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .member-clear-btn {
+      padding: 9px 12px;
+      background: transparent;
+      border: 1px solid rgba(255,204,0,0.3);
+      color: #FFCC00;
+      cursor: pointer;
+      font-size: 13px;
+      flex-shrink: 0;
+      line-height: 1;
+      transition: background 0.15s;
+    }
+    .member-clear-btn:hover {
+      background: rgba(255,204,0,0.08);
+    }
+  </style>
 </head>
 <body>
 
@@ -96,24 +169,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <i class="bi bi-gear"></i>
         <span>Settings</span>
       </li>
-    <li onclick="document.getElementById('logoutForm').submit()" style="cursor:pointer">
+      <li onclick="document.getElementById('logoutForm').submit()" style="cursor:pointer">
         <i class="bi bi-box-arrow-right"></i>
-        <?php echo fitstop_csrf_input(); ?>
         <span>Logout</span>
       </li>
       <form id="logoutForm" action="../../login/logout.php" method="POST" style="display: none;">
         <?php echo fitstop_csrf_input(); ?>
-        <button type="submit" class="nav-link border-0 bg-transparent" style="cursor: pointer;">
-          <i class="bi bi-box-arrow-right"></i> Logout
-        </button>
       </form>
     </ul>
   </aside>
 
-  <!-- ══════════ MAIN CONTENT ══════════ -->
   <main class="main-content">
 
-    <!-- TOPBAR -->
     <div class="topbar">
       <div class="topbar-left">
         <h1>Staff Portal</h1>
@@ -129,7 +196,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           <span id="currentDate">—</span>
         </div>
 
-        <!-- NOTIFICATION BELL -->
         <div class="notif-wrapper" id="notifWrapper">
           <button class="notif-bell-btn" id="notifBellBtn" onclick="toggleNotifPanel()" title="Inventory Alerts">
             <i class="bi bi-bell-fill"></i>
@@ -151,7 +217,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </div>
     </div>
 
-    <!-- PROFILE CONTAINER -->
     <div class="profile-container">
       <div class="profile-content">
         <div class="profile-text">
@@ -161,10 +226,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </div>
     </div>
 
-    <!-- ── DASHBOARD ── -->
+    <!-- DASHBOARD -->
     <section id="dashboard">
-
-      <!-- Stats Row -->
       <div class="stats-grid">
         <div class="stat-box">
           <div class="stat-icon members"><i class="bi bi-people-fill"></i></div>
@@ -196,18 +259,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         </div>
       </div>
 
-      <!-- Quick Actions -->
       <section>
         <h2>Quick Actions</h2>
         <div class="actions-grid">
-
           <div class="action-card">
             <div class="action-icon"><i class="bi bi-person-plus-fill"></i></div>
             <h3>Register New Member</h3>
             <p>Fast client data capture &amp; ID generation</p>
             <button class="action-btn" onclick="document.getElementById('clientRegistration').scrollIntoView({behavior:'smooth'})">Start Registration</button>
           </div>
-
           <div class="action-card">
             <div class="action-icon"><i class="bi bi-qr-code-scan"></i></div>
             <h3>Scan Attendance</h3>
@@ -227,27 +287,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
               </div>
             </div>
           </div>
-
           <div class="action-card">
             <div class="action-icon"><i class="bi bi-box-seam-fill"></i></div>
             <h3>Update Inventory</h3>
             <p>Manage equipment stock &amp; status</p>
             <a href="inventory.php" class="action-btn">View Inventory</a>
           </div>
-
           <div class="action-card">
             <div class="action-icon"><i class="bi bi-card-checklist"></i></div>
             <h3>Generate ID</h3>
             <p>System-generated member IDs &amp; QR codes</p>
             <button class="action-btn">Create ID</button>
           </div>
-
         </div>
       </section>
-
     </section>
 
-    <!-- ── CLIENT REGISTRATION ── -->
+    <!-- CLIENT REGISTRATION -->
     <section class="registration-section" id="clientRegistration">
       <h2>Client Registration</h2>
       <div class="registration-card">
@@ -315,11 +371,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </div>
     </section>
 
-    <!-- ── PAYMENT PROCESSING ── -->
+    <!-- PAYMENT PROCESSING -->
     <section class="registration-section">
       <h2>Payment Processing</h2>
       <div class="registration-card">
         <form class="registration-form" id="paymentForm">
+
+          <!-- Customer Type -->
           <div style="margin-bottom:20px;">
             <label style="color:var(--text-muted);font-size:10.5px;margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:block;">Customer Type</label>
             <div style="display:flex;gap:20px;">
@@ -331,27 +389,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
               </label>
             </div>
           </div>
+
           <div class="form-grid">
+
+            <!-- Member ID — searchable dropdown from DB -->
             <div class="form-group" id="memberIdGroup">
-              <label>Member ID</label>
-              <input type="text" id="paymentMemberID" class="form-input" placeholder="#MB2024001">
+              <label>Member <span style="font-size:10px;color:var(--text-muted);">(users only)</span></label>
+              <div class="member-select-wrap">
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <input type="text"
+                    id="memberSearchInput"
+                    class="member-search-input form-input"
+                    placeholder="Search member name or username..."
+                    autocomplete="off"
+                    oninput="filterMemberDropdown(this.value)"
+                    onfocus="openMemberDropdown()"
+                    style="flex:1;"
+                  >
+                  <button type="button"
+                    id="memberClearBtn"
+                    class="member-clear-btn"
+                    onclick="clearMemberSelection()"
+                    style="display:none;"
+                    title="Clear selection">&#x2715;</button>
+                </div>
+                <input type="hidden" id="paymentMemberID">
+                <div class="member-dropdown-list" id="memberDropdownList"></div>
+              </div>
             </div>
+
+            <!-- Walk-in name -->
             <div class="form-group" id="customerNameGroup" style="display:none;">
               <label>Customer Name</label>
               <input type="text" id="paymentCustomerName" class="form-input" placeholder="Enter full name">
             </div>
+
+            <!-- Amount -->
             <div class="form-group">
               <label>Amount (₱)</label>
               <input type="number" id="paymentAmount" class="form-input" placeholder="0.00" step="0.01">
             </div>
+
+            <!-- Paid For — dropdown -->
             <div class="form-group">
               <label>Paid For</label>
-              <input type="text" id="paymentPaidFor" class="form-input" placeholder="Monthly Membership / Protein Shake...">
+              <select id="paymentPaidFor" class="form-input" onchange="autoFillAmount(this.value)">
+                <option value="">Select category...</option>
+                <option value="Membership">Membership</option>
+                <option value="Monthly">Monthly</option>
+                <option value="Day Pass / Walk-In">Day Pass / Walk-In</option>
+                <option value="Special Rate">Special Rate</option>
+                <option value="Inventory">Inventory</option>
+              </select>
             </div>
+
+            <!-- Optional Notes -->
             <div class="form-group">
               <label>Optional Notes</label>
               <input type="text" id="paymentNotes" class="form-input" placeholder="Optional note">
             </div>
+
+            <!-- Payment Method -->
             <div class="form-group">
               <label>Payment Method</label>
               <select id="paymentMethod" class="form-input">
@@ -360,6 +458,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 <option value="GCash">GCash</option>
               </select>
             </div>
+
           </div>
           <div class="form-actions">
             <button type="button" class="btn-secondary" onclick="clearPaymentForm()">Clear</button>
@@ -369,7 +468,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </div>
     </section>
 
-    <!-- ── INVENTORY ── -->
+    <!-- INVENTORY -->
     <section class="inventory-section" id="inventory">
       <h2>Inventory Management</h2>
       <div class="inventory-header">
@@ -380,19 +479,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           </div>
           <button class="search-btn">Search</button>
         </div>
-
       </div>
       <div class="inventory-table">
         <table>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Equipment Name</th>
-              <th>Category</th>
-              <th>Qty</th>
-              <th>Status</th>
-              <th>Last Maintenance</th>
-              <th>Actions</th>
+              <th>ID</th><th>Equipment Name</th><th>Category</th>
+              <th>Qty</th><th>Status</th><th>Last Maintenance</th><th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -433,7 +526,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </div>
     </section>
 
-    <!-- ── WORKOUT / ATTENDANCE ── -->
+    <!-- ATTENDANCE -->
     <section class="attendance-section" id="attendance">
       <h2>Workout / Performance Log</h2>
       <div class="registration-card" style="margin-bottom:20px;">
@@ -470,7 +563,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Loading...</div>
           </div>
         </div>
-
         <div class="attendance-card">
           <h3>Weekly Summary</h3>
           <div class="summary-chart" id="weeklyChart">
@@ -486,7 +578,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </div>
     </section>
 
-    <!-- ── MEMBER MANAGEMENT ── -->
+    <!-- MEMBER MANAGEMENT -->
     <section class="members-section" id="memberManagement">
       <h2>Active Members</h2>
       <div class="members-grid">
@@ -495,7 +587,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           <h4>Kevin Barretto</h4>
           <p class="member-id">#MB2024001</p>
           <div class="member-details">
-            <span><i class="bi bi-award"></i> Gold Plan</span>
             <span><i class="bi bi-fire"></i> 45-day streak</span>
           </div>
           <div class="member-stats">
@@ -509,7 +600,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           <h4>Charles Carillo</h4>
           <p class="member-id">#MB2024002</p>
           <div class="member-details">
-            <span><i class="bi bi-award"></i> Silver Plan</span>
             <span><i class="bi bi-fire"></i> 28-day streak</span>
           </div>
           <div class="member-stats">
@@ -523,7 +613,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           <h4>Sharien Salarda</h4>
           <p class="member-id">#MB2024003</p>
           <div class="member-details">
-            <span><i class="bi bi-award"></i> Gold Plan</span>
             <span><i class="bi bi-fire"></i> 92-day streak</span>
           </div>
           <div class="member-stats">
@@ -537,7 +626,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           <h4>Lance Chua</h4>
           <p class="member-id">#MB2024004</p>
           <div class="member-details">
-            <span><i class="bi bi-award"></i> Bronze Plan</span>
             <span><i class="bi bi-fire"></i> 15-day streak</span>
           </div>
           <div class="member-stats">
@@ -549,7 +637,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </div>
     </section>
 
-    <!-- ── ID GENERATION ── -->
+    <!-- ID GENERATION -->
     <section id="idGeneration">
       <h2>ID Generation</h2>
       <div class="registration-card">
@@ -568,49 +656,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </div>
     </section>
 
-    <!-- ── SETTINGS ── -->
+    <!-- SETTINGS -->
     <section id="settings">
       <h2>Settings</h2>
       <div class="registration-card">
         <p style="color:var(--text-muted);font-size:14px;">System settings will be configured here.</p>
       </div>
     </section>
+    </div>
 
-    <!-- ── NOTIFICATIONS ── -->
-    <section class="notifications-section">
-      <h2>Pending Notifications</h2>
-      <div class="notifications-list">
-        <div class="notification-item priority-high">
-          <i class="bi bi-exclamation-triangle-fill"></i>
-          <div>
-            <strong>Equipment Maintenance Required</strong>
-            <p>Stationary Bike #EQ003 needs immediate attention</p>
-            <span class="notification-time">30 mins ago</span>
-          </div>
-        </div>
-        <div class="notification-item priority-medium">
-          <i class="bi bi-calendar-event"></i>
-          <div>
-            <strong>Membership Renewal Reminder</strong>
-            <p>5 members' subscriptions expiring in 3 days</p>
-            <span class="notification-time">1 hour ago</span>
-          </div>
-        </div>
-        <div class="notification-item priority-low">
-          <i class="bi bi-box-seam"></i>
-          <div>
-            <strong>Inventory Low Stock Alert</strong>
-            <p>Rowing Machine quantity below minimum threshold</p>
-            <span class="notification-time">2 hours ago</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-  </main>
-</div>
-
-<!-- ══════════ RECEIPT MODAL ══════════ -->
+<!-- RECEIPT MODAL -->
 <div id="receiptModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#161616;border:1px solid #333;border-top:2px solid #FFCC00;padding:36px;max-width:480px;width:90%;color:#fff;">
     <div style="text-align:center;margin-bottom:24px;padding-bottom:20px;border-bottom:1px dashed #333;">
@@ -627,50 +682,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
 
 <script>
-document.querySelectorAll(".menu li").forEach(item => {
-  item.addEventListener("click", function () {
-    if (this.id === "logoutBtn") {
-      const form = document.createElement("form");
-      form.action = "../Login/logout.php";
-      form.method = "POST";
-      <?php echo fitstop_csrf_input(); ?> 
-      document.body.appendChild(form);
-      form.submit();
-      return;
-    }
-    const targetId = this.getAttribute("data-target");
+document.querySelectorAll('.menu li').forEach(item => {
+  item.addEventListener('click', function () {
+    const targetId = this.getAttribute('data-target');
     if (targetId) {
-      document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth" });
+      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' });
     }
-    document.querySelectorAll(".menu li").forEach(li => li.classList.remove("active"));
-    this.classList.add("active");
+    document.querySelectorAll('.menu li').forEach(li => li.classList.remove('active'));
+    this.classList.add('active');
   });
 });
 
 const d = new Date();
 document.getElementById('currentDate').textContent = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
 
-document.getElementById("clearBtn").addEventListener("click", function() {
-  document.getElementById("registrationForm").reset();
+document.getElementById('clearBtn').addEventListener('click', function() {
+  document.getElementById('registrationForm').reset();
 });
 
-document.getElementById("registrationForm").addEventListener("submit", function(event) {
+document.getElementById('registrationForm').addEventListener('submit', function(event) {
   event.preventDefault();
-  const fullName        = document.getElementById("regFullName").value.trim();
-  const email           = document.getElementById("regEmail").value.trim();
-  const age             = document.getElementById("regAge").value.trim();
-  const heightCm        = document.getElementById("regHeight").value.trim();
-  const weightKg        = document.getElementById("regWeight").value.trim();
-  const fitnessLevel    = document.getElementById("regFitnessLevel").value;
-  const goal            = document.getElementById("regGoal").value;
-  const password        = document.getElementById("regPassword").value;
-  const confirmPassword = document.getElementById("regConfirmPassword").value;
+  const fullName        = document.getElementById('regFullName').value.trim();
+  const email           = document.getElementById('regEmail').value.trim();
+  const age             = document.getElementById('regAge').value.trim();
+  const heightCm        = document.getElementById('regHeight').value.trim();
+  const weightKg        = document.getElementById('regWeight').value.trim();
+  const fitnessLevel    = document.getElementById('regFitnessLevel').value;
+  const goal            = document.getElementById('regGoal').value;
+  const password        = document.getElementById('regPassword').value;
+  const confirmPassword = document.getElementById('regConfirmPassword').value;
 
-  if (!fullName || !email) { alert("Full name and email are required."); return; }
-  if (!password || !confirmPassword) { alert("Password and confirm password are required."); return; }
-  if (password.length < 8) { alert("Password must be at least 8 characters."); return; }
-  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) { alert("Password must include at least one letter and one number."); return; }
-  if (password !== confirmPassword) { alert("Passwords do not match."); return; }
+  if (!fullName || !email) { alert('Full name and email are required.'); return; }
+  if (!password || !confirmPassword) { alert('Password and confirm password are required.'); return; }
+  if (password.length < 8) { alert('Password must be at least 8 characters.'); return; }
+  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) { alert('Password must include at least one letter and one number.'); return; }
+  if (password !== confirmPassword) { alert('Passwords do not match.'); return; }
 
   fetch('../Database/create_member.php', {
     method: 'POST',
@@ -681,8 +727,9 @@ document.getElementById("registrationForm").addEventListener("submit", function(
   .then(data => {
     if (!data.success) { alert(data.error || 'Failed to create member.'); return; }
     alert('Member created!\nMember ID: ' + data.member_id_display + '\nUsername: ' + data.username);
-    document.getElementById("registrationForm").reset();
+    document.getElementById('registrationForm').reset();
     loadAttendanceMembers();
+    loadMembersForPayment();
   })
   .catch(() => alert('Unable to create member right now.'));
 });
@@ -692,19 +739,192 @@ document.getElementById("registrationForm").addEventListener("submit", function(
 <script>
 let activeQrScanner = null;
 let scannerRunning  = false;
+let allMembers      = [];
 
 function escapeHtml(v) {
-  return String(v||'').replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function timeAgo(datetimeStr) {
-  const now  = new Date();
-  const past = new Date(datetimeStr.replace(' ', 'T'));
-  const diff = Math.floor((now - past) / 1000);
+  const diff = Math.floor((new Date() - new Date(datetimeStr.replace(' ','T'))) / 1000);
   if (diff < 60)    return diff + 's ago';
-  if (diff < 3600)  return Math.floor(diff / 60) + ' min ago';
-  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-  return Math.floor(diff / 86400) + 'd ago';
+  if (diff < 3600)  return Math.floor(diff/60) + ' min ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+
+function loadMembersForPayment() {
+  const fd = new FormData();
+  fd.append('action', 'get_members');
+  fetch('staff.php', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success && Array.isArray(data.members)) {
+        allMembers = data.members;
+      }
+    }).catch(()=>{});
+}
+
+function openMemberDropdown() {
+  filterMemberDropdown(document.getElementById('memberSearchInput').value);
+  document.getElementById('memberDropdownList').classList.add('open');
+}
+
+function filterMemberDropdown(query) {
+  const list = document.getElementById('memberDropdownList');
+  query = query.toLowerCase().trim();
+
+  const filtered = allMembers.filter(m => {
+    const fullName = ((m.first_name||'') + ' ' + (m.last_name||'')).toLowerCase();
+    return fullName.includes(query) || (m.username||'').toLowerCase().includes(query);
+  });
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="member-dropdown-empty">No members found.</div>';
+  } else {
+    list.innerHTML = filtered.map(m => {
+      const fullName = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.username;
+      return `<div class="member-dropdown-item" onclick="selectMember(${m.id}, '${escapeHtml(fullName)}', '${escapeHtml(m.username||'')}')">
+        ${escapeHtml(fullName)}
+        <span class="member-id-tag">@${escapeHtml(m.username||'')} · ID:${m.id}</span>
+      </div>`;
+    }).join('');
+  }
+  list.classList.add('open');
+}
+
+function selectMember(id, fullName, username) {
+  document.getElementById('paymentMemberID').value      = id;
+  document.getElementById('memberSearchInput').value    = fullName + ' (@' + username + ')';
+  document.getElementById('memberDropdownList').classList.remove('open');
+  document.getElementById('memberClearBtn').style.display = 'inline-block';
+}
+
+function clearMemberSelection() {
+  document.getElementById('paymentMemberID').value      = '';
+  document.getElementById('memberSearchInput').value    = '';
+  document.getElementById('memberClearBtn').style.display = 'none';
+  document.getElementById('memberDropdownList').classList.remove('open');
+  document.getElementById('memberSearchInput').focus();
+  filterMemberDropdown('');
+}
+
+document.addEventListener('click', function(e) {
+  const wrap = document.querySelector('.member-select-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('memberDropdownList').classList.remove('open');
+  }
+});
+
+function toggleCustomerType(type) {
+  document.getElementById('memberIdGroup').style.display     = type === 'member' ? 'block' : 'none';
+  document.getElementById('customerNameGroup').style.display = type === 'member' ? 'none'  : 'block';
+  if (type === 'member') {
+    document.getElementById('memberSearchInput').value = '';
+    document.getElementById('paymentMemberID').value   = '';
+    document.getElementById('memberClearBtn').style.display = 'none';
+  }
+}
+
+function autoFillAmount(paidFor) {
+  const amountInput = document.getElementById('paymentAmount');
+  const presets = {
+    'Membership':          500,
+    'Monthly':             650,
+    'Day Pass / Walk-In':   60,
+    'Special Rate':         40,
+    'Inventory':             0,
+  };
+  if (paidFor in presets) {
+    amountInput.value = presets[paidFor].toFixed(2);
+  } else {
+    amountInput.value = '';
+  }
+}
+
+function clearPaymentForm() {
+  document.getElementById('paymentForm').reset();
+  document.getElementById('memberSearchInput').value = '';
+  document.getElementById('paymentMemberID').value   = '';
+  document.getElementById('memberClearBtn').style.display = 'none';
+  document.getElementById('memberDropdownList').classList.remove('open');
+  toggleCustomerType('member');
+}
+
+function processPayment() {
+  const customerType = document.querySelector('input[name="customerType"]:checked').value;
+  const amount       = document.getElementById('paymentAmount').value.trim();
+  const paidFor      = document.getElementById('paymentPaidFor').value;
+  const notes        = document.getElementById('paymentNotes').value.trim();
+  const method       = document.getElementById('paymentMethod').value;
+  const btn          = document.getElementById('paymentSubmitBtn');
+  let memberId = null, customerName = null;
+
+  if (customerType === 'member') {
+    memberId = document.getElementById('paymentMemberID').value.trim();
+    if (!memberId) { alert('Please select a member from the dropdown.'); return; }
+  } else {
+    customerName = document.getElementById('paymentCustomerName').value.trim();
+    if (!customerName) { alert('Please enter customer name!'); return; }
+  }
+  if (!amount || !method || !paidFor) { alert('Please fill in all required fields!'); return; }
+  if (parseFloat(amount) <= 0) { alert('Amount must be greater than 0!'); return; }
+
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  fetch('../Database/save_transaction.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ customer_type: customerType, member_ref: memberId, customer_name: customerName, amount: parseFloat(amount), payment_method: method, paid_for: paidFor, notes })
+  })
+  .then(r => r.json())
+  .then(data => {
+    btn.disabled = false; btn.textContent = 'Generate Receipt';
+    if (!data.success) { alert(data.error || 'Failed to save transaction.'); return; }
+    displayReceipt(data.receipt);
+    clearPaymentForm();
+  })
+  .catch(() => { btn.disabled = false; btn.textContent = 'Generate Receipt'; alert('Unable to save transaction right now.'); });
+}
+
+function displayReceipt(receipt) {
+  const content = document.getElementById('receiptContent');
+  const custInfo = receipt.customerType === 'member'
+    ? `<p style="margin:5px 0;"><strong>Member ID:</strong> ${receipt.memberId}</p>`
+    : `<p style="margin:5px 0;"><strong>Customer:</strong> ${receipt.customerName}</p>`;
+  content.innerHTML = `
+    <div style="margin-bottom:14px;">
+      <p style="margin:5px 0;color:#999;font-size:12px;"><strong style="color:#fff;">Receipt #:</strong> ${receipt.receiptNumber}</p>
+      <p style="margin:5px 0;color:#999;font-size:12px;"><strong style="color:#fff;">Date:</strong> ${receipt.date} &nbsp; <strong style="color:#fff;">Time:</strong> ${receipt.time}</p>
+    </div>
+    <div style="padding:14px;background:#111;border:1px solid #2a2a2a;margin:14px 0;">
+      ${custInfo}
+      <p style="margin:5px 0;"><strong>Type:</strong> ${receipt.customerType === 'member' ? 'Member' : 'Walk-In'}</p>
+      <p style="margin:5px 0;"><strong>Paid For:</strong> ${receipt.paidFor || '-'}</p>
+      <p style="margin:5px 0;"><strong>Payment:</strong> ${receipt.method}</p>
+      <p style="margin:5px 0;"><strong>Status:</strong> <span style="color:#22d07a;">&#10003; ${receipt.status}</span></p>
+      ${receipt.notes ? `<p style="margin:5px 0;"><strong>Notes:</strong> ${receipt.notes}</p>` : ''}
+    </div>
+    <div style="border-top:1px dashed #333;padding-top:14px;">
+      <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:700;">
+        <span>TOTAL:</span><span style="color:#FFCC00;">&#8369;${receipt.amount.toFixed(2)}</span>
+      </div>
+    </div>`;
+  window.currentReceipt = receipt;
+  document.getElementById('receiptModal').style.display = 'flex';
+}
+
+function closeReceipt() {
+  document.getElementById('receiptModal').style.display = 'none';
+}
+
+function printReceipt() {
+  const r       = window.currentReceipt;
+  const custInfo = r.customerType === 'member' ? `Member ID: ${r.memberId}` : `Customer: ${r.customerName}`;
+  const pw = window.open('','','height=500,width=700');
+  pw.document.write(`<html><head><title>Receipt</title><style>body{font-family:Arial,sans-serif;padding:40px;}h2{margin:0;}.header{text-align:center;margin-bottom:30px;border-bottom:2px dashed #000;padding-bottom:20px;}.row{display:flex;justify-content:space-between;padding:8px 0;}.total{border-top:2px dashed #000;padding-top:20px;display:flex;justify-content:space-between;font-size:18px;font-weight:bold;}.footer{text-align:center;margin-top:30px;font-size:12px;color:#666;}</style></head><body><div class="header"><h2>FIT-STOP GYM</h2><p>Official Receipt</p></div><div><div class="row"><span>Receipt #:</span><span>${r.receiptNumber}</span></div><div class="row"><span>Date/Time:</span><span>${r.date} ${r.time}</span></div><div class="row"><span>${custInfo}</span></div><div class="row"><span>Paid For:</span><span>${r.paidFor||'-'}</span></div><div class="row"><span>Payment:</span><span>${r.method}</span></div>${r.notes?`<div class="row"><span>Notes:</span><span>${r.notes}</span></div>`:''}</div><div class="total"><span>TOTAL:</span><span>&#8369;${r.amount.toFixed(2)}</span></div><div class="footer"><p>Thank you!</p></div></body></html>`);
+  pw.document.close();
+  setTimeout(() => pw.print(), 100);
 }
 
 function resolveMemberRefFromQr(qrCodeMessage) {
@@ -712,20 +932,12 @@ function resolveMemberRefFromQr(qrCodeMessage) {
   if (!raw) return '';
   if (/^FS-\d{4}-\d+$/i.test(raw)) return raw;
   let decoded = raw;
-  try { decoded = decodeURIComponent(raw); } catch(e) { decoded = raw; }
+  try { decoded = decodeURIComponent(raw); } catch(e) {}
   if (decoded.startsWith('{') && decoded.endsWith('}')) {
-    try {
-      const p    = JSON.parse(decoded);
-      const pref = p.member_ref||p.member_id||p.member_id_display||p.user_id||p.id||p.username;
-      return pref ? String(pref).trim() : '';
-    } catch(e) { return ''; }
+    try { const p = JSON.parse(decoded); return String(p.member_ref||p.member_id||p.user_id||p.id||'').trim(); } catch(e) { return ''; }
   }
   if (/^https?:\/\//i.test(decoded)) {
-    try {
-      const url = new URL(decoded);
-      const fp  = url.searchParams.get('member_ref')||url.searchParams.get('member_id')||url.searchParams.get('member_id_display')||url.searchParams.get('id')||'';
-      if (fp) return String(fp).trim();
-    } catch(e) {}
+    try { const url = new URL(decoded); return (url.searchParams.get('member_ref')||url.searchParams.get('member_id')||'').trim(); } catch(e) {}
   }
   return decoded;
 }
@@ -738,8 +950,6 @@ function submitAttendance(memberRef, source) {
   .then(r => r.json())
   .then(data => {
     if (!data.success) throw new Error(data.error || 'Unable to record attendance.');
-    const label = data.member_display_name || memberRef;
-    addNotification(data.point_awarded ? 'Attendance saved for ' + label + ' (+1 point today)' : 'Attendance saved for ' + label + ' (point already credited today)');
     return data;
   });
 }
@@ -754,21 +964,18 @@ function loadAttendanceMembers() {
       select.innerHTML = '<option value="">Select a member...</option>';
       data.members.forEach(m => {
         const o = document.createElement('option');
-        o.value       = m.member_ref;
-        o.textContent = m.display_name;
+        o.value = m.member_ref; o.textContent = m.display_name;
         select.appendChild(o);
       });
     }).catch(()=>{});
 }
 
 function startScanner() {
-  const readerDiv = document.getElementById("reader");
-  const stopBtn   = document.getElementById("stopScannerBtn");
   if (scannerRunning) return;
-  readerDiv.innerHTML = "";
-  if (!activeQrScanner) activeQrScanner = new Html5Qrcode("reader");
+  document.getElementById('reader').innerHTML = '';
+  if (!activeQrScanner) activeQrScanner = new Html5Qrcode('reader');
   activeQrScanner.start(
-    { facingMode: "environment" }, { fps: 10, qrbox: 250 },
+    { facingMode: 'environment' }, { fps: 10, qrbox: 250 },
     qrCodeMessage => {
       const memberRef = resolveMemberRefFromQr(qrCodeMessage);
       if (!memberRef) { alert('Invalid QR data.'); return; }
@@ -779,21 +986,15 @@ function startScanner() {
     }, () => {}
   ).then(() => {
     scannerRunning = true;
-    if (stopBtn) stopBtn.style.display = 'inline-block';
-  }).catch(err => {
-    scannerRunning = false;
-    if (stopBtn) stopBtn.style.display = 'none';
-    alert("Camera Error: " + err);
-  });
+    document.getElementById('stopScannerBtn').style.display = 'inline-block';
+  }).catch(err => { scannerRunning = false; alert('Camera Error: ' + err); });
 }
 
 function stopScanner() {
-  const stopBtn   = document.getElementById("stopScannerBtn");
-  const readerDiv = document.getElementById("reader");
-  const finalize  = () => {
+  const finalize = () => {
     scannerRunning = false;
-    if (stopBtn)   stopBtn.style.display = 'none';
-    if (readerDiv) readerDiv.innerHTML   = '';
+    document.getElementById('stopScannerBtn').style.display = 'none';
+    document.getElementById('reader').innerHTML = '';
   };
   if (!activeQrScanner) { finalize(); return; }
   activeQrScanner.stop().catch(()=>{}).then(() => activeQrScanner.clear()).catch(()=>{}).finally(() => { activeQrScanner = null; finalize(); });
@@ -807,102 +1008,6 @@ function submitManualAttendance() {
     .catch(err => alert(err.message || 'Unable to save attendance.'));
 }
 
-function processPayment() {
-  const customerType     = document.querySelector('input[name="customerType"]:checked').value;
-  const amount           = document.getElementById("paymentAmount").value.trim();
-  const paidFor          = document.getElementById("paymentPaidFor").value.trim();
-  const notes            = document.getElementById("paymentNotes").value.trim();
-  const method           = document.getElementById("paymentMethod").value;
-  const paymentSubmitBtn = document.getElementById("paymentSubmitBtn");
-  let memberId = null, customerName = null;
-
-  if (customerType === 'member') {
-    memberId = document.getElementById("paymentMemberID").value.trim();
-    if (!memberId) { alert("Please enter Member ID!"); return; }
-  } else {
-    customerName = document.getElementById("paymentCustomerName").value.trim();
-    if (!customerName) { alert("Please enter customer name!"); return; }
-  }
-  if (!amount || !method || !paidFor) { alert("Please fill in all fields!"); return; }
-  if (parseFloat(amount) <= 0) { alert("Amount must be greater than 0!"); return; }
-
-  paymentSubmitBtn.disabled    = true;
-  paymentSubmitBtn.textContent = 'Saving...';
-
-  fetch('../Database/save_transaction.php', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ customer_type: customerType, member_ref: memberId, customer_name: customerName, amount: parseFloat(amount), payment_method: method, paid_for: paidFor, notes })
-  })
-  .then(r => r.json())
-  .then(data => {
-    paymentSubmitBtn.disabled    = false;
-    paymentSubmitBtn.textContent = 'Generate Receipt';
-    if (!data.success) { alert(data.error || 'Failed to save transaction.'); return; }
-    displayReceipt(data.receipt);
-    clearPaymentForm();
-  })
-  .catch(() => {
-    paymentSubmitBtn.disabled    = false;
-    paymentSubmitBtn.textContent = 'Generate Receipt';
-    alert('Unable to save transaction right now.');
-  });
-}
-
-function displayReceipt(receipt) {
-  const modal   = document.getElementById("receiptModal");
-  const content = document.getElementById("receiptContent");
-  const customerInfo = receipt.customerType === 'member'
-    ? `<p style="margin:5px 0;"><strong>Member ID:</strong> ${receipt.memberId}</p>`
-    : `<p style="margin:5px 0;"><strong>Customer:</strong> ${receipt.customerName}</p>`;
-  const noteInfo = receipt.notes ? `<p style="margin:5px 0;"><strong>Notes:</strong> ${receipt.notes}</p>` : '';
-  content.innerHTML = `
-    <div style="margin-bottom:14px;">
-      <p style="margin:5px 0;color:#999;font-size:12px;"><strong style="color:#fff;">Receipt #:</strong> ${receipt.receiptNumber}</p>
-      <p style="margin:5px 0;color:#999;font-size:12px;"><strong style="color:#fff;">Date:</strong> ${receipt.date} &nbsp; <strong style="color:#fff;">Time:</strong> ${receipt.time}</p>
-    </div>
-    <div style="padding:14px;background:#111;border:1px solid #2a2a2a;margin:14px 0;">
-      ${customerInfo}
-      <p style="margin:5px 0;"><strong>Type:</strong> ${receipt.customerType === 'member' ? 'Member' : 'Walk-In'}</p>
-      <p style="margin:5px 0;"><strong>Paid For:</strong> ${receipt.paidFor || '-'}</p>
-      <p style="margin:5px 0;"><strong>Payment:</strong> ${receipt.method}</p>
-      <p style="margin:5px 0;"><strong>Status:</strong> <span style="color:#22d07a;">&#10003; ${receipt.status}</span></p>
-      ${noteInfo}
-    </div>
-    <div style="border-top:1px dashed #333;padding-top:14px;">
-      <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:700;">
-        <span>TOTAL:</span>
-        <span style="color:#FFCC00;">&#8369;${receipt.amount.toFixed(2)}</span>
-      </div>
-    </div>`;
-  window.currentReceipt = receipt;
-  modal.style.display   = "flex";
-}
-
-function closeReceipt() {
-  document.getElementById("receiptModal").style.display = "none";
-  addNotification("Receipt " + window.currentReceipt.receiptNumber + " generated");
-}
-
-function printReceipt() {
-  const r            = window.currentReceipt;
-  const customerInfo = r.customerType === 'member' ? `Member ID: ${r.memberId}` : `Customer: ${r.customerName}`;
-  const noteInfo     = r.notes ? `<div class="row"><span>Notes:</span><span>${r.notes}</span></div>` : '';
-  const pw = window.open('','','height=500,width=700');
-  pw.document.write(`<html><head><title>Receipt - ${r.receiptNumber}</title><style>body{font-family:Arial,sans-serif;padding:40px;}h2{margin:0;font-size:22px;}.header{text-align:center;margin-bottom:30px;border-bottom:2px dashed #000;padding-bottom:20px;}.row{display:flex;justify-content:space-between;padding:8px 0;}.total{border-top:2px dashed #000;padding-top:20px;display:flex;justify-content:space-between;font-size:18px;font-weight:bold;}.footer{text-align:center;margin-top:30px;font-size:12px;color:#666;}</style></head><body><div class="header"><h2>FIT-STOP GYM</h2><p>Official Receipt</p></div><div><div class="row"><span>Receipt #:</span><span>${r.receiptNumber}</span></div><div class="row"><span>Date/Time:</span><span>${r.date} ${r.time}</span></div><div class="row"><span>${customerInfo}</span></div><div class="row"><span>Type:</span><span>${r.customerType==='member'?'Member':'Walk-In'}</span></div><div class="row"><span>Paid For:</span><span>${r.paidFor||'-'}</span></div><div class="row"><span>Payment:</span><span>${r.method}</span></div>${noteInfo}</div><div class="total"><span>TOTAL:</span><span>&#8369;${r.amount.toFixed(2)}</span></div><div class="footer"><p>Thank you for your payment!</p></div></body></html>`);
-  pw.document.close();
-  setTimeout(() => pw.print(), 100);
-}
-
-function toggleCustomerType(type) {
-  document.getElementById('memberIdGroup').style.display     = type === 'member' ? 'block' : 'none';
-  document.getElementById('customerNameGroup').style.display = type === 'member' ? 'none'  : 'block';
-}
-
-function clearPaymentForm() {
-  document.getElementById("paymentForm").reset();
-  toggleCustomerType('member');
-}
-
 let exerciseNameToId   = {};
 let exerciseNameToType = {};
 
@@ -912,9 +1017,7 @@ function loadExerciseOptions() {
     .then(data => {
       if (!data.success || !Array.isArray(data.exercises)) return;
       const datalist = document.getElementById('exerciseOptions');
-      if (!datalist) return;
-      exerciseNameToId   = {};
-      exerciseNameToType = {};
+      exerciseNameToId = {}; exerciseNameToType = {};
       data.exercises.forEach(item => {
         exerciseNameToId[item.name.toLowerCase()]   = item.exercise_id;
         exerciseNameToType[item.name.toLowerCase()] = (item.movement_type||'').toLowerCase();
@@ -929,47 +1032,41 @@ function updatePerformanceMetricField() {
   const input = document.getElementById('performanceMetric');
   if (!ex||!label||!input) return;
   const mt = exerciseNameToType[ex.value.trim().toLowerCase()]||'';
-  if (mt === 'cardio') { label.textContent = 'Minutes'; input.placeholder = 'Enter minutes'; }
-  else                 { label.textContent = 'Weight (kg)'; input.placeholder = 'Enter weight'; }
+  label.textContent = mt === 'cardio' ? 'Minutes' : 'Weight (kg)';
+  input.placeholder = mt === 'cardio' ? 'Enter minutes' : 'Enter weight';
 }
 
 function logWorkout() {
-  const id          = document.getElementById("perfID").value.trim();
-  const exercise    = document.getElementById("exercise").value.trim();
-  const metricValue = document.getElementById("performanceMetric").value.trim();
-  const reps        = document.getElementById("reps").value.trim();
-
-  if (!id||!exercise||!metricValue||!reps) { alert("Please provide Member ID, Exercise, Weight/Minutes, and Reps."); return; }
-
+  const id = document.getElementById('perfID').value.trim();
+  const exercise = document.getElementById('exercise').value.trim();
+  const metricValue = document.getElementById('performanceMetric').value.trim();
+  const reps = document.getElementById('reps').value.trim();
+  if (!id||!exercise||!metricValue||!reps) { alert('Please provide all fields.'); return; }
   const exerciseId = exerciseNameToId[exercise.toLowerCase()];
-  if (!exerciseId) { alert("Please choose a valid exercise from the dropdown list."); return; }
-
-  const mt        = exerciseNameToType[exercise.toLowerCase()]||'';
+  if (!exerciseId) { alert('Please choose a valid exercise from the dropdown list.'); return; }
   const metricNum = parseFloat(metricValue);
-  if (isNaN(metricNum)||metricNum<0) { alert("Please enter a valid Weight/Minutes value."); return; }
-
+  if (isNaN(metricNum)||metricNum<0) { alert('Please enter a valid value.'); return; }
   fetch('../Database/save_workout_log.php', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ member_ref: id, exercise_id: exerciseId, reps: parseInt(reps,10), weight: metricNum })
   })
   .then(r => r.json())
   .then(data => {
-    if (!data.success) { alert(data.error||"Failed to save workout log."); return; }
-    const logs  = document.getElementById("workoutLogs");
-    const entry = document.createElement("div");
-    entry.classList.add("attendance-item");
-    const ms = mt==='cardio'?'min':'kg';
+    if (!data.success) { alert(data.error||'Failed to save workout log.'); return; }
+    const logs  = document.getElementById('workoutLogs');
+    const entry = document.createElement('div');
+    entry.classList.add('attendance-item');
+    const ms = (exerciseNameToType[exercise.toLowerCase()]||'')==='cardio' ? 'min' : 'kg';
     entry.innerHTML = `<strong style="color:var(--text-primary);font-family:'Chakra Petch',sans-serif;">${id}</strong> <span style="color:var(--text-muted);font-size:13px;margin-left:10px;">${exercise} · ${metricNum} ${ms} · ${reps} reps</span>`;
     logs.prepend(entry);
-    addNotification("Workout logged for " + id);
   })
-  .catch(() => alert("Unable to save workout log right now."));
+  .catch(() => alert('Unable to save workout log right now.'));
 }
 
 function addNotification(message) {
-  const list = document.querySelector(".notifications-list");
-  const item = document.createElement("div");
-  item.classList.add("notification-item","priority-low");
+  const list = document.querySelector('.notifications-list');
+  const item = document.createElement('div');
+  item.classList.add('notification-item','priority-low');
   item.innerHTML = `<i class="bi bi-bell-fill"></i><div><strong>${message}</strong><span class="notification-time">Just now</span></div>`;
   list.prepend(item);
 }
@@ -977,14 +1074,11 @@ function addNotification(message) {
 document.addEventListener('DOMContentLoaded', function() {
   loadExerciseOptions();
   loadAttendanceMembers();
+  loadMembersForPayment();
   loadRealtimeAttendance();
   setInterval(loadRealtimeAttendance, 15000);
-
   const ex = document.getElementById('exercise');
-  if (ex) {
-    ex.addEventListener('input', updatePerformanceMetricField);
-    ex.addEventListener('change', updatePerformanceMetricField);
-  }
+  if (ex) { ex.addEventListener('input', updatePerformanceMetricField); ex.addEventListener('change', updatePerformanceMetricField); }
   updatePerformanceMetricField();
 });
 </script>
@@ -996,60 +1090,41 @@ function loadRealtimeAttendance() {
     .then(data => {
       const list = document.getElementById('realtimeAttendanceList');
       if (!list) return;
-
-      if (!data.success) {
-        list.innerHTML = `<div style="padding:16px;color:var(--danger);font-size:12px;font-family:'Chakra Petch',sans-serif;">Error: ${escapeHtml(data.error || 'Unknown error')}</div>`;
-        return;
-      }
-
+      if (!data.success) { list.innerHTML = `<div style="padding:16px;color:var(--danger);font-size:12px;">Error: ${escapeHtml(data.error||'Unknown error')}</div>`; return; }
       if (data.stats) {
         document.getElementById('stat-checked-in').textContent    = data.stats.members_checked_in;
         document.getElementById('stat-registrations').textContent = data.stats.new_registrations;
         document.getElementById('stat-equipment').textContent     = data.stats.equipment_issues;
         document.getElementById('stat-notifications').textContent = data.stats.pending_notifications;
       }
-
       const records = Array.isArray(data.records) ? data.records : [];
-
-      if (records.length === 0) {
-        list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">No check-ins today yet.</div>';
-      } else {
-        list.innerHTML = records.map(rec => {
-          const name     = rec.display_name || ('User #' + rec.user_id);
-          const initials = name.substring(0, 2).toUpperCase();
-          const ago      = timeAgo(rec.datetime);
-          return `
-            <div class="attendance-item">
+      list.innerHTML = records.length === 0
+        ? '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">No check-ins today yet.</div>'
+        : records.map(rec => {
+            const name = rec.display_name || ('User #' + rec.user_id);
+            return `<div class="attendance-item">
               <div class="member-info">
-                <div class="member-avatar">${escapeHtml(initials)}</div>
-                <div>
-                  <strong>${escapeHtml(name)}</strong>
-                  <span class="time">${escapeHtml(ago)}</span>
-                </div>
+                <div class="member-avatar">${escapeHtml(name.substring(0,2).toUpperCase())}</div>
+                <div><strong>${escapeHtml(name)}</strong><span class="time">${escapeHtml(timeAgo(rec.datetime))}</span></div>
               </div>
               <span class="check-in-badge">Check-In</span>
             </div>`;
-        }).join('');
-      }
-
+          }).join('');
       if (Array.isArray(data.weekly)) {
-        const days     = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-        const counts   = data.weekly;
-        const maxVal   = Math.max(...counts, 1);
-        const today    = new Date().getDay();
-        const todayIdx = today === 0 ? 6 : today - 1;
-
+        const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        const maxVal = Math.max(...data.weekly, 1);
+        const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
         days.forEach((day, i) => {
           const bar = document.getElementById('bar-' + day);
           if (!bar) return;
-          bar.style.height = Math.round((counts[i] / maxVal) * 100) + '%';
+          bar.style.height = Math.round((data.weekly[i]/maxVal)*100) + '%';
           bar.className    = 'chart-bar' + (i === todayIdx ? ' active' : '');
         });
       }
     })
     .catch(() => {
       const list = document.getElementById('realtimeAttendanceList');
-      if (list) list.innerHTML = `<div style="padding:16px;color:var(--danger);font-size:12px;font-family:'Chakra Petch',sans-serif;">Failed to reach server. Check that realtime-attendance.php exists in the Staff folder.</div>`;
+      if (list) list.innerHTML = `<div style="padding:16px;color:var(--danger);font-size:12px;">Failed to reach server.</div>`;
     });
 }
 </script>
@@ -1074,111 +1149,74 @@ document.addEventListener('click', function(e) {
 
 function formatTs(ts) {
   if (!ts) return '—';
-  const d = new Date(ts.replace(' ', 'T'));
+  const d = new Date(ts.replace(' ','T'));
   if (isNaN(d)) return ts;
-  return d.toLocaleString('en-PH', {
-    month:'short', day:'numeric', year:'numeric',
-    hour:'2-digit', minute:'2-digit', hour12:true
-  });
+  return d.toLocaleString('en-PH', { month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true });
 }
 
 function loadNotificationHistory() {
   const list  = document.getElementById('notifList');
   const count = document.getElementById('notifPanelCount');
   list.innerHTML = '<div class="notif-loader"><i class="bi bi-hourglass-split"></i> Loading...</div>';
-
-  fetch('staff.php', { method: 'POST', body: (() => { const f = new FormData(); f.append('action','get_notifications'); return f; })() })
+  const fd = new FormData();
+  fd.append('action', 'get_notifications');
+  fetch('staff.php', { method: 'POST', body: fd })
     .then(r => r.json())
     .then(data => {
       notifLoaded = true;
-      if (!data.success) {
-        list.innerHTML = '<div class="notif-empty"><i class="bi bi-exclamation-circle"></i>Could not load history.</div>';
-        return;
-      }
-
+      if (!data.success) { list.innerHTML = '<div class="notif-empty"><i class="bi bi-exclamation-circle"></i>Could not load history.</div>'; return; }
       const transactions = Array.isArray(data.transactions) ? data.transactions : [];
       const lowStock     = Array.isArray(data.low_stock)    ? data.low_stock    : [];
       const total        = transactions.length + lowStock.length;
-
       if (count) count.textContent = total + ' record' + (total !== 1 ? 's' : '');
-
-      if (total === 0) {
-        list.innerHTML = '<div class="notif-empty"><i class="bi bi-bell-slash"></i>No notifications yet.</div>';
-        return;
-      }
-
+      if (total === 0) { list.innerHTML = '<div class="notif-empty"><i class="bi bi-bell-slash"></i>No notifications yet.</div>'; return; }
       const txHtml = transactions.map(t => {
         const who    = t.customer_name || (t.customer_type === 'member' ? 'Member #' + t.user_id : 'Walk-In');
-        const amount = parseFloat(t.amount || 0).toFixed(2);
-        const method = t.payment_method || '—';
-        const status = t.status || 'paid';
-        const ts     = formatTs(t.transaction_date || t.created_at);
-        return `
-          <div class="notif-item">
-            <div class="notif-icon" style="background:rgba(34,208,122,0.12);border-color:rgba(34,208,122,0.3);color:var(--success);">
-              <i class="bi bi-receipt"></i>
-            </div>
-            <div class="notif-body">
-              <p class="notif-msg">
-                <strong>${escapeHtml(t.receipt_number || 'Receipt')}</strong><br>
-                <span class="item-highlight">&#8369;${escapeHtml(amount)}</span>
-                · ${escapeHtml(who)} · ${escapeHtml(method)}
-                · <span style="text-transform:capitalize;">${escapeHtml(status)}</span>
-              </p>
-              <span class="notif-time"><i class="bi bi-clock"></i> ${ts}</span>
-            </div>
-          </div>`;
+        const amount = parseFloat(t.amount||0).toFixed(2);
+        const ts     = formatTs(t.transaction_date||t.created_at);
+        return `<div class="notif-item">
+          <div class="notif-icon" style="background:rgba(34,208,122,0.12);border-color:rgba(34,208,122,0.3);color:var(--success);"><i class="bi bi-receipt"></i></div>
+          <div class="notif-body">
+            <p class="notif-msg"><strong>${escapeHtml(t.receipt_number||'Receipt')}</strong><br>
+            <span class="item-highlight">&#8369;${escapeHtml(amount)}</span>
+            · ${escapeHtml(who)} · ${escapeHtml(t.payment_method||'—')}
+            · <span style="text-transform:capitalize;">${escapeHtml(t.status||'paid')}</span></p>
+            <span class="notif-time"><i class="bi bi-clock"></i> ${ts}</span>
+          </div>
+        </div>`;
       }).join('');
-
       const stockHtml = lowStock.map(i => {
-        const qty       = parseInt(i.quantity);
-        const ts        = formatTs(i.updated_at);
-        const iconColor = qty === 0 ? 'var(--danger)'        : 'var(--warning)';
-        const bgColor   = qty === 0 ? 'rgba(255,71,87,0.12)' : 'rgba(255,159,67,0.12)';
-        const bdColor   = qty === 0 ? 'rgba(255,71,87,0.3)'  : 'rgba(255,159,67,0.3)';
-        const icon      = qty === 0 ? 'bi-x-circle-fill'     : 'bi-exclamation-triangle-fill';
-        return `
-          <div class="notif-item">
-            <div class="notif-icon" style="background:${bgColor};border-color:${bdColor};color:${iconColor};">
-              <i class="bi ${icon}"></i>
-            </div>
-            <div class="notif-body">
-              <p class="notif-msg">
-                <strong>${escapeHtml(i.item_name)}</strong> — ${escapeHtml(i.category)}<br>
-                Stock: <span class="item-highlight">${qty} unit${qty !== 1 ? 's' : ''}</span>
-                ${qty === 0 ? '— <span style="color:var(--danger);font-weight:700;">OUT OF STOCK</span>' : '— Low Stock'}
-              </p>
-              <span class="notif-time"><i class="bi bi-clock"></i> Updated: ${ts}</span>
-            </div>
-          </div>`;
+        const qty = parseInt(i.quantity);
+        const danger = qty === 0;
+        return `<div class="notif-item">
+          <div class="notif-icon" style="background:${danger?'rgba(255,71,87,0.12)':'rgba(255,159,67,0.12)'};border-color:${danger?'rgba(255,71,87,0.3)':'rgba(255,159,67,0.3)'};color:${danger?'var(--danger)':'var(--warning)'};">
+            <i class="bi ${danger?'bi-x-circle-fill':'bi-exclamation-triangle-fill'}"></i>
+          </div>
+          <div class="notif-body">
+            <p class="notif-msg"><strong>${escapeHtml(i.item_name)}</strong> — ${escapeHtml(i.category)}<br>
+            Stock: <span class="item-highlight">${qty} unit${qty!==1?'s':''}</span>
+            ${danger?'— <span style="color:var(--danger);font-weight:700;">OUT OF STOCK</span>':'— Low Stock'}</p>
+            <span class="notif-time"><i class="bi bi-clock"></i> Updated: ${formatTs(i.updated_at)}</span>
+          </div>
+        </div>`;
       }).join('');
-
-      list.innerHTML = txHtml + (lowStock.length ? `
-        <div style="padding:8px 16px;background:#000;font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1.5px;font-family:'Chakra Petch',sans-serif;">
-          Inventory Alerts
-        </div>` + stockHtml : '');
+      list.innerHTML = txHtml + (lowStock.length ? `<div style="padding:8px 16px;background:#000;font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1.5px;font-family:'Chakra Petch',sans-serif;">Inventory Alerts</div>` + stockHtml : '');
     })
-    .catch(() => {
-      list.innerHTML = '<div class="notif-empty"><i class="bi bi-wifi-off"></i>Unable to load notifications.</div>';
-    });
+    .catch(() => { list.innerHTML = '<div class="notif-empty"><i class="bi bi-wifi-off"></i>Unable to load notifications.</div>'; });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  fetch('staff.php', { method: 'POST', body: (() => { const f = new FormData(); f.append('action','get_notifications'); return f; })() })
+  const fd = new FormData();
+  fd.append('action', 'get_notifications');
+  fetch('staff.php', { method: 'POST', body: fd })
     .then(r => r.json())
     .then(data => {
       if (!data.success) return;
-      const txCount    = Array.isArray(data.transactions) ? data.transactions.length : 0;
-      const stockCount = Array.isArray(data.low_stock)    ? data.low_stock.length    : 0;
-      const total      = txCount + stockCount;
-      const badge      = document.getElementById('notifBadge');
-      if (total > 0) {
-        badge.textContent = total > 99 ? '99+' : total;
-        badge.classList.remove('hidden');
-      } else {
-        badge.classList.add('hidden');
-      }
-    }).catch(() => {});
+      const total = (Array.isArray(data.transactions)?data.transactions.length:0) + (Array.isArray(data.low_stock)?data.low_stock.length:0);
+      const badge = document.getElementById('notifBadge');
+      if (total > 0) { badge.textContent = total > 99 ? '99+' : total; badge.classList.remove('hidden'); }
+      else badge.classList.add('hidden');
+    }).catch(()=>{});
 });
 </script>
 
@@ -1186,33 +1224,25 @@ document.addEventListener('DOMContentLoaded', function() {
 function generateMemberID() {
   const memberRef = document.getElementById('idGenMemberRef').value.trim();
   if (!memberRef) { alert('Please enter a Member ID or reference.'); return; }
-
-  const resultDiv     = document.getElementById('idGenResult');
+  const resultDiv = document.getElementById('idGenResult');
   resultDiv.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Generating ID card...</p>';
-
   fetch('../Database/generate_member_id.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ member_ref: memberRef })
   })
   .then(r => r.json())
   .then(data => {
-    if (!data.success) {
-      resultDiv.innerHTML = `<p style="color:var(--danger);font-size:13px;">${escapeHtml(data.error || 'Failed to generate ID.')}</p>`;
-      return;
-    }
+    if (!data.success) { resultDiv.innerHTML = `<p style="color:var(--danger);font-size:13px;">${escapeHtml(data.error||'Failed to generate ID.')}</p>`; return; }
     resultDiv.innerHTML = `
       <div style="border:1px solid var(--border-accent);padding:20px;display:inline-block;background:var(--bg-surface);text-align:center;">
         <p style="font-family:'Chakra Petch',sans-serif;color:var(--hazard);font-size:13px;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Member ID Card Generated</p>
-        ${data.qr_image ? `<img src="${data.qr_image}" alt="QR Code" style="width:160px;height:160px;display:block;margin:0 auto 12px;border:2px solid var(--hazard);">` : ''}
-        <p style="color:var(--text-primary);font-weight:700;font-family:'Chakra Petch',sans-serif;font-size:15px;letter-spacing:1px;">${escapeHtml(data.member_id_display || memberRef)}</p>
-        ${data.full_name ? `<p style="color:var(--text-muted);font-size:12px;margin-top:4px;">${escapeHtml(data.full_name)}</p>` : ''}
-        ${data.download_url ? `<a href="${data.download_url}" download class="action-btn" style="display:inline-block;margin-top:14px;text-decoration:none;"><i class="bi bi-download" style="margin-right:5px;"></i>Download</a>` : ''}
+        ${data.qr_image?`<img src="${data.qr_image}" alt="QR Code" style="width:160px;height:160px;display:block;margin:0 auto 12px;border:2px solid var(--hazard);">` : ''}
+        <p style="color:var(--text-primary);font-weight:700;font-family:'Chakra Petch',sans-serif;font-size:15px;letter-spacing:1px;">${escapeHtml(data.member_id_display||memberRef)}</p>
+        ${data.full_name?`<p style="color:var(--text-muted);font-size:12px;margin-top:4px;">${escapeHtml(data.full_name)}</p>`:''}
+        ${data.download_url?`<a href="${data.download_url}" download class="action-btn" style="display:inline-block;margin-top:14px;text-decoration:none;"><i class="bi bi-download" style="margin-right:5px;"></i>Download</a>`:''}
       </div>`;
   })
-  .catch(() => {
-    resultDiv.innerHTML = '<p style="color:var(--danger);font-size:13px;">Unable to generate ID right now.</p>';
-  });
+  .catch(() => { resultDiv.innerHTML = '<p style="color:var(--danger);font-size:13px;">Unable to generate ID right now.</p>'; });
 }
 </script>
 

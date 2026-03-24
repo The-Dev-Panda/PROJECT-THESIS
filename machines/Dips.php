@@ -48,6 +48,20 @@ include('../includes/header.php');
                             aria-label="View photo 2">
                         <img src="../images/DipBar.png" alt="Dips Machine Photo" loading="lazy" decoding="async">
                     </button>
+
+                    <button type="button" 
+                            data-src="https://drive.google.com/file/d/1GCT8CxT2JLRKhh7rHziPTbbz3UWYM1AW/preview" 
+                            data-type="video" 
+                            aria-label="Play video 1">
+                        <img src="../images/DIPS.png" alt="Dips Machine Video" loading="lazy" decoding="async">
+                    </button>
+
+                    <button type="button" 
+                            data-src="https://drive.google.com/file/d/18R2PplYzULUmZMEFW_MELihcvv0HiEGs/preview" 
+                            data-type="video" 
+                            aria-label="Play video 2">
+                        <img src="../images/DIPS.png" alt="Dips Machine Video" loading="lazy" decoding="async">
+                    </button>
                 </div>
                 
                 <!-- Exercises Section -->
