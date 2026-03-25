@@ -99,14 +99,14 @@ try {
     $weeklyStmt = $db->prepare("SELECT COUNT(DISTINCT DATE(datetime)) AS total FROM attendance WHERE user_id = :user_id AND datetime >= :weekly_threshold");
     $weeklyStmt->execute([
         ':user_id' => $userId,
-        ':weekly_threshold' => date('Y-m-d', strtotime('-6 days')),
+        ':weekly_threshold' => date('Y-m-d H:i:s', strtotime('-6 days')),
     ]);
     $weeklyCount = (int)$weeklyStmt->fetchColumn();
 
     $monthlyStmt = $db->prepare("SELECT COUNT(DISTINCT DATE(datetime)) AS total FROM attendance WHERE user_id = :user_id AND datetime >= :monthly_threshold");
     $monthlyStmt->execute([
         ':user_id' => $userId,
-        ':monthly_threshold' => date('Y-m-d', strtotime('-29 days')),
+        ':monthly_threshold' => date('Y-m-d H:i:s', strtotime('-29 days')),
     ]);
     $monthlyCount = (int)$monthlyStmt->fetchColumn();
 

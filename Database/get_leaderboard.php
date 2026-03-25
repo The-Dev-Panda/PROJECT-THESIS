@@ -35,8 +35,8 @@ try {
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
         $datetimeThreshold = $period === 'monthly'
-            ? date('Y-m-d', strtotime('-29 days'))
-            : date('Y-m-d', strtotime('-6 days'));
+            ? date('Y-m-d H:i:s', strtotime('-29 days'))
+            : date('Y-m-d H:i:s', strtotime('-6 days'));
         $sql = "
             SELECT
                 u.id,
