@@ -619,10 +619,13 @@ document.getElementById('registrationForm').addEventListener('submit', function(
   if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) { alert('Password must include at least one letter and one number.'); return; }
   if (password !== confirmPassword) { alert('Passwords do not match.'); return; }
 
+  const csrfTokenInput = document.querySelector('input[name="csrf_token"]');
+  if (!csrfTokenInput || !csrfTokenInput.value) { alert('Security token missing. Please reload the page.'); return; }
+  const csrfToken = csrfTokenInput.value;
   fetch('../Database/create_member.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ full_name: fullName, email, age, height_cm: heightCm, weight_kg: weightKg, fitness_level: fitnessLevel, goal, password, confirm_password: confirmPassword })
+    body: JSON.stringify({ csrf_token: csrfToken, full_name: fullName, email, age, height_cm: heightCm, weight_kg: weightKg, fitness_level: fitnessLevel, goal, password, confirm_password: confirmPassword })
   })
   .then(r => r.json())
   .then(data => {

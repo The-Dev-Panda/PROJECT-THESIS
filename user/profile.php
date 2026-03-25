@@ -536,6 +536,7 @@ try {
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+EQG7wp9vY1Qtu2w1P7QHCMkHPlJ8" crossorigin="anonymous"></script>
     <script src="lightmode.js"></script>
+    <script>window.FITSTOP_CSRF_TOKEN = <?php echo json_encode(fitstop_csrf_token()); ?>;</script>
     <script>
       const qrHost = document.getElementById("qrcode");
       if (qrHost) {
@@ -550,6 +551,7 @@ try {
         event.preventDefault();
 
         const payload = {
+          csrf_token: window.FITSTOP_CSRF_TOKEN,
           age: document.getElementById("onboardAge").value,
           height_cm: document.getElementById("onboardHeight").value,
           weight_kg: document.getElementById("onboardWeight").value,

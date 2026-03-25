@@ -46,6 +46,7 @@ function saveProfileToDb(d) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      csrf_token: window.FITSTOP_CSRF_TOKEN,
       height_cm: d.height,
       weight_kg: d.weight,
     }),
