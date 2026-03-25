@@ -77,6 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="<?php echo fitstop_csrf_token(); ?>">
   <title>Staff Dashboard - Fit-Stop Gym</title>
   <link rel="stylesheet" href="staff.css">
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -439,7 +440,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
               <input type="number" id="paymentAmount" class="form-input" placeholder="0.00" step="0.01">
             </div>
 
-            <!-- Paid For — dropdown -->
+            <!-- Paid For — dropdown with inventory items -->
             <div class="form-group">
               <label>Paid For</label>
               <select id="paymentPaidFor" class="form-input" onchange="autoFillAmount(this.value)">
@@ -448,7 +449,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 <option value="Monthly">Monthly</option>
                 <option value="Day Pass / Walk-In">Day Pass / Walk-In</option>
                 <option value="Special Rate">Special Rate</option>
-                <option value="Inventory">Inventory</option>
+                <optgroup label="── Inventory Items ──">
+                  <option value="Inventory:2:Sting"        data-inv-id="2"  data-price="20">Sting (Beverage)</option>
+                  <option value="Inventory:3:Amino"        data-inv-id="3"  data-price="10">Amino (Supplements)</option>
+                  <option value="Inventory:4:Pre-Workout"  data-inv-id="4"  data-price="35">Pre-Workout (Supplements)</option>
+                  <option value="Inventory:5:Gatorade"     data-inv-id="5"  data-price="25">Gatorade (Beverage)</option>
+                  <option value="Inventory:6:Creatine"     data-inv-id="6"  data-price="20">Creatine (Supplements)</option>
+                  <option value="Inventory:7:Whey"         data-inv-id="7"  data-price="75">Whey (Supplements)</option>
+                  <option value="Inventory:8:Protein Bar"  data-inv-id="8"  data-price="120">Protein Bar (Snacks)</option>
+                </optgroup>
               </select>
             </div>
 
@@ -529,8 +538,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </div>
     </section>
 
-      
-    
     <section class="members-section" id="memberManagement">
       <h2>Active Members</h2>
       <div id="membersGrid" class="members-grid">
@@ -733,31 +740,34 @@ function toggleCustomerType(type) {
 }
 
 function autoFillAmount(paidFor) {
-  const amountInput = document.getElementById('paymentAmount');
+  const amountInput  = document.getElementById('paymentAmount');
   const customerType = document.querySelector('input[name="customerType"]:checked')?.value || 'member';
 
-  const defaults = {
-    'Membership':        500,
-    'Monthly':           650,
-    'Day Pass / Walk-In': 50,
-    'Special Rate':       40,
-  };
+  // Inventory item — read price from the selected option's data-price attribute
+  if (paidFor && paidFor.startsWith('Inventory:')) {
+    const sel   = document.getElementById('paymentPaidFor');
+    const opt   = sel ? sel.options[sel.selectedIndex] : null;
+    const price = opt ? parseFloat(opt.dataset.price) : null;
+    amountInput.value = (price !== null && !isNaN(price)) ? price.toFixed(2) : '';
+    return;
+  }
 
+  const defaults = {
+    'Membership':         500,
+    'Monthly':            650,
+    'Day Pass / Walk-In':  50,
+    'Special Rate':        40,
+  };
   const walkInOverrides = {
-    'Monthly':           750,
-    'Day Pass / Walk-In': 60,
+    'Monthly':            750,
+    'Day Pass / Walk-In':  60,
   };
 
   let price = defaults[paidFor] ?? null;
   if (customerType === 'non-member' && paidFor in walkInOverrides) {
     price = walkInOverrides[paidFor];
   }
-
-  if (price !== null) {
-    amountInput.value = price.toFixed(2);
-  } else {
-    amountInput.value = '';
-  }
+  amountInput.value = price !== null ? price.toFixed(2) : '';
 }
 
 function clearPaymentForm() {
@@ -788,21 +798,85 @@ function processPayment() {
   if (!amount || !method || !paidFor) { alert('Please fill in all required fields!'); return; }
   if (parseFloat(amount) <= 0) { alert('Amount must be greater than 0!'); return; }
 
+  // Detect if an inventory item is being purchased
+  let invItemId   = null;
+  let invItemName = null;
+  const invQty    = 1; // 1 unit per payment transaction
+  if (paidFor.startsWith('Inventory:')) {
+    const parts = paidFor.split(':');
+    invItemId   = parts[1];   // e.g. "2"
+    invItemName = parts[2];   // e.g. "Sting"
+  }
+
   btn.disabled = true; btn.textContent = 'Saving...';
 
   fetch('../Database/save_transaction.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ customer_type: customerType, member_ref: memberId, customer_name: customerName, amount: parseFloat(amount), payment_method: method, paid_for: paidFor, notes })
+    body: JSON.stringify({
+      customer_type:  customerType,
+      member_ref:     memberId,
+      customer_name:  customerName,
+      amount:         parseFloat(amount),
+      payment_method: method,
+      paid_for:       invItemId ? ('Inventory - ' + invItemName) : paidFor,
+      notes,
+      inv_item_id:    invItemId,
+      inv_qty:        invQty,
+    })
   })
   .then(r => r.json())
   .then(data => {
     btn.disabled = false; btn.textContent = 'Generate Receipt';
     if (!data.success) { alert(data.error || 'Failed to save transaction.'); return; }
+
+    // If an inventory item was purchased — deduct stock server-side & update tally
+    if (invItemId) {
+      deductInventoryStock(invItemId, invItemName, invQty);
+    }
+
     displayReceipt(data.receipt);
     clearPaymentForm();
   })
   .catch(() => { btn.disabled = false; btn.textContent = 'Generate Receipt'; alert('Unable to save transaction right now.'); });
+}
+
+/**
+ * Called after a successful inventory item payment.
+ * 1. POSTs to inventory.php to deduct stock server-side.
+ * 2. Writes the sale into localStorage so inventory.php's Daily Counter
+ *    Logsheet automatically shows the tally when opened.
+ */
+function deductInventoryStock(invItemId, invItemName, qty) {
+  // Server-side stock deduction via inventory.php
+  const fd = new FormData();
+  fd.append('action',     'update_stock');
+  fd.append('id',         invItemId);
+  fd.append('change',     -qty);
+  // Pass CSRF token from the meta tag we added to <head>
+  const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+  if (csrfMeta) fd.append('csrf_token', csrfMeta.content);
+
+  fetch('inventory.php', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) console.warn('Stock deduction failed:', data.message);
+    })
+    .catch(err => console.warn('Stock deduction error:', err));
+
+  // Write to localStorage tally (read by inventory.php Daily Counter Logsheet)
+  const TALLY_KEY = 'fitstop_inv_tally';
+  const today     = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  let tally = {};
+  try { tally = JSON.parse(localStorage.getItem(TALLY_KEY) || '{}'); } catch(e) {}
+
+  // Reset tally if it's a new day
+  if (tally._date !== today) {
+    tally = { _date: today };
+  }
+
+  tally[invItemId] = (tally[invItemId] || 0) + qty;
+  localStorage.setItem(TALLY_KEY, JSON.stringify(tally));
 }
 
 function displayReceipt(receipt) {
@@ -993,7 +1067,7 @@ document.addEventListener('DOMContentLoaded', function() {
   loadExerciseOptions();
   loadAttendanceMembers();
   loadMembersForPayment();
- loadRealtimeAttendance();
+  loadRealtimeAttendance();
   refreshUnreadCount();
   setInterval(() => {
     loadRealtimeAttendance();
@@ -1016,7 +1090,6 @@ function loadRealtimeAttendance() {
      if (data.stats) {
         document.getElementById('stat-checked-in').textContent    = data.stats.members_checked_in;
         document.getElementById('stat-registrations').textContent = data.stats.new_registrations;
-        // Don't overwrite stat-notifications here — it's managed by the unread badge logic
       }
       const records = Array.isArray(data.records) ? data.records : [];
       list.innerHTML = records.length === 0
@@ -1250,7 +1323,6 @@ function loadActiveMembers() {
 document.addEventListener('DOMContentLoaded', function() {
   loadActiveMembers();
 });
-
 </script>
 
 </body>

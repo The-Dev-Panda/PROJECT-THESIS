@@ -56,7 +56,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 exit;
             }
 
-            // Only record water expense in this logsheet flow.
             $entryTotal = 0;
             $itemsTotal = 0;
             $grandTotal = 0 - $lessWater;
@@ -76,12 +75,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 ]);
             }
 
+            // Process sold items from the logsheet (manual add qty entries)
+            $updatedRows = [];
+            $soldItemsJson = $_POST['sold_items'] ?? '[]';
+            $soldItems = json_decode($soldItemsJson, true);
+            if (is_array($soldItems)) {
+                foreach ($soldItems as $item) {
+                    $itemId  = (int)($item['id']  ?? 0);
+                    $itemQty = (int)($item['qty'] ?? 0);
+                    if ($itemId <= 0 || $itemQty <= 0) continue;
+
+                    $cur    = (int)$pdo->query("SELECT quantity FROM inventory WHERE id = $itemId")->fetchColumn();
+                    $newQty = max(0, $cur - $itemQty);
+                    $pdo->prepare("UPDATE inventory SET quantity = :qty, updated_at = CURRENT_TIMESTAMP WHERE id = :id")
+                        ->execute([':qty' => $newQty, ':id' => $itemId]);
+
+                    $updRow = $pdo->query("SELECT * FROM inventory WHERE id = $itemId")->fetch(PDO::FETCH_ASSOC);
+                    $updatedRows[] = $updRow;
+
+                    $itemPrice  = (float)($item['price'] ?? 0);
+                    $itemTotal  = $itemPrice * $itemQty;
+                    $itemsTotal += $itemTotal;
+                    $grandTotal += $itemTotal;
+
+                    $receiptNo = 'INV-' . date('Ymd') . '-' . $itemId . '-' . rand(100, 999);
+                    $pdo->prepare("INSERT INTO transactions
+                            (receipt_number, customer_type, customer_name, amount,
+                             payment_method, staff_id, transaction_date, status, `desc`)
+                        VALUES (:rn, 'inventory', 'Customer Purchase', :amount,
+                                'Cash', :staff, CURRENT_TIMESTAMP, 'completed', :desc)")
+                    ->execute([
+                        ':rn'     => $receiptNo,
+                        ':amount' => $itemTotal,
+                        ':staff'  => $staffId,
+                        ':desc'   => "Logsheet: Sold {$itemQty}x " . ($item['name'] ?? 'Item'),
+                    ]);
+                }
+            }
+
             echo json_encode([
-                'success'     => true,
-                'entry_total' => $entryTotal,
-                'items_total' => $itemsTotal,
-                'grand_total' => $grandTotal,
-                'less_water'  => $lessWater,
+                'success'      => true,
+                'entry_total'  => $entryTotal,
+                'items_total'  => $itemsTotal,
+                'grand_total'  => $grandTotal,
+                'less_water'   => $lessWater,
+                'updated_rows' => $updatedRows,
             ]);
             exit;
         }
@@ -320,6 +358,7 @@ try {
     }
     .sf-input:focus { outline: none; border-color: var(--hazard); box-shadow: 0 0 0 1px var(--hazard); }
     .sf-input:disabled { opacity: 0.35; cursor: not-allowed; }
+    .sf-input[readonly] { opacity: 0.75; cursor: default; pointer-events: none; }
 
     .sf-totals {
       background: var(--bg-surface); border: 1px solid var(--border);
@@ -655,9 +694,10 @@ try {
               </td>
               <td><span class="<?= $scls ?> sf-stock-badge" style="font-size:10px;padding:2px 7px;"><?= $stock ?></span></td>
               <td>
-                <input type="number" class="sf-input sf-item-qty"
-                  min="0" max="<?= $stock ?>" value="0"
-                  <?= $oos ? 'disabled' : '' ?>>
+                  <input type="number" class="sf-input sf-item-qty"
+                    min="0" max="<?= $stock ?>" value="0"
+                    readonly
+                    <?= $oos ? 'disabled' : '' ?>>
               </td>
               <td class="rate">&#8369;<?= number_format((float)$item['price'], 2) ?></td>
               <td class="tot sf-item-tot">&#8369;0.00</td>
@@ -679,9 +719,7 @@ try {
           <tbody>
             <tr>
               <td>Water</td>
-              <td><input type="number" class="sf-input" id="sfWater" min="0" value="0" step="0.01"
-
-                style="width:100px;"></td>
+              <td><input type="number" class="sf-input" id="sfWater" min="0" value="0" step="0.01" style="width:100px;"></td>
               <td colspan="4"></td>
             </tr>
           </tbody>
@@ -791,10 +829,9 @@ function saveSoldChange() {
         const itemId  = currentRow.getAttribute('data-id');
         const sfRow   = document.querySelector(`#sfItemsBody tr[data-inv-id="${itemId}"]`);
         if (sfRow) {
-          const soldQty   = qtyInput;
           const price     = parseFloat(sfRow.dataset.price) || 0;
           const prevTally = parseInt(sfRow.dataset.tally) || 0;
-          const newTally  = prevTally + soldQty;
+          const newTally  = prevTally + qtyInput;
           sfRow.dataset.tally = newTally;
           sfRow.dataset.stock = newQty;
 
@@ -815,6 +852,9 @@ function saveSoldChange() {
           else sfRow.classList.remove('stock-oos');
         }
 
+        // Sync updated tally back to localStorage
+        syncTallyToLocalStorage();
+
         notifLoaded = false;
         const badge = document.getElementById('notifBadge');
         badge.textContent = (parseInt(badge.textContent) || 0) + 1;
@@ -831,6 +871,7 @@ function saveSoldChange() {
 
 function openSalesModal() {
   sfRecalc();
+  applyLocalStorageTally();   // refresh tally from staff.php payments
   document.getElementById('sfSuccess').classList.remove('show');
   document.getElementById('salesModal').classList.add('active');
 }
@@ -868,15 +909,72 @@ function sfRecalc() {
   document.getElementById('sfGrandTot').innerHTML = fmt(entryTotal + itemsTotal - water);
 }
 
+/**
+ * Reads inventory tally written by staff.php's deductInventoryStock()
+ * from localStorage and updates the "Today's Tally" column in the logsheet.
+ */
+function applyLocalStorageTally() {
+  const TALLY_KEY = 'fitstop_inv_tally';
+  const today     = new Date().toISOString().slice(0, 10);
+  let tally = {};
+  try { tally = JSON.parse(localStorage.getItem(TALLY_KEY) || '{}'); } catch(e) {}
+
+  // Ignore if tally is from a previous day
+  if (tally._date !== today) return;
+
+  document.querySelectorAll('#sfItemsBody tr[data-inv-id]').forEach(row => {
+    const invId    = row.dataset.invId;
+    const tallyQty = parseInt(tally[invId]) || 0;
+    if (tallyQty <= 0) return;
+
+    const price      = parseFloat(row.dataset.price) || 0;
+    const tallyCell  = row.querySelector('.sf-item-tally');
+    const prevStored = parseInt(row.dataset.tally) || 0;
+
+    if (tallyQty > prevStored) {
+      row.dataset.tally = tallyQty;
+
+      // ✅ UPDATE the tally display column
+      if (tallyCell) {
+        tallyCell.innerHTML = `<span style="font-weight:700;">${tallyQty}</span>
+          <span style="font-size:10.5px;color:var(--text-muted);display:block;">${fmt(tallyQty * price)}</span>`;
+      }
+
+      // ✅ NEW: Also set the "Add Qty" input to reflect new sales from staff.php
+      const qtyInput = row.querySelector('.sf-item-qty');
+      if (qtyInput && !qtyInput.disabled) {
+        const addedSinceLastOpen = tallyQty - prevStored;
+        const currentVal = parseInt(qtyInput.value) || 0;
+        qtyInput.value = currentVal + addedSinceLastOpen;
+      }
+    }
+  });
+
+  // ✅ Recalculate totals after updating inputs
+  sfRecalc();
+}
+/**
+ * Writes all current row tallies back to localStorage so they survive
+ * page refresh and are visible to staff.php payment page.
+ */
+function syncTallyToLocalStorage() {
+  const TALLY_KEY = 'fitstop_inv_tally';
+  const today     = new Date().toISOString().slice(0, 10);
+  const tally     = { _date: today };
+  document.querySelectorAll('#sfItemsBody tr[data-inv-id]').forEach(row => {
+    const qty = parseInt(row.dataset.tally) || 0;
+    if (qty > 0) tally[row.dataset.invId] = qty;
+  });
+  localStorage.setItem(TALLY_KEY, JSON.stringify(tally));
+}
+
 function loadSalesSummary() {
   const fd = new FormData();
   fd.append('action', 'get_sales_summary');
+  fd.append('csrf_token', csrfToken);
 
-  // optional: filter by staff_id (if needed), otherwise all
   const staffId = (window.currentStaffId && Number.isInteger(window.currentStaffId)) ? window.currentStaffId : null;
-  if (staffId) {
-    fd.append('staff_id', staffId);
-  }
+  if (staffId) fd.append('staff_id', staffId);
 
   fetch('inventory.php', { method: 'POST', body: fd })
     .then(r => r.json())
@@ -887,6 +985,9 @@ function loadSalesSummary() {
       document.getElementById('sfMember').value    = data.summary.member;
       document.getElementById('sfSpecial').value   = data.summary.special;
       document.getElementById('sfMonthly').value   = data.summary.monthly;
+
+      // Apply any inventory item tallies from staff.php payment page
+      applyLocalStorageTally();
 
       sfRecalc();
     })
@@ -1021,7 +1122,7 @@ function submitSalesForm() {
           const inp  = document.getElementById(inputId);
           const cell = document.getElementById(cfg.tallyId);
           if (!inp || !cell) return;
-          const added    = parseInt(inp.value) || 0;
+          const added     = parseInt(inp.value) || 0;
           const prevTally = parseInt(cell.dataset.tally) || 0;
           const newTally  = prevTally + added;
           cell.dataset.tally = newTally;
@@ -1036,6 +1137,10 @@ function submitSalesForm() {
 
         document.querySelectorAll('.sf-item-qty').forEach(i => i.value = 0);
         document.getElementById('sfWater').value = 0;
+
+        // Sync accumulated tallies to localStorage
+        syncTallyToLocalStorage();
+
         sfRecalc();
 
         notifLoaded = false;
@@ -1152,6 +1257,8 @@ function resetTally() {
     const cell = document.getElementById(id);
     if (cell) { cell.dataset.tally = 0; cell.innerHTML = '—'; }
   });
+  // Also clear localStorage so staff.php payments start fresh for the tally
+  localStorage.removeItem('fitstop_inv_tally');
   document.getElementById('sfSuccess').classList.remove('show');
   showToast('Tally reset.', 'success');
 }
@@ -1171,9 +1278,15 @@ document.querySelector('.search-input').addEventListener('keydown', e => { if (e
 document.getElementById('soldModal').addEventListener('click', function(e) { if (e.target === this) closeSoldModal(); });
 document.getElementById('salesModal').addEventListener('click', function(e) { if (e.target === this) closeSalesModal(); });
 
+// Add this inside window.addEventListener('load', ...) at the bottom
 window.addEventListener('load', function() {
   loadSalesSummary();
   sfRecalc();
+
+  // ✅ Poll localStorage every 10 seconds so staff.php payments reflect here live
+  setInterval(function() {
+    applyLocalStorageTally();
+  }, 10000);
 });
 </script>
 
