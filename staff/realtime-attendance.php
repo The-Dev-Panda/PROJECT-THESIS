@@ -42,10 +42,11 @@ try {
         WHERE DATE(datetime) = DATE('now', 'localtime')
     ")->fetchColumn();
 
-    $newRegistrations = (int)$pdo->query("
+  $newRegistrations = (int)$pdo->query("
         SELECT COUNT(*)
-        FROM transactions
-        WHERE DATE(transaction_date) = DATE('now', 'localtime')
+        FROM users
+        WHERE user_type = 'user'
+        AND DATE(created_at) = DATE('now', 'localtime')
     ")->fetchColumn();
 
     $pendingNotifications = (int)$pdo->query("

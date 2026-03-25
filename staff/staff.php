@@ -48,6 +48,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
+      if ($action === 'get_active_members') {
+            $members = $pdo->query("
+                SELECT u.id, u.username, u.first_name, u.last_name, u.email,
+                       u.points, u.created_at, u.profile_picture,
+                       MAX(a.datetime) AS last_attendance
+                FROM users u
+                LEFT JOIN attendance a ON a.user_id = u.id
+                WHERE u.user_type = 'user'
+                GROUP BY u.id
+                ORDER BY u.first_name ASC, u.last_name ASC
+            ")->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(['success' => true, 'members' => $members]);
+            exit;
+        }
+
         echo json_encode(['success' => false, 'message' => 'Unknown action']);
         exit;
 
@@ -150,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <i class="bi bi-person-plus"></i>
         <span>Client Registration</span>
       </li>
-      <li id="inventoryBtn" data-target="inventory">
+          <li id="inventoryBtn" onclick="window.location.href='inventory.php'" style="cursor:pointer;">
         <i class="bi bi-box-seam"></i>
         <span>Inventory</span>
       </li>
@@ -242,13 +257,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           <div class="stat-info">
             <span class="stat-value" id="stat-registrations">—</span>
             <span class="stat-label">New Registrations</span>
-          </div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-icon equipment"><i class="bi bi-tools"></i></div>
-          <div class="stat-info">
-            <span class="stat-value" id="stat-equipment">—</span>
-            <span class="stat-label">Equipment Issues</span>
           </div>
         </div>
         <div class="stat-box">
@@ -469,64 +477,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </div>
     </section>
 
-    <!-- INVENTORY -->
-    <section class="inventory-section" id="inventory">
-      <h2>Inventory Management</h2>
-      <div class="inventory-header">
-        <div class="search-container">
-          <div class="search-wrapper">
-            <i class="bi bi-search search-icon"></i>
-            <input type="text" class="search-input" placeholder="Search equipment...">
-          </div>
-          <button class="search-btn">Search</button>
-        </div>
-      </div>
-      <div class="inventory-table">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th><th>Equipment Name</th><th>Category</th>
-              <th>Qty</th><th>Status</th><th>Last Maintenance</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="color:var(--text-muted);font-family:monospace;">#EQ001</td>
-              <td style="color:var(--text-primary);font-weight:600;">Treadmill Pro X5</td>
-              <td>Cardio</td><td>8</td>
-              <td><span class="status-badge active">Active</span></td>
-              <td>Jan 15, 2025</td>
-              <td><button class="btn-icon"><i class="bi bi-pencil"></i></button><button class="btn-icon"><i class="bi bi-qr-code"></i></button></td>
-            </tr>
-            <tr>
-              <td style="color:var(--text-muted);font-family:monospace;">#EQ002</td>
-              <td style="color:var(--text-primary);font-weight:600;">Dumbbells Set</td>
-              <td>Strength</td><td>45</td>
-              <td><span class="status-badge active">Active</span></td>
-              <td>Jan 10, 2025</td>
-              <td><button class="btn-icon"><i class="bi bi-pencil"></i></button><button class="btn-icon"><i class="bi bi-qr-code"></i></button></td>
-            </tr>
-            <tr>
-              <td style="color:var(--text-muted);font-family:monospace;">#EQ003</td>
-              <td style="color:var(--text-primary);font-weight:600;">Stationary Bike</td>
-              <td>Cardio</td><td>5</td>
-              <td><span class="status-badge maintenance">Maintenance</span></td>
-              <td>Dec 28, 2024</td>
-              <td><button class="btn-icon"><i class="bi bi-pencil"></i></button><button class="btn-icon"><i class="bi bi-qr-code"></i></button></td>
-            </tr>
-            <tr>
-              <td style="color:var(--text-muted);font-family:monospace;">#EQ004</td>
-              <td style="color:var(--text-primary);font-weight:600;">Rowing Machine</td>
-              <td>Cardio</td><td>3</td>
-              <td><span class="status-badge low-stock">Low Stock</span></td>
-              <td>Jan 05, 2025</td>
-              <td><button class="btn-icon"><i class="bi bi-pencil"></i></button><button class="btn-icon"><i class="bi bi-qr-code"></i></button></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
     <!-- ATTENDANCE -->
     <section class="attendance-section" id="attendance">
       <h2>Workout / Performance Log</h2>
@@ -579,62 +529,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </div>
     </section>
 
-    <!-- MEMBER MANAGEMENT -->
+      
+    
     <section class="members-section" id="memberManagement">
       <h2>Active Members</h2>
-      <div class="members-grid">
-        <div class="member-card">
-          <img src="staffimage/kevin.jpg" alt="Member" class="member-img">
-          <h4>Kevin Barretto</h4>
-          <p class="member-id">#MB2024001</p>
-          <div class="member-details">
-            <span><i class="bi bi-fire"></i> 45-day streak</span>
-          </div>
-          <div class="member-stats">
-            <div class="stat-item"><span class="label">BMI</span><span class="value">22.5</span></div>
-            <div class="stat-item"><span class="label">Sessions</span><span class="value">68</span></div>
-          </div>
-          <button class="view-btn">View Profile</button>
-        </div>
-        <div class="member-card">
-          <img src="staffimage/cj.jpg" alt="Member" class="member-img">
-          <h4>Charles Carillo</h4>
-          <p class="member-id">#MB2024002</p>
-          <div class="member-details">
-            <span><i class="bi bi-fire"></i> 28-day streak</span>
-          </div>
-          <div class="member-stats">
-            <div class="stat-item"><span class="label">BMI</span><span class="value">24.1</span></div>
-            <div class="stat-item"><span class="label">Sessions</span><span class="value">42</span></div>
-          </div>
-          <button class="view-btn">View Profile</button>
-        </div>
-        <div class="member-card">
-          <img src="staffimage/sha.jpg" alt="Member" class="member-img">
-          <h4>Sharien Salarda</h4>
-          <p class="member-id">#MB2024003</p>
-          <div class="member-details">
-            <span><i class="bi bi-fire"></i> 92-day streak</span>
-          </div>
-          <div class="member-stats">
-            <div class="stat-item"><span class="label">BMI</span><span class="value">21.8</span></div>
-            <div class="stat-item"><span class="label">Sessions</span><span class="value">135</span></div>
-          </div>
-          <button class="view-btn">View Profile</button>
-        </div>
-        <div class="member-card">
-          <img src="staffimage/lance.jpg" alt="Member" class="member-img">
-          <h4>Lance Chua</h4>
-          <p class="member-id">#MB2024004</p>
-          <div class="member-details">
-            <span><i class="bi bi-fire"></i> 15-day streak</span>
-          </div>
-          <div class="member-stats">
-            <div class="stat-item"><span class="label">BMI</span><span class="value">26.3</span></div>
-            <div class="stat-item"><span class="label">Sessions</span><span class="value">18</span></div>
-          </div>
-          <button class="view-btn">View Profile</button>
-        </div>
+      <div id="membersGrid" class="members-grid">
+        <div style="padding:24px;color:var(--text-muted);font-size:13px;">Loading members...</div>
       </div>
     </section>
 
@@ -1076,8 +976,12 @@ document.addEventListener('DOMContentLoaded', function() {
   loadExerciseOptions();
   loadAttendanceMembers();
   loadMembersForPayment();
-  loadRealtimeAttendance();
-  setInterval(loadRealtimeAttendance, 15000);
+ loadRealtimeAttendance();
+  refreshUnreadCount();
+  setInterval(() => {
+    loadRealtimeAttendance();
+    refreshUnreadCount();
+  }, 15000);
   const ex = document.getElementById('exercise');
   if (ex) { ex.addEventListener('input', updatePerformanceMetricField); ex.addEventListener('change', updatePerformanceMetricField); }
   updatePerformanceMetricField();
@@ -1092,11 +996,10 @@ function loadRealtimeAttendance() {
       const list = document.getElementById('realtimeAttendanceList');
       if (!list) return;
       if (!data.success) { list.innerHTML = `<div style="padding:16px;color:var(--danger);font-size:12px;">Error: ${escapeHtml(data.error||'Unknown error')}</div>`; return; }
-      if (data.stats) {
+     if (data.stats) {
         document.getElementById('stat-checked-in').textContent    = data.stats.members_checked_in;
         document.getElementById('stat-registrations').textContent = data.stats.new_registrations;
-        document.getElementById('stat-equipment').textContent     = data.stats.equipment_issues;
-        document.getElementById('stat-notifications').textContent = data.stats.pending_notifications;
+        // Don't overwrite stat-notifications here — it's managed by the unread badge logic
       }
       const records = Array.isArray(data.records) ? data.records : [];
       list.innerHTML = records.length === 0
@@ -1137,7 +1040,16 @@ let notifLoaded    = false;
 function toggleNotifPanel() {
   notifPanelOpen = !notifPanelOpen;
   document.getElementById('notifPanel').classList.toggle('open', notifPanelOpen);
-  if (notifPanelOpen && !notifLoaded) loadNotificationHistory();
+  if (notifPanelOpen) {
+    localStorage.setItem('notif_last_read', Date.now().toString());
+    const badge = document.getElementById('notifBadge');
+    badge.textContent = '0';
+    badge.classList.add('hidden');
+    const statEl = document.getElementById('stat-notifications');
+    if (statEl) statEl.textContent = '0';
+
+    if (!notifLoaded) loadNotificationHistory();
+  }
 }
 
 document.addEventListener('click', function(e) {
@@ -1206,19 +1118,32 @@ function loadNotificationHistory() {
     .catch(() => { list.innerHTML = '<div class="notif-empty"><i class="bi bi-wifi-off"></i>Unable to load notifications.</div>'; });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+function refreshUnreadCount() {
   const fd = new FormData();
   fd.append('action', 'get_notifications');
   fetch('staff.php', { method: 'POST', body: fd })
     .then(r => r.json())
     .then(data => {
       if (!data.success) return;
-      const total = (Array.isArray(data.transactions)?data.transactions.length:0) + (Array.isArray(data.low_stock)?data.low_stock.length:0);
+      const transactions = Array.isArray(data.transactions) ? data.transactions : [];
+      const lowStock     = Array.isArray(data.low_stock)    ? data.low_stock    : [];
+      const lastRead     = parseInt(localStorage.getItem('notif_last_read') || '0');
+
+      const unread = [
+        ...transactions.map(t => new Date((t.transaction_date || t.created_at).replace(' ', 'T') + 'Z').getTime()),
+        ...lowStock.map(i => new Date((i.updated_at).replace(' ', 'T') + 'Z').getTime())
+      ].filter(ts => ts > lastRead).length;
+
       const badge = document.getElementById('notifBadge');
-      if (total > 0) { badge.textContent = total > 99 ? '99+' : total; badge.classList.remove('hidden'); }
+      if (unread > 0) { badge.textContent = unread > 99 ? '99+' : unread; badge.classList.remove('hidden'); }
       else badge.classList.add('hidden');
+
+      const statEl = document.getElementById('stat-notifications');
+      if (statEl) statEl.textContent = unread;
     }).catch(()=>{});
-});
+}
+
+document.addEventListener('DOMContentLoaded', refreshUnreadCount);
 </script>
 
 <script>
@@ -1245,6 +1170,70 @@ function generateMemberID() {
   })
   .catch(() => { resultDiv.innerHTML = '<p style="color:var(--danger);font-size:13px;">Unable to generate ID right now.</p>'; });
 }
+</script>
+
+<script>
+function loadActiveMembers() {
+  const grid = document.getElementById('membersGrid');
+  if (!grid) return;
+
+  const fd = new FormData();
+  fd.append('action', 'get_active_members');
+
+  fetch('staff.php', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success || !Array.isArray(data.members)) {
+        grid.innerHTML = '<div style="padding:24px;color:var(--danger);font-size:13px;">Failed to load members.</div>';
+        return;
+      }
+
+      if (data.members.length === 0) {
+        grid.innerHTML = '<div style="padding:24px;color:var(--text-muted);font-size:13px;">No active members found.</div>';
+        return;
+      }
+
+      grid.innerHTML = data.members.map(m => {
+        const fullName = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.username;
+        const initials = fullName.substring(0, 2).toUpperCase();
+        const points   = parseInt(m.points || 0);
+        const joined   = m.created_at
+          ? new Date(m.created_at.replace(' ', 'T')).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+          : '—';
+        const lastSeen = m.last_attendance
+          ? timeAgo(m.last_attendance)
+          : 'No visits yet';
+
+        const avatarHtml = m.profile_picture
+          ? `<img src="${escapeHtml(m.profile_picture)}" alt="${escapeHtml(fullName)}" class="member-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+             <div class="member-img" style="display:none;align-items:center;justify-content:center;background:var(--bg-surface);color:var(--hazard);font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:20px;">${initials}</div>`
+          : `<div class="member-img" style="display:flex;align-items:center;justify-content:center;background:var(--bg-surface);color:var(--hazard);font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:20px;">${initials}</div>`;
+
+        return `
+          <div class="member-card">
+            ${avatarHtml}
+            <h4>${escapeHtml(fullName)}</h4>
+            <p class="member-id">@${escapeHtml(m.username || '—')}</p>
+            <div class="member-details">
+              <span><i class="bi bi-star-fill" style="color:var(--hazard);"></i> ${points} pts</span>
+            </div>
+            <div class="member-stats">
+              <div class="stat-item"><span class="label">Joined</span><span class="value" style="font-size:11px;">${joined}</span></div>
+              <div class="stat-item"><span class="label">Last Seen</span><span class="value" style="font-size:11px;">${lastSeen}</span></div>
+            </div>
+            <button class="view-btn" onclick="alert('Member: ${escapeHtml(fullName)}\\nEmail: ${escapeHtml(m.email || '—')}\\nPoints: ${points}')">View Profile</button>
+          </div>`;
+      }).join('');
+    })
+    .catch(() => {
+      grid.innerHTML = '<div style="padding:24px;color:var(--danger);font-size:13px;">Unable to reach server.</div>';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadActiveMembers();
+});
+
 </script>
 
 </body>
