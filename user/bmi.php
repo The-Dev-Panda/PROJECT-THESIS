@@ -201,10 +201,6 @@ if ($userId > 0) {
  
         <div class="m-tip"><i class="bi bi-lightbulb-fill"></i><span id="mTip">--</span></div>
  
-        <!-- Apply to Dashboard -->
-        <button class="m-apply-btn" id="mApplyBtn" onclick="applyToDashboard()">
-          <i class="bi bi-check2-circle"></i> Apply to Dashboard
-        </button>
  
         <p class="m-section-label">BMI Reference Chart</p>
         <div class="m-ref-grid">

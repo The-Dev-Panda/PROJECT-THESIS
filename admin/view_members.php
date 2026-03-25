@@ -211,7 +211,7 @@ $active_members = $stmt->fetch()['total'];
                 <p>Manage gym member accounts</p>
             </div>
         </div>
-        <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
+        <div class="stats-grid" style="grid-template-columns: repeat(auto, minmax(300px, 1fr)); grid-auto-flow: row dense;">
             <div class="stat-box">
                 <div class="stat-icon members">
                     <i class="bi bi-person"></i>

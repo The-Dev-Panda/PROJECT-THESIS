@@ -9768,6 +9768,139 @@ body.light-mode .toggle-track {
   margin: 0;
 }
 
+/* Dashboard layout stabilization */
+.notifications,
+.bmi-section,
+.history-grid,
+.leaderboard-grid,
+.records-grid,
+.diet-calendar,
+.nutrition-summary,
+.bottom-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.notifications {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bmi-section {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+}
+
+.history-grid,
+.records-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.leaderboard-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr);
+}
+
+.diet-calendar {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.nutrition-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bottom-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.profile-card,
+.bmi-card,
+.history-card,
+.diet-day,
+.nutrition-card,
+.box,
+.ranking-row,
+.log-entry,
+.receipt-entry,
+.meal-item {
+  min-width: 0;
+}
+
+.notification-card,
+.history-card,
+.ranking-row,
+.log-entry,
+.receipt-entry,
+.meal-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 1199.98px) {
+  .bmi-section,
+  .leaderboard-grid,
+  .diet-calendar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nutrition-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 991.98px) {
+  .notifications,
+  .bmi-section,
+  .history-grid,
+  .leaderboard-grid,
+  .records-grid,
+  .diet-calendar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .topbar,
+  .section-header,
+  .leaderboard-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .profile-container {
+    width: 100%;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .main-content {
+    padding: 16px;
+  }
+
+  .nutrition-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .notification-card,
+  .history-card,
+  .ranking-row,
+  .log-entry,
+  .receipt-entry,
+  .meal-item,
+  .history-workout {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .notification-card .notify-btn,
+  .history-card .notify-btn {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .workout-stats-mini {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
 /* ─── LEADERBOARD SECTION ────────────────────────────────── */
 .leaderboard-section {
   margin: 28px 0;
