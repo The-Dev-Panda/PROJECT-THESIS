@@ -1,5 +1,3 @@
-const BMI_KEY = "fitstop_bmi_data";
-
 function redirectToLogin(message) {
   window.location.href = "../Login/Login_Page.php" + (message ? "?error=" + encodeURIComponent(message) : "");
 }
@@ -56,29 +54,21 @@ function saveProfileToDb(d) {
 
 /* ── On load: restore saved BMI ── */
 window.addEventListener("DOMContentLoaded", () => {
-  ["mHeightSlider", "mWeightSlider"].forEach((id) =>
-    mPct(document.getElementById(id)),
-  );
+  const heightSlider = document.getElementById("mHeightSlider");
+  const weightSlider = document.getElementById("mWeightSlider");
+
+  mSync(heightSlider, "mHeightVal", "cm");
+  mSync(weightSlider, "mWeightVal", "kg");
 
   loadProfileFromDb().then((dbProfile) => {
     if (dbProfile) {
-      document.getElementById("mHeightSlider").value = dbProfile.height;
-      document.getElementById("mWeightSlider").value = dbProfile.weight;
-      mSync(document.getElementById("mHeightSlider"), "mHeightVal", "cm");
-      mSync(document.getElementById("mWeightSlider"), "mWeightVal", "kg");
-      mCalculate();
-      if (lastCalcData) {
-        applyDataToDashboard(lastCalcData);
-      }
-      return;
+      heightSlider.value = dbProfile.height;
+      weightSlider.value = dbProfile.weight;
+      mSync(heightSlider, "mHeightVal", "cm");
+      mSync(weightSlider, "mWeightVal", "kg");
     }
 
-    const saved = localStorage.getItem(BMI_KEY);
-    if (saved) {
-      try {
-        applyDataToDashboard(JSON.parse(saved));
-      } catch (e) {}
-    }
+    mCalculate(false);
   });
 });
 
@@ -124,7 +114,7 @@ function mSync(el, valId, unit) {
 let lastCalcData = null;
 
 /* ── Calculate ── */
-function mCalculate() {
+function mCalculate(shouldPersist = true) {
   const hRaw = parseFloat(document.getElementById("mHeightSlider").value);
   const wRaw = parseFloat(document.getElementById("mWeightSlider").value);
   const hM = hRaw / 100;
@@ -183,12 +173,6 @@ function mCalculate() {
   badge.style.borderColor = color;
   badge.style.background = color + "18";
 
-  const applyBtn = document.getElementById("mApplyBtn");
-  if (applyBtn) {
-    applyBtn.classList.remove("applied");
-    applyBtn.innerHTML = '<i class="bi bi-check2-circle"></i> Apply to Dashboard';
-  }
-
   const res = document.getElementById("mResult");
   res.classList.remove("show");
   void res.offsetWidth;
@@ -205,6 +189,8 @@ function mCalculate() {
   };
 
   applyDataToDashboard(lastCalcData);
-  saveProfileToDb({ height: hRaw, weight: wRaw }).catch(() => {});
+  if (shouldPersist) {
+    saveProfileToDb({ height: hRaw, weight: wRaw }).catch(() => {});
+  }
 }
 
