@@ -61,12 +61,12 @@ $allowedMovementTypes = ['strength', 'cardio', 'hypertrophy', 'flexibility', 'mo
     <meta charset="utf-8">
     <title>Exercises | FITSTOP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 </head>
 
 <body>
@@ -74,12 +74,12 @@ $allowedMovementTypes = ['strength', 'cardio', 'hypertrophy', 'flexibility', 'mo
 
     <div class="main-content">
         <!-- Topbar -->
-        <div class="topbar">
-            <div class="topbar-left">
+        <div class="topbar row">
+            <div class="topbar-left col-sm-12 col-xl-6">
                 <h1><i class="bi bi-bar-chart-line"></i> Exercise Library</h1>
                 <p>Manage exercises for workout logging and member programs</p>
             </div>
-            <div class="topbar-right">
+            <div class="topbar-right col-sm-12 col-xl-2 col-xl-offset-4">
                 <div class="topbar-badge">
                     <i class="bi bi-lightning-fill"></i>
                     <span><?php echo $total_records; ?> Exercises</span>
@@ -103,33 +103,48 @@ $allowedMovementTypes = ['strength', 'cardio', 'hypertrophy', 'flexibility', 'mo
 
         <!-- Filters Section -->
         <section>
-            <div class="inventory-header">
-                <form method="GET" class="search-container">
-                    <div class="search-wrapper" style="min-width: 200px;">
-                        <i class="bi bi-search search-icon"></i>
-                        <input type="text" name="search" class="search-input" placeholder="Search exercises..." maxlength="30"
-                            value="<?php echo htmlspecialchars($search); ?>">
+            <div>
+                <form method="GET">
+                    <div class="row my-2">
+                        <div class="col-sm-12 col-xl-3 my-1">
+                            <div class="search-wrapper" style="min-width: 200px;">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" name="search" class="search-input" placeholder="Search exercises..."
+                                    maxlength="30" value="<?php echo htmlspecialchars($search); ?>">
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-xl-2 my-1">
+                            <select name="target_muscle" class="search-input" style="min-width: 200px;">
+                                <option value="">All Muscles</option>
+                                <?php foreach ($target_list as $target): ?>
+                                    <option value="<?php echo htmlspecialchars($target); ?>" <?php echo ($target_muscle == $target) ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($target); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-sm-12 col-xl-2 my-1">
+                            <select name="movement_type" class="search-input" style="min-width: 200px;">
+                                <option value="">All Types</option>
+                                <?php foreach ($movement_list as $movement): ?>
+                                    <option value="<?php echo htmlspecialchars($movement); ?>" <?php echo ($movement_type == $movement) ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($movement); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-sm-12 col-xl-1 col-xl-offset-1 d-flex justify-content-center p-1">
+                            <button type="submit" class="search-btn col-sm-9 col-xl-12 p-3">
+                                <i class="bi bi-funnel"></i> Filter
+                            </button>
+                        </div>
+                        <div class="col-sm-12 col-xl-2 d-flex justify-content-center p-1">
+                            <a href="add_exercise.php" class="add-btn col-9 p-3 ">
+                                <i class="bi bi-plus-circle"></i> Add Exercise
+                            </a>
+                        </div>
                     </div>
-                    <select name="target_muscle" class="search-input" style="min-width: 200px;">
-                        <option value="">All Muscles</option>
-                        <?php foreach ($target_list as $target): ?>
-                            <option value="<?php echo htmlspecialchars($target); ?>" <?php echo ($target_muscle == $target) ? 'selected' : ''; ?>><?php echo htmlspecialchars($target); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <select name="movement_type" class="search-input" style="min-width: 200px;">
-                        <option value="">All Types</option>
-                        <?php foreach ($movement_list as $movement): ?>
-                            <option value="<?php echo htmlspecialchars($movement); ?>" <?php echo ($movement_type == $movement) ? 'selected' : ''; ?>><?php echo htmlspecialchars($movement); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <button type="submit" class="search-btn">
-                        <i class="bi bi-funnel"></i> Filter
-                    </button>
                 </form>
-                <a href="add_exercise.php" class="add-btn">
-                    <i class="bi bi-plus-circle"></i> Add Exercise
-                </a>
             </div>
 
             <!-- Exercise Table -->
@@ -158,7 +173,8 @@ $allowedMovementTypes = ['strength', 'cardio', 'hypertrophy', 'flexibility', 'mo
                                         </span>
                                     </td>
                                     <td>
-                                        <a class="btn-icon" href="edit_exercise.php?id=<?php echo (int) $row['exercise_id']; ?>">
+                                        <a class="btn-icon"
+                                            href="edit_exercise.php?id=<?php echo (int) $row['exercise_id']; ?>">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                         <a class="btn-icon"

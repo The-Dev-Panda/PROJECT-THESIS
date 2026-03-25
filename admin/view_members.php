@@ -211,8 +211,8 @@ $active_members = $stmt->fetch()['total'];
                 <p>Manage gym member accounts</p>
             </div>
         </div>
-        <div class="stats-grid" style="grid-template-columns: repeat(auto, minmax(300px, 1fr)); grid-auto-flow: row dense;">
-            <div class="stat-box">
+        <div class="row">
+            <div class="stat-box col-sm-12 col-xl">
                 <div class="stat-icon members">
                     <i class="bi bi-person"></i>
                 </div>
@@ -223,7 +223,7 @@ $active_members = $stmt->fetch()['total'];
                     <div class="stat-label">Total Members</div>
                 </div>
             </div>
-            <div class="stat-box">
+            <div class="stat-box col-sm-12 col-xl">
                 <div class="stat-icon registrations">
                     <i class="bi bi-person"></i>
                 </div>
@@ -233,7 +233,7 @@ $active_members = $stmt->fetch()['total'];
                     <div class="stat-label">New Members Today</div>
                 </div>
             </div>
-            <div class="stat-box">
+            <div class="stat-box col-sm-12 col-xl">
                 <div class="stat-icon registrations">
                     <i class="bi bi-person"></i>
                 </div>
@@ -243,12 +243,13 @@ $active_members = $stmt->fetch()['total'];
                     <div class="stat-label">New Members This Month</div>
                 </div>
             </div>
-            <div class="stat-box">
+            <div class="stat-box col-sm-12 col-xl">
                 <div class="stat-icon registrations">
                     <i class="bi bi-person" style="color: var(--success);"></i>
                 </div>
                 <div>
-                    <div class="stat-value"><?php echo number_format(isset($active_members) ? $active_members : 0, 0); ?>
+                    <div class="stat-value">
+                        <?php echo number_format(isset($active_members) ? $active_members : 0, 0); ?>
                     </div>
                     <div class="stat-label">Active Members (logged in last 7 days)</div>
                 </div>
@@ -258,45 +259,57 @@ $active_members = $stmt->fetch()['total'];
 
         <!-- Search & Filter Section -->
         <section>
-            <div class="inventory-header">
-                <form method="GET" class="search-container">
-                    <div class="search-wrapper" style="flex: 2;">
-                        <i class="bi bi-search search-icon"></i>
-                        <input type="text" name="search" class="search-input" placeholder="Search members..." maxlength="30"
-                            value="<?php echo htmlspecialchars($search); ?>" style="min-width: 200px;">
+            <form method="GET">
+                <div class="row my-2">
+                    <div class="col-sm-12 col-xl-3">
+                        <div class="search-wrapper" style="flex: 2;">
+                            <i class="bi bi-search search-icon"></i>
+                            <input type="text" name="search" class="search-input" placeholder="Search members..."
+                                maxlength="30" value="<?php echo htmlspecialchars($search); ?>"
+                                style="min-width: 200px;">
+                        </div>
                     </div>
-
-                    <select name="status" class="search-input" style="min-width: 150px;">
-                        <option value="">All Status</option>
-                        <option value="verified" <?php echo $status_filter === 'verified' ? 'selected' : ''; ?>>Verified
-                        </option>
-                        <option value="not_verified" <?php echo $status_filter === 'not_verified' ? 'selected' : ''; ?>>
-                            Not Verified</option>
-                    </select>
-
-                    <select name="time" class="search-input" style="min-width: 180px;">
-                        <option value="">All Time</option>
-                        <option value="today" <?php echo $time_filter === 'today' ? 'selected' : ''; ?>>Today</option>
-                        <option value="week" <?php echo $time_filter === 'week' ? 'selected' : ''; ?>>Last 7 Days</option>
-                        <option value="month" <?php echo $time_filter === 'month' ? 'selected' : ''; ?>>Last 30 Days
-                        </option>
-                        <option value="year" <?php echo $time_filter === 'year' ? 'selected' : ''; ?>>Last Year</option>
-                    </select>
-
+                    <div class="col-sm-12 col-xl-2">
+                        <select name="status" class="search-input" style="min-width: 150px;">
+                            <option value="">All Status</option>
+                            <option value="verified" <?php echo $status_filter === 'verified' ? 'selected' : ''; ?>>
+                                Verified
+                            </option>
+                            <option value="not_verified" <?php echo $status_filter === 'not_verified' ? 'selected' : ''; ?>>
+                                Not Verified</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-12 col-xl-2">
+                        <select name="time" class="search-input" style="min-width: 180px;">
+                            <option value="">All Time</option>
+                            <option value="today" <?php echo $time_filter === 'today' ? 'selected' : ''; ?>>Today
+                            </option>
+                            <option value="week" <?php echo $time_filter === 'week' ? 'selected' : ''; ?>>Last 7 Days
+                            </option>
+                            <option value="month" <?php echo $time_filter === 'month' ? 'selected' : ''; ?>>Last 30
+                                Days
+                            </option>
+                            <option value="year" <?php echo $time_filter === 'year' ? 'selected' : ''; ?>>Last Year
+                            </option>
+                        </select>
+                    </div>
                     <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
                     <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
-
-                    <button type="submit" class="search-btn">
-                        <i class="bi bi-funnel"></i> Filter
-                    </button>
-                </form>
-
-                <?php if ($search || $status_filter || $time_filter): ?>
-                    <a href="view_members.php" class="btn-secondary" style="padding: 11px 22px; text-decoration: none;">
-                        <i class="bi bi-x-circle"></i> Clear Filters
-                    </a>
-                <?php endif; ?>
-            </div>
+                    <div class="col-sm-12 col-xl-2 d-flex justify-content-center">
+                        <button type="submit" class="search-btn">
+                            <i class="bi bi-funnel"></i> Filter
+                        </button>
+                    </div>
+                    <div class="col-sm-12 col-xl-2 col-xl-offset-2 d-flex justify-content-center">
+                        <?php if ($search || $status_filter || $time_filter): ?>
+                            <a href="view_members.php" class="btn-secondary"
+                                style="text-decoration: none;">
+                                <i class="bi bi-x-circle"></i> Clear Filters
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </form>
 
             <!-- Members Table -->
             <div style="margin-bottom: 16px;">
