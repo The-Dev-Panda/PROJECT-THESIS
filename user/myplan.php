@@ -716,6 +716,7 @@ try {
           <option value="Pull">Pull</option>
           <option value="Legs">Legs</option>
           <option value="Cardio">Cardio</option>
+          <option value="Core">Core</option>
         </select>
       </div>
 
@@ -937,7 +938,7 @@ function addWorkout() {
                     font-weight: 700;
                     letter-spacing: 2px;
                     text-transform: uppercase;
-                    color: #888;
+                
                   "
                   >Qty / Servings</label
                 >

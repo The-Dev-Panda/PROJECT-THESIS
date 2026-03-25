@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/auth_user.php';
-
+$workoutDays = [];
 $welcomeName = 'Member';
 $selectedPeriod = isset($_GET['period']) ? strtolower(trim((string)$_GET['period'])) : 'week';
 $allowedPeriods = ['week', 'month', 'year'];
@@ -183,76 +183,90 @@ try {
               <?php echo $selectedPeriod === 'week' ? 'week' : ($selectedPeriod === 'month' ? 'month' : 'year'); ?>.
             </p>
           </div>
-
-          <div class="search-container">
-            <div>
-              <i class="fas fa-search search-icon"></i>
-              <input
-                type="text"
-                class="search-input"
-                placeholder="What is your goal today?"
-              />
-            </div>
-            <button class="search-btn">Search</button>
-          </div>
         </header>
 
-        <!-- EXERCISE HISTORY SECTION -->
+        <!-- EXERCISE HISTORY -->
         <section class="history-section">
           <div class="section-header">
             <h3>Exercise History</h3>
             <div class="filter-buttons">
-              <a class="filter-btn <?php echo $selectedPeriod === 'week' ? 'active' : ''; ?>" href="history.php?period=week" style="text-decoration:none;">Week</a>
-              <a class="filter-btn <?php echo $selectedPeriod === 'month' ? 'active' : ''; ?>" href="history.php?period=month" style="text-decoration:none;">Month</a>
-              <a class="filter-btn <?php echo $selectedPeriod === 'year' ? 'active' : ''; ?>" href="history.php?period=year" style="text-decoration:none;">Year</a>
+              <button class="filter-btn active">Latest Workouts</button>
+              <button class="filter-btn" id="showPreviousWorkoutBtn" <?php echo count($workoutDays) <= 1 ? 'disabled' : ''; ?>>Show Previous</button>
             </div>
           </div>
 
           <div class="history-grid">
-            <?php if (!empty($historyRows)): ?>
-              <?php foreach ($historyRows as $historyRow): ?>
-                <div class="history-card">
+            <?php if (count($workoutDays) === 0): ?>
+              <div class="history-card">
+                <div class="history-date">
+                  <span class="date-day">No workouts yet</span>
+                  <span class="date-full">Start logging your exercises to see history.</span>
+                </div>
+                <span class="completion-badge">No data</span>
+              </div>
+            <?php else: ?>
+              <?php foreach ($workoutDays as $workoutDayIndex => $workoutDay): ?>
+                <div
+                  class="history-card"
+                  data-workout-card="1"
+                  <?php echo $workoutDayIndex === 0 ? '' : 'style="display:none" data-workout-hidden="1"'; ?>
+                >
                   <div class="history-date">
-                    <span class="date-day"><?php echo htmlspecialchars($historyRow['day_label'], ENT_QUOTES, 'UTF-8'); ?></span>
-                    <span class="date-full"><?php echo htmlspecialchars($historyRow['day_full'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="date-day"><?php echo htmlspecialchars($workoutDay['label'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="date-full"><?php echo htmlspecialchars($workoutDay['sub'], ENT_QUOTES, 'UTF-8'); ?></span>
                   </div>
                   <div class="history-workout">
-                    <div class="workout-icon <?php echo htmlspecialchars($historyRow['icon_class'], ENT_QUOTES, 'UTF-8'); ?>">
-                      <i class="fas <?php echo htmlspecialchars($historyRow['icon_symbol'], ENT_QUOTES, 'UTF-8'); ?>"></i>
+                    <div class="workout-icon chest">
+                      <i class="fas fa-dumbbell"></i>
                     </div>
-                    <div class="workout-details">
-                      <h4><?php echo htmlspecialchars($historyRow['title'], ENT_QUOTES, 'UTF-8'); ?></h4>
-                      <p><?php echo htmlspecialchars($historyRow['time_range'], ENT_QUOTES, 'UTF-8'); ?></p>
+                    <div class="workout-details" style="width:100%;">
+                      <h4>Workout Summary</h4>
+                      <p><?php echo htmlspecialchars($workoutDay['time_range'] !== '' ? $workoutDay['time_range'] : 'Time not available', ENT_QUOTES, 'UTF-8'); ?></p>
                       <div class="workout-stats-mini">
-                        <span><i class="fas fa-fire"></i> <?php echo (int)$historyRow['total_sets']; ?> sets</span>
-                        <span><i class="fas fa-list"></i> <?php echo (int)$historyRow['exercise_count']; ?> exercises</span>
-                        <span><i class="fas fa-weight-hanging"></i> <?php echo htmlspecialchars($historyRow['total_volume_text'], ENT_QUOTES, 'UTF-8'); ?></span>
+                        <span><i class="fas fa-layer-group"></i> <?php echo (int)$workoutDay['total_sets']; ?> sets</span>
+                        <span><i class="fas fa-weight-hanging"></i> <?php echo htmlspecialchars(number_format((float)$workoutDay['total_volume'], 1), ENT_QUOTES, 'UTF-8'); ?> kg volume</span>
                       </div>
+                      <div id="workoutDayDetail-<?php echo (int)$workoutDayIndex; ?>" style="display:none;margin-top:10px;">
+                        <?php foreach ($workoutDay['exercises'] as $exercise): ?>
+                          <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);">
+                            <span><?php echo htmlspecialchars($exercise['name'], ENT_QUOTES, 'UTF-8'); ?></span>
+                            <span style="opacity:0.9;"><?php echo (int)$exercise['sets']; ?> sets, <?php echo (int)$exercise['reps']; ?> reps, max <?php echo htmlspecialchars(number_format((float)$exercise['max_weight'], 1), ENT_QUOTES, 'UTF-8'); ?> kg</span>
+                          </div>
+                        <?php endforeach; ?>
+                      </div>
+                      <button class="notify-btn" style="margin-top:10px;" onclick="toggleWorkoutDayDetail(<?php echo (int)$workoutDayIndex; ?>)">Show workout details</button>
                     </div>
                   </div>
                   <span class="completion-badge completed">Completed</span>
                 </div>
               <?php endforeach; ?>
-            <?php else: ?>
-              <div class="history-card">
-                <div class="history-date">
-                  <span class="date-day">No Workouts Yet</span>
-                  <span class="date-full">Start logging workouts to build your history.</span>
-                </div>
-                <div class="history-workout">
-                  <div class="workout-icon cardio">
-                    <i class="fas fa-dumbbell"></i>
-                  </div>
-                  <div class="workout-details">
-                    <h4>No records found</h4>
-                    <p>Try checking a different period or log your first workout.</p>
-                  </div>
-                </div>
-                <span class="completion-badge" style="background:#374151;color:#e5e7eb;">No Data</span>
-              </div>
             <?php endif; ?>
           </div>
         </section>
+   <!-- E-Receipts -->
+          <div class="profile-card terms-card">
+            <h4><i class="bi bi-receipt"></i> E-Receipts & Payment History</h4>
+            <hr class="section-divider" />
+
+            <?php if (empty($transactions)): ?>
+              <p style="text-align: center; color: #999; padding: 20px;">No transactions found.</p>
+            <?php else: ?>
+              <?php foreach ($transactions as $transaction): ?>
+              <div class="receipt-entry">
+                <div class="receipt-icon">
+                  <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div class="receipt-info">
+                  <span class="rname"><?php echo htmlspecialchars($transaction['desc'] ?? 'Payment'); ?></span>
+                  <span class="rdate"><?php echo htmlspecialchars($transaction['created_at'] ?? date('M d, Y')); ?> &nbsp;•&nbsp; <?php echo htmlspecialchars($transaction['payment_method'] ?? 'N/A'); ?></span>
+                </div>
+                <span class="receipt-amount">₱<?php echo number_format((float)$transaction['amount'], 2); ?></span>
+              </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
+
+            <a class="view-all-link">Download all receipts <i class="fas fa-download"></i></a>
+          </div>
       </main>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+EQG7wp9vY1Qtu2w1P7QHCMkHPlJ8" crossorigin="anonymous"></script>
