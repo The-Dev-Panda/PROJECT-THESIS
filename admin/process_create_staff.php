@@ -2,6 +2,8 @@
 session_start();
 require_once __DIR__ . '/../includes/security.php';
 
+date_default_timezone_set('Asia/Manila');
+
 if(empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin'){
     header('Location: Login_Page.php');
     exit();
@@ -43,14 +45,18 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
             exit();
         }
         
-        $stmt = $pdo->prepare("INSERT INTO users (username, first_name, last_name, email, password, user_type, is_verified) 
-                               VALUES (:username, :first_name, :last_name, :email, :password, 'staff', 1)");
+        $now = date('Y-m-d H:i:s');
+
+        $stmt = $pdo->prepare("INSERT INTO users (username, first_name, last_name, email, password, user_type, is_verified, dpa_consent, created_at, updated_at) 
+                               VALUES (:username, :first_name, :last_name, :email, :password, 'staff', 1, 0, :created_at, :updated_at)");
         $stmt->execute([
             'username' => $username,
             'first_name' => $first_name,
             'last_name' => $last_name,
             'email' => $email,
-            'password' => $hashed_password
+            'password' => $hashed_password,
+            'created_at' => $now,
+            'updated_at' => $now
         ]);
         header('Location: create_staff.php?success=created');
         exit();

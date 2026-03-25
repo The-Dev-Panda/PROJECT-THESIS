@@ -725,19 +725,36 @@ function toggleCustomerType(type) {
     document.getElementById('paymentMemberID').value   = '';
     document.getElementById('memberClearBtn').style.display = 'none';
   }
+
+  const paidForSelect = document.getElementById('paymentPaidFor');
+  if (paidForSelect) {
+    autoFillAmount(paidForSelect.value);
+  }
 }
 
 function autoFillAmount(paidFor) {
   const amountInput = document.getElementById('paymentAmount');
-  const presets = {
-    'Membership':          500,
-    'Monthly':             650,
-    'Day Pass / Walk-In':   60,
-    'Special Rate':         40,
-    'Inventory':             0,
+  const customerType = document.querySelector('input[name="customerType"]:checked')?.value || 'member';
+
+  const defaults = {
+    'Membership':        500,
+    'Monthly':           650,
+    'Day Pass / Walk-In': 50,
+    'Special Rate':       40,
   };
-  if (paidFor in presets) {
-    amountInput.value = presets[paidFor].toFixed(2);
+
+  const walkInOverrides = {
+    'Monthly':           750,
+    'Day Pass / Walk-In': 60,
+  };
+
+  let price = defaults[paidFor] ?? null;
+  if (customerType === 'non-member' && paidFor in walkInOverrides) {
+    price = walkInOverrides[paidFor];
+  }
+
+  if (price !== null) {
+    amountInput.value = price.toFixed(2);
   } else {
     amountInput.value = '';
   }

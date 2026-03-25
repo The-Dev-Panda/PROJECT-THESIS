@@ -47,83 +47,90 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
 
         if ($action === 'submit_sales_form') {
-            $staffId    = isset($_SESSION['id']) ? (int)$_SESSION['id'] : (isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null);
-            $saleDate   = $_POST['sale_date'] ?? date('Y-m-d');
-            $nonMember  = (int)($_POST['non_member'] ?? 0);
-            $member     = (int)($_POST['member'] ?? 0);
-            $special    = (int)($_POST['special'] ?? 0);
-            $monthly    = (int)($_POST['monthly'] ?? 0);
-            $lessWater  = (float)($_POST['less_water'] ?? 0);
-            $entryTotal = ($nonMember * 60) + ($member * 50) + ($special * 40);
+            $staffId   = isset($_SESSION['id']) ? (int)$_SESSION['id'] : (isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null);
+            $saleDate  = $_POST['sale_date'] ?? date('Y-m-d');
+            $lessWater = (float)($_POST['less_water'] ?? 0);
 
-            $soldItems  = json_decode($_POST['sold_items'] ?? '[]', true);
-            if (!is_array($soldItems)) $soldItems = [];
+            if ($lessWater < 0) {
+                echo json_encode(['success' => false, 'message' => 'Invalid water expense']);
+                exit;
+            }
 
+            // Only record water expense in this logsheet flow.
+            $entryTotal = 0;
             $itemsTotal = 0;
-            $updatedRows = [];
+            $grandTotal = 0 - $lessWater;
 
-            foreach ($soldItems as $item) {
-                $invId    = (int)($item['id'] ?? 0);
-                $qty      = (int)($item['qty'] ?? 0);
-                $price    = (float)($item['price'] ?? 0);
-                $name     = trim($item['name'] ?? '');
-                if ($invId <= 0 || $qty <= 0) continue;
-
-                $cur    = (int)$pdo->query("SELECT quantity FROM inventory WHERE id = $invId")->fetchColumn();
-                $newQty = max(0, $cur - $qty);
-                $pdo->prepare("UPDATE inventory SET quantity = :q, updated_at = CURRENT_TIMESTAMP WHERE id = :id")
-                    ->execute([':q' => $newQty, ':id' => $invId]);
-
-                $total       = $price * $qty;
-                $itemsTotal += $total;
-                $receiptNo   = 'SALE-' . date('Ymd') . '-' . $invId . '-' . rand(100, 999);
-
-                $pdo->prepare("
-                    INSERT INTO transactions
+            if ($lessWater > 0) {
+                $receiptNo = 'EXP-' . date('Ymd') . '-' . rand(1000, 9999);
+                $pdo->prepare("INSERT INTO transactions
                         (receipt_number, customer_type, customer_name, amount,
                          payment_method, staff_id, transaction_date, status, `desc`)
-                    VALUES (:rn, 'inventory', 'Walk-in Sale', :amt,
-                            'Cash', :si, CURRENT_TIMESTAMP, 'completed', :desc)
-                ")->execute([
+                    VALUES (:rn, 'expense', 'Water Expense', :amt,
+                            'Cash', :si, CURRENT_TIMESTAMP, 'completed', :desc)")
+                ->execute([
                     ':rn'   => $receiptNo,
-                    ':amt'  => $total,
+                    ':amt'  => $lessWater,
                     ':si'   => $staffId,
-                    ':desc' => "Daily Sale: {$qty}x {$name} @ ₱{$price} = ₱{$total}",
-                ]);
-
-                $updatedRow  = $pdo->query("SELECT * FROM inventory WHERE id = $invId")->fetch(PDO::FETCH_ASSOC);
-                $updatedRows[] = $updatedRow;
-            }
-
-            if ($entryTotal > 0 || $nonMember > 0 || $member > 0 || $special > 0 || $monthly > 0) {
-                $entryDesc = [];
-                if ($nonMember > 0) $entryDesc[] = "{$nonMember}x Non-Member(₱60)";
-                if ($member > 0)    $entryDesc[] = "{$member}x Member(₱50)";
-                if ($special > 0)   $entryDesc[] = "{$special}x Special(₱40)";
-                if ($monthly > 0)   $entryDesc[] = "{$monthly}x Monthly";
-                $pdo->prepare("
-                    INSERT INTO transactions
-                        (receipt_number, customer_type, customer_name, amount,
-                         payment_method, staff_id, transaction_date, status, `desc`)
-                    VALUES (:rn, 'entry', 'Daily Entry Fees', :amt,
-                            'Cash', :si, CURRENT_TIMESTAMP, 'completed', :desc)
-                ")->execute([
-                    ':rn'  => 'ENTRY-' . date('Ymd') . '-' . rand(1000, 9999),
-                    ':amt' => $entryTotal,
-                    ':si'  => $staffId,
-                    ':desc'=> 'Entry Fees: ' . implode(', ', $entryDesc),
+                    ':desc' => 'Less Expenses (Water) for ' . $saleDate,
                 ]);
             }
-
-            $grandTotal = $entryTotal + $itemsTotal - $lessWater;
 
             echo json_encode([
-                'success'      => true,
-                'entry_total'  => $entryTotal,
-                'items_total'  => $itemsTotal,
-                'grand_total'  => $grandTotal,
-                'updated_rows' => $updatedRows,
+                'success'     => true,
+                'entry_total' => $entryTotal,
+                'items_total' => $itemsTotal,
+                'grand_total' => $grandTotal,
+                'less_water'  => $lessWater,
             ]);
+            exit;
+        }
+
+        if ($action === 'get_sales_summary') {
+            $today = date('Y-m-d');
+            $summary = ['non_member' => 0, 'member' => 0, 'special' => 0, 'monthly' => 0, 'total_revenue' => 0.0];
+
+            $staffId = isset($_POST['staff_id']) ? (int)$_POST['staff_id'] : null;
+
+            if ($staffId > 0) {
+                $stmt = $pdo->prepare("SELECT paid_for, customer_type, COUNT(*) AS cnt, SUM(amount) AS total_amount
+                                      FROM transactions
+                                      WHERE DATE(transaction_date) = :today
+                                        AND status = 'completed'
+                                        AND staff_id = :staff_id
+                                      GROUP BY paid_for, customer_type");
+                $stmt->execute([':today' => $today, ':staff_id' => $staffId]);
+            } else {
+                $stmt = $pdo->prepare("SELECT paid_for, customer_type, COUNT(*) AS cnt, SUM(amount) AS total_amount
+                                      FROM transactions
+                                      WHERE DATE(transaction_date) = :today
+                                        AND status = 'completed'
+                                      GROUP BY paid_for, customer_type");
+                $stmt->execute([':today' => $today]);
+            }
+
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $paidFor = trim((string)$row['paid_for']);
+                $cnt = (int)$row['cnt'];
+                $totalAmount = (float)$row['total_amount'];
+                $summary['total_revenue'] += $totalAmount;
+
+                if (strcasecmp($paidFor, 'Day Pass / Walk-In') === 0) {
+                    if (isset($row['customer_type']) && strtolower((string)$row['customer_type']) === 'non-member') {
+                        $summary['non_member'] += $cnt;
+                    } else {
+                        $summary['member'] += $cnt;
+                    }
+                } elseif (strcasecmp($paidFor, 'Special Rate') === 0) {
+                    $summary['special'] += $cnt;
+                } elseif (strcasecmp($paidFor, 'Monthly') === 0) {
+                    $summary['monthly'] += $cnt;
+                } elseif (strcasecmp($paidFor, 'Membership') === 0) {
+                    $summary['member'] += $cnt;
+                }
+            }
+
+            echo json_encode(['success' => true, 'summary' => $summary]);
             exit;
         }
 
@@ -590,28 +597,28 @@ try {
           <tbody>
             <tr>
               <td>Non-Member</td>
-              <td><input type="number" class="sf-input sf-entry" data-rate="60" id="sfNonMember" min="0" value="0"></td>
+              <td><input type="number" class="sf-input sf-entry" data-rate="60" id="sfNonMember" min="0" value="0" readonly></td>
               <td class="rate">&#8369;60</td>
               <td class="tot" id="sfNonMemberTot">&#8369;0.00</td>
               <td class="tot sf-entry-tally" id="sfNonMemberTally" data-tally="0">—</td>
             </tr>
             <tr>
               <td>Member</td>
-              <td><input type="number" class="sf-input sf-entry" data-rate="50" id="sfMember" min="0" value="0"></td>
+              <td><input type="number" class="sf-input sf-entry" data-rate="50" id="sfMember" min="0" value="0" readonly></td>
               <td class="rate">&#8369;50</td>
               <td class="tot" id="sfMemberTot">&#8369;0.00</td>
               <td class="tot sf-entry-tally" id="sfMemberTally" data-tally="0">—</td>
             </tr>
             <tr>
               <td>Special Rate</td>
-              <td><input type="number" class="sf-input sf-entry" data-rate="40" id="sfSpecial" min="0" value="0"></td>
+              <td><input type="number" class="sf-input sf-entry" data-rate="40" id="sfSpecial" min="0" value="0" readonly></td>
               <td class="rate">&#8369;40</td>
               <td class="tot" id="sfSpecialTot">&#8369;0.00</td>
               <td class="tot sf-entry-tally" id="sfSpecialTally" data-tally="0">—</td>
             </tr>
             <tr>
               <td>Monthly</td>
-              <td><input type="number" class="sf-input sf-entry" data-rate="0" id="sfMonthly" min="0" value="0"></td>
+              <td><input type="number" class="sf-input sf-entry" data-rate="0" id="sfMonthly" min="0" value="0" readonly></td>
               <td class="rate">&#8369;650/750</td>
               <td class="tot" id="sfMonthlyTot">&#8369;0.00</td>
               <td class="tot sf-entry-tally" id="sfMonthlyTally" data-tally="0">—</td>
@@ -861,9 +868,33 @@ function sfRecalc() {
   document.getElementById('sfGrandTot').innerHTML = fmt(entryTotal + itemsTotal - water);
 }
 
+function loadSalesSummary() {
+  const fd = new FormData();
+  fd.append('action', 'get_sales_summary');
+
+  // optional: filter by staff_id (if needed), otherwise all
+  const staffId = (window.currentStaffId && Number.isInteger(window.currentStaffId)) ? window.currentStaffId : null;
+  if (staffId) {
+    fd.append('staff_id', staffId);
+  }
+
+  fetch('inventory.php', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success || !data.summary) return;
+
+      document.getElementById('sfNonMember').value = data.summary.non_member;
+      document.getElementById('sfMember').value    = data.summary.member;
+      document.getElementById('sfSpecial').value   = data.summary.special;
+      document.getElementById('sfMonthly').value   = data.summary.monthly;
+
+      sfRecalc();
+    })
+    .catch(() => {});
+}
+
 document.addEventListener('input', function(e) {
-  if (e.target.classList.contains('sf-entry') ||
-      e.target.classList.contains('sf-item-qty') ||
+  if (e.target.classList.contains('sf-item-qty') ||
       e.target.id === 'sfWater') {
     sfRecalc();
   }
@@ -1139,6 +1170,11 @@ document.querySelector('.search-input').addEventListener('input', searchProducts
 document.querySelector('.search-input').addEventListener('keydown', e => { if (e.key === 'Enter') searchProducts(); });
 document.getElementById('soldModal').addEventListener('click', function(e) { if (e.target === this) closeSoldModal(); });
 document.getElementById('salesModal').addEventListener('click', function(e) { if (e.target === this) closeSalesModal(); });
+
+window.addEventListener('load', function() {
+  loadSalesSummary();
+  sfRecalc();
+});
 </script>
 
 </body>
