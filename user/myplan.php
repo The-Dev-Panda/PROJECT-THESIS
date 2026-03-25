@@ -686,75 +686,170 @@ if ($workoutMode === 'heavy') $targetBurn = 600;
 </style>
 
 <!-- ── WORKOUT PLAN ── -->
-<section class="diet-schedule-section" id="workoutPlan">
-  <div class="section-header" style="display:flex; justify-content:space-between; align-items:center;">
-    <h3>Workout Plan</h3>
+<?php
+// FETCH EXERCISES FROM SQLITE
+$exerciseList = [];
 
-    <form method="GET" action="#workoutPlan" style="display:flex; gap:10px;">
-      <input type="hidden" name="mode" value="<?php echo htmlspecialchars($workoutMode); ?>">
-      <select name="level" class="plan-select" onchange="this.form.submit()">
-        <option value="beginner" <?php echo $selectedLevel==='beginner'?'selected':''; ?>>Beginner</option>
-        <option value="intermediate" <?php echo $selectedLevel==='intermediate'?'selected':''; ?>>Intermediate</option>
-        <option value="advanced" <?php echo $selectedLevel==='advanced'?'selected':''; ?>>Advanced</option>
-      </select>
-    </form>
-  </div>
+try {
+    require __DIR__ . '/../Login/connection.php';
 
-  <div style="margin-bottom:10px;">
-    <a href="?mode=light&level=<?php echo urlencode($selectedLevel); ?>#workoutPlan" class="btn-outline plan-mode-btn <?php echo $workoutMode==='light'?'active':''; ?>">Light</a>
-    <a href="?mode=moderate&level=<?php echo urlencode($selectedLevel); ?>#workoutPlan" class="btn-outline plan-mode-btn <?php echo $workoutMode==='moderate'?'active':''; ?>">Moderate</a>
-    <a href="?mode=heavy&level=<?php echo urlencode($selectedLevel); ?>#workoutPlan" class="btn-outline plan-mode-btn <?php echo $workoutMode==='heavy'?'active':''; ?>">Heavy</a>
-  </div>
+    $stmt = $pdo->query("SELECT exercise_id, name, movement_type FROM exercises ORDER BY name ASC");
+    $exerciseList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    $exerciseList = [];
+}
+?>
 
-  <div class="diet-calendar">
-    <?php foreach ($exercisePlan as $ex): ?>
-    <div class="diet-day active">
-      <div class="day-header">
-        <span class="day-name"><?php echo $ex['name']; ?></span>
-        <span class="day-calories"><?php echo $ex['burn']; ?> cal</span>
+<section class="workout-tracker-section">
+  <div class="mt-stripe"></div>
+
+  <div class="mt-panel">
+    <h2 class="mt-title">Customize Today's Workout</h2>
+    <hr class="mt-title-divider" />
+
+    <div class="mt-input-row">
+
+      <!-- WORKOUT TYPE -->
+      <div class="mt-field">
+        <label>Workout Type</label>
+        <select id="workoutType" class="mt-select">
+          <option value="All">All</option>
+          <option value="Push">Push</option>
+          <option value="Pull">Pull</option>
+          <option value="Legs">Legs</option>
+          <option value="Cardio">Cardio</option>
+        </select>
       </div>
 
-      <div class="meals">
-        <div class="meal-item completed">
-          <span class="meal-time">Sets</span>
-          <span class="meal-name"><?php echo $sets; ?> sets</span>
-          <span class="meal-cal">Target</span>
-        </div>
-
-        <div class="meal-item">
-          <span class="meal-time">Machine</span>
-          <span class="meal-name">
-            <a href="<?php echo $ex['machine']; ?>">View Guide</a>
-          </span>
-          <span class="meal-cal">Open</span>
-        </div>
+      <!-- WORKOUT NAME -->
+      <div class="mt-field" style="flex:1;">
+        <label>Workout Name</label>
+        <select id="workoutName" class="mt-select">
+          <option value="">Select Workout</option>
+        </select>
       </div>
+
+      <!-- SETS -->
+      <div class="mt-field">
+        <label>Sets</label>
+        <input type="number" id="sets" class="form-input" value="3" min="1">
+      </div>
+
+      <!-- REPS -->
+      <div class="mt-field">
+        <label>Reps</label>
+        <input type="number" id="reps" class="form-input" value="10" min="1">
+      </div>
+
+      <!-- DAY -->
+      <div class="mt-field">
+        <label>Day</label>
+        <select id="workoutDay" class="mt-select">
+          <option>Monday</option>
+          <option>Tuesday</option>
+          <option>Wednesday</option>
+          <option>Thursday</option>
+          <option>Friday</option>
+          <option>Saturday</option>
+          <option>Sunday</option>
+        </select>
+      </div>
+
+      <button class="mt-add-btn" onclick="addWorkout()">Add Workout</button>
     </div>
-    <?php endforeach; ?>
-  </div>
 
-  <div class="nutrition-summary">
-    <div class="nutrition-card">
-      <div class="nutrition-icon">
-        <i class="fas fa-fire"></i>
-      </div>
-      <div class="nutrition-info">
-        <span class="nutrition-label">Calories Burned</span>
-        <span class="nutrition-value"><?php echo $totalBurn; ?> cal</span>
-      </div>
-    </div>
+    <hr class="mt-cards-divider" />
 
-    <div class="nutrition-card">
-      <div class="nutrition-icon">
-        <i class="fas fa-bullseye"></i>
-      </div>
-      <div class="nutrition-info">
-        <span class="nutrition-label">Target Goal</span>
-        <span class="nutrition-value"><?php echo $targetBurn; ?> cal</span>
-      </div>
-    </div>
+    <div class="mt-meals-grid" id="workoutSchedule"></div>
   </div>
 </section>
+
+<style>
+.mt-select {
+  width: 100%;
+  background: #0f0f0f;
+  color: #fff;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.85rem;
+}
+.mt-select:focus {
+  border-color: #ffcc00;
+  outline: none;
+}
+.workout-card {
+  background: #101010;
+  border: 1px solid #2b2b2b;
+  border-radius: 10px;
+  padding: 12px;
+  color: #fff;
+}
+.workout-card h4 {
+  color: #ffcc00;
+}
+</style>
+
+<script>
+// PASS PHP DATA TO JS
+const exercises = <?php echo json_encode($exerciseList); ?>;
+
+const workoutType = document.getElementById("workoutType");
+const workoutName = document.getElementById("workoutName");
+const scheduleDiv = document.getElementById("workoutSchedule");
+
+// LOAD EXERCISES FROM DB
+function loadExercises() {
+  const type = workoutType.value;
+  workoutName.innerHTML = '<option value="">Select Workout</option>';
+
+  exercises.forEach(ex => {
+    if (type === "All" || ex.movement_type === type) {
+      const opt = document.createElement("option");
+      opt.value = ex.name;
+      opt.textContent = ex.name;
+      workoutName.appendChild(opt);
+    }
+  });
+}
+
+workoutType.addEventListener("change", loadExercises);
+window.onload = loadExercises;
+
+// ADD WORKOUT
+function addWorkout() {
+  const name = workoutName.value;
+  const sets = document.getElementById("sets").value;
+  const reps = document.getElementById("reps").value;
+  const day = document.getElementById("workoutDay").value;
+
+  if (!name) {
+    alert("Select workout first");
+    return;
+  }
+
+  const card = document.createElement("div");
+  card.className = "workout-card";
+
+  card.innerHTML = `
+    <h4>${day}</h4>
+    <p><strong>${name}</strong></p>
+    <p>${sets} sets × ${reps} reps</p>
+    <button onclick="this.parentElement.remove()" style="
+      background:#ffcc00;
+      border:none;
+      padding:5px 10px;
+      border-radius:6px;
+      cursor:pointer;
+    ">Remove</button>
+  `;
+
+  scheduleDiv.appendChild(card);
+
+  // smooth scroll, NO page reset
+  card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+</script>
         <!-- ════════════════════════════════════════════
            MEAL TRACKER — NEW UI (dark/yellow)
            ════════════════════════════════════════════ -->
