@@ -118,12 +118,12 @@ $verification = $stmt->fetch();
 
     <div class="main-content">
         <!-- Topbar -->
-        <div class="topbar">
-            <div class="topbar-left">
+        <div class="topbar row">
+            <div class="topbar-left col-sm-12 col-xl-6">
                 <h1><i class="bi bi-graph-up"></i> Analytics Dashboard</h1>
                 <p>Real-time insights and performance metrics</p>
             </div>
-            <div class="topbar-right">
+            <div class="topbar-right col-sm-12 col-xl-2 col-xl-offset-4">
                 <div class="topbar-badge">
                     <div class="topbar-dot"></div>
                     <span>Live Data</span>

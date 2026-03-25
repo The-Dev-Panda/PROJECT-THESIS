@@ -17,6 +17,8 @@ $attendanceTitle = 'No Attendance Yet';
 $attendanceDetail = 'No check-in record found.';
 $workoutDays = [];
 $profileInitials = 'MM';
+$monthWeightChangeText = 'No data';
+$totalWeightChangeText = 'No data';
 
 try {
   require __DIR__ . '/../Login/connection.php';
@@ -85,6 +87,51 @@ try {
     }
     if ($weightKg !== null && $weightKg > 0) {
       $weightText = rtrim(rtrim(number_format($weightKg, 1, '.', ''), '0'), '.') . ' kg';
+
+      $formatWeightDiff = static function (float $value): string {
+        $rounded = round($value, 1);
+        $prefix = $rounded > 0 ? '+' : '';
+        return $prefix . number_format($rounded, 1, '.', '') . ' kg';
+      };
+
+      $historyTableStmt = $pdo->query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'old_member_profiles' LIMIT 1");
+      $hasHistoryTable = $historyTableStmt && $historyTableStmt->fetchColumn();
+      if ($hasHistoryTable) {
+        $monthBaseline = null;
+        $oldestWeight = null;
+
+        $monthStmt = $pdo->prepare("SELECT weight_kg
+          FROM old_member_profiles
+          WHERE user_id = :user_id
+            AND weight_kg IS NOT NULL
+            AND datetime(archived_at, 'localtime') <= datetime('now', 'localtime', '-30 days')
+          ORDER BY datetime(archived_at, 'localtime') DESC
+          LIMIT 1");
+        $monthStmt->execute([':user_id' => $userId]);
+        $monthBaselineRaw = $monthStmt->fetchColumn();
+        if ($monthBaselineRaw !== false && $monthBaselineRaw !== null) {
+          $monthBaseline = (float)$monthBaselineRaw;
+        }
+
+        $oldestStmt = $pdo->prepare("SELECT weight_kg
+          FROM old_member_profiles
+          WHERE user_id = :user_id
+            AND weight_kg IS NOT NULL
+          ORDER BY datetime(archived_at, 'localtime') ASC
+          LIMIT 1");
+        $oldestStmt->execute([':user_id' => $userId]);
+        $oldestWeightRaw = $oldestStmt->fetchColumn();
+        if ($oldestWeightRaw !== false && $oldestWeightRaw !== null) {
+          $oldestWeight = (float)$oldestWeightRaw;
+          $totalWeightChangeText = $formatWeightDiff($weightKg - $oldestWeight);
+        }
+
+        if ($monthBaseline !== null) {
+          $monthWeightChangeText = $formatWeightDiff($weightKg - $monthBaseline);
+        } elseif ($oldestWeight !== null) {
+          $monthWeightChangeText = $formatWeightDiff($weightKg - $oldestWeight);
+        }
+      }
     }
 
     if ($bmi !== null && $bmi > 0) {
@@ -379,11 +426,11 @@ $activePage = 'dashboard';
             <div class="progress-stats">
               <div class="stat-item">
                 <span class="stat-label">This Month</span>
-                <span class="stat-value">-2.3 kg</span>
+                <span class="stat-value"><?php echo htmlspecialchars($monthWeightChangeText, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
               <div class="stat-item">
                 <span class="stat-label">Total Lost</span>
-                <span class="stat-value">-8.7 kg</span>
+                <span class="stat-value"><?php echo htmlspecialchars($totalWeightChangeText, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
             </div>
           </div>

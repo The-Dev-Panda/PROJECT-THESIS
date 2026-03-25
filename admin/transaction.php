@@ -181,6 +181,10 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
 
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
 
     <style>
         .sortable-header {
@@ -200,22 +204,16 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
 
     <div class="main-content">
         <!-- Topbar -->
-        <div class="topbar">
-            <div class="topbar-left">
+        <div class="topbar row">
+            <div class="topbar-left col-sm-12 col-xl-6">
                 <h1><i class="bi bi-receipt"></i> Transactions</h1>
                 <p>Monitor all payment transactions</p>
-            </div>
-            <div class="topbar-right">
-                <div class="topbar-badge">
-                    <i class="bi bi-cash-stack"></i>
-                    <span>₱<?php echo number_format($total_revenue, 2); ?> Total</span>
-                </div>
             </div>
         </div>
 
         <!-- Stats Grid -->
-        <div class="stats-grid" style="grid-template-columns: repeat(auto, 1fr);">
-            <div class="stat-box">
+        <div class="stat-grid row p-0 mb-1 g-2">
+            <div class="stat-box col-sm-12 col-xl-3">
                 <div class="stat-icon members">
                     <i class="bi bi-calendar-day"></i>
                 </div>
@@ -225,7 +223,7 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
                 </div>
             </div>
 
-            <div class="stat-box">
+            <div class="stat-box col-sm-12 col-xl-3">
                 <div class="stat-icon registrations">
                     <i class="bi bi-calendar-month"></i>
                 </div>
@@ -235,7 +233,7 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
                 </div>
             </div>
 
-            <div class="stat-box">
+            <div class="stat-box col-sm-12 col-xl-3">
                 <div class="stat-icon equipment">
                     <i class="bi bi-wallet2"></i>
                 </div>
@@ -245,7 +243,7 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
                 </div>
             </div>
 
-            <div class="stat-box">
+            <div class="stat-box col-sm-12 col-xl-3">
                 <div class="stat-icon notifications">
                     <i class="bi bi-receipt-cutoff"></i>
                 </div>
@@ -255,7 +253,7 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
                 </div>
             </div>
 
-            <div class="stat-box">
+            <div class="stat-box col-sm-12 col-xl-3">
                 <div class="stat-icon notifications">
                     <i class="bi bi-receipt-cutoff bi-success"></i>
                 </div>
@@ -265,7 +263,7 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
                 </div>
             </div>
 
-            <div class="stat-box">
+            <div class="stat-box col-sm-12 col-xl-3">
                 <div class="stat-icon registrations"
                     style="color: <?php echo $growth >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">
                     <i class="bi bi-currency-exchange"></i>
@@ -281,158 +279,172 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
 
         <!-- Search & Filter Section -->
         <section>
-            <div class="inventory-header">
-                <form method="GET" class="search-container">
-                    <div class="search-wrapper" style="flex: 2;">
-                        <i class="bi bi-search search-icon"></i>
-                        <input type="text" name="search" class="search-input" maxlength="30" style="min-width: 300px;"
-                            placeholder="Search customer or receipt..."
-                            value="<?php echo htmlspecialchars($search); ?>">
+            <div>
+                <form method="GET">
+                    <div class="row">
+                        <div class="search-wrapper col-sm-12 col-xl-2 p-1">
+                            <i class="bi bi-search search-icon"></i>
+                            <input type="text" name="search" class="search-input" maxlength="30"
+                                placeholder="Search customer or receipt..."
+                                value="<?php echo htmlspecialchars($search); ?>">
+                        </div>
+                        <div class="col-sm-12 col-xl-2 p-1">
+                            <select name="payment_method" class="search-input" style="min-width: 250px;">
+                                <option value="">All Payment Methods</option>
+                                <?php foreach ($payment_methods as $method): ?>
+                                    <option value="<?php echo htmlspecialchars($method); ?>" <?php echo $payment_method === $method ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($method); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-sm-12 col-xl-2 p-1">
+                            <select name="time" class="search-input" style="min-width: 180px;">
+                                <option value="">All Time</option>
+                                <option value="today" <?php echo $time_filter === 'today' ? 'selected' : ''; ?>>Today
+                                </option>
+                                <option value="week" <?php echo $time_filter === 'week' ? 'selected' : ''; ?>>Last 7
+                                    Days
+                                </option>
+                                <option value="month" <?php echo $time_filter === 'month' ? 'selected' : ''; ?>>Last
+                                    30
+                                    Days
+                                </option>
+                                <option value="year" <?php echo $time_filter === 'year' ? 'selected' : ''; ?>>Last
+                                    Year
+                                </option>
+                            </select>
+                        </div>
+                        <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
+                        <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
+                        <div class="col-sm-12 col-xl-1 p-1 d-flex justify-content-center">
+                            <button type="submit" class="search-btn">
+                                <i class="bi bi-funnel"></i> Filter
+                            </button>
+                        </div>
+                        <div class="col-sm-12 col-xl-2 p-1 d-flex justify-content-center">
+                        <?php if ($search || $payment_method || $time_filter): ?>
+                            <a href="transaction.php" class="btn-secondary"
+                                style="text-decoration: none;">
+                                <i class="bi bi-x-circle"></i> Clear Filters
+                            </a>
+                        <?php endif; ?>
+                        </div>
                     </div>
-
-                    <select name="payment_method" class="search-input" style="min-width: 250px;">
-                        <option value="">All Payment Methods</option>
-                        <?php foreach ($payment_methods as $method): ?>
-                            <option value="<?php echo htmlspecialchars($method); ?>" <?php echo $payment_method === $method ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($method); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-
-                    <select name="time" class="search-input" style="min-width: 180px;">
-                        <option value="">All Time</option>
-                        <option value="today" <?php echo $time_filter === 'today' ? 'selected' : ''; ?>>Today</option>
-                        <option value="week" <?php echo $time_filter === 'week' ? 'selected' : ''; ?>>Last 7 Days</option>
-                        <option value="month" <?php echo $time_filter === 'month' ? 'selected' : ''; ?>>Last 30 Days
-                        </option>
-                        <option value="year" <?php echo $time_filter === 'year' ? 'selected' : ''; ?>>Last Year</option>
-                    </select>
-
-                    <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
-                    <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
-
-                    <button type="submit" class="search-btn">
-                        <i class="bi bi-funnel"></i> Filter
-                    </button>
                 </form>
+            </div>
+        </section>
 
-                <?php if ($search || $payment_method || $time_filter): ?>
-                    <a href="transaction.php" class="btn-secondary" style="padding: 11px 22px; text-decoration: none;">
-                        <i class="bi bi-x-circle"></i> Clear Filters
+        <!-- Transactions Table -->
+        <div class="inventory-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="sortable-header"
+                            onclick="window.location.href='<?php echo getSortUrl('id', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                            ID <?php echo getSortIcon('id', $sort_by, $sort_order); ?>
+                        </th>
+                        <th class="sortable-header"
+                            onclick="window.location.href='<?php echo getSortUrl('receipt_number', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                            Receipt # <?php echo getSortIcon('receipt_number', $sort_by, $sort_order); ?>
+                        </th>
+                        <th class="sortable-header"
+                            onclick="window.location.href='<?php echo getSortUrl('customer_name', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                            Customer <?php echo getSortIcon('customer_name', $sort_by, $sort_order); ?>
+                        </th>
+                        <th class="sortable-header"
+                            onclick="window.location.href='<?php echo getSortUrl('customer_type', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                            Type <?php echo getSortIcon('customer_type', $sort_by, $sort_order); ?>
+                        </th>
+                        <th class="sortable-header"
+                            onclick="window.location.href='<?php echo getSortUrl('amount', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                            Amount <?php echo getSortIcon('amount', $sort_by, $sort_order); ?>
+                        </th>
+                        <th class="sortable-header"
+                            onclick="window.location.href='<?php echo getSortUrl('payment_method', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                            Payment Method <?php echo getSortIcon('payment_method', $sort_by, $sort_order); ?>
+                        </th>
+                        <th class="sortable-header"
+                            onclick="window.location.href='<?php echo getSortUrl('transaction_date', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                            Date <?php echo getSortIcon('transaction_date', $sort_by, $sort_order); ?>
+                        </th>
+                        <th class="sortable-header"
+                            onclick="window.location.href='<?php echo getSortUrl('staff_id', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
+                            Staff <?php echo getSortIcon('staff_id', $sort_by, $sort_order); ?>
+                        </th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (count($transactions) > 0): ?>
+                        <?php foreach ($transactions as $txn): ?>
+                            <tr>
+                                <td><?php echo $txn['id']; ?></td>
+                                <td><strong><?php echo htmlspecialchars($txn['receipt_number']); ?></strong></td>
+                                <td><?php echo htmlspecialchars($txn['customer_name']); ?></td>
+                                <td><?php echo htmlspecialchars($txn['customer_type']); ?></td>
+                                <td><strong
+                                        style="color: var(--hazard);">₱<?php echo number_format($txn['amount'], 2); ?></strong>
+                                </td>
+                                <td><?php echo htmlspecialchars($txn['payment_method']); ?></td>
+                                <td><?php echo date('M d, Y g:i A', strtotime($txn['transaction_date'])); ?></td>
+                                <td><?php echo htmlspecialchars(($txn['first_name'] ?? '') . ' ' . ($txn['last_name'] ?? '')); ?>
+                                </td>
+                                <td><?php echo htmlspecialchars($txn['desc'] ?? ''); ?></td>
+                                <td>
+                                    <button class="btn-icon"
+                                        onclick="viewTransaction(<?php echo htmlspecialchars(json_encode($txn)); ?>)">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                <?php echo ($search || $payment_method || $time_filter) ? 'No transactions match your filters' : 'No transactions found'; ?>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <?php if ($total_pages > 1): ?>
+            <div style="margin-top: 20px; text-align: center;">
+                <?php if ($page > 1): ?>
+                    <a href="<?php echo getPaginationUrl($page - 1, $search, $payment_method, $time_filter, $sort_by, $sort_order); ?>"
+                        style="padding: 8px 12px; margin: 0 3px; background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
+                        <i class="bi bi-chevron-left"></i> Prev
+                    </a>
+                <?php endif; ?>
+
+                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                    <a href="<?php echo getPaginationUrl($i, $search, $payment_method, $time_filter, $sort_by, $sort_order); ?>"
+                        style="padding: 8px 12px; margin: 0 3px; background: <?php echo ($i == $page) ? 'var(--hazard)' : 'var(--bg-card)'; ?>; color: <?php echo ($i == $page) ? '#000' : 'var(--text-muted)'; ?>; border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
+                        <?php echo $i; ?>
+                    </a>
+                <?php endfor; ?>
+
+                <?php if ($page < $total_pages): ?>
+                    <a href="<?php echo getPaginationUrl($page + 1, $search, $payment_method, $time_filter, $sort_by, $sort_order); ?>"
+                        style="padding: 8px 12px; margin: 0 3px; background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
+                        Next <i class="bi bi-chevron-right"></i>
                     </a>
                 <?php endif; ?>
             </div>
+        <?php endif; ?>
 
-            <!-- Transactions Table -->
-            <div class="inventory-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th class="sortable-header"
-                                onclick="window.location.href='<?php echo getSortUrl('id', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
-                                ID <?php echo getSortIcon('id', $sort_by, $sort_order); ?>
-                            </th>
-                            <th class="sortable-header"
-                                onclick="window.location.href='<?php echo getSortUrl('receipt_number', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
-                                Receipt # <?php echo getSortIcon('receipt_number', $sort_by, $sort_order); ?>
-                            </th>
-                            <th class="sortable-header"
-                                onclick="window.location.href='<?php echo getSortUrl('customer_name', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
-                                Customer <?php echo getSortIcon('customer_name', $sort_by, $sort_order); ?>
-                            </th>
-                            <th class="sortable-header"
-                                onclick="window.location.href='<?php echo getSortUrl('customer_type', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
-                                Type <?php echo getSortIcon('customer_type', $sort_by, $sort_order); ?>
-                            </th>
-                            <th class="sortable-header"
-                                onclick="window.location.href='<?php echo getSortUrl('amount', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
-                                Amount <?php echo getSortIcon('amount', $sort_by, $sort_order); ?>
-                            </th>
-                            <th class="sortable-header"
-                                onclick="window.location.href='<?php echo getSortUrl('payment_method', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
-                                Payment Method <?php echo getSortIcon('payment_method', $sort_by, $sort_order); ?>
-                            </th>
-                            <th class="sortable-header"
-                                onclick="window.location.href='<?php echo getSortUrl('transaction_date', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
-                                Date <?php echo getSortIcon('transaction_date', $sort_by, $sort_order); ?>
-                            </th>
-                            <th class="sortable-header"
-                                onclick="window.location.href='<?php echo getSortUrl('staff_id', $sort_by, $sort_order, $search, $payment_method, $time_filter, $page); ?>'">
-                                Staff <?php echo getSortIcon('staff_id', $sort_by, $sort_order); ?>
-                            </th>
-                            <th>Description</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (count($transactions) > 0): ?>
-                            <?php foreach ($transactions as $txn): ?>
-                                <tr>
-                                    <td><?php echo $txn['id']; ?></td>
-                                    <td><strong><?php echo htmlspecialchars($txn['receipt_number']); ?></strong></td>
-                                    <td><?php echo htmlspecialchars($txn['customer_name']); ?></td>
-                                    <td><?php echo htmlspecialchars($txn['customer_type']); ?></td>
-                                    <td><strong
-                                            style="color: var(--hazard);">₱<?php echo number_format($txn['amount'], 2); ?></strong>
-                                    </td>
-                                    <td><?php echo htmlspecialchars($txn['payment_method']); ?></td>
-                                    <td><?php echo date('M d, Y g:i A', strtotime($txn['transaction_date'])); ?></td>
-                                    <td><?php echo htmlspecialchars(($txn['first_name'] ?? '') . ' ' . ($txn['last_name'] ?? '')); ?>
-                                    </td>
-                                    <td><?php echo htmlspecialchars($txn['desc'] ?? ''); ?></td>
-                                    <td>
-                                        <button class="btn-icon"
-                                            onclick="viewTransaction(<?php echo htmlspecialchars(json_encode($txn)); ?>)">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                                    <?php echo ($search || $payment_method || $time_filter) ? 'No transactions match your filters' : 'No transactions found'; ?>
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+        <?php if ($search || $payment_method || $time_filter || $sort_by !== 'transaction_date' || $sort_order !== 'DESC'): ?>
+            <div style="margin-top: 16px; text-align: center;">
+                <a href="transaction.php"
+                    style="color: var(--text-muted); text-decoration: none; font-size: 11px; text-transform: uppercase; font-family: 'Chakra Petch', sans-serif;">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset All Filters
+                </a>
             </div>
-
-            <!-- Pagination -->
-            <?php if ($total_pages > 1): ?>
-                <div style="margin-top: 20px; text-align: center;">
-                    <?php if ($page > 1): ?>
-                        <a href="<?php echo getPaginationUrl($page - 1, $search, $payment_method, $time_filter, $sort_by, $sort_order); ?>"
-                            style="padding: 8px 12px; margin: 0 3px; background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
-                            <i class="bi bi-chevron-left"></i> Prev
-                        </a>
-                    <?php endif; ?>
-
-                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                        <a href="<?php echo getPaginationUrl($i, $search, $payment_method, $time_filter, $sort_by, $sort_order); ?>"
-                            style="padding: 8px 12px; margin: 0 3px; background: <?php echo ($i == $page) ? 'var(--hazard)' : 'var(--bg-card)'; ?>; color: <?php echo ($i == $page) ? '#000' : 'var(--text-muted)'; ?>; border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
-                            <?php echo $i; ?>
-                        </a>
-                    <?php endfor; ?>
-
-                    <?php if ($page < $total_pages): ?>
-                        <a href="<?php echo getPaginationUrl($page + 1, $search, $payment_method, $time_filter, $sort_by, $sort_order); ?>"
-                            style="padding: 8px 12px; margin: 0 3px; background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); text-decoration: none; font-family: 'Chakra Petch', sans-serif; font-size: 11px;">
-                            Next <i class="bi bi-chevron-right"></i>
-                        </a>
-                    <?php endif; ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($search || $payment_method || $time_filter || $sort_by !== 'transaction_date' || $sort_order !== 'DESC'): ?>
-                <div style="margin-top: 16px; text-align: center;">
-                    <a href="transaction.php"
-                        style="color: var(--text-muted); text-decoration: none; font-size: 11px; text-transform: uppercase; font-family: 'Chakra Petch', sans-serif;">
-                        <i class="bi bi-arrow-counterclockwise"></i> Reset All Filters
-                    </a>
-                </div>
-            <?php endif; ?>
+        <?php endif; ?>
         </section>
     </div>
 

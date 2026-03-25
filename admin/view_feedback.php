@@ -60,12 +60,12 @@ try {
     <?php include('includes/header_admin.php') ?>
     <div class="main-content">
         <!-- Topbar -->
-        <div class="topbar">
-            <div class="topbar-left">
+        <div class="topbar row">
+            <div class="topbar-left col-sm-12 col-xl-6">
                 <h1><i class="bi bi-chat-square-text-fill"></i> Feedback</h1>
                 <p>View and manage machine feedback</p>
             </div>
-            <div class="topbar-right">
+            <div class="topbar-right col-sm-12 col-xl-2 col-xl-offset-4">
                 <div class="topbar-badge">
                     <i class="bi bi-chat-dots"></i>
                     <span><?php echo count($feedbacks); ?> Total</span>
