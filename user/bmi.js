@@ -184,8 +184,10 @@ function mCalculate() {
   badge.style.background = color + "18";
 
   const applyBtn = document.getElementById("mApplyBtn");
-  applyBtn.classList.remove("applied");
-  applyBtn.innerHTML = '<i class="bi bi-check2-circle"></i> Apply to Dashboard';
+  if (applyBtn) {
+    applyBtn.classList.remove("applied");
+    applyBtn.innerHTML = '<i class="bi bi-check2-circle"></i> Apply to Dashboard';
+  }
 
   const res = document.getElementById("mResult");
   res.classList.remove("show");
@@ -201,29 +203,8 @@ function mCalculate() {
     markerPct: needlePct,
     toGoal: (diff >= 0 ? "+" : "") + fmt(diff),
   };
+
+  applyDataToDashboard(lastCalcData);
+  saveProfileToDb({ height: hRaw, weight: wRaw }).catch(() => {});
 }
 
-/* ── Apply to Dashboard + persist ── */
-function applyToDashboard() {
-  if (!lastCalcData) return;
-
-  saveProfileToDb(lastCalcData)
-    .then((data) => {
-      if (!data.success) {
-        throw new Error(data.error || "Failed to save profile");
-      }
-
-      localStorage.setItem(BMI_KEY, JSON.stringify(lastCalcData));
-      applyDataToDashboard(lastCalcData);
-      const applyBtn = document.getElementById("mApplyBtn");
-      applyBtn.classList.add("applied");
-      applyBtn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Applied!';
-      const toast = document.getElementById("bmiToast");
-      toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 3000);
-      setTimeout(() => closeBMIModal(), 1200);
-    })
-    .catch(() => {
-      alert("Unable to save BMI to profile right now.");
-    });
-}
