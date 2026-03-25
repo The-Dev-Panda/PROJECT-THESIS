@@ -111,6 +111,16 @@ $verification = $stmt->fetch();
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+
+    <!-- WEB APP PROMPT -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#080808">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
 </head>
 
 <body>
@@ -123,13 +133,39 @@ $verification = $stmt->fetch();
                 <h1><i class="bi bi-graph-up"></i> Analytics Dashboard</h1>
                 <p>Real-time insights and performance metrics</p>
             </div>
-            <div class="topbar-right col-sm-12 col-xl-2 col-xl-offset-4">
+            <!-- <div class="topbar-right col-sm-12 col-xl-2 col-xl-offset-2">
                 <div class="topbar-badge">
                     <div class="topbar-dot"></div>
                     <span>Live Data</span>
                 </div>
+            </div> -->
+            <div class="topbar-right col-sm-12 col-xl-2">
+                <button id="installBtn" class="topbar-badge my-3 p-3">Install App</button>
             </div>
         </div>
+        <!-- WEB APP PART -->
+        <script>
+            let deferredPrompt;
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault(); // stop automatic prompt
+                deferredPrompt = e;
+
+                // Show your custom button
+                document.getElementById('installBtn').style.display = 'block';
+            });
+
+            document.getElementById('installBtn').addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User response: ${outcome}`);
+
+                    deferredPrompt = null;
+                }
+            });
+        </script>
 
         <div class="row g-3 mb-3">
             <div class="col-12 col-sm-6 col-lg-3">
