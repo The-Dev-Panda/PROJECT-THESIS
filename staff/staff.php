@@ -437,9 +437,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <!-- Amount -->
             <div class="form-group">
               <label>Amount (₱)</label>
-              <input type="number" id="paymentAmount" class="form-input" placeholder="0.00" step="0.01">
+            <input type="number" id="paymentAmount" class="form-input" step="0.01" oninput="updateTotal()">
             </div>
 
+            <!-- Quantity -->
+            <div class="form-group">
+              <label>Quantity</label>
+             <input type="number" id="paymentQty" value="1" class="form-input" min="1" oninput="updateTotal()" onkeyup="updateTotal()">
+            </div>
             <!-- Paid For — dropdown with inventory items -->
             <div class="form-group">
               <label>Paid For</label>
@@ -477,6 +482,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
               </select>
             </div>
 
+          </div>
+
+                    <div style="margin-top:10px; text-align:right; font-weight:700; font-size:20px;">
+            Total: ₱<span id="paymentTotal">0.00</span>
           </div>
           <div class="form-actions">
             <button type="button" class="btn-secondary" onclick="clearPaymentForm()">Clear</button>
@@ -743,14 +752,30 @@ function autoFillAmount(paidFor) {
   const amountInput  = document.getElementById('paymentAmount');
   const customerType = document.querySelector('input[name="customerType"]:checked')?.value || 'member';
 
-  // Inventory item — read price from the selected option's data-price attribute
   if (paidFor && paidFor.startsWith('Inventory:')) {
     const sel   = document.getElementById('paymentPaidFor');
     const opt   = sel ? sel.options[sel.selectedIndex] : null;
     const price = opt ? parseFloat(opt.dataset.price) : null;
     amountInput.value = (price !== null && !isNaN(price)) ? price.toFixed(2) : '';
+    updateTotal();
     return;
   }
+
+ function updateTotal() {
+  const amountField = document.getElementById('paymentAmount');
+  const qtyField    = document.getElementById('paymentQty');
+  const totalField  = document.getElementById('paymentTotal');
+
+  let amount = parseFloat(amountField.value);
+  let qty    = parseInt(qtyField.value);
+
+  if (isNaN(amount)) amount = 0;
+  if (isNaN(qty) || qty < 1) qty = 0;
+
+  const total = amount * qty;
+
+  totalField.textContent = total.toFixed(2);
+}
 
   const defaults = {
     'Membership':         500,
@@ -781,11 +806,13 @@ function clearPaymentForm() {
 
 function processPayment() {
   const customerType = document.querySelector('input[name="customerType"]:checked').value;
-  const amount       = document.getElementById('paymentAmount').value.trim();
+  const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
   const paidFor      = document.getElementById('paymentPaidFor').value;
   const notes        = document.getElementById('paymentNotes').value.trim();
   const method       = document.getElementById('paymentMethod').value;
   const btn          = document.getElementById('paymentSubmitBtn');
+  const qty    = parseInt(document.getElementById('paymentQty').value) || 1;
+  const total  = amount * qty;
   let memberId = null, customerName = null;
 
   if (customerType === 'member') {
@@ -801,7 +828,7 @@ function processPayment() {
   // Detect if an inventory item is being purchased
   let invItemId   = null;
   let invItemName = null;
-  const invQty    = 1; // 1 unit per payment transaction
+  const invQty = qty;
   if (paidFor.startsWith('Inventory:')) {
     const parts = paidFor.split(':');
     invItemId   = parts[1];   // e.g. "2"
@@ -817,7 +844,7 @@ function processPayment() {
       customer_type:  customerType,
       member_ref:     memberId,
       customer_name:  customerName,
-      amount:         parseFloat(amount),
+      amount: total,
       payment_method: method,
       paid_for:       invItemId ? ('Inventory - ' + invItemName) : paidFor,
       notes,
