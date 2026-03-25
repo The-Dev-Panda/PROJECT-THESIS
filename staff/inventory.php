@@ -125,53 +125,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
 
         if ($action === 'get_sales_summary') {
-            $today = date('Y-m-d');
-            $summary = ['non_member' => 0, 'member' => 0, 'special' => 0, 'monthly' => 0, 'total_revenue' => 0.0];
+    $today   = date('Y-m-d');
+    $summary = [
+        'non_member'    => 0,
+        'member_walkin' => 0,
+        'membership'    => 0,
+        'special'       => 0,
+        'monthly'       => 0,
+        'total_revenue' => 0.0,
+    ];
 
-            $staffId = isset($_POST['staff_id']) ? (int)$_POST['staff_id'] : null;
+    // ... existing $stmt query stays the same ...
 
-            if ($staffId > 0) {
-                $stmt = $pdo->prepare("SELECT paid_for, customer_type, COUNT(*) AS cnt, SUM(amount) AS total_amount
-                                      FROM transactions
-                                      WHERE DATE(transaction_date) = :today
-                                        AND status = 'completed'
-                                        AND staff_id = :staff_id
-                                      GROUP BY paid_for, customer_type");
-                $stmt->execute([':today' => $today, ':staff_id' => $staffId]);
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $paidFor     = trim((string)$row['paid_for']);
+        $cnt         = (int)$row['cnt'];
+        $totalAmount = (float)$row['total_amount'];
+        $summary['total_revenue'] += $totalAmount;
+
+        if (strcasecmp($paidFor, 'Day Pass / Walk-In') === 0) {
+            if (strtolower((string)($row['customer_type'] ?? '')) === 'non-member') {
+                $summary['non_member'] += $cnt;
             } else {
-                $stmt = $pdo->prepare("SELECT paid_for, customer_type, COUNT(*) AS cnt, SUM(amount) AS total_amount
-                                      FROM transactions
-                                      WHERE DATE(transaction_date) = :today
-                                        AND status = 'completed'
-                                      GROUP BY paid_for, customer_type");
-                $stmt->execute([':today' => $today]);
+                $summary['member_walkin'] += $cnt;  // member walk-in day pass
             }
-
-            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-                $paidFor = trim((string)$row['paid_for']);
-                $cnt = (int)$row['cnt'];
-                $totalAmount = (float)$row['total_amount'];
-                $summary['total_revenue'] += $totalAmount;
-
-                if (strcasecmp($paidFor, 'Day Pass / Walk-In') === 0) {
-                    if (isset($row['customer_type']) && strtolower((string)$row['customer_type']) === 'non-member') {
-                        $summary['non_member'] += $cnt;
-                    } else {
-                        $summary['member'] += $cnt;
-                    }
-                } elseif (strcasecmp($paidFor, 'Special Rate') === 0) {
-                    $summary['special'] += $cnt;
-                } elseif (strcasecmp($paidFor, 'Monthly') === 0) {
-                    $summary['monthly'] += $cnt;
-                } elseif (strcasecmp($paidFor, 'Membership') === 0) {
-                    $summary['member'] += $cnt;
-                }
-            }
-
-            echo json_encode(['success' => true, 'summary' => $summary]);
-            exit;
+        } elseif (strcasecmp($paidFor, 'Membership') === 0) {
+            $summary['membership'] += $cnt;          // one-time membership fee
+        } elseif (strcasecmp($paidFor, 'Special Rate') === 0) {
+            $summary['special'] += $cnt;
+        } elseif (strcasecmp($paidFor, 'Monthly') === 0) {
+            $summary['monthly'] += $cnt;
         }
+    }
 
+    echo json_encode(['success' => true, 'summary' => $summary]);
+    exit;
+}
         if ($action === 'get_notifications') {
             $txRows = $pdo->query("
                 SELECT id, receipt_number, customer_type, user_id,
@@ -459,8 +448,6 @@ try {
           <div class="topbar-dot"></div>
           Active Staff Member
         </div>
-
-        <!-- Daily Sales Button -->
         <button class="notif-bell-btn" onclick="openSalesModal()" title="Daily Sales / Counter Logsheet"
           style="margin-right:6px;position:relative;">
           <i class="bi bi-receipt"></i>
@@ -641,12 +628,22 @@ try {
               <td class="tot" id="sfNonMemberTot">&#8369;0.00</td>
               <td class="tot sf-entry-tally" id="sfNonMemberTally" data-tally="0">—</td>
             </tr>
+            <!-- Member(Walk-in) row — unchanged -->
             <tr>
-              <td>Member</td>
-              <td><input type="number" class="sf-input sf-entry" data-rate="50" id="sfMember" min="0" value="0" readonly></td>
+              <td>Member(Walk-in)</td>
+              <td><input type="number" class="sf-input sf-entry" data-rate="50" id="sfMemberWalkin" min="0" value="0" readonly></td>
               <td class="rate">&#8369;50</td>
-              <td class="tot" id="sfMemberTot">&#8369;0.00</td>
-              <td class="tot sf-entry-tally" id="sfMemberTally" data-tally="0">—</td>
+              <td class="tot" id="sfMemberWalkinTot">&#8369;0.00</td>
+              <td class="tot sf-entry-tally" id="sfMemberWalkinTally" data-tally="0">—</td>
+            </tr>
+
+            <!-- Membership row — now has its own unique ID -->
+            <tr>
+              <td>Membership</td>
+              <td><input type="number" class="sf-input sf-entry" data-rate="500" id="sfMembership" min="0" value="0" readonly></td>
+              <td class="rate">&#8369;500</td>
+              <td class="tot" id="sfMembershipTot">&#8369;0.00</td>
+              <td class="tot sf-entry-tally" id="sfMembershipTally" data-tally="0">—</td>
             </tr>
             <tr>
               <td>Special Rate</td>
@@ -949,8 +946,45 @@ function applyLocalStorageTally() {
       }
     }
   });
+ const ENTRY_KEY = 'fitstop_entry_tally';
+  let entryTally = {};
+  try { entryTally = JSON.parse(localStorage.getItem(ENTRY_KEY) || '{}'); } catch(e) {}
 
-  // ✅ Recalculate totals after updating inputs
+  if (entryTally._date === today) {
+      const entryMap = {
+      non_member    : 'sfNonMember',
+      member_walkin : 'sfMemberWalkin',
+      membership    : 'sfMembership',
+      special       : 'sfSpecial',
+      monthly       : 'sfMonthly',
+    };
+    Object.entries(entryMap).forEach(([key, inputId]) => {
+      const inp       = document.getElementById(inputId);
+      const tallyCell = document.getElementById(inputId + 'Tally');
+      if (!inp) return;
+
+      const newCount  = parseInt(entryTally[key]) || 0;
+      const prevCount = parseInt(inp.dataset.lastTally || 0);
+
+      if (newCount > prevCount) {
+        inp.value            = newCount;
+        inp.dataset.lastTally = newCount;
+
+        // Update tally display column
+        if (tallyCell) {
+          const rate = parseFloat(inp.dataset.rate) || 0;
+          const prev = parseInt(tallyCell.dataset.tally) || 0;
+          const updated = Math.max(prev, newCount);
+          tallyCell.dataset.tally = updated;
+          tallyCell.innerHTML = `<span style="font-weight:700;">${updated}</span>
+            <span style="font-size:10.5px;color:var(--text-muted);display:block;">
+              ${rate > 0 ? fmt(updated * rate) : '(see rate)'}
+            </span>`;
+        }
+      }
+    });
+  }
+
   sfRecalc();
 }
 /**
@@ -981,12 +1015,12 @@ function loadSalesSummary() {
     .then(data => {
       if (!data.success || !data.summary) return;
 
-      document.getElementById('sfNonMember').value = data.summary.non_member;
-      document.getElementById('sfMember').value    = data.summary.member;
-      document.getElementById('sfSpecial').value   = data.summary.special;
-      document.getElementById('sfMonthly').value   = data.summary.monthly;
+      document.getElementById('sfNonMember').value    = data.summary.non_member;
+      document.getElementById('sfMemberWalkin').value = data.summary.member_walkin;
+      document.getElementById('sfMembership').value   = data.summary.membership;
+      document.getElementById('sfSpecial').value      = data.summary.special;
+      document.getElementById('sfMonthly').value      = data.summary.monthly;
 
-      // Apply any inventory item tallies from staff.php payment page
       applyLocalStorageTally();
 
       sfRecalc();
@@ -1112,12 +1146,13 @@ function submitSalesForm() {
         successBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
         // Accumulate entry fee tallies
-        const entryMap = {
-          sfNonMember: { tallyId: 'sfNonMemberTally', rate: 60 },
-          sfMember:    { tallyId: 'sfMemberTally',    rate: 50 },
-          sfSpecial:   { tallyId: 'sfSpecialTally',   rate: 40 },
-          sfMonthly:   { tallyId: 'sfMonthlyTally',   rate: 0  },
-        };
+          const entryMap = {
+        sfNonMember    : { tallyId: 'sfNonMemberTally',    rate: 60  },
+        sfMemberWalkin : { tallyId: 'sfMemberWalkinTally', rate: 50  },
+        sfMembership   : { tallyId: 'sfMembershipTally',   rate: 500 },
+        sfSpecial      : { tallyId: 'sfSpecialTally',       rate: 40  },
+        sfMonthly      : { tallyId: 'sfMonthlyTally',       rate: 0   },
+  };
         Object.entries(entryMap).forEach(([inputId, cfg]) => {
           const inp  = document.getElementById(inputId);
           const cell = document.getElementById(cfg.tallyId);
@@ -1253,12 +1288,19 @@ function resetTally() {
     const cell = row.querySelector('.sf-item-tally');
     if (cell) cell.innerHTML = '—';
   });
-  ['sfNonMemberTally','sfMemberTally','sfSpecialTally','sfMonthlyTally'].forEach(id => {
-    const cell = document.getElementById(id);
-    if (cell) { cell.dataset.tally = 0; cell.innerHTML = '—'; }
-  });
-  // Also clear localStorage so staff.php payments start fresh for the tally
+
+['sfNonMemberTally','sfMemberWalkinTally','sfMembershipTally','sfSpecialTally','sfMonthlyTally'].forEach(id => {
+  const cell = document.getElementById(id);
+  if (cell) { cell.dataset.tally = 0; cell.innerHTML = '—'; }
+});
+
+['sfNonMember','sfMemberWalkin','sfMembership','sfSpecial','sfMonthly'].forEach(id => {
+  const inp = document.getElementById(id);
+  if (inp) { inp.value = 0; inp.dataset.lastTally = 0; }
+});
+
   localStorage.removeItem('fitstop_inv_tally');
+  localStorage.removeItem('fitstop_entry_tally'); 
   document.getElementById('sfSuccess').classList.remove('show');
   showToast('Tally reset.', 'success');
 }

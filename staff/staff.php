@@ -826,13 +826,15 @@ function processPayment() {
     })
   })
   .then(r => r.json())
-  .then(data => {
+ .then(data => {
     btn.disabled = false; btn.textContent = 'Generate Receipt';
     if (!data.success) { alert(data.error || 'Failed to save transaction.'); return; }
 
-    // If an inventory item was purchased — deduct stock server-side & update tally
     if (invItemId) {
       deductInventoryStock(invItemId, invItemName, invQty);
+    }
+    if (!invItemId) {
+      recordEntryFeeToLocalStorage(paidFor, customerType);
     }
 
     displayReceipt(data.receipt);
@@ -877,6 +879,30 @@ function deductInventoryStock(invItemId, invItemName, qty) {
 
   tally[invItemId] = (tally[invItemId] || 0) + qty;
   localStorage.setItem(TALLY_KEY, JSON.stringify(tally));
+}
+function recordEntryFeeToLocalStorage(paidFor, customerType) {
+  const ENTRY_KEY = 'fitstop_entry_tally';
+  const today     = new Date().toISOString().slice(0, 10);
+  let tally = {};
+  try { tally = JSON.parse(localStorage.getItem(ENTRY_KEY) || '{}'); } catch(e) {}
+
+  if (tally._date !== today) {
+    tally = { _date: today };
+  }
+
+  if (paidFor === 'Day Pass / Walk-In' && customerType === 'non-member') {
+    tally.non_member = (tally.non_member || 0) + 1;
+  } else if (paidFor === 'Day Pass / Walk-In' && customerType === 'member') {
+    tally.member_walkin = (tally.member_walkin || 0) + 1;  // ✅ separated
+  } else if (paidFor === 'Membership') {
+    tally.membership = (tally.membership || 0) + 1;         // ✅ separated
+  } else if (paidFor === 'Special Rate') {
+    tally.special = (tally.special || 0) + 1;
+  } else if (paidFor === 'Monthly') {
+    tally.monthly = (tally.monthly || 0) + 1;
+  }
+
+  localStorage.setItem(ENTRY_KEY, JSON.stringify(tally));
 }
 
 function displayReceipt(receipt) {

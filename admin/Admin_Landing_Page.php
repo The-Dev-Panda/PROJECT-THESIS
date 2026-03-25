@@ -32,7 +32,7 @@ $stats['unread_notifications'] = $stmt->fetch()['total'];
 $member_growth = [];
 for ($i = 5; $i >= 0; $i--) {
     $date = date('Y-m', strtotime("-$i months"));
-    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM users WHERE user_type = 'user' AND DATE_FORMAT('%Y-%m', created_at) = :date");
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM users WHERE user_type = 'user' AND strftime('%Y-%m', created_at) = :date");
     $stmt->execute(['date' => $date]);
     $count = $stmt->fetch()['count'];
     $member_growth[] = [
@@ -45,7 +45,7 @@ for ($i = 5; $i >= 0; $i--) {
 $revenue_by_month = [];
 for ($i = 5; $i >= 0; $i--) {
     $date = date('Y-m', strtotime("-$i months"));
-    $stmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE DATE_FORMAT('%Y-%m', transaction_date) = :date");
+    $stmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', transaction_date) = :date");
     $stmt->execute(['date' => $date]);
     $total = $stmt->fetch()['total'];
     $revenue_by_month[] = [
