@@ -748,18 +748,7 @@ function toggleCustomerType(type) {
   }
 }
 
-function autoFillAmount(paidFor) {
-  const amountInput  = document.getElementById('paymentAmount');
-  const customerType = document.querySelector('input[name="customerType"]:checked')?.value || 'member';
 
-  if (paidFor && paidFor.startsWith('Inventory:')) {
-    const sel   = document.getElementById('paymentPaidFor');
-    const opt   = sel ? sel.options[sel.selectedIndex] : null;
-    const price = opt ? parseFloat(opt.dataset.price) : null;
-    amountInput.value = (price !== null && !isNaN(price)) ? price.toFixed(2) : '';
-    updateTotal();
-    return;
-  }
 
  function updateTotal() {
   const amountField = document.getElementById('paymentAmount');
@@ -772,11 +761,21 @@ function autoFillAmount(paidFor) {
   if (isNaN(amount)) amount = 0;
   if (isNaN(qty) || qty < 1) qty = 0;
 
-  const total = amount * qty;
-
-  totalField.textContent = total.toFixed(2);
+  totalField.textContent = (amount * qty).toFixed(2);
 }
 
+function autoFillAmount(paidFor) {
+  const amountInput  = document.getElementById('paymentAmount');
+  const customerType = document.querySelector('input[name="customerType"]:checked')?.value || 'member';
+
+  if (paidFor && paidFor.startsWith('Inventory:')) {
+    const sel   = document.getElementById('paymentPaidFor');
+    const opt   = sel ? sel.options[sel.selectedIndex] : null;
+    const price = opt ? parseFloat(opt.dataset.price) : null;
+    amountInput.value = (price !== null && !isNaN(price)) ? price.toFixed(2) : '';
+    updateTotal();
+    return;
+  }
   const defaults = {
     'Membership':         500,
     'Monthly':            650,
