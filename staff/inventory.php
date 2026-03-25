@@ -414,26 +414,34 @@ try {
       <span class="logo-text">Fit-Stop</span>
     </div>
     <ul class="menu">
-      <li onclick="window.location.href='staff.php'" style="cursor:pointer;">
-        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
-      </li>
-      <li class="active" onclick="window.location.href='inventory.php'" style="cursor:pointer;">
-        <i class="bi bi-box-seam"></i><span>Inventory</span>
-      </li>
-      <li onclick="window.location.href='attendance.php'" style="cursor:pointer;">
-        <i class="bi bi-clipboard-check"></i><span>Attendance</span>
-      </li>
-      <li onclick="window.location.href='members.php'" style="cursor:pointer;">
-        <i class="bi bi-people"></i><span>Members</span>
-      </li>
-      <li onclick="document.getElementById('logoutForm').submit()" style="cursor:pointer">
-        <i class="bi bi-box-arrow-right"></i>
-        <span>Logout</span>
-      </li>
-      <form id="logoutForm" action="../../login/logout.php" method="POST" style="display:none;">
-        <?php echo fitstop_csrf_input(); ?>
-      </form>
-    </ul>
+  <li onclick="window.location.href='staff.php'" style="cursor:pointer;">
+    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+  </li>
+  <li onclick="window.location.href='staff.php#clientRegistration'" style="cursor:pointer;">
+    <i class="bi bi-person-plus"></i><span>Client Registration</span>
+  </li>
+  <li class="active" style="cursor:pointer;">
+    <i class="bi bi-box-seam"></i><span>Inventory</span>
+  </li>
+  <li onclick="window.location.href='staff.php#attendance'" style="cursor:pointer;">
+    <i class="bi bi-clipboard-check"></i><span>Attendance</span>
+  </li>
+  <li onclick="window.location.href='staff.php#memberManagement'" style="cursor:pointer;">
+    <i class="bi bi-people"></i><span>Members</span>
+  </li>
+  <li onclick="window.location.href='staff.php#idGeneration'" style="cursor:pointer;">
+    <i class="bi bi-qr-code"></i><span>ID Generation</span>
+  </li>
+  <li onclick="window.location.href='staff.php#settings'" style="cursor:pointer;">
+    <i class="bi bi-gear"></i><span>Settings</span>
+  </li>
+  <li onclick="document.getElementById('logoutForm').submit()" style="cursor:pointer;">
+    <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+  </li>
+  <form id="logoutForm" action="../../login/logout.php" method="POST" style="display:none;">
+    <?php echo fitstop_csrf_input(); ?>
+  </form>
+</ul>
   </aside>
 
   <main class="main-content">

@@ -337,7 +337,7 @@ $activePage = 'dashboard';
         <!-- TOP BAR -->
         <header class="topbar">
           <div class="welcome">
-            <h1 id="dashboardWelcome">Hey <?php echo htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8'); ?>!</h1>
+            <h1 id="dashboardWelcome">Hey Welcome, <?php echo htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8'); ?>!</h1>
             <p id="dashboardWelcomeSub">Goal: <?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?></p>
           </div>
           <div class="profile-container" style="margin-left:auto;">

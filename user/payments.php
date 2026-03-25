@@ -168,31 +168,7 @@ try {
                   membership may be immediately suspended or cancelled.
                 </p>
               </div>
-
-              <div class="agreement-checkbox">
-                <i class="fas fa-check-square"></i>
-                <span
-                  >I have read and agree to the Terms & Conditions and Privacy
-                  Policy</span
-                >
-              </div>
             </div>
-          </div>
-
-          <!-- ACTION BUTTONS -->
-          <div class="profile-actions">
-            <button class="btn-action secondary">
-              <i class="fas fa-download"></i>
-              Download All Documents
-            </button>
-            <button class="btn-action secondary">
-              <i class="fas fa-history"></i>
-              View Payment History
-            </button>
-            <button class="btn-action danger">
-              <i class="fas fa-user-times"></i>
-              Cancel Membership
-            </button>
           </div>
         </section>
       </main>

@@ -687,7 +687,6 @@ if ($workoutMode === 'heavy') $targetBurn = 600;
 
 <!-- ── WORKOUT PLAN ── -->
 <?php
-// FETCH EXERCISES FROM SQLITE
 $exerciseList = [];
 
 try {
@@ -709,7 +708,6 @@ try {
 
     <div class="mt-input-row">
 
-      <!-- WORKOUT TYPE -->
       <div class="mt-field">
         <label>Workout Type</label>
         <select id="workoutType" class="mt-select">
@@ -718,10 +716,10 @@ try {
           <option value="Pull">Pull</option>
           <option value="Legs">Legs</option>
           <option value="Cardio">Cardio</option>
+          <option value="Core">Core</option>
         </select>
       </div>
 
-      <!-- WORKOUT NAME -->
       <div class="mt-field" style="flex:1;">
         <label>Workout Name</label>
         <select id="workoutName" class="mt-select">
@@ -729,19 +727,16 @@ try {
         </select>
       </div>
 
-      <!-- SETS -->
       <div class="mt-field">
         <label>Sets</label>
-        <input type="number" id="sets" class="form-input" value="3" min="1">
+        <input type="number" id="sets" class="form-input" value="3">
       </div>
 
-      <!-- REPS -->
       <div class="mt-field">
         <label>Reps</label>
-        <input type="number" id="reps" class="form-input" value="10" min="1">
+        <input type="number" id="reps" class="form-input" value="10">
       </div>
 
-      <!-- DAY -->
       <div class="mt-field">
         <label>Day</label>
         <select id="workoutDay" class="mt-select">
@@ -760,7 +755,8 @@ try {
 
     <hr class="mt-cards-divider" />
 
-    <div class="mt-meals-grid" id="workoutSchedule"></div>
+    <!-- WEEKLY GRID -->
+    <div class="workout-grid" id="workoutGrid"></div>
   </div>
 </section>
 
@@ -772,33 +768,78 @@ try {
   border: 1px solid #383838;
   border-radius: 8px;
   padding: 10px;
-  font-size: 0.85rem;
 }
+
 .mt-select:focus {
   border-color: #ffcc00;
-  outline: none;
 }
-.workout-card {
+
+.workout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.day-card {
   background: #101010;
   border: 1px solid #2b2b2b;
   border-radius: 10px;
   padding: 12px;
-  color: #fff;
 }
-.workout-card h4 {
+
+.day-title {
   color: #ffcc00;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.workout-item {
+  background: #0d0d0d;
+  border: 1px solid #2e2e2e;
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+}
+
+.done-btn {
+  margin-top: 6px;
+  background: #ffcc00;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
 }
 </style>
 
 <script>
-// PASS PHP DATA TO JS
 const exercises = <?php echo json_encode($exerciseList); ?>;
 
 const workoutType = document.getElementById("workoutType");
 const workoutName = document.getElementById("workoutName");
-const scheduleDiv = document.getElementById("workoutSchedule");
+const workoutGrid = document.getElementById("workoutGrid");
 
-// LOAD EXERCISES FROM DB
+const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
+// CREATE DAY CARDS
+function initDays() {
+  workoutGrid.innerHTML = "";
+  days.forEach(day => {
+    const card = document.createElement("div");
+    card.className = "day-card";
+    card.id = "day-" + day;
+
+    card.innerHTML = `
+      <div class="day-title">${day}</div>
+      <div class="day-content"></div>
+    `;
+
+    workoutGrid.appendChild(card);
+  });
+}
+
+// LOAD EXERCISES
 function loadExercises() {
   const type = workoutType.value;
   workoutName.innerHTML = '<option value="">Select Workout</option>';
@@ -814,9 +855,12 @@ function loadExercises() {
 }
 
 workoutType.addEventListener("change", loadExercises);
-window.onload = loadExercises;
+window.onload = () => {
+  initDays();
+  loadExercises();
+};
 
-// ADD WORKOUT
+// ADD WORKOUT TO DAY
 function addWorkout() {
   const name = workoutName.value;
   const sets = document.getElementById("sets").value;
@@ -828,26 +872,22 @@ function addWorkout() {
     return;
   }
 
-  const card = document.createElement("div");
-  card.className = "workout-card";
+  const dayContainer = document.querySelector("#day-" + day + " .day-content");
 
-  card.innerHTML = `
-    <h4>${day}</h4>
-    <p><strong>${name}</strong></p>
-    <p>${sets} sets × ${reps} reps</p>
-    <button onclick="this.parentElement.remove()" style="
-      background:#ffcc00;
-      border:none;
-      padding:5px 10px;
-      border-radius:6px;
-      cursor:pointer;
-    ">Remove</button>
+  const item = document.createElement("div");
+  item.className = "workout-item";
+
+  item.innerHTML = `
+    <strong>${name}</strong><br>
+    ${sets} sets × ${reps} reps
+    <br>
+    <button class="done-btn" onclick="this.parentElement.remove()">Done</button>
   `;
 
-  scheduleDiv.appendChild(card);
+  dayContainer.appendChild(item);
 
-  // smooth scroll, NO page reset
-  card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  // smooth scroll
+  item.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 </script>
         <!-- ════════════════════════════════════════════
@@ -898,7 +938,7 @@ function addWorkout() {
                     font-weight: 700;
                     letter-spacing: 2px;
                     text-transform: uppercase;
-                    color: #888;
+                
                   "
                   >Qty / Servings</label
                 >
