@@ -228,12 +228,12 @@ function getPaginationUrl($page_num, $search, $category, $stock, $sort, $order)
 
     <div class="main-content">
         <!-- Topbar -->
-        <div class="topbar">
-            <div class="topbar-left">
+        <div class="topbar row">
+            <div class="topbar-left col-sm-12 col-xl-6">
                 <h1><i class="bi bi-box-seam"></i> Inventory</h1>
                 <p>Manage equipment stock & status</p>
             </div>
-            <div class="topbar-right">
+            <div class="topbar-right col-sm-12 col-xl-1 col-xl-offset-5">
                 <div class="topbar-badge">
                     <i class="bi bi-archive"></i>
                     <span><?php echo $total_records; ?> Items</span>
@@ -259,52 +259,66 @@ function getPaginationUrl($page_num, $search, $category, $stock, $sort, $order)
 
         <!-- Search and Filter Bar -->
         <section>
-            <div class="inventory-header">
-                <form method="GET" class="search-container">
-                    <div class="row">
-                        <div class="search-wrapper col-sm-12 col-xl-2" style="min-width: 200px;">
-                            <i class="bi bi-search search-icon"></i>
-                            <input type="text" name="search" class="search-input" maxlength="30"
-                                placeholder="Search items..." value="<?php echo htmlspecialchars($search); ?>">
+            <div class="inventory-header row">
+                <div class="col-8">
+                    <form method="GET">
+                        <div class="row">
+                            <div class="search-wrapper col-sm-12 col-xl-2" style="min-width: 200px;">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" name="search" class="search-input" maxlength="30"
+                                    placeholder="Search items..." value="<?php echo htmlspecialchars($search); ?>">
+                            </div>
+                            <div class="col-sm-12 col-xl-3">
+                                <select name="category" class="search-input">
+                                    <option value="">All Categories</option>
+                                    <?php foreach ($categories as $cat): ?>
+                                        <option value="<?php echo htmlspecialchars($cat); ?>" <?php echo ($category_filter == $cat) ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($cat); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-sm-12 col-xl-3">
+                                <select name="stock" class="search-input">
+                                    <option value="">All Stock Levels</option>
+                                    <option value="in_stock" <?php echo $stock_filter === 'in_stock' ? 'selected' : ''; ?>>In
+                                        Stock
+                                        (10+)</option>
+                                    <option value="low" <?php echo $stock_filter === 'low' ? 'selected' : ''; ?>>Low Stock
+                                        (1-9)
+                                    </option>
+                                    <option value="out" <?php echo $stock_filter === 'out' ? 'selected' : ''; ?>>Out of
+                                        Stock
+                                    </option>
+                                </select>
+                            </div>
+
+                            <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
+                            <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
+                            <div class="col-sm-12 col-xl-1 p-0 m-0 d-flex justify-content-center">
+                                <button type="submit" class="search-btn">
+                                    <i class="bi bi-funnel"></i> Filter
+                                </button>
+                            </div>
                         </div>
-                        <select name="category" class="search-input col-sm-12 col-xl-2">
-                            <option value="">All Categories</option>
-                            <?php foreach ($categories as $cat): ?>
-                                <option value="<?php echo htmlspecialchars($cat); ?>" <?php echo ($category_filter == $cat) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($cat); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-
-                        <select name="stock" class="search-input col-sm-12">
-                            <option value="">All Stock Levels</option>
-                            <option value="in_stock" <?php echo $stock_filter === 'in_stock' ? 'selected' : ''; ?>>In
-                                Stock
-                                (10+)</option>
-                            <option value="low" <?php echo $stock_filter === 'low' ? 'selected' : ''; ?>>Low Stock (1-9)
-                            </option>
-                            <option value="out" <?php echo $stock_filter === 'out' ? 'selected' : ''; ?>>Out of Stock
-                            </option>
-                        </select>
-
-                        <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
-                        <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
-
-                        <button type="submit" class="search-btn col-sm-12">
-                            <i class="bi bi-funnel"></i> Filter
-                        </button>
+                    </form>
+                </div>
+                <div class="col-sm-12 col-xl-3">
+                    <div class="row">
+                        <div class="col-sm-12 col-xl-6 p-0 m-0">
+                            <?php if ($search || $category_filter || $stock_filter): ?>
+                                <a href="view_inventory.php" class="btn-secondary" style=" text-decoration: none;">
+                                    <i class="bi bi-x-circle"></i> Clear Filters
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                        <div class="col-sm-12 col-xl-6 d-flex justify-content-center">
+                            <button class="add-btn" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                                <i class="bi bi-plus-circle"></i> Add Item
+                            </button>
+                        </div>
                     </div>
-                </form>
-
-                <?php if ($search || $category_filter || $stock_filter): ?>
-                    <a href="view_inventory.php" class="btn-secondary col-sm-12 " style=" text-decoration: none;">
-                        <i class="bi bi-x-circle"></i> Clear Filters
-                    </a>
-                <?php endif; ?>
-
-                <button class="add-btn col-sm-12" data-bs-toggle="modal" data-bs-target="#addItemModal">
-                    <i class="bi bi-plus-circle"></i> Add Item
-                </button>
+                </div>
             </div>
 
             <!-- Inventory Table -->

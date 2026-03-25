@@ -58,7 +58,7 @@ body {
     gap: 13px;
     padding: 28px 22px;
     border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
+    flex-shrink: 1;
 }
 
 .logo-img {
@@ -123,6 +123,10 @@ body {
     margin-left: var(--sidebar-w);
     padding: 28px 32px;
     min-height: 100vh;
+}
+@media screen and (max-width: 768px) {
+    .main-content { margin-left: 0; }
+    
 }
 
 /* ── TOPBAR ── */
