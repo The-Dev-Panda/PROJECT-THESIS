@@ -2,7 +2,6 @@
 header('Content-Type: application/json');
 
 date_default_timezone_set('Asia/Manila');
-$dbPath = __DIR__ . '/DB.sqlite';
 
 function requireUserSession(): int
 {
@@ -21,30 +20,72 @@ function requireUserSession(): int
 
 function ensureMealLogsTable(PDO $db): void
 {
-    $db->exec(
-        'CREATE TABLE IF NOT EXISTS meal_logs (
-            meal_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            logged_date TEXT NOT NULL,
-            meal_type TEXT NOT NULL,
-            food_name TEXT NOT NULL,
-            quantity REAL NOT NULL,
-            calories INTEGER NOT NULL,
-            protein REAL NOT NULL,
-            carbs REAL NOT NULL,
-            fat REAL NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )'
-    );
-    $db->exec('CREATE INDEX IF NOT EXISTS idx_meal_logs_user_date ON meal_logs(user_id, logged_date)');
+    $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+    if ($driver === 'mysql') {
+        $db->exec(
+            'CREATE TABLE IF NOT EXISTS meal_logs (
+                meal_id INT NOT NULL AUTO_INCREMENT,
+                user_id INT NOT NULL,
+                logged_date VARCHAR(10) NOT NULL,
+                meal_type VARCHAR(50) NOT NULL,
+                food_name VARCHAR(255) NOT NULL,
+                quantity DECIMAL(10,2) NOT NULL,
+                calories INT NOT NULL,
+                protein DECIMAL(10,2) NOT NULL,
+                carbs DECIMAL(10,2) NOT NULL,
+                fat DECIMAL(10,2) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (meal_id),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )'
+        );
+        try {
+            $db->exec('CREATE INDEX idx_meal_logs_user_date ON meal_logs(user_id, logged_date)');
+        } catch (PDOException $e) {
+            // Index already exists; ignore.
+        }
+    } elseif ($driver === 'pgsql') {
+        $db->exec(
+            'CREATE TABLE IF NOT EXISTS meal_logs (
+                meal_id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                logged_date VARCHAR(10) NOT NULL,
+                meal_type VARCHAR(50) NOT NULL,
+                food_name VARCHAR(255) NOT NULL,
+                quantity NUMERIC(10,2) NOT NULL,
+                calories INTEGER NOT NULL,
+                protein NUMERIC(10,2) NOT NULL,
+                carbs NUMERIC(10,2) NOT NULL,
+                fat NUMERIC(10,2) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )'
+        );
+        $db->exec('CREATE INDEX IF NOT EXISTS idx_meal_logs_user_date ON meal_logs(user_id, logged_date)');
+    } else {
+        // SQLite
+        $db->exec(
+            'CREATE TABLE IF NOT EXISTS meal_logs (
+                meal_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                logged_date TEXT NOT NULL,
+                meal_type TEXT NOT NULL,
+                food_name TEXT NOT NULL,
+                quantity REAL NOT NULL,
+                calories INTEGER NOT NULL,
+                protein REAL NOT NULL,
+                carbs REAL NOT NULL,
+                fat REAL NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )'
+        );
+        $db->exec('CREATE INDEX IF NOT EXISTS idx_meal_logs_user_date ON meal_logs(user_id, logged_date)');
+    }
 }
 
 try {
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
     if (strtoupper($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
         http_response_code(405);
         echo json_encode(['success' => false, 'error' => 'Method not allowed']);
@@ -73,13 +114,8 @@ try {
 
     $startDate = date('Y-m-d', strtotime('-' . ($days - 1) . ' days', $endTs));
 
-    $db = new PDO('sqlite:' . $dbPath);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
-    $db->exec('PRAGMA busy_timeout = 10000');
-    $db->exec('PRAGMA journal_mode = WAL');
-    $db->exec('PRAGMA synchronous = NORMAL');
-    $db->exec('PRAGMA foreign_keys = ON');
+    include __DIR__ . '/../Login/connection.php';
+    $db = $pdo;
 
     ensureMealLogsTable($db);
 

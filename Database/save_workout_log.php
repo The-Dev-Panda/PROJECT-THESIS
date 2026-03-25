@@ -1,8 +1,6 @@
 <?php
 header('Content-Type: application/json');
 
-$dbPath = __DIR__ . '/DB.sqlite';
-
 function requireUserSession() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -16,10 +14,6 @@ function requireUserSession() {
 }
 
 try {
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
     $sessionUserId = requireUserSession();
 
     $input = json_decode(file_get_contents('php://input'), true);
@@ -39,13 +33,8 @@ try {
         throw new Exception('Missing required fields');
     }
 
-    $db = new PDO('sqlite:' . $dbPath);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
-    $db->exec('PRAGMA busy_timeout = 10000');
-    $db->exec('PRAGMA journal_mode = WAL');
-    $db->exec('PRAGMA synchronous = NORMAL');
-    $db->exec('PRAGMA foreign_keys = ON');
+    include __DIR__ . '/../Login/connection.php';
+    $db = $pdo;
 
     // Resolve user_id from numeric id or username.
     if (ctype_digit($memberRef)) {

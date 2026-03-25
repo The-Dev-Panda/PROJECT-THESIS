@@ -59,24 +59,31 @@ try {
       $welcomeName = (string)$user['username'];
     }
 
+    $datetimeThreshold = date('Y-m-d H:i:s', strtotime($windowModifier));
+
+    $dbDriver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $groupConcatExpr = $dbDriver === 'pgsql'
+      ? "STRING_AGG(DISTINCT COALESCE(e.name, 'Exercise'), ',')"
+      : "GROUP_CONCAT(DISTINCT COALESCE(e.name, 'Exercise'))";
+
     $historyStmt = $pdo->prepare("SELECT
-      date(datetime(wl.logged_at, 'localtime')) AS workout_day,
-      MIN(datetime(wl.logged_at, 'localtime')) AS first_log_time,
-      MAX(datetime(wl.logged_at, 'localtime')) AS last_log_time,
+      DATE(wl.logged_at) AS workout_day,
+      MIN(wl.logged_at) AS first_log_time,
+      MAX(wl.logged_at) AS last_log_time,
       COUNT(*) AS total_sets,
       COUNT(DISTINCT wl.exercise_id) AS exercise_count,
       SUM(COALESCE(wl.weight, 0) * COALESCE(wl.reps, 0)) AS total_volume,
-      GROUP_CONCAT(DISTINCT COALESCE(e.name, 'Exercise')) AS exercise_names
+      {$groupConcatExpr} AS exercise_names
     FROM workout_logs wl
     LEFT JOIN exercises e ON e.exercise_id = wl.exercise_id
     WHERE wl.user_id = :user_id
-      AND datetime(wl.logged_at, 'localtime') >= datetime('now', 'localtime', :window)
+      AND wl.logged_at >= :datetime_threshold
     GROUP BY workout_day
     ORDER BY workout_day DESC
     LIMIT 60");
     $historyStmt->execute([
       ':user_id' => $userId,
-      ':window' => $windowModifier
+      ':datetime_threshold' => $datetimeThreshold,
     ]);
     $rows = $historyStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 

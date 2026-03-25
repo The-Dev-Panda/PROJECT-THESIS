@@ -131,7 +131,7 @@ if (!in_array($newStatus, $validStatuses, true)) {
 try {
     include('../Login/connection.php');
 
-    $checkStmt = $pdo->prepare('SELECT id, status, rowid AS feedback_rowid FROM feedback WHERE id = :id OR rowid = :id LIMIT 1');
+    $checkStmt = $pdo->prepare('SELECT id, status FROM feedback WHERE id = :id LIMIT 1');
     $checkStmt->execute(['id' => $feedbackId]);
     $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -144,7 +144,7 @@ try {
         exit();
     }
 
-    $stmt = $pdo->prepare('UPDATE feedback SET status = :status WHERE id = :id OR rowid = :id');
+    $stmt = $pdo->prepare('UPDATE feedback SET status = :status WHERE id = :id');
     $stmt->execute([
         'status' => $newStatus,
         'id' => $feedbackId

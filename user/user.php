@@ -22,6 +22,7 @@ $totalWeightChangeText = 'No data';
 
 try {
   require __DIR__ . '/../Login/connection.php';
+  require_once __DIR__ . '/../includes/db_helpers.php';
 
   $userId = (int)($_SESSION['id'] ?? 0);
   if ($userId > 0) {
@@ -29,16 +30,7 @@ try {
     $userStmt->execute([':id' => $userId]);
     $user = $userStmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
-    $profileColumns = [];
-    $profileColumnStmt = $pdo->query('PRAGMA table_info(member_profiles)');
-    if ($profileColumnStmt) {
-      $profileColumnRows = $profileColumnStmt->fetchAll(PDO::FETCH_ASSOC);
-      foreach ($profileColumnRows as $profileColumnRow) {
-        if (isset($profileColumnRow['name'])) {
-          $profileColumns[] = (string)$profileColumnRow['name'];
-        }
-      }
-    }
+    $profileColumns = getTableColumns($pdo, 'member_profiles');
 
     $profileSelectSql = 'SELECT '
       . (in_array('age', $profileColumns, true) ? 'age' : 'NULL AS age') . ', '
@@ -94,8 +86,7 @@ try {
         return $prefix . number_format($rounded, 1, '.', '') . ' kg';
       };
 
-      $historyTableStmt = $pdo->query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'old_member_profiles' LIMIT 1");
-      $hasHistoryTable = $historyTableStmt && $historyTableStmt->fetchColumn();
+      $hasHistoryTable = tableExists($pdo, 'old_member_profiles');
       if ($hasHistoryTable) {
         $monthBaseline = null;
         $oldestWeight = null;
@@ -104,10 +95,13 @@ try {
           FROM old_member_profiles
           WHERE user_id = :user_id
             AND weight_kg IS NOT NULL
-            AND datetime(archived_at, 'localtime') <= datetime('now', 'localtime', '-30 days')
-          ORDER BY datetime(archived_at, 'localtime') DESC
+            AND archived_at <= :month_threshold
+          ORDER BY archived_at DESC
           LIMIT 1");
-        $monthStmt->execute([':user_id' => $userId]);
+        $monthStmt->execute([
+            ':user_id' => $userId,
+            ':month_threshold' => date('Y-m-d H:i:s', strtotime('-30 days')),
+        ]);
         $monthBaselineRaw = $monthStmt->fetchColumn();
         if ($monthBaselineRaw !== false && $monthBaselineRaw !== null) {
           $monthBaseline = (float)$monthBaselineRaw;
@@ -117,7 +111,7 @@ try {
           FROM old_member_profiles
           WHERE user_id = :user_id
             AND weight_kg IS NOT NULL
-          ORDER BY datetime(archived_at, 'localtime') ASC
+          ORDER BY archived_at ASC
           LIMIT 1");
         $oldestStmt->execute([':user_id' => $userId]);
         $oldestWeightRaw = $oldestStmt->fetchColumn();
@@ -177,14 +171,14 @@ try {
     }
 
     $workoutStmt = $pdo->prepare("SELECT
-        date(datetime(wl.logged_at, 'localtime')) AS workout_day,
+        DATE(wl.logged_at) AS workout_day,
         COALESCE(e.name, 'Exercise') AS exercise_name,
         COUNT(*) AS sets_count,
         SUM(COALESCE(wl.reps, 0)) AS total_reps,
         MAX(COALESCE(wl.weight, 0)) AS max_weight,
         SUM(COALESCE(wl.weight, 0) * COALESCE(wl.reps, 0)) AS total_volume,
-        MIN(datetime(wl.logged_at, 'localtime')) AS first_log_time,
-        MAX(datetime(wl.logged_at, 'localtime')) AS last_log_time
+        MIN(wl.logged_at) AS first_log_time,
+        MAX(wl.logged_at) AS last_log_time
       FROM workout_logs wl
       LEFT JOIN exercises e ON e.exercise_id = wl.exercise_id
       WHERE wl.user_id = :user_id

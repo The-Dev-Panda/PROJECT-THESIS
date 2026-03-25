@@ -8,13 +8,10 @@ if (empty($_SESSION['username']) || strtolower((string)($_SESSION['user_type'] ?
 $memberId = isset($_SESSION['id']) ? (int)$_SESSION['id'] : 0;
 try {
     include('connection.php');
-    $columns = $pdo->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_ASSOC);
-    $hasConsent = false;
-    $hasConsentAt = false;
-    foreach ($columns as $col) {
-        if (strtolower($col['name']) === 'dpa_consent') $hasConsent = true;
-        if (strtolower($col['name']) === 'dpa_consent_at') $hasConsentAt = true;
-    }
+    require_once __DIR__ . '/../includes/db_helpers.php';
+    $userColumns = getTableColumns($pdo, 'users');
+    $hasConsent = in_array('dpa_consent', $userColumns, true);
+    $hasConsentAt = in_array('dpa_consent_at', $userColumns, true);
     if (!$hasConsent) $pdo->exec('ALTER TABLE users ADD COLUMN dpa_consent INTEGER NOT NULL DEFAULT 0');
     if (!$hasConsentAt) $pdo->exec('ALTER TABLE users ADD COLUMN dpa_consent_at TIMESTAMP DEFAULT NULL');
     if ($memberId > 0) {

@@ -159,13 +159,14 @@ try {
 
         $stmt = $pdo->prepare("
             INSERT INTO feedback (id, about, reporterID, last_name, created_at, desc, status)
-            VALUES (:id, :about, NULL, :last_name, datetime('now'), :desc, 'pending')
+            VALUES (:id, :about, NULL, :last_name, :created_at, :desc, 'pending')
         ");
 
         $stmt->execute([
             'id' => $feedbackId,
             'about' => $about,
             'last_name' => $guestName !== '' ? $guestName : 'Anonymous Guest',
+            'created_at' => date('Y-m-d H:i:s'),
             'desc' => $desc
         ]);
 
@@ -177,9 +178,12 @@ try {
             SELECT COUNT(*) as recent_count
             FROM feedback
             WHERE reporterID = :reporterID
-            AND created_at > datetime('now', '-5 minutes')
+            AND created_at > :since
         ");
-        $rateLimitStmt->execute(['reporterID' => $reporterID]);
+        $rateLimitStmt->execute([
+            'reporterID' => $reporterID,
+            'since' => date('Y-m-d H:i:s', strtotime('-5 minutes')),
+        ]);
         $rateLimitResult = $rateLimitStmt->fetch(PDO::FETCH_ASSOC);
 
         if ($rateLimitResult['recent_count'] >= 3) {
@@ -196,7 +200,7 @@ try {
 
         $stmt = $pdo->prepare("
             INSERT INTO feedback (id, about, reporterID, last_name, created_at, desc, status)
-            VALUES (:id, :about, :reporterID, :last_name, datetime('now'), :desc, 'pending')
+            VALUES (:id, :about, :reporterID, :last_name, :created_at, :desc, 'pending')
         ");
 
         $stmt->execute([
@@ -204,6 +208,7 @@ try {
             'about' => $about,
             'reporterID' => $reporterID,
             'last_name' => $lastName,
+            'created_at' => date('Y-m-d H:i:s'),
             'desc' => $desc
         ]);
     }

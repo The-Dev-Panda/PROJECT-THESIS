@@ -15,7 +15,7 @@ $feedbacks = [];
 $errorMessage = null;
 
 try {
-    $stmt = $pdo->query('SELECT *, COALESCE(id, rowid) AS feedback_id FROM feedback ORDER BY datetime(created_at) DESC, rowid DESC');
+    $stmt = $pdo->query('SELECT *, id AS feedback_id FROM feedback ORDER BY created_at DESC, id DESC');
     $feedbacks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $errorMessage = 'Unable to load feedback right now.';
