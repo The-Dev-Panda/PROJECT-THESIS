@@ -135,21 +135,59 @@ $weeklyWorkoutCount = 0;
 
 if (isset($pdo) && $userId > 0) {
   try {
-    $pdo->exec('CREATE TABLE IF NOT EXISTS meal_logs (
-      meal_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      logged_date TEXT NOT NULL,
-      meal_type TEXT NOT NULL,
-      food_name TEXT NOT NULL,
-      quantity REAL NOT NULL,
-      calories INTEGER NOT NULL,
-      protein REAL NOT NULL,
-      carbs REAL NOT NULL,
-      fat REAL NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )');
-    $pdo->exec('CREATE INDEX IF NOT EXISTS idx_meal_logs_user_date ON meal_logs(user_id, logged_date)');
+    $mealDriver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    if ($mealDriver === 'mysql') {
+      $pdo->exec('CREATE TABLE IF NOT EXISTS meal_logs (
+        meal_id INT NOT NULL AUTO_INCREMENT,
+        user_id INT NOT NULL,
+        logged_date VARCHAR(10) NOT NULL,
+        meal_type VARCHAR(50) NOT NULL,
+        food_name VARCHAR(255) NOT NULL,
+        quantity DECIMAL(10,2) NOT NULL,
+        calories INT NOT NULL,
+        protein DECIMAL(10,2) NOT NULL,
+        carbs DECIMAL(10,2) NOT NULL,
+        fat DECIMAL(10,2) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (meal_id),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )');
+      try {
+        $pdo->exec('CREATE INDEX idx_meal_logs_user_date ON meal_logs(user_id, logged_date)');
+      } catch (PDOException $e) { /* Index already exists */ }
+    } elseif ($mealDriver === 'pgsql') {
+      $pdo->exec('CREATE TABLE IF NOT EXISTS meal_logs (
+        meal_id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        logged_date VARCHAR(10) NOT NULL,
+        meal_type VARCHAR(50) NOT NULL,
+        food_name VARCHAR(255) NOT NULL,
+        quantity NUMERIC(10,2) NOT NULL,
+        calories INTEGER NOT NULL,
+        protein NUMERIC(10,2) NOT NULL,
+        carbs NUMERIC(10,2) NOT NULL,
+        fat NUMERIC(10,2) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )');
+      $pdo->exec('CREATE INDEX IF NOT EXISTS idx_meal_logs_user_date ON meal_logs(user_id, logged_date)');
+    } else {
+      $pdo->exec('CREATE TABLE IF NOT EXISTS meal_logs (
+        meal_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        logged_date TEXT NOT NULL,
+        meal_type TEXT NOT NULL,
+        food_name TEXT NOT NULL,
+        quantity REAL NOT NULL,
+        calories INTEGER NOT NULL,
+        protein REAL NOT NULL,
+        carbs REAL NOT NULL,
+        fat REAL NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )');
+      $pdo->exec('CREATE INDEX IF NOT EXISTS idx_meal_logs_user_date ON meal_logs(user_id, logged_date)');
+    }
 
     $mealStmt = $pdo->prepare('SELECT meal_id, logged_date, meal_type, food_name, quantity, calories, protein, carbs, fat
       FROM meal_logs

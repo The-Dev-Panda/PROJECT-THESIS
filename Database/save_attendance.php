@@ -54,21 +54,30 @@ try {
     $db->beginTransaction();
 
     // Enforce at most one attendance event per user per hour.
-    $hourlyCheckStmt = $db->prepare("SELECT datetime FROM attendance WHERE user_id = :user_id AND datetime(datetime, 'localtime') >= datetime('now', 'localtime', '-59 minutes') ORDER BY datetime DESC LIMIT 1");
-    $hourlyCheckStmt->execute([':user_id' => $userId]);
+    $hourlyCheckStmt = $db->prepare("SELECT datetime FROM attendance WHERE user_id = :user_id AND datetime >= :hourly_threshold ORDER BY datetime DESC LIMIT 1");
+    $hourlyCheckStmt->execute([
+        ':user_id' => $userId,
+        ':hourly_threshold' => date('Y-m-d H:i:s', strtotime('-59 minutes')),
+    ]);
     $recentAttendance = $hourlyCheckStmt->fetchColumn();
     if ($recentAttendance !== false) {
         throw new Exception('Attendance already recorded within the last hour');
     }
 
     // Attendance is event-based. Point is credited once per member per calendar day.
-    $pointCheckStmt = $db->prepare("SELECT 1 FROM attendance WHERE user_id = :user_id AND date(datetime, 'localtime') = date('now', 'localtime') LIMIT 1");
-    $pointCheckStmt->execute([':user_id' => $userId]);
+    $pointCheckStmt = $db->prepare("SELECT 1 FROM attendance WHERE user_id = :user_id AND DATE(datetime) = :today LIMIT 1");
+    $pointCheckStmt->execute([
+        ':user_id' => $userId,
+        ':today' => date('Y-m-d'),
+    ]);
     $alreadyCreditedToday = (bool)$pointCheckStmt->fetchColumn();
 
     try {
-        $insertStmt = $db->prepare('INSERT INTO attendance (user_id, datetime) VALUES (:user_id, CURRENT_TIMESTAMP)');
-        $insertStmt->execute([':user_id' => $userId]);
+        $insertStmt = $db->prepare('INSERT INTO attendance (user_id, datetime) VALUES (:user_id, :now)');
+        $insertStmt->execute([
+            ':user_id' => $userId,
+            ':now' => date('Y-m-d H:i:s'),
+        ]);
         $attendanceId = (int)$db->lastInsertId();
         $pointAwarded = !$alreadyCreditedToday;
     } catch (PDOException $insertEx) {
@@ -80,19 +89,28 @@ try {
         throw $insertEx;
     }
 
-    $dailyStmt = $db->prepare("SELECT COUNT(*) AS total FROM attendance WHERE user_id = :user_id AND date(datetime, 'localtime') = date('now', 'localtime')");
-    $dailyStmt->execute([':user_id' => $userId]);
+    $dailyStmt = $db->prepare("SELECT COUNT(*) AS total FROM attendance WHERE user_id = :user_id AND DATE(datetime) = :today");
+    $dailyStmt->execute([
+        ':user_id' => $userId,
+        ':today' => date('Y-m-d'),
+    ]);
     $dailyCount = (int)$dailyStmt->fetchColumn();
 
-    $weeklyStmt = $db->prepare("SELECT COUNT(DISTINCT date(datetime, 'localtime')) AS total FROM attendance WHERE user_id = :user_id AND datetime(datetime, 'localtime') >= datetime('now', 'localtime', '-6 days')");
-    $weeklyStmt->execute([':user_id' => $userId]);
+    $weeklyStmt = $db->prepare("SELECT COUNT(DISTINCT DATE(datetime)) AS total FROM attendance WHERE user_id = :user_id AND datetime >= :weekly_threshold");
+    $weeklyStmt->execute([
+        ':user_id' => $userId,
+        ':weekly_threshold' => date('Y-m-d H:i:s', strtotime('-6 days')),
+    ]);
     $weeklyCount = (int)$weeklyStmt->fetchColumn();
 
-    $monthlyStmt = $db->prepare("SELECT COUNT(DISTINCT date(datetime, 'localtime')) AS total FROM attendance WHERE user_id = :user_id AND datetime(datetime, 'localtime') >= datetime('now', 'localtime', '-29 days')");
-    $monthlyStmt->execute([':user_id' => $userId]);
+    $monthlyStmt = $db->prepare("SELECT COUNT(DISTINCT DATE(datetime)) AS total FROM attendance WHERE user_id = :user_id AND datetime >= :monthly_threshold");
+    $monthlyStmt->execute([
+        ':user_id' => $userId,
+        ':monthly_threshold' => date('Y-m-d H:i:s', strtotime('-29 days')),
+    ]);
     $monthlyCount = (int)$monthlyStmt->fetchColumn();
 
-    $allTimePointsStmt = $db->prepare("SELECT COUNT(DISTINCT date(datetime, 'localtime')) AS total FROM attendance WHERE user_id = :user_id");
+    $allTimePointsStmt = $db->prepare("SELECT COUNT(DISTINCT DATE(datetime)) AS total FROM attendance WHERE user_id = :user_id");
     $allTimePointsStmt->execute([':user_id' => $userId]);
     $allTimePoints = (int)$allTimePointsStmt->fetchColumn();
 

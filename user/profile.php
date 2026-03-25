@@ -21,6 +21,7 @@ $qrPayload = json_encode(['member_ref' => (string)($_SESSION['id'] ?? ''), 'user
 
 try {
   require __DIR__ . '/../Login/connection.php';
+  require_once __DIR__ . '/../includes/db_helpers.php';
 
   $userId = (int)($_SESSION['id'] ?? 0);
   if ($userId > 0) {
@@ -28,16 +29,7 @@ try {
     $userStmt->execute([':id' => $userId]);
     $user = $userStmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
-    $profileColumns = [];
-    $profileColumnStmt = $pdo->query('PRAGMA table_info(member_profiles)');
-    if ($profileColumnStmt) {
-      $profileColumnRows = $profileColumnStmt->fetchAll(PDO::FETCH_ASSOC);
-      foreach ($profileColumnRows as $profileColumnRow) {
-        if (isset($profileColumnRow['name'])) {
-          $profileColumns[] = (string)$profileColumnRow['name'];
-        }
-      }
-    }
+    $profileColumns = getTableColumns($pdo, 'member_profiles');
 
     $profileSelectSql = 'SELECT '
       . (in_array('age', $profileColumns, true) ? 'age' : 'NULL AS age') . ', '
@@ -108,7 +100,7 @@ try {
       $selectedGoal = $goal;
     }
 
-    $attendanceStmt = $pdo->prepare("SELECT DISTINCT date(datetime, 'localtime') AS attendance_day FROM attendance WHERE user_id = :user_id ORDER BY attendance_day DESC");
+    $attendanceStmt = $pdo->prepare("SELECT DISTINCT DATE(datetime) AS attendance_day FROM attendance WHERE user_id = :user_id ORDER BY attendance_day DESC");
     $attendanceStmt->execute([':user_id' => $userId]);
     $attendanceDays = $attendanceStmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
 

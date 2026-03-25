@@ -2,7 +2,6 @@
 header('Content-Type: application/json');
 
 date_default_timezone_set('Asia/Manila');
-$dbPath = __DIR__ . '/DB.sqlite';
 
 function requireUserSession() {
     if (session_status() === PHP_SESSION_NONE) {
@@ -19,10 +18,6 @@ function requireUserSession() {
 }
 
 try {
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
     $sessionUserId = requireUserSession();
 
     if (session_status() === PHP_SESSION_NONE) {
@@ -65,24 +60,11 @@ try {
         throw new Exception('Invalid BMI value');
     }
 
-    $db = new PDO('sqlite:' . $dbPath);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
-    $db->exec('PRAGMA busy_timeout = 10000');
-    $db->exec('PRAGMA journal_mode = WAL');
-    $db->exec('PRAGMA synchronous = NORMAL');
-    $db->exec('PRAGMA foreign_keys = ON');
+    include __DIR__ . '/../Login/connection.php';
+    require_once __DIR__ . '/../includes/db_helpers.php';
+    $db = $pdo;
 
-    $profileColumns = [];
-    $profileColumnStmt = $db->query('PRAGMA table_info(member_profiles)');
-    if ($profileColumnStmt) {
-        $profileColumnRows = $profileColumnStmt->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($profileColumnRows as $profileColumnRow) {
-            if (isset($profileColumnRow['name'])) {
-                $profileColumns[] = (string)$profileColumnRow['name'];
-            }
-        }
-    }
+    $profileColumns = getTableColumns($db, 'member_profiles');
     $hasBmiColumn = in_array('bmi', $profileColumns, true);
     $hasContactColumn = in_array('contact', $profileColumns, true);
     $hasGenderColumn = in_array('gender', $profileColumns, true);

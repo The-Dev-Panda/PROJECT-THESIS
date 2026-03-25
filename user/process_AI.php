@@ -122,35 +122,38 @@ try {
     $progressSummary = '';
     $availableExercisesSummary = '';
     if ($intent === 'progress') {
-        $attendance7Stmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE user_id = :user_id AND datetime(datetime, 'localtime') >= datetime('now', 'localtime', '-6 days')");
-        $attendance7Stmt->execute([':user_id' => $userId]);
+        $threshold7d = date('Y-m-d H:i:s', strtotime('-6 days'));
+        $threshold30d = date('Y-m-d H:i:s', strtotime('-29 days'));
+
+        $attendance7Stmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE user_id = :user_id AND datetime >= :threshold");
+        $attendance7Stmt->execute([':user_id' => $userId, ':threshold' => $threshold7d]);
         $attendance7d = (int)$attendance7Stmt->fetchColumn();
 
-        $attendance30Stmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE user_id = :user_id AND datetime(datetime, 'localtime') >= datetime('now', 'localtime', '-29 days')");
-        $attendance30Stmt->execute([':user_id' => $userId]);
+        $attendance30Stmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE user_id = :user_id AND datetime >= :threshold");
+        $attendance30Stmt->execute([':user_id' => $userId, ':threshold' => $threshold30d]);
         $attendance30d = (int)$attendance30Stmt->fetchColumn();
 
-        $workout7Stmt = $pdo->prepare("SELECT COUNT(*) FROM workout_logs WHERE user_id = :user_id AND datetime(logged_at, 'localtime') >= datetime('now', 'localtime', '-6 days')");
-        $workout7Stmt->execute([':user_id' => $userId]);
+        $workout7Stmt = $pdo->prepare("SELECT COUNT(*) FROM workout_logs WHERE user_id = :user_id AND logged_at >= :threshold");
+        $workout7Stmt->execute([':user_id' => $userId, ':threshold' => $threshold7d]);
         $workoutLogs7d = (int)$workout7Stmt->fetchColumn();
 
-        $workout30Stmt = $pdo->prepare("SELECT COUNT(*) FROM workout_logs WHERE user_id = :user_id AND datetime(logged_at, 'localtime') >= datetime('now', 'localtime', '-29 days')");
-        $workout30Stmt->execute([':user_id' => $userId]);
+        $workout30Stmt = $pdo->prepare("SELECT COUNT(*) FROM workout_logs WHERE user_id = :user_id AND logged_at >= :threshold");
+        $workout30Stmt->execute([':user_id' => $userId, ':threshold' => $threshold30d]);
         $workoutLogs30d = (int)$workout30Stmt->fetchColumn();
 
-        $trainingDaysStmt = $pdo->prepare("SELECT COUNT(DISTINCT date(logged_at, 'localtime')) FROM workout_logs WHERE user_id = :user_id AND datetime(logged_at, 'localtime') >= datetime('now', 'localtime', '-29 days')");
-        $trainingDaysStmt->execute([':user_id' => $userId]);
+        $trainingDaysStmt = $pdo->prepare("SELECT COUNT(DISTINCT DATE(logged_at)) FROM workout_logs WHERE user_id = :user_id AND logged_at >= :threshold");
+        $trainingDaysStmt->execute([':user_id' => $userId, ':threshold' => $threshold30d]);
         $trainingDays30d = (int)$trainingDaysStmt->fetchColumn();
 
         $topExercisesStmt = $pdo->prepare("SELECT e.name AS exercise_name, COUNT(*) AS sets_logged, MAX(wl.weight) AS max_weight
             FROM workout_logs wl
             LEFT JOIN exercises e ON e.exercise_id = wl.exercise_id
             WHERE wl.user_id = :user_id
-              AND datetime(wl.logged_at, 'localtime') >= datetime('now', 'localtime', '-29 days')
+              AND wl.logged_at >= :threshold
             GROUP BY wl.exercise_id, e.name
             ORDER BY sets_logged DESC, max_weight DESC
             LIMIT 5");
-        $topExercisesStmt->execute([':user_id' => $userId]);
+        $topExercisesStmt->execute([':user_id' => $userId, ':threshold' => $threshold30d]);
         $topExercises = $topExercisesStmt->fetchAll(PDO::FETCH_ASSOC);
 
         $topExerciseChunks = [];

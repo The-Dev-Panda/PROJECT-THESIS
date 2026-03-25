@@ -34,18 +34,20 @@ try {
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
-        $windowModifier = $period === 'monthly' ? '-29 days' : '-6 days';
+        $datetimeThreshold = $period === 'monthly'
+            ? date('Y-m-d H:i:s', strtotime('-29 days'))
+            : date('Y-m-d H:i:s', strtotime('-6 days'));
         $sql = "
             SELECT
                 u.id,
                 u.first_name,
                 u.last_name,
                 u.username,
-                COUNT(DISTINCT date(a.datetime, 'localtime')) AS score
+                COUNT(DISTINCT DATE(a.datetime)) AS score
             FROM users u
             LEFT JOIN attendance a
               ON a.user_id = u.id
-             AND datetime(a.datetime, 'localtime') >= datetime('now', 'localtime', :window)
+             AND a.datetime >= :datetime_threshold
             WHERE lower(coalesce(u.user_type, '')) = 'user'
             GROUP BY u.id, u.first_name, u.last_name, u.username
             ORDER BY score DESC, u.first_name ASC, u.last_name ASC
@@ -53,7 +55,7 @@ try {
         ";
 
         $stmt = $db->prepare($sql);
-        $stmt->bindValue(':window', $windowModifier, PDO::PARAM_STR);
+        $stmt->bindValue(':datetime_threshold', $datetimeThreshold, PDO::PARAM_STR);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);

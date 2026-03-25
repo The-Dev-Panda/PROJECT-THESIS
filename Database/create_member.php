@@ -43,18 +43,8 @@ try {
     $firstName = $nameParts[0] ?? '';
     $lastName = count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : 'Member';
 
-    $dbPath = __DIR__ . '/DB.sqlite';
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
-    $db = new PDO('sqlite:' . $dbPath);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
-    $db->exec('PRAGMA busy_timeout = 10000');
-    $db->exec('PRAGMA journal_mode = WAL');
-    $db->exec('PRAGMA synchronous = NORMAL');
-    $db->exec('PRAGMA foreign_keys = ON');
+    include __DIR__ . '/../Login/connection.php';
+    $db = $pdo;
 
     $baseUsername = strtolower(preg_replace('/[^A-Za-z0-9]+/', '', $firstName . $lastName));
     if ($baseUsername === '') {
@@ -90,16 +80,20 @@ try {
     ]);
 
     //ADMIN NOTIFICATION
-    $sql = "INSERT INTO notification_history (name, description, datetime, remarks, is_read, category) VALUES (:name, :description, :datetime, :remarks, :is_read, :category)";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([
-        ':name' => 'New Member',
-        ':description' => 'username: ' . $username, //change nalang, kung ano dapat malaman ng admin
-        ':datetime' => date('Y-m-d H:i:s'),
-        ':remarks' => 'Successfully added by' . $_SESSION['username'],
-        ':is_read' => 0,
-        ':category' => 'membership'
-    ]);
+    try {
+        $sql = "INSERT INTO notification_history (name, description, datetime, remarks, is_read, category) VALUES (:name, :description, :datetime, :remarks, :is_read, :category)";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':name' => 'New Member',
+            ':description' => 'username: ' . $username,
+            ':datetime' => date('Y-m-d H:i:s'),
+            ':remarks' => 'Successfully added by ' . ($_SESSION['username'] ?? 'admin'),
+            ':is_read' => 0,
+            ':category' => 'membership'
+        ]);
+    } catch (Exception $notifEx) {
+        // Notification table may not exist yet; do not block member creation.
+    }
 
     $userId = (int) $db->lastInsertId();
 
