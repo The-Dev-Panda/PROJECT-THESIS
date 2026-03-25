@@ -128,3 +128,66 @@ CREATE TABLE meal_logs (
 
 CREATE INDEX IF NOT EXISTS idx_meal_logs_user_date
 ON meal_logs(user_id, logged_date);
+
+CREATE TABLE IF NOT EXISTS old_member_profiles (
+  history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  profile_id INTEGER,
+  user_id INTEGER NOT NULL,
+  age INTEGER,
+  height_cm REAL,
+  weight_kg REAL,
+  fitness_level TEXT,
+  goal TEXT,
+  contact TEXT,
+  gender TEXT,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP,
+  archived_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  changed_by_user_id INTEGER,
+  change_source TEXT NOT NULL DEFAULT 'profile_update',
+  change_note TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (changed_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_old_member_profiles_user_id_archived_at
+ON old_member_profiles(user_id, archived_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_old_member_profiles_profile_id
+ON old_member_profiles(profile_id);
+
+CREATE TRIGGER IF NOT EXISTS trg_member_profiles_archive_before_update
+BEFORE UPDATE ON member_profiles
+FOR EACH ROW
+BEGIN
+  INSERT INTO old_member_profiles (
+    profile_id,
+    user_id,
+    age,
+    height_cm,
+    weight_kg,
+    fitness_level,
+    goal,
+    contact,
+    gender,
+    created_at,
+    updated_at,
+    changed_by_user_id,
+    change_source
+  )
+  VALUES (
+    OLD.id,
+    OLD.user_id,
+    OLD.age,
+    OLD.height_cm,
+    OLD.weight_kg,
+    OLD.fitness_level,
+    OLD.goal,
+    OLD.contact,
+    OLD.gender,
+    OLD.created_at,
+    OLD.updated_at,
+    NULL,
+    'before_update'
+  );
+END;
