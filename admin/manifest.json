@@ -1,0 +1,15 @@
+{
+    "name": "Fitstop Admin",
+    "short_name": "FitstopAdmin",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#080808",
+    "theme_color": "#080808",
+    "icons": [
+      {
+        "src": "../images/Fitstop.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      }
+    ]
+  }

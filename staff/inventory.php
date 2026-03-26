@@ -56,7 +56,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 exit;
             }
 
-            // Only record water expense in this logsheet flow.
             $entryTotal = 0;
             $itemsTotal = 0;
             $grandTotal = 0 - $lessWater;
@@ -76,64 +75,92 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 ]);
             }
 
+            // Process sold items from the logsheet (manual add qty entries)
+            $updatedRows = [];
+            $soldItemsJson = $_POST['sold_items'] ?? '[]';
+            $soldItems = json_decode($soldItemsJson, true);
+            if (is_array($soldItems)) {
+                foreach ($soldItems as $item) {
+                    $itemId  = (int)($item['id']  ?? 0);
+                    $itemQty = (int)($item['qty'] ?? 0);
+                    if ($itemId <= 0 || $itemQty <= 0) continue;
+
+                    $cur    = (int)$pdo->query("SELECT quantity FROM inventory WHERE id = $itemId")->fetchColumn();
+                    $newQty = max(0, $cur - $itemQty);
+                    $pdo->prepare("UPDATE inventory SET quantity = :qty, updated_at = CURRENT_TIMESTAMP WHERE id = :id")
+                        ->execute([':qty' => $newQty, ':id' => $itemId]);
+
+                    $updRow = $pdo->query("SELECT * FROM inventory WHERE id = $itemId")->fetch(PDO::FETCH_ASSOC);
+                    $updatedRows[] = $updRow;
+
+                    $itemPrice  = (float)($item['price'] ?? 0);
+                    $itemTotal  = $itemPrice * $itemQty;
+                    $itemsTotal += $itemTotal;
+                    $grandTotal += $itemTotal;
+
+                    $receiptNo = 'INV-' . date('Ymd') . '-' . $itemId . '-' . rand(100, 999);
+                    $pdo->prepare("INSERT INTO transactions
+                            (receipt_number, customer_type, customer_name, amount,
+                             payment_method, staff_id, transaction_date, status, `desc`)
+                        VALUES (:rn, 'inventory', 'Customer Purchase', :amount,
+                                'Cash', :staff, CURRENT_TIMESTAMP, 'completed', :desc)")
+                    ->execute([
+                        ':rn'     => $receiptNo,
+                        ':amount' => $itemTotal,
+                        ':staff'  => $staffId,
+                        ':desc'   => "Logsheet: Sold {$itemQty}x " . ($item['name'] ?? 'Item'),
+                    ]);
+                }
+            }
+
             echo json_encode([
-                'success'     => true,
-                'entry_total' => $entryTotal,
-                'items_total' => $itemsTotal,
-                'grand_total' => $grandTotal,
-                'less_water'  => $lessWater,
+                'success'      => true,
+                'entry_total'  => $entryTotal,
+                'items_total'  => $itemsTotal,
+                'grand_total'  => $grandTotal,
+                'less_water'   => $lessWater,
+                'updated_rows' => $updatedRows,
             ]);
             exit;
         }
 
         if ($action === 'get_sales_summary') {
-            $today = date('Y-m-d');
-            $summary = ['non_member' => 0, 'member' => 0, 'special' => 0, 'monthly' => 0, 'total_revenue' => 0.0];
+    $today   = date('Y-m-d');
+    $summary = [
+        'non_member'    => 0,
+        'member_walkin' => 0,
+        'membership'    => 0,
+        'special'       => 0,
+        'monthly'       => 0,
+        'total_revenue' => 0.0,
+    ];
 
-            $staffId = isset($_POST['staff_id']) ? (int)$_POST['staff_id'] : null;
+    // ... existing $stmt query stays the same ...
 
-            if ($staffId > 0) {
-                $stmt = $pdo->prepare("SELECT paid_for, customer_type, COUNT(*) AS cnt, SUM(amount) AS total_amount
-                                      FROM transactions
-                                      WHERE DATE(transaction_date) = :today
-                                        AND status = 'completed'
-                                        AND staff_id = :staff_id
-                                      GROUP BY paid_for, customer_type");
-                $stmt->execute([':today' => $today, ':staff_id' => $staffId]);
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $paidFor     = trim((string)$row['paid_for']);
+        $cnt         = (int)$row['cnt'];
+        $totalAmount = (float)$row['total_amount'];
+        $summary['total_revenue'] += $totalAmount;
+
+        if (strcasecmp($paidFor, 'Day Pass / Walk-In') === 0) {
+            if (strtolower((string)($row['customer_type'] ?? '')) === 'non-member') {
+                $summary['non_member'] += $cnt;
             } else {
-                $stmt = $pdo->prepare("SELECT paid_for, customer_type, COUNT(*) AS cnt, SUM(amount) AS total_amount
-                                      FROM transactions
-                                      WHERE DATE(transaction_date) = :today
-                                        AND status = 'completed'
-                                      GROUP BY paid_for, customer_type");
-                $stmt->execute([':today' => $today]);
+                $summary['member_walkin'] += $cnt;  // member walk-in day pass
             }
-
-            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-                $paidFor = trim((string)$row['paid_for']);
-                $cnt = (int)$row['cnt'];
-                $totalAmount = (float)$row['total_amount'];
-                $summary['total_revenue'] += $totalAmount;
-
-                if (strcasecmp($paidFor, 'Day Pass / Walk-In') === 0) {
-                    if (isset($row['customer_type']) && strtolower((string)$row['customer_type']) === 'non-member') {
-                        $summary['non_member'] += $cnt;
-                    } else {
-                        $summary['member'] += $cnt;
-                    }
-                } elseif (strcasecmp($paidFor, 'Special Rate') === 0) {
-                    $summary['special'] += $cnt;
-                } elseif (strcasecmp($paidFor, 'Monthly') === 0) {
-                    $summary['monthly'] += $cnt;
-                } elseif (strcasecmp($paidFor, 'Membership') === 0) {
-                    $summary['member'] += $cnt;
-                }
-            }
-
-            echo json_encode(['success' => true, 'summary' => $summary]);
-            exit;
+        } elseif (strcasecmp($paidFor, 'Membership') === 0) {
+            $summary['membership'] += $cnt;          // one-time membership fee
+        } elseif (strcasecmp($paidFor, 'Special Rate') === 0) {
+            $summary['special'] += $cnt;
+        } elseif (strcasecmp($paidFor, 'Monthly') === 0) {
+            $summary['monthly'] += $cnt;
         }
+    }
 
+    echo json_encode(['success' => true, 'summary' => $summary]);
+    exit;
+}
         if ($action === 'get_notifications') {
             $txRows = $pdo->query("
                 SELECT id, receipt_number, customer_type, user_id,
@@ -320,6 +347,7 @@ try {
     }
     .sf-input:focus { outline: none; border-color: var(--hazard); box-shadow: 0 0 0 1px var(--hazard); }
     .sf-input:disabled { opacity: 0.35; cursor: not-allowed; }
+    .sf-input[readonly] { opacity: 0.75; cursor: default; pointer-events: none; }
 
     .sf-totals {
       background: var(--bg-surface); border: 1px solid var(--border);
@@ -386,26 +414,34 @@ try {
       <span class="logo-text">Fit-Stop</span>
     </div>
     <ul class="menu">
-      <li onclick="window.location.href='staff.php'" style="cursor:pointer;">
-        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
-      </li>
-      <li class="active" onclick="window.location.href='inventory.php'" style="cursor:pointer;">
-        <i class="bi bi-box-seam"></i><span>Inventory</span>
-      </li>
-      <li onclick="window.location.href='attendance.php'" style="cursor:pointer;">
-        <i class="bi bi-clipboard-check"></i><span>Attendance</span>
-      </li>
-      <li onclick="window.location.href='members.php'" style="cursor:pointer;">
-        <i class="bi bi-people"></i><span>Members</span>
-      </li>
-      <li onclick="document.getElementById('logoutForm').submit()" style="cursor:pointer">
-        <i class="bi bi-box-arrow-right"></i>
-        <span>Logout</span>
-      </li>
-      <form id="logoutForm" action="../../login/logout.php" method="POST" style="display:none;">
-        <?php echo fitstop_csrf_input(); ?>
-      </form>
-    </ul>
+  <li onclick="window.location.href='staff.php'" style="cursor:pointer;">
+    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+  </li>
+  <li onclick="window.location.href='staff.php#clientRegistration'" style="cursor:pointer;">
+    <i class="bi bi-person-plus"></i><span>Client Registration</span>
+  </li>
+  <li class="active" style="cursor:pointer;">
+    <i class="bi bi-box-seam"></i><span>Inventory</span>
+  </li>
+  <li onclick="window.location.href='staff.php#attendance'" style="cursor:pointer;">
+    <i class="bi bi-clipboard-check"></i><span>Attendance</span>
+  </li>
+  <li onclick="window.location.href='staff.php#memberManagement'" style="cursor:pointer;">
+    <i class="bi bi-people"></i><span>Members</span>
+  </li>
+  <li onclick="window.location.href='staff.php#idGeneration'" style="cursor:pointer;">
+    <i class="bi bi-qr-code"></i><span>ID Generation</span>
+  </li>
+  <li onclick="window.location.href='staff.php#settings'" style="cursor:pointer;">
+    <i class="bi bi-gear"></i><span>Settings</span>
+  </li>
+  <li onclick="document.getElementById('logoutForm').submit()" style="cursor:pointer;">
+    <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+  </li>
+  <form id="logoutForm" action="../../login/logout.php" method="POST" style="display:none;">
+    <?php echo fitstop_csrf_input(); ?>
+  </form>
+</ul>
   </aside>
 
   <main class="main-content">
@@ -420,8 +456,6 @@ try {
           <div class="topbar-dot"></div>
           Active Staff Member
         </div>
-
-        <!-- Daily Sales Button -->
         <button class="notif-bell-btn" onclick="openSalesModal()" title="Daily Sales / Counter Logsheet"
           style="margin-right:6px;position:relative;">
           <i class="bi bi-receipt"></i>
@@ -602,12 +636,22 @@ try {
               <td class="tot" id="sfNonMemberTot">&#8369;0.00</td>
               <td class="tot sf-entry-tally" id="sfNonMemberTally" data-tally="0">—</td>
             </tr>
+            <!-- Member(Walk-in) row — unchanged -->
             <tr>
-              <td>Member</td>
-              <td><input type="number" class="sf-input sf-entry" data-rate="50" id="sfMember" min="0" value="0" readonly></td>
+              <td>Member(Walk-in)</td>
+              <td><input type="number" class="sf-input sf-entry" data-rate="50" id="sfMemberWalkin" min="0" value="0" readonly></td>
               <td class="rate">&#8369;50</td>
-              <td class="tot" id="sfMemberTot">&#8369;0.00</td>
-              <td class="tot sf-entry-tally" id="sfMemberTally" data-tally="0">—</td>
+              <td class="tot" id="sfMemberWalkinTot">&#8369;0.00</td>
+              <td class="tot sf-entry-tally" id="sfMemberWalkinTally" data-tally="0">—</td>
+            </tr>
+
+            <!-- Membership row — now has its own unique ID -->
+            <tr>
+              <td>Membership</td>
+              <td><input type="number" class="sf-input sf-entry" data-rate="500" id="sfMembership" min="0" value="0" readonly></td>
+              <td class="rate">&#8369;500</td>
+              <td class="tot" id="sfMembershipTot">&#8369;0.00</td>
+              <td class="tot sf-entry-tally" id="sfMembershipTally" data-tally="0">—</td>
             </tr>
             <tr>
               <td>Special Rate</td>
@@ -655,9 +699,10 @@ try {
               </td>
               <td><span class="<?= $scls ?> sf-stock-badge" style="font-size:10px;padding:2px 7px;"><?= $stock ?></span></td>
               <td>
-                <input type="number" class="sf-input sf-item-qty"
-                  min="0" max="<?= $stock ?>" value="0"
-                  <?= $oos ? 'disabled' : '' ?>>
+                  <input type="number" class="sf-input sf-item-qty"
+                    min="0" max="<?= $stock ?>" value="0"
+                    readonly
+                    <?= $oos ? 'disabled' : '' ?>>
               </td>
               <td class="rate">&#8369;<?= number_format((float)$item['price'], 2) ?></td>
               <td class="tot sf-item-tot">&#8369;0.00</td>
@@ -679,9 +724,7 @@ try {
           <tbody>
             <tr>
               <td>Water</td>
-              <td><input type="number" class="sf-input" id="sfWater" min="0" value="0" step="0.01"
-
-                style="width:100px;"></td>
+              <td><input type="number" class="sf-input" id="sfWater" min="0" value="0" step="0.01" style="width:100px;"></td>
               <td colspan="4"></td>
             </tr>
           </tbody>
@@ -791,10 +834,9 @@ function saveSoldChange() {
         const itemId  = currentRow.getAttribute('data-id');
         const sfRow   = document.querySelector(`#sfItemsBody tr[data-inv-id="${itemId}"]`);
         if (sfRow) {
-          const soldQty   = qtyInput;
           const price     = parseFloat(sfRow.dataset.price) || 0;
           const prevTally = parseInt(sfRow.dataset.tally) || 0;
-          const newTally  = prevTally + soldQty;
+          const newTally  = prevTally + qtyInput;
           sfRow.dataset.tally = newTally;
           sfRow.dataset.stock = newQty;
 
@@ -815,6 +857,9 @@ function saveSoldChange() {
           else sfRow.classList.remove('stock-oos');
         }
 
+        // Sync updated tally back to localStorage
+        syncTallyToLocalStorage();
+
         notifLoaded = false;
         const badge = document.getElementById('notifBadge');
         badge.textContent = (parseInt(badge.textContent) || 0) + 1;
@@ -831,6 +876,7 @@ function saveSoldChange() {
 
 function openSalesModal() {
   sfRecalc();
+  applyLocalStorageTally();   // refresh tally from staff.php payments
   document.getElementById('sfSuccess').classList.remove('show');
   document.getElementById('salesModal').classList.add('active');
 }
@@ -868,25 +914,122 @@ function sfRecalc() {
   document.getElementById('sfGrandTot').innerHTML = fmt(entryTotal + itemsTotal - water);
 }
 
+/**
+ * Reads inventory tally written by staff.php's deductInventoryStock()
+ * from localStorage and updates the "Today's Tally" column in the logsheet.
+ */
+function applyLocalStorageTally() {
+  const TALLY_KEY = 'fitstop_inv_tally';
+  const today     = new Date().toISOString().slice(0, 10);
+  let tally = {};
+  try { tally = JSON.parse(localStorage.getItem(TALLY_KEY) || '{}'); } catch(e) {}
+
+  // Ignore if tally is from a previous day
+  if (tally._date !== today) return;
+
+  document.querySelectorAll('#sfItemsBody tr[data-inv-id]').forEach(row => {
+    const invId    = row.dataset.invId;
+    const tallyQty = parseInt(tally[invId]) || 0;
+    if (tallyQty <= 0) return;
+
+    const price      = parseFloat(row.dataset.price) || 0;
+    const tallyCell  = row.querySelector('.sf-item-tally');
+    const prevStored = parseInt(row.dataset.tally) || 0;
+
+    if (tallyQty > prevStored) {
+      row.dataset.tally = tallyQty;
+
+      // ✅ UPDATE the tally display column
+      if (tallyCell) {
+        tallyCell.innerHTML = `<span style="font-weight:700;">${tallyQty}</span>
+          <span style="font-size:10.5px;color:var(--text-muted);display:block;">${fmt(tallyQty * price)}</span>`;
+      }
+
+      // ✅ NEW: Also set the "Add Qty" input to reflect new sales from staff.php
+      const qtyInput = row.querySelector('.sf-item-qty');
+      if (qtyInput && !qtyInput.disabled) {
+        const addedSinceLastOpen = tallyQty - prevStored;
+        const currentVal = parseInt(qtyInput.value) || 0;
+        qtyInput.value = currentVal + addedSinceLastOpen;
+      }
+    }
+  });
+ const ENTRY_KEY = 'fitstop_entry_tally';
+  let entryTally = {};
+  try { entryTally = JSON.parse(localStorage.getItem(ENTRY_KEY) || '{}'); } catch(e) {}
+
+  if (entryTally._date === today) {
+      const entryMap = {
+      non_member    : 'sfNonMember',
+      member_walkin : 'sfMemberWalkin',
+      membership    : 'sfMembership',
+      special       : 'sfSpecial',
+      monthly       : 'sfMonthly',
+    };
+    Object.entries(entryMap).forEach(([key, inputId]) => {
+      const inp       = document.getElementById(inputId);
+      const tallyCell = document.getElementById(inputId + 'Tally');
+      if (!inp) return;
+
+      const newCount  = parseInt(entryTally[key]) || 0;
+      const prevCount = parseInt(inp.dataset.lastTally || 0);
+
+      if (newCount > prevCount) {
+        inp.value            = newCount;
+        inp.dataset.lastTally = newCount;
+
+        // Update tally display column
+        if (tallyCell) {
+          const rate = parseFloat(inp.dataset.rate) || 0;
+          const prev = parseInt(tallyCell.dataset.tally) || 0;
+          const updated = Math.max(prev, newCount);
+          tallyCell.dataset.tally = updated;
+          tallyCell.innerHTML = `<span style="font-weight:700;">${updated}</span>
+            <span style="font-size:10.5px;color:var(--text-muted);display:block;">
+              ${rate > 0 ? fmt(updated * rate) : '(see rate)'}
+            </span>`;
+        }
+      }
+    });
+  }
+
+  sfRecalc();
+}
+/**
+ * Writes all current row tallies back to localStorage so they survive
+ * page refresh and are visible to staff.php payment page.
+ */
+function syncTallyToLocalStorage() {
+  const TALLY_KEY = 'fitstop_inv_tally';
+  const today     = new Date().toISOString().slice(0, 10);
+  const tally     = { _date: today };
+  document.querySelectorAll('#sfItemsBody tr[data-inv-id]').forEach(row => {
+    const qty = parseInt(row.dataset.tally) || 0;
+    if (qty > 0) tally[row.dataset.invId] = qty;
+  });
+  localStorage.setItem(TALLY_KEY, JSON.stringify(tally));
+}
+
 function loadSalesSummary() {
   const fd = new FormData();
   fd.append('action', 'get_sales_summary');
+  fd.append('csrf_token', csrfToken);
 
-  // optional: filter by staff_id (if needed), otherwise all
   const staffId = (window.currentStaffId && Number.isInteger(window.currentStaffId)) ? window.currentStaffId : null;
-  if (staffId) {
-    fd.append('staff_id', staffId);
-  }
+  if (staffId) fd.append('staff_id', staffId);
 
   fetch('inventory.php', { method: 'POST', body: fd })
     .then(r => r.json())
     .then(data => {
       if (!data.success || !data.summary) return;
 
-      document.getElementById('sfNonMember').value = data.summary.non_member;
-      document.getElementById('sfMember').value    = data.summary.member;
-      document.getElementById('sfSpecial').value   = data.summary.special;
-      document.getElementById('sfMonthly').value   = data.summary.monthly;
+      document.getElementById('sfNonMember').value    = data.summary.non_member;
+      document.getElementById('sfMemberWalkin').value = data.summary.member_walkin;
+      document.getElementById('sfMembership').value   = data.summary.membership;
+      document.getElementById('sfSpecial').value      = data.summary.special;
+      document.getElementById('sfMonthly').value      = data.summary.monthly;
+
+      applyLocalStorageTally();
 
       sfRecalc();
     })
@@ -1011,17 +1154,18 @@ function submitSalesForm() {
         successBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
         // Accumulate entry fee tallies
-        const entryMap = {
-          sfNonMember: { tallyId: 'sfNonMemberTally', rate: 60 },
-          sfMember:    { tallyId: 'sfMemberTally',    rate: 50 },
-          sfSpecial:   { tallyId: 'sfSpecialTally',   rate: 40 },
-          sfMonthly:   { tallyId: 'sfMonthlyTally',   rate: 0  },
-        };
+          const entryMap = {
+        sfNonMember    : { tallyId: 'sfNonMemberTally',    rate: 60  },
+        sfMemberWalkin : { tallyId: 'sfMemberWalkinTally', rate: 50  },
+        sfMembership   : { tallyId: 'sfMembershipTally',   rate: 500 },
+        sfSpecial      : { tallyId: 'sfSpecialTally',       rate: 40  },
+        sfMonthly      : { tallyId: 'sfMonthlyTally',       rate: 0   },
+  };
         Object.entries(entryMap).forEach(([inputId, cfg]) => {
           const inp  = document.getElementById(inputId);
           const cell = document.getElementById(cfg.tallyId);
           if (!inp || !cell) return;
-          const added    = parseInt(inp.value) || 0;
+          const added     = parseInt(inp.value) || 0;
           const prevTally = parseInt(cell.dataset.tally) || 0;
           const newTally  = prevTally + added;
           cell.dataset.tally = newTally;
@@ -1036,6 +1180,10 @@ function submitSalesForm() {
 
         document.querySelectorAll('.sf-item-qty').forEach(i => i.value = 0);
         document.getElementById('sfWater').value = 0;
+
+        // Sync accumulated tallies to localStorage
+        syncTallyToLocalStorage();
+
         sfRecalc();
 
         notifLoaded = false;
@@ -1148,10 +1296,19 @@ function resetTally() {
     const cell = row.querySelector('.sf-item-tally');
     if (cell) cell.innerHTML = '—';
   });
-  ['sfNonMemberTally','sfMemberTally','sfSpecialTally','sfMonthlyTally'].forEach(id => {
-    const cell = document.getElementById(id);
-    if (cell) { cell.dataset.tally = 0; cell.innerHTML = '—'; }
-  });
+
+['sfNonMemberTally','sfMemberWalkinTally','sfMembershipTally','sfSpecialTally','sfMonthlyTally'].forEach(id => {
+  const cell = document.getElementById(id);
+  if (cell) { cell.dataset.tally = 0; cell.innerHTML = '—'; }
+});
+
+['sfNonMember','sfMemberWalkin','sfMembership','sfSpecial','sfMonthly'].forEach(id => {
+  const inp = document.getElementById(id);
+  if (inp) { inp.value = 0; inp.dataset.lastTally = 0; }
+});
+
+  localStorage.removeItem('fitstop_inv_tally');
+  localStorage.removeItem('fitstop_entry_tally'); 
   document.getElementById('sfSuccess').classList.remove('show');
   showToast('Tally reset.', 'success');
 }
@@ -1171,9 +1328,15 @@ document.querySelector('.search-input').addEventListener('keydown', e => { if (e
 document.getElementById('soldModal').addEventListener('click', function(e) { if (e.target === this) closeSoldModal(); });
 document.getElementById('salesModal').addEventListener('click', function(e) { if (e.target === this) closeSalesModal(); });
 
+// Add this inside window.addEventListener('load', ...) at the bottom
 window.addEventListener('load', function() {
   loadSalesSummary();
   sfRecalc();
+
+  // ✅ Poll localStorage every 10 seconds so staff.php payments reflect here live
+  setInterval(function() {
+    applyLocalStorageTally();
+  }, 10000);
 });
 </script>
 

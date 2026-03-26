@@ -1,5 +1,26 @@
 <?php
 require_once __DIR__ . '/auth_user.php';
+$welcomeName = 'Member';
+
+
+try {
+  require __DIR__ . '/../Login/connection.php';
+
+  $userId = (int)($_SESSION['id'] ?? 0);
+  if ($userId > 0) {
+    $userStmt = $pdo->prepare('SELECT first_name, username FROM users WHERE id = :id LIMIT 1');
+    $userStmt->execute([':id' => $userId]);
+    $user = $userStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    if (!empty($user['first_name'])) {
+      $welcomeName = (string)$user['first_name'];
+    } elseif (!empty($user['username'])) {
+      $welcomeName = (string)$user['username'];
+    }
+  }
+} catch (Throwable $e) {
+  // Show empty-state card if loading from DB fails.
+}
 
 if (isset($_GET['clear']) && $_GET['clear'] == '1') {
     unset($_SESSION['chat_history']);
@@ -42,36 +63,45 @@ $custom_js = <<<'JS'
 </script>
 JS;
 ?>
-<!DOCTYPE html>
-<html>
-
-<head>
-    <meta charset="utf-8">
-    <title>AI ADVISOR</title>
-    <meta name="description" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-        crossorigin="anonymous"></script>
-
-    <link rel="stylesheet" href="styles.css">
-
-    <link href="../../styles.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-
-</head>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exercise History</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-OERcA2zY1OHt4q4Fv8B+U7MeM3NnN3KK2eEbV5t8JSaI1zlzW3URy9Bv1WTRi7v8Q" crossorigin="anonymous">
+    <link rel="stylesheet" href="user.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Chakra+Petch:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
 
 <body>
+    <div class="dashboard">
+      <?php include __DIR__ . '/includes/sidebar.php'; ?>
+      <!-- MAIN CONTENT -->
+      <main class="main-content">
+        <!-- TOP BAR -->
+        <header class="topbar">
+          <div class="welcome">
+            <h1>History</h1>
+            <p>
+              Hi <?php echo htmlspecialchars($welcomeName, ENT_QUOTES, 'UTF-8'); ?>!
+              This is AI Advisor, your personal fitness assistant. 
+            </p>
+          </div>
+        </header>
     <?php include('../includes/header.php') ?>
-    <div class="row mt-5"></div>
-    <div class="row mt-5"></div>
-    <div class="container alert alert-info alert-dismissible fade show">
+    
         <?php
         if ($aiFlash !== '') {
             echo '<div class="alert alert-primary">';
@@ -123,4 +153,4 @@ JS;
             </div>
         </div>
     </div>
-    <?php include('../includes/footer.php') ?>
+  

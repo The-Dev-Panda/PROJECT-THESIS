@@ -1,5 +1,6 @@
 <?php
 $current_page = basename($_SERVER['PHP_SELF']);
+date_default_timezone_set('Asia/Manila');
 require_once __DIR__ . '/../../includes/security.php';
 include('../login/connection.php');
 
