@@ -617,6 +617,7 @@ document.getElementById('registrationForm').addEventListener('submit', function(
   const fullName        = document.getElementById('regFullName').value.trim();
   const email           = document.getElementById('regEmail').value.trim();
   const age             = document.getElementById('regAge').value.trim();
+  const address         = document.getElementById('regAddress').value.trim();
   const heightCm        = document.getElementById('regHeight').value.trim();
   const weightKg        = document.getElementById('regWeight').value.trim();
   const fitnessLevel    = document.getElementById('regFitnessLevel').value;
@@ -633,7 +634,7 @@ document.getElementById('registrationForm').addEventListener('submit', function(
   fetch('../Database/create_member.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ full_name: fullName, email, age, height_cm: heightCm, weight_kg: weightKg, fitness_level: fitnessLevel, goal, password, confirm_password: confirmPassword })
+    body: JSON.stringify({ full_name: fullName, email, age, address, height_cm: heightCm, weight_kg: weightKg, fitness_level: fitnessLevel, goal, password, confirm_password: confirmPassword })
   })
   .then(r => r.json())
   .then(data => {
