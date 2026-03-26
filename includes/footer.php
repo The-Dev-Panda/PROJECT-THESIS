@@ -22,8 +22,6 @@
                     <a href="<?php echo $base_path ?? ''; ?>staff/staff.php" class="footer-link text-hazard">Staff Portal</a>
                 <?php elseif (!empty($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin'): ?>
                     <a href="<?php echo $base_path ?? ''; ?>admin/Admin_Landing_Page.php" class="footer-link text-hazard">Admin Portal</a>
-                <?php else: ?>
-                    <a href="<?php echo $base_path ?? ''; ?>Login/Login_Page.php" class="footer-link text-hazard">Staff Portal</a>
                 <?php endif; ?>
             </div>
             <p class="text-muted small mb-0">

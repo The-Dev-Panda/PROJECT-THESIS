@@ -254,7 +254,7 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                                 value="<?php echo htmlspecialchars($search); ?>">
                         </div>
                     </div>
-                    <div class="col-sm-12 col-xl-2 border border-danger">
+                    <div class="col-sm-12 col-xl-2">
                         <select name="time" class="search-input">
                             <option value="">All Time</option>
                             <option value="today" <?php echo $time_filter === 'today' ? 'selected' : ''; ?>>Today</option>
@@ -268,7 +268,7 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                     </div>
                     <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
                     <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
-                    <div class="col-sm-12 col-xl-2 my-1 border border-danger">
+                    <div class="col-sm-12 col-xl-2 my-1">
                         <button type="submit" class="search-btn">
                             <i class="bi bi-funnel"></i> Filter
                         </button>

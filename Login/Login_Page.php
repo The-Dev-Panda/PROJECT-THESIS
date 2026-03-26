@@ -32,8 +32,8 @@ if (isset($_SESSION["username"]) && $_SESSION["username"] != "") {
 <?php include('header.php');?>
     <div class="container-fluid">
         <div class="row vh-100">
-            <div class="col-md-6 col-sm-12 d-flex justify-content-center align-items-center">
-                <div class="col-md-6 rounded border border-warning shadow p-4">
+            <div class="col-md-6 col-xl-6 d-flex justify-content-center align-items-center" style="margin-top: 100px;">
+                <div class="col-sm-12 col-xl-6 rounded border border-warning shadow p-4">
                     <form action="Process_Login.php" method="POST">
                         <?php echo fitstop_csrf_input(); ?>
                         <div class="col" style="font-size: 1.2rem;">
@@ -72,11 +72,18 @@ if (isset($_SESSION["username"]) && $_SESSION["username"] != "") {
                     </form>
                 </div>
             </div>
-            <div class="col-md-6 border-start border-warning p-0"
+            <div class="col-md-6 col-xl-6 border-start border-warning p-0"
                 style="box-shadow: 0px 0 10px 10px rgba(0, 0, 0, 0.5);">
                 <img src="../images/Fitstop.png" alt="FITSTOP LOGIN" class="img-fluid w-100 h-100"
                     style="object-fit: cover;">
             </div>
+            <style>
+                @media screen and (max-width: 768px) {
+                    img{
+                        display: none;
+                    }
+                }
+            </style>
         </div>
     </div>
     <?php include('../includes/footer.php');?>

@@ -62,7 +62,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             echo json_encode(['success' => true, 'members' => $members]);
             exit;
         }
+if ($action === 'save_monthly') {
+    $memberId = $_POST['member_id'] ?? null;
+    $name     = trim($_POST['name'] ?? '');
 
+    if (empty($name)) {
+        echo json_encode(['success' => false, 'message' => 'Name is required.']);
+        exit;
+    }
+
+    $today = date('Y-m-d');
+
+    // Check for an active (non-expired) monthly record with the same name
+    $checkStmt = $pdo->prepare("
+        SELECT id, expires_in FROM monthly
+        WHERE name = :name AND expires_in >= :today
+        LIMIT 1
+    ");
+    $checkStmt->execute([':name' => $name, ':today' => $today]);
+    $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existing) {
+        echo json_encode([
+            'success'    => false,
+            'duplicate'  => true,
+            'message'    => $name . ' already has an active monthly subscription that expires on ' . $existing['expires_in'] . '.',
+        ]);
+        exit;
+    }
+
+    $expiresIn = date('Y-m-d', strtotime('+30 days'));
+
+    $stmt = $pdo->prepare("
+        INSERT INTO monthly (member, name, expires_in)
+        VALUES (:member, :name, :expires_in)
+    ");
+    $stmt->execute([
+        ':member'     => $memberId ?: null,
+        ':name'       => $name,
+        ':expires_in' => $expiresIn,
+    ]);
+
+    echo json_encode([
+        'success'    => true,
+        'expires_in' => $expiresIn,
+        'insert_id'  => $pdo->lastInsertId(),
+    ]);
+    exit;
+}
         echo json_encode(['success' => false, 'message' => 'Unknown action']);
         exit;
 
@@ -1008,9 +1055,20 @@ function processPayment() {
     if (!data.success) { alert(data.error || 'Failed to save transaction.'); return; }
 
     // Deduct inventory stock for each inventory item
+   // Deduct inventory stock and handle monthly registration
     payCart.forEach(item => {
-      if (item.invItemId) deductInventoryStock(item.invItemId, item.invItemName, item.qty);
-      else recordEntryFeeToLocalStorage(item.paidFor, customerType);
+      if (item.invItemId) {
+        deductInventoryStock(item.invItemId, item.invItemName, item.qty);
+      } else {
+        recordEntryFeeToLocalStorage(item.paidFor, customerType);
+
+        
+
+        // If Monthly payment, insert into monthly table
+        if (item.paidFor === 'Monthly') {
+          saveMonthlyRecord(customerType, memberId, customerName);
+        }
+      }
     });
 
     // Build receipt with itemized list
@@ -1095,7 +1153,46 @@ function recordEntryFeeToLocalStorage(paidFor, customerType) {
 
   localStorage.setItem(ENTRY_KEY, JSON.stringify(tally));
 }
+function saveMonthlyRecord(customerType, memberId, customerName) {
+  let name = '';
+  let mId  = null;
 
+  if (customerType === 'member' && memberId) {
+    const found = allMembers.find(m => String(m.id) === String(memberId));
+    if (found) {
+      name = [found.first_name, found.last_name].filter(Boolean).join(' ') || found.username || '';
+    }
+    mId = memberId;
+  } else {
+    // Walk-in: use the entered customer name, no member_id
+    name = customerName || '';
+    mId  = null;
+  }
+
+  if (!name) {
+    console.warn('saveMonthlyRecord: no name resolved, aborting.');
+    return;
+  }
+
+  const fd = new FormData();
+  fd.append('action',    'save_monthly');
+  fd.append('member_id', mId || '');   // empty string → PHP converts to null
+  fd.append('name',      name);
+
+  fetch('staff.php', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        console.log('Monthly record saved. Expires:', data.expires_in);
+      } else if (data.duplicate) {
+        // Show a clear alert to the staff immediately
+        alert('⚠️ Duplicate Monthly Subscription\n\n' + data.message);
+      } else {
+        console.warn('Monthly save failed:', data.message);
+      }
+    })
+    .catch(err => console.warn('Monthly save error:', err));
+}
 function displayReceipt(receipt) {
   const content = document.getElementById('receiptContent');
   const custInfo = receipt.customerType === 'member'
