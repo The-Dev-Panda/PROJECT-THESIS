@@ -1081,13 +1081,16 @@ function recordEntryFeeToLocalStorage(paidFor, customerType) {
   if (paidFor === 'Day Pass / Walk-In' && customerType === 'non-member') {
     tally.non_member = (tally.non_member || 0) + 1;
   } else if (paidFor === 'Day Pass / Walk-In' && customerType === 'member') {
-    tally.member_walkin = (tally.member_walkin || 0) + 1;  // ✅ separated
-  } else if (paidFor === 'Membership') {
-    tally.membership = (tally.membership || 0) + 1;         // ✅ separated
+    tally.member_walkin = (tally.member_walkin || 0) + 1;
+  } else if (paidFor === 'Membership / Renewal' || paidFor === 'Membership') {
+    tally.membership = (tally.membership || 0) + 1;
   } else if (paidFor === 'Special Rate') {
     tally.special = (tally.special || 0) + 1;
   } else if (paidFor === 'Monthly') {
-    tally.monthly = (tally.monthly || 0) + 1;
+    // Store both count AND amount so logsheet can show correct total
+    tally.monthly       = (tally.monthly || 0) + 1;
+    tally.monthly_total = (tally.monthly_total || 0) +
+      (customerType === 'non-member' ? 750 : 650);
   }
 
   localStorage.setItem(ENTRY_KEY, JSON.stringify(tally));
