@@ -3,6 +3,8 @@ require_once __DIR__ . '/auth_user.php';
 
 $displayName = 'Member';
 $emailAddress = 'Not set';
+$addressValue = 'Not set';
+$remarksValue = 'Not set';
 $memberIdDisplay = 'Not set';
 $ageValue = null;
 $ageDisplay = 'Not set';
@@ -46,7 +48,8 @@ try {
       . (in_array('contact', $profileColumns, true) ? 'contact' : 'NULL AS contact') . ', '
       . (in_array('gender', $profileColumns, true) ? 'gender' : 'NULL AS gender') . ', '
       . (in_array('fitness_level', $profileColumns, true) ? 'fitness_level' : 'NULL AS fitness_level') . ', '
-      . (in_array('goal', $profileColumns, true) ? 'goal' : 'NULL AS goal')
+      . (in_array('goal', $profileColumns, true) ? 'goal' : 'NULL AS goal') . ', '
+      . (in_array('remarks', $profileColumns, true) ? 'remarks' : 'NULL AS remarks')
       . ' FROM member_profiles WHERE user_id = :user_id LIMIT 1';
 
     $profileStmt = $pdo->prepare($profileSelectSql);
@@ -70,6 +73,10 @@ try {
 
     if (!empty($user['email'])) {
       $emailAddress = (string)$user['email'];
+    }
+
+    if (!empty($user['address'])) {
+      $addressValue = (string)$user['address'];
     }
 
     $memberIdDisplay = 'FS-' . date('Y') . '-' . str_pad((string)$userId, 4, '0', STR_PAD_LEFT);
@@ -96,6 +103,10 @@ try {
     if (isset($profile['gender']) && $profile['gender'] !== null && $profile['gender'] !== '') {
       $genderValue = (string)$profile['gender'];
       $selectedGender = (string)$profile['gender'];
+    }
+
+    if (isset($profile['remarks']) && $profile['remarks'] !== null && $profile['remarks'] !== '') {
+      $remarksValue = (string)$profile['remarks'];
     }
 
     if (!empty($profile['fitness_level'])) {
@@ -256,8 +267,12 @@ try {
                 <span class="info-value"><?php echo htmlspecialchars($genderValue, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
               <div class="info-item">
-                <span class="info-label">Address</span>
-                <span class="info-value">Cebu City, Philippines</span>
+                <span class="info-label">Health Concerns</span>
+                <span class="info-value"><?php echo htmlspecialchars($remarksValue !== '' ? $remarksValue : 'Not set', ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="info-item"> 
+                <span class="info-label"></span>Address</span>
+                <span class="info-value"><?php echo htmlspecialchars($addressValue !== '' ? $addressValue : 'Not set', ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
               <div class="info-item">
                 <span class="info-label">Contact Number</span>
@@ -330,6 +345,10 @@ try {
                     <option value="Endurance" <?php echo $selectedGoal === 'Endurance' ? 'selected' : ''; ?>>Endurance</option>
                     <option value="General Fitness" <?php echo $selectedGoal === 'General Fitness' ? 'selected' : ''; ?>>General Fitness</option>
                   </select>
+                </div>
+                <div class="onboard-field">
+                  <label class="onboard-label" for="onboardRemarks">Health Concerns (for trainer / AI)</label>
+                  <textarea id="onboardRemarks" class="form-input" rows="3" placeholder="e.g. asthma, high blood pressure"><?php echo htmlspecialchars($remarksValue !== 'Not set' ? $remarksValue : '', ENT_QUOTES, 'UTF-8'); ?></textarea>
                 </div>
                 <div class="onboard-actions">
                   <button type="submit" class="btn-action primary" style="border:none; width:100%;">Save Profile</button>
@@ -556,7 +575,8 @@ try {
           contact: document.getElementById("onboardContact").value,
           gender: document.getElementById("onboardGender").value,
           fitness_level: document.getElementById("onboardFitnessLevel").value,
-          goal: document.getElementById("onboardGoal").value
+          goal: document.getElementById("onboardGoal").value,
+          remarks: document.getElementById("onboardRemarks").value
         };
 
         fetch("../Database/upsert_member_profile.php", {
