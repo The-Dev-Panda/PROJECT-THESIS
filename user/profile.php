@@ -26,7 +26,7 @@ try {
 
   $userId = (int)($_SESSION['id'] ?? 0);
   if ($userId > 0) {
-    $userStmt = $pdo->prepare('SELECT id, username, first_name, last_name, email FROM users WHERE id = :id LIMIT 1');
+    $userStmt = $pdo->prepare('SELECT id, username, first_name, last_name, email, address FROM users WHERE id = :id LIMIT 1');
     $userStmt->execute([':id' => $userId]);
     $user = $userStmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
