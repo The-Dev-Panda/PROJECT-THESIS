@@ -436,17 +436,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
             <!-- Amount -->
             <div class="form-group">
-              <label>Amount (₱)</label>
-            <input type="number" id="paymentAmount" class="form-input" step="0.01" oninput="updateTotal()">
-            </div>
-
-            <!-- Quantity -->
-            <div class="form-group">
-              <label>Quantity</label>
-             <input type="number" id="paymentQty" value="1" class="form-input" min="1" oninput="updateTotal()" onkeyup="updateTotal()">
-            </div>
-            <!-- Paid For — dropdown with inventory items -->
-            <div class="form-group">
               <label>Paid For</label>
               <select id="paymentPaidFor" class="form-input" onchange="autoFillAmount(this.value)">
                 <option value="">Select category...</option>
@@ -466,13 +455,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
               </select>
             </div>
 
-            <!-- Optional Notes -->
+            <div class="form-group">
+              <label>Quantity</label>
+             <input type="number" id="paymentQty" value="1" class="form-input" min="1" oninput="updateTotal()" onkeyup="updateTotal()">
+            </div>
+           <div class="form-group">
+              <label>Amount (₱)</label>
+            <input type="number" id="paymentAmount" class="form-input" step="0.01" oninput="updateTotal()">
+            </div>
             <div class="form-group">
               <label>Optional Notes</label>
               <input type="text" id="paymentNotes" class="form-input" placeholder="Optional note">
             </div>
 
-            <!-- Payment Method -->
             <div class="form-group">
               <label>Payment Method</label>
               <select id="paymentMethod" class="form-input">
