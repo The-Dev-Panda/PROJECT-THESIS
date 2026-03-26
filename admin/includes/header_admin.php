@@ -263,5 +263,3 @@ $unread_count = $unread_stmt->fetch()['count'];
             
         }
     </style>
-
-</body>

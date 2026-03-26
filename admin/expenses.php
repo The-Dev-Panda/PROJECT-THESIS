@@ -10,18 +10,18 @@ include("../Login/connection.php");
 
 // Handle Delete
 if (isset($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
-    
+    $id = (int) $_GET['delete'];
+
     // Get expense details before deleting
     $stmt = $pdo->prepare("SELECT expense_name, expense, author FROM expense_history WHERE expense_id = :id");
     $stmt->execute(['id' => $id]);
     $expense = $stmt->fetch();
-    
+
     if ($expense) {
         // Delete expense
         $stmt = $pdo->prepare("DELETE FROM expense_history WHERE expense_id = :id");
         $stmt->execute(['id' => $id]);
-        
+
         // Log to notification history
         $notif = $pdo->prepare("INSERT INTO notification_history (name, description, remarks, category) VALUES (?, ?, ?, ?)");
         $notif->execute([
@@ -31,7 +31,7 @@ if (isset($_GET['delete'])) {
             'Finance'
         ]);
     }
-    
+
     header('Location: expenses.php?success=deleted');
     exit();
 }
@@ -44,7 +44,7 @@ $sort_order = isset($_GET['order']) ? $_GET['order'] : 'DESC';
 
 // Pagination
 $records_per_page = 15;
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $offset = ($page - 1) * $records_per_page;
 
 // Allowed sort columns
@@ -109,57 +109,70 @@ $total_stmt->execute($params);
 $total_expenses = $total_stmt->fetch()['total'];
 
 // Helper functions
-function getSortUrl($column, $current_sort, $current_order, $search, $time, $page) {
+function getSortUrl($column, $current_sort, $current_order, $search, $time, $page)
+{
     $new_order = 'ASC';
     if ($current_sort === $column && $current_order === 'ASC') {
         $new_order = 'DESC';
     }
     $params = "sort=$column&order=$new_order";
-    if ($search) $params .= "&search=" . urlencode($search);
-    if ($time) $params .= "&time=$time";
-    if ($page > 1) $params .= "&page=$page";
+    if ($search)
+        $params .= "&search=" . urlencode($search);
+    if ($time)
+        $params .= "&time=$time";
+    if ($page > 1)
+        $params .= "&page=$page";
     return "?$params";
 }
 
-function getSortIcon($column, $current_sort, $current_order) {
+function getSortIcon($column, $current_sort, $current_order)
+{
     if ($current_sort !== $column) {
         return '<i class="bi bi-arrow-down-up" style="opacity: 0.3; font-size: 10px;"></i>';
     }
-    return $current_order === 'ASC' 
-        ? '<i class="bi bi-arrow-up" style="color: var(--hazard); font-size: 10px;"></i>' 
+    return $current_order === 'ASC'
+        ? '<i class="bi bi-arrow-up" style="color: var(--hazard); font-size: 10px;"></i>'
         : '<i class="bi bi-arrow-down" style="color: var(--hazard); font-size: 10px;"></i>';
 }
 
-function getPaginationUrl($page_num, $search, $time, $sort, $order) {
+function getPaginationUrl($page_num, $search, $time, $sort, $order)
+{
     $params = "page=$page_num";
-    if ($search) $params .= "&search=" . urlencode($search);
-    if ($time) $params .= "&time=$time";
-    if ($sort !== 'created_at') $params .= "&sort=$sort";
-    if ($order !== 'DESC') $params .= "&order=$order";
+    if ($search)
+        $params .= "&search=" . urlencode($search);
+    if ($time)
+        $params .= "&time=$time";
+    if ($sort !== 'created_at')
+        $params .= "&sort=$sort";
+    if ($order !== 'DESC')
+        $params .= "&order=$order";
     return "?$params";
 }
 ?>
 
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>Expense Management - FITSTOP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    
+
     <style>
         .sortable-header {
             cursor: pointer;
             user-select: none;
             transition: color 0.2s;
         }
+
         .sortable-header:hover {
             color: var(--hazard);
         }
     </style>
 </head>
+
 <body>
     <?php include('includes/header_admin.php') ?>
 
@@ -180,12 +193,16 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order) {
 
         <!-- Success/Error Messages -->
         <?php if (isset($_GET['success'])): ?>
-            <div style="background: rgba(34, 208, 122, 0.1); border: 1px solid var(--success); color: var(--success); padding: 10px 14px; margin-bottom: 20px; font-size: 12px; text-transform: uppercase;">
-                <i class="bi bi-check-circle"></i> 
-                <?php 
-                    if ($_GET['success'] === 'added') echo 'Expense added successfully';
-                    elseif ($_GET['success'] === 'updated') echo 'Expense updated successfully';
-                    elseif ($_GET['success'] === 'deleted') echo 'Expense deleted successfully';
+            <div
+                style="background: rgba(34, 208, 122, 0.1); border: 1px solid var(--success); color: var(--success); padding: 10px 14px; margin-bottom: 20px; font-size: 12px; text-transform: uppercase;">
+                <i class="bi bi-check-circle"></i>
+                <?php
+                if ($_GET['success'] === 'added')
+                    echo 'Expense added successfully';
+                elseif ($_GET['success'] === 'updated')
+                    echo 'Expense updated successfully';
+                elseif ($_GET['success'] === 'deleted')
+                    echo 'Expense deleted successfully';
                 ?>
             </div>
         <?php endif; ?>
@@ -195,19 +212,23 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order) {
             <h2><i class="bi bi-plus-circle"></i> Add New Expense</h2>
             <div class="registration-card">
                 <form method="POST" action="process_expenses.php">
+                    <?php echo fitstop_csrf_input(); ?>
                     <input type="hidden" name="action" value="add">
                     <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr auto;">
                         <div class="form-group">
                             <label class="form-label">Expense Name</label>
-                            <input type="text" name="expense_name" class="form-input" placeholder="e.g., Equipment Purchase" maxlength="100" required>
+                            <input type="text" name="expense_name" class="form-input"
+                                placeholder="e.g., Equipment Purchase" maxlength="100" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Amount (₱)</label>
-                            <input type="text" name="expense" class="form-input number-only" placeholder="0.00" maxlength="12" required>
+                            <input type="text" name="expense" class="form-input number-only" placeholder="0.00"
+                                maxlength="12" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Description</label>
-                            <input type="text" name="description" class="form-input" placeholder="Details about the expense" maxlength="200">
+                            <input type="text" name="description" class="form-input"
+                                placeholder="Details about the expense" maxlength="200">
                         </div>
                         <div class="form-group" style="display: flex; align-items: flex-end;">
                             <button type="submit" class="btn-primary" style="width: 100%;">
@@ -225,32 +246,35 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order) {
                 <form method="GET" class="search-container">
                     <div class="search-wrapper" style="flex: 2;">
                         <i class="bi bi-search search-icon"></i>
-                        <input type="text" name="search" class="search-input" placeholder="Search expenses..." value="<?php echo htmlspecialchars($search); ?>">
+                        <input type="text" name="search" class="search-input" placeholder="Search expenses..."
+                            value="<?php echo htmlspecialchars($search); ?>">
                     </div>
-                    
+
                     <select name="time" class="search-input">
                         <option value="">All Time</option>
                         <option value="today" <?php echo $time_filter === 'today' ? 'selected' : ''; ?>>Today</option>
                         <option value="week" <?php echo $time_filter === 'week' ? 'selected' : ''; ?>>Last 7 Days</option>
-                        <option value="month" <?php echo $time_filter === 'month' ? 'selected' : ''; ?>>Last 30 Days</option>
+                        <option value="month" <?php echo $time_filter === 'month' ? 'selected' : ''; ?>>Last 30 Days
+                        </option>
                         <option value="year" <?php echo $time_filter === 'year' ? 'selected' : ''; ?>>Last Year</option>
                     </select>
-                    
+
                     <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
                     <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
-                    
+
                     <button type="submit" class="search-btn">
                         <i class="bi bi-funnel"></i> Filter
                     </button>
                 </form>
-                
+
                 <?php if ($search || $time_filter): ?>
                     <a href="expenses.php" class="btn-secondary" style="padding: 11px 22px; text-decoration: none;">
                         <i class="bi bi-x-circle"></i> Clear
                     </a>
                 <?php endif; ?>
-                
-                <a href="export_expenses.php?<?php echo http_build_query(['search' => $search, 'time' => $time_filter]); ?>" class="add-btn" style="background: var(--success); text-decoration: none;">
+
+                <a href="export_expenses.php?<?php echo http_build_query(['search' => $search, 'time' => $time_filter]); ?>"
+                    class="add-btn" style="background: var(--success); text-decoration: none;">
                     <i class="bi bi-file-earmark-excel"></i> Export to Excel
                 </a>
             </div>
@@ -260,7 +284,9 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order) {
                 <h2 style="margin: 0; border: none; padding: 0; font-size: 11px;">
                     <i class="bi bi-list-ul"></i> Expense History
                     <span style="color: var(--text-muted); margin-left: 10px;">
-                        Showing <?php echo min($offset + 1, $total_records); ?>-<?php echo min($offset + $records_per_page, $total_records); ?> of <?php echo $total_records; ?> records
+                        Showing
+                        <?php echo min($offset + 1, $total_records); ?>-<?php echo min($offset + $records_per_page, $total_records); ?>
+                        of <?php echo $total_records; ?> records
                     </span>
                 </h2>
             </div>
@@ -270,20 +296,25 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order) {
                 <table>
                     <thead>
                         <tr>
-                            <th class="sortable-header" onclick="window.location.href='<?php echo getSortUrl('expense_id', $sort_by, $sort_order, $search, $time_filter, $page); ?>'">
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('expense_id', $sort_by, $sort_order, $search, $time_filter, $page); ?>'">
                                 ID <?php echo getSortIcon('expense_id', $sort_by, $sort_order); ?>
                             </th>
-                            <th class="sortable-header" onclick="window.location.href='<?php echo getSortUrl('expense_name', $sort_by, $sort_order, $search, $time_filter, $page); ?>'">
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('expense_name', $sort_by, $sort_order, $search, $time_filter, $page); ?>'">
                                 Expense Name <?php echo getSortIcon('expense_name', $sort_by, $sort_order); ?>
                             </th>
-                            <th class="sortable-header" onclick="window.location.href='<?php echo getSortUrl('expense', $sort_by, $sort_order, $search, $time_filter, $page); ?>'">
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('expense', $sort_by, $sort_order, $search, $time_filter, $page); ?>'">
                                 Amount <?php echo getSortIcon('expense', $sort_by, $sort_order); ?>
                             </th>
                             <th>Description</th>
-                            <th class="sortable-header" onclick="window.location.href='<?php echo getSortUrl('author', $sort_by, $sort_order, $search, $time_filter, $page); ?>'">
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('author', $sort_by, $sort_order, $search, $time_filter, $page); ?>'">
                                 Added By <?php echo getSortIcon('author', $sort_by, $sort_order); ?>
                             </th>
-                            <th class="sortable-header" onclick="window.location.href='<?php echo getSortUrl('created_at', $sort_by, $sort_order, $search, $time_filter, $page); ?>'">
+                            <th class="sortable-header"
+                                onclick="window.location.href='<?php echo getSortUrl('created_at', $sort_by, $sort_order, $search, $time_filter, $page); ?>'">
                                 Date <?php echo getSortIcon('created_at', $sort_by, $sort_order); ?>
                             </th>
                             <th>Actions</th>
@@ -295,15 +326,19 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order) {
                                 <tr>
                                     <td><?php echo $expense['expense_id']; ?></td>
                                     <td><strong><?php echo htmlspecialchars($expense['expense_name']); ?></strong></td>
-                                    <td><strong style="color: var(--danger);">₱<?php echo number_format($expense['expense'], 2); ?></strong></td>
+                                    <td><strong
+                                            style="color: var(--danger);">₱<?php echo number_format($expense['expense'], 2); ?></strong>
+                                    </td>
                                     <td><?php echo htmlspecialchars($expense['description'] ?? '-'); ?></td>
                                     <td><?php echo htmlspecialchars($expense['author']); ?></td>
                                     <td><?php echo date('M d, Y g:i A', strtotime($expense['created_at'])); ?></td>
                                     <td>
-                                        <button class="btn-icon" onclick="editExpense(<?php echo htmlspecialchars(json_encode($expense)); ?>)">
+                                        <button class="btn-icon"
+                                            onclick="editExpense(<?php echo htmlspecialchars(json_encode($expense)); ?>)">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <a href="?delete=<?php echo $expense['expense_id']; ?>" class="btn-icon" onclick="return confirm('Delete this expense?')">
+                                        <a href="?delete=<?php echo $expense['expense_id']; ?>" class="btn-icon"
+                                            onclick="return confirm('Delete this expense?')">
                                             <i class="bi bi-trash"></i>
                                         </a>
                                     </td>
@@ -321,7 +356,8 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order) {
                         <tfoot>
                             <tr style="background: var(--bg-card); font-weight: 700;">
                                 <td colspan="2" style="text-align: right; padding: 12px;">TOTAL:</td>
-                                <td style="color: var(--danger); font-size: 16px;">₱<?php echo number_format($total_expenses, 2); ?></td>
+                                <td style="color: var(--danger); font-size: 16px;">
+                                    ₱<?php echo number_format($total_expenses, 2); ?></td>
                                 <td colspan="4"></td>
                             </tr>
                         </tfoot>
@@ -358,30 +394,40 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order) {
     </div>
 
     <!-- Edit Modal -->
-    <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
+    <div id="editModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
         <div style="background: var(--bg-surface); border: 1px solid var(--border); max-width: 600px; width: 90%;">
-            <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="font-family: 'Chakra Petch', sans-serif; color: var(--hazard); text-transform: uppercase; margin: 0;">Edit Expense</h3>
-                <button onclick="closeModal()" style="background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer;">&times;</button>
+            <div
+                style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <h3
+                    style="font-family: 'Chakra Petch', sans-serif; color: var(--hazard); text-transform: uppercase; margin: 0;">
+                    Edit Expense</h3>
+                <button onclick="closeModal()"
+                    style="background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer;">&times;</button>
             </div>
             <form method="POST" action="process_expenses.php">
+                <?php echo fitstop_csrf_input(); ?>
                 <input type="hidden" name="action" value="update">
                 <input type="hidden" name="expense_id" id="edit_id">
                 <div style="padding: 20px;">
                     <div class="form-group">
                         <label class="form-label">Expense Name</label>
-                        <input type="text" name="expense_name" id="edit_name" class="form-input" maxlength="100" required>
+                        <input type="text" name="expense_name" id="edit_name" class="form-input" maxlength="100"
+                            required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Amount (₱)</label>
-                        <input type="text" name="expense" id="edit_expense" class="form-input number-only" maxlength="12" required>
+                        <input type="text" name="expense" id="edit_expense" class="form-input number-only"
+                            maxlength="12" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Description</label>
-                        <textarea name="description" id="edit_description" class="form-input" rows="3" maxlength="200"></textarea>
+                        <textarea name="description" id="edit_description" class="form-input" rows="3"
+                            maxlength="200"></textarea>
                     </div>
                     <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button type="button" onclick="closeModal()" class="btn-secondary" style="flex: 1;">Cancel</button>
+                        <button type="button" onclick="closeModal()" class="btn-secondary"
+                            style="flex: 1;">Cancel</button>
                         <button type="submit" class="btn-primary" style="flex: 1;">
                             <i class="bi bi-check-circle"></i> Update Expense
                         </button>
@@ -405,11 +451,12 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order) {
             document.getElementById('editModal').style.display = 'none';
         }
 
-        document.getElementById('editModal').addEventListener('click', function(e) {
+        document.getElementById('editModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeModal();
             }
         });
     </script>
 </body>
+
 </html>

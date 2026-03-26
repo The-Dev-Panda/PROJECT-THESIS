@@ -41,7 +41,8 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                 <p>Add new staff member to the system</p>
             </div>
         </div>
-    <?php if (isset($_GET['success'])) {
+    <?php 
+    if (isset($_GET['success'])) {
         //DISPLAY SUCCESS MESSAGE
         echo '
          <div style="background: rgba(34, 208, 122, 0.1); border: 1px solid var(--success); color: var(--success); padding: 10px 14px; margin-bottom: 20px; font-size: 12px; text-transform: uppercase;">
@@ -72,7 +73,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
         ;
         echo '
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div></div>
+            </div>
         ';
     } ?>
 
