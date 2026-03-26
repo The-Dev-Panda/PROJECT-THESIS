@@ -198,6 +198,8 @@ try {
     $stockCount = (int)$pdo->query("SELECT COUNT(*) FROM inventory WHERE quantity <= 10")->fetchColumn();
     $notifCount = $txCount + $stockCount;
 } catch (Exception $e) { $notifCount = 0; }
+// Pass raw counts to JS for read-tracking
+$jsNotifTotal = $notifCount;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -464,9 +466,7 @@ try {
         <div class="notif-wrapper" id="notifWrapper">
           <button class="notif-bell-btn" onclick="toggleNotifPanel()" title="Notification History">
             <i class="bi bi-bell-fill"></i>
-            <span class="notif-badge <?= $notifCount === 0 ? 'hidden' : '' ?>" id="notifBadge">
-              <?= $notifCount > 99 ? '99+' : $notifCount ?>
-            </span>
+          <span class="notif-badge hidden" id="notifBadge">0</span>
           </button>
           <div class="notif-panel" id="notifPanel">
             <div class="notif-panel-header">
@@ -1227,10 +1227,45 @@ function formatTs(ts) {
   return d.toLocaleString('en-PH', { month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true });
 }
 
+function initNotifBadge() {
+  const NOTIF_KEY  = 'fitstop_inv_notif_read';
+  const today      = new Date().toISOString().slice(0, 10);
+  const totalCount = <?= $jsNotifTotal ?? 0 ?>;
+  window._totalNotifCount = totalCount;
+
+  let lastRead = { date: '', count: 0 };
+  try { lastRead = JSON.parse(localStorage.getItem(NOTIF_KEY) || '{}'); } catch(e) {}
+
+  // If last read was a previous day, treat everything as unread
+  const lastReadCount = (lastRead.date === today) ? (parseInt(lastRead.count) || 0) : 0;
+  const unread        = Math.max(0, totalCount - lastReadCount);
+
+  const badge = document.getElementById('notifBadge');
+  if (unread > 0) {
+    badge.textContent = unread > 99 ? '99+' : unread;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
 function toggleNotifPanel() {
   notifPanelOpen = !notifPanelOpen;
   document.getElementById('notifPanel').classList.toggle('open', notifPanelOpen);
-  if (notifPanelOpen && !notifLoaded) loadNotifications();
+  if (notifPanelOpen) {
+    // Mark as read — save current total to localStorage
+    const NOTIF_KEY = 'fitstop_inv_notif_read';
+   localStorage.setItem(NOTIF_KEY, JSON.stringify({
+  date:  new Date().toISOString().slice(0, 10),
+  count: window._totalNotifCount || 0   // ← always save the FULL total, not the badge number
+}));
+    // Clear the badge
+    const badge = document.getElementById('notifBadge');
+    badge.textContent = '0';
+    badge.classList.add('hidden');
+
+    if (!notifLoaded) loadNotifications();
+  }
 }
 
 document.addEventListener('click', function(e) {
@@ -1346,8 +1381,8 @@ document.getElementById('salesModal').addEventListener('click', function(e) { if
 window.addEventListener('load', function() {
   loadSalesSummary();
   sfRecalc();
+  initNotifBadge();           // ← add this line
 
-  // ✅ Poll localStorage every 10 seconds so staff.php payments reflect here live
   setInterval(function() {
     applyLocalStorageTally();
   }, 10000);
