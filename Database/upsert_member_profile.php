@@ -43,13 +43,21 @@ try {
     $fitnessLevel = isset($input['fitness_level']) ? trim((string)$input['fitness_level']) : null;
     $goal = isset($input['goal']) ? trim((string)$input['goal']) : null;
     $contact = isset($input['contact']) ? trim((string)$input['contact']) : null;
+    $address = isset($input['address']) ? trim((string)$input['address']) : null;
     $gender = isset($input['gender']) ? trim((string)$input['gender']) : null;
+    $remarks = isset($input['remarks']) ? trim((string)$input['remarks']) : null;
 
     if ($contact === '') {
         $contact = null;
     }
+    if ($address === '') {
+        $address = null;
+    }
     if ($gender === '') {
         $gender = null;
+    }
+    if ($remarks === '') {
+        $remarks = null;
     }
 
     if ($age !== null && $age < 0) {
@@ -86,6 +94,7 @@ try {
     $hasBmiColumn = in_array('bmi', $profileColumns, true);
     $hasContactColumn = in_array('contact', $profileColumns, true);
     $hasGenderColumn = in_array('gender', $profileColumns, true);
+    $hasRemarksColumn = in_array('remarks', $profileColumns, true);
 
     $userStmt = $db->prepare('SELECT id, user_type FROM users WHERE id = :id LIMIT 1');
     $userStmt->execute([':id' => (int)$memberRef]);
@@ -99,6 +108,13 @@ try {
     }
 
     $userId = (int)$user['id'];
+
+    $updateUserSql = 'UPDATE users SET address = :address WHERE id = :id';
+    $updateUserStmt = $db->prepare($updateUserSql);
+    $updateUserStmt->execute([
+        ':address' => $address,
+        ':id' => $userId
+    ]);
 
     $existsStmt = $db->prepare('SELECT id FROM member_profiles WHERE user_id = :user_id LIMIT 1');
     $existsStmt->execute([':user_id' => $userId]);
@@ -134,6 +150,10 @@ try {
             $updateFields[] = 'gender = :gender';
             $updateParams[':gender'] = $gender;
         }
+        if ($hasRemarksColumn) {
+            $updateFields[] = 'remarks = :remarks';
+            $updateParams[':remarks'] = $remarks;
+        }
 
         $updateSql = 'UPDATE member_profiles SET ' . implode(', ', $updateFields) . ', updated_at = CURRENT_TIMESTAMP WHERE user_id = :user_id';
         $updateStmt = $db->prepare($updateSql);
@@ -164,6 +184,11 @@ try {
             $insertColumns[] = 'gender';
             $insertValues[] = ':gender';
             $insertParams[':gender'] = $gender;
+        }
+        if ($hasRemarksColumn) {
+            $insertColumns[] = 'remarks';
+            $insertValues[] = ':remarks';
+            $insertParams[':remarks'] = $remarks;
         }
 
         $insertSql = 'INSERT INTO member_profiles (' . implode(', ', $insertColumns) . ') VALUES (' . implode(', ', $insertValues) . ')';
