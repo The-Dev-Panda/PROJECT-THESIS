@@ -459,7 +459,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <label>Item / Service</label>
             <select id="paymentPaidFor" class="form-input" onchange="autoFillAmount(this.value)">
               <option value="">Select category...</option>
-              <option value="Membership">Membership</option>
+             <option value="Membership">Membership / Renewal</option>
               <option value="Monthly">Monthly</option>
               <option value="Day Pass / Walk-In">Day Pass / Walk-In</option>
               <option value="Special Rate">Special Rate</option>
@@ -810,10 +810,25 @@ function autoFillAmount(paidFor) {
     updateUnitTotal();
     return;
   }
-  const defaults = { 'Membership': 500, 'Monthly': 650, 'Day Pass / Walk-In': 50, 'Special Rate': 40 };
-  const walkInOverrides = { 'Monthly': 750, 'Day Pass / Walk-In': 60 };
-  let price = defaults[paidFor] ?? null;
-  if (customerType === 'non-member' && paidFor in walkInOverrides) price = walkInOverrides[paidFor];
+
+  // Member prices (radio = member)
+  const memberPrices = {
+    'Membership':        650,   // renew membership
+    'Monthly':           650,   // monthly fee for members
+    'Day Pass / Walk-In': 50,   // member walk-in
+    'Special Rate':       40,
+  };
+
+  // Walk-In prices (radio = non-member)
+  const walkInPrices = {
+    'Membership':        500,   // new membership registration
+    'Monthly':           750,   // monthly for walk-in
+    'Day Pass / Walk-In': 60,   // non-member walk-in
+    'Special Rate':       40,
+  };
+
+  const priceTable = customerType === 'non-member' ? walkInPrices : memberPrices;
+  const price = priceTable[paidFor] ?? null;
   amountInput.value = price !== null ? price.toFixed(2) : '';
   updateUnitTotal();
 }

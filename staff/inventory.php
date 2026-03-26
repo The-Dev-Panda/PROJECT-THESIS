@@ -535,7 +535,7 @@ try {
               <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars($row['description'] ?? '—') ?></td>
               <td class="created-cell" style="font-size:12px;"><?= $row['created_at'] ?></td>
               <td class="updated-cell" style="font-size:12px;"><?= $row['updated_at'] ?></td>
-              <td><span class="status-badge <?= $statusCls ?>"><?= $statusTxt ?></span></td>
+             <td><span class="status-badge <?= $statusCls ?>"><?= $statusTxt ?></span></td>
             </tr>
             <?php endforeach; ?>
           </tbody>
