@@ -905,18 +905,18 @@ function autoFillAmount(paidFor) {
   }
 
   const memberPrices = {
-    'Membership':         650,
+    'Membership':         500,
     'Monthly':            650,
     'Day Pass / Walk-In': 50,
     'Special Rate':       40,
-  };
+};
 
-  const walkInPrices = {
-    'Membership':         500,
+const walkInPrices = {
+    'Membership':         650,
     'Monthly':            750,
     'Day Pass / Walk-In': 60,
     'Special Rate':       40,
-  };
+};
 
   const priceTable = customerType === 'non-member' ? walkInPrices : memberPrices;
   const price = priceTable[paidFor] ?? null;
@@ -1370,15 +1370,49 @@ function confirmRenewal(monthlyId, name) {
   fetch('staff.php', { method: 'POST', body: fd })
     .then(r => r.json())
     .then(data => {
-      closeRenewModal();
-      if (data.success) {
-        const expStr = new Date(data.new_expiry).toLocaleDateString('en-US',
-          { month: 'long', day: 'numeric', year: 'numeric' });
-        showRenewSuccessToast(name, expStr, data.days_left);
-      } else {
-        alert('Renewal failed: ' + (data.message || 'Unknown error.'));
-      }
-    })
+  closeRenewModal();
+  if (data.success) {
+    const expStr = new Date(data.new_expiry).toLocaleDateString('en-US',
+      { month: 'long', day: 'numeric', year: 'numeric' });
+    showRenewSuccessToast(name, expStr, data.days_left);
+
+    // ✅ Record renewal into localStorage tally so inventory.php logsheet picks it up
+    const ENTRY_KEY    = 'fitstop_entry_tally';
+    const today        = new Date().toISOString().slice(0, 10);
+    let entryTally     = {};
+    try { entryTally   = JSON.parse(localStorage.getItem(ENTRY_KEY) || '{}'); } catch(e) {}
+    if (entryTally._date !== today) { entryTally = { _date: today }; }
+
+    entryTally.monthly        = (entryTally.monthly || 0) + 1;
+    entryTally.monthly_total  = (entryTally.monthly_total || 0) + 650;
+    localStorage.setItem(ENTRY_KEY, JSON.stringify(entryTally));
+
+    // Build and show a renewal receipt
+    const now      = new Date();
+    const dateStr  = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const timeStr  = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const receiptNumber = 'RNW-' + now.getFullYear() + '-' + String(now.getTime()).slice(-6);
+
+    displayReceipt({
+      receiptNumber: receiptNumber,
+      date:          dateStr,
+      time:          timeStr,
+      customerType:  'member',
+      customerName:  name,
+      memberId:      name,
+      method:        'Monthly Renewal',
+      status:        'Renewed',
+      paidFor:       'Monthly Subscription Renewal',
+      notes:         'New expiry: ' + expStr,
+      amount:        650,
+      lineItems: [
+        { name: 'Monthly Subscription Renewal', qty: 1, sub: 650 }
+      ],
+    });
+  } else {
+    alert('Renewal failed: ' + (data.message || 'Unknown error.'));
+  }
+})
     .catch(() => {
       closeRenewModal();
       alert('Unable to process renewal right now. Please try again.');
