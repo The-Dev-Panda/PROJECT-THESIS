@@ -217,23 +217,23 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                 <form method="POST" action="process_expenses.php">
                     <?php echo fitstop_csrf_input(); ?>
                     <input type="hidden" name="action" value="add">
-                    <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr auto;">
-                        <div class="form-group">
+                    <div class="row">
+                        <div class="form-group col-sm-12 col-xl-3">
                             <label class="form-label">Expense Name</label>
                             <input type="text" name="expense_name" class="form-input"
                                 placeholder="e.g., Equipment Purchase" maxlength="100" required>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group col-sm-12 col-xl-3">
                             <label class="form-label">Amount (₱)</label>
                             <input type="text" name="expense" class="form-input number-only" placeholder="0.00"
                                 maxlength="12" required>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group form-group col-sm-12 col-xl-5">
                             <label class="form-label">Description</label>
                             <input type="text" name="description" class="form-input"
                                 placeholder="Details about the expense" maxlength="200">
                         </div>
-                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <div class="form-group col-sm-12 col-xl-1">
                             <button type="submit" class="btn-primary" style="width: 100%;">
                                 <i class="bi bi-plus-circle"></i> Add
                             </button>
@@ -268,19 +268,19 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                     </div>
                     <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
                     <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
-                    <div class="col-sm-12 col-xl-2">
+                    <div class="col-sm-12 col-xl-2 d-flex justify-content-center my-1">
                         <button type="submit" class="search-btn">
                             <i class="bi bi-funnel"></i> Filter
                         </button>
                     </div>
-                    <div class="col-sm-12 col-xl-2">
+                    <div class="col-sm-12 col-xl-2 d-flex justify-content-center my-1">
                         <?php if ($search || $time_filter): ?>
                             <a href="expenses.php" class="btn-secondary" style="padding: 11px 22px; text-decoration: none;">
                                 <i class="bi bi-x-circle"></i> Clear
                             </a>
                         <?php endif; ?>
                     </div>
-                    <div class="col-sm-12 col-xl-2 col-xl-offset-2 text-center">
+                    <div class="col-sm-12 col-xl-2 d-flex justify-content-center my-1">
                         <a href="export_expenses.php?<?php echo http_build_query(['search' => $search, 'time' => $time_filter]); ?>"
                             class="add-btn" style="background: var(--success); text-decoration: none;">
                             <i class="bi bi-file-earmark-excel"></i> Export to Excel
