@@ -33,7 +33,7 @@ if (isset($_SESSION['ai_flash']) && is_string($_SESSION['ai_flash'])) {
 }
 
 $quickPrompts = [
-    'Build a safe 45-minute workout I can do today based on my goal.',
+    'Build a safe workout I can do today based on my goal.',
     'Suggest a post-workout meal and include simple portion sizes.',
     'Give me a recovery plan for tonight with sleep and hydration targets.',
     'Review my progress this week and share 3 practical improvements.'
@@ -90,67 +90,81 @@ JS;
       <?php include __DIR__ . '/includes/sidebar.php'; ?>
       <!-- MAIN CONTENT -->
       <main class="main-content">
-        <!-- TOP BAR -->
-        <header class="topbar">
-          <div class="welcome">
-            <h1>History</h1>
-            <p>
-              Hi <?php echo htmlspecialchars($welcomeName, ENT_QUOTES, 'UTF-8'); ?>!
-              This is AI Advisor, your personal fitness assistant. 
-            </p>
-          </div>
-        </header>
-    <?php include('../includes/header.php') ?>
-    
-        <?php
-        if ($aiFlash !== '') {
-            echo '<div class="alert alert-primary">';
-            echo '<i class="bi bi-robot me-2"></i>';
-            echo nl2br(htmlspecialchars($aiFlash, ENT_QUOTES, 'UTF-8'));
-            echo '</div>';
-        }
-
-        // Optional session chat history (not persisted in database)
-        if (!empty($_SESSION['chat_history'])) {
-            foreach ($_SESSION['chat_history'] as $entry) {
-                if ($entry['role'] == 'user') {
-                    echo '
-                <div class="alert alert-secondary">
-                    <i class="bi bi-person-fill me-2"></i>';
-                    echo htmlspecialchars((string)$entry['message'], ENT_QUOTES, 'UTF-8');
-                    echo '<div class="text-muted">' . htmlspecialchars((string)$entry['timestamp'], ENT_QUOTES, 'UTF-8') . '</div>';
-                    echo '</div>';
-                } elseif ($entry['role'] == 'ai') {
-                    echo '
-                <div class="alert alert-info">
-                    <i class="bi bi-robot me-2"></i>';
-                    echo nl2br(htmlspecialchars((string)$entry['message'], ENT_QUOTES, 'UTF-8'));
-                    echo '<div class="text-muted">' . htmlspecialchars((string)$entry['timestamp'], ENT_QUOTES, 'UTF-8') . '</div>';
-                    echo '</div>';
-                }
-            }
-        }
-        ?>
-        <div class="container d-flex gap-2 align-items-center">
-            <form action="process_AI.php" method="POST" class="d-flex gap-2 flex-grow-1" id="aiAdvisorForm">
-                <?php echo fitstop_csrf_input(); ?>
-                <input type="text" name="query" id="aiAdvisorQuery" placeholder="Enter your query" class="form-control" maxlength="500" required>
-                <button type="submit" class="btn btn-success">Submit</button>
-            </form>
-            <a href="AI_ADVISOR.php?clear=1" class="btn btn-sm btn-danger"
-                onclick="return confirm('Clear all messages?')" title="Clear chat">
-                <i class="bi bi-trash"></i>
-            </a>
-        </div>
-        <div class="container mt-3">
-            <div class="small text-muted mb-2">Quick prompts</div>
-            <div class="d-flex flex-wrap gap-2" id="aiQuickPromptList">
-                <?php foreach ($quickPrompts as $prompt): ?>
-                    <button type="button" class="btn btn-outline-secondary btn-sm ai-quick-prompt" data-prompt="<?php echo htmlspecialchars($prompt, ENT_QUOTES, 'UTF-8'); ?>">
-                        <?php echo htmlspecialchars($prompt, ENT_QUOTES, 'UTF-8'); ?>
-                    </button>
-                <?php endforeach; ?>
+        <div class="container-fluid py-4">
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+            <div>
+              <h1 class="h3 mb-1">AI Advisor</h1>
+              <p class="text-muted mb-0">Hi <?php echo htmlspecialchars($welcomeName, ENT_QUOTES, 'UTF-8'); ?>! This is your personal fitness assistant.</p>
             </div>
+            <a href="AI_ADVISOR.php?clear=1" class="btn btn-outline-danger btn-sm mt-3 mt-md-0" onclick="return confirm('Clear all messages?')" title="Clear chat">
+              <i class="bi bi-trash me-1"></i> Clear chat
+            </a>
+          </div>
+
+          <div class="row gy-3">
+            <div class="col-12 col-lg-8">
+              <div class="card shadow-sm h-100">
+                <div class="card-body">
+                  <?php if ($aiFlash !== ''): ?>
+                    <div class="alert alert-primary d-flex align-items-start gap-2" role="alert">
+                      <i class="bi bi-robot fs-4"></i>
+                      <div><?php echo nl2br(htmlspecialchars($aiFlash, ENT_QUOTES, 'UTF-8')); ?></div>
+                    </div>
+                  <?php endif; ?>
+
+                  <h6 class="mb-3">Conversation History</h6>
+                  <div class="list-group" style="max-height: 45vh; overflow-y: auto;">
+                    <?php if (!empty($_SESSION['chat_history'])):
+                        foreach ($_SESSION['chat_history'] as $entry):
+                            $role = $entry['role'] === 'ai' ? 'AI' : 'You';
+                            $label = $entry['role'] === 'ai' ? 'info' : 'secondary';
+                    ?>
+                        <div class="list-group-item list-group-item-<?php echo $label; ?> py-2">
+                          <div class="d-flex justify-content-between align-items-start">
+                            <strong><?php echo htmlspecialchars($role); ?></strong>
+                            <small class="text-muted"><?php echo htmlspecialchars((string)$entry['timestamp'], ENT_QUOTES, 'UTF-8'); ?></small>
+                          </div>
+                          <div><?php echo $entry['role'] === 'ai' ? nl2br(htmlspecialchars((string)$entry['message'], ENT_QUOTES, 'UTF-8')) : htmlspecialchars((string)$entry['message'], ENT_QUOTES, 'UTF-8'); ?></div>
+                        </div>
+                    <?php endforeach; else: ?>
+                        <div class="list-group-item text-muted">No conversation yet. Ask a question to begin.</div>
+                    <?php endif; ?>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-4">
+              <div class="card shadow-sm h-100">
+                <div class="card-body">
+                  <form action="process_AI.php" method="POST" id="aiAdvisorForm">
+                    <?php echo fitstop_csrf_input(); ?>
+                    <div class="mb-3">
+                      <label for="aiAdvisorQuery" class="form-label">Ask your AI advisor</label>
+                      <input type="text" name="query" id="aiAdvisorQuery" placeholder="What do you want to know?" class="form-control" maxlength="500" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Submit</button>
+                  </form>
+
+                  <hr>
+                  <h6 class="mb-2">Quick prompts</h6>
+                  <div class="d-grid gap-2" id="aiQuickPromptList">
+                    <?php foreach ($quickPrompts as $prompt): ?>
+                      <button type="button" class="btn btn-outline-secondary btn-sm ai-quick-prompt text-start" data-prompt="<?php echo htmlspecialchars($prompt, ENT_QUOTES, 'UTF-8'); ?>">
+                        <?php echo htmlspecialchars($prompt, ENT_QUOTES, 'UTF-8'); ?>
+                      </button>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </main>
     </div>
+
+    <?php echo $custom_js; ?>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-I6hXqZcZ30Qpi70YpDkU4hfOhxC1a4Ud/NOHUxDyEYvL48cZ8KXH/S9ZHAlGqBKx" crossorigin="anonymous"></script>
+</body>
+</html>
   

@@ -137,6 +137,8 @@ $unread_count = $unread_stmt->fetch()['count'];
             <li onclick="location.href='view_staff.php'"><i class="bi bi-people"></i><span>Staff</span></li>
             <li onclick="location.href='transaction.php'"><i class="bi bi-bar-chart-line"></i><span>Transactions</span>
             </li>
+            <li onclick="location.href='expenses.php'"><i class="bi bi-currency-exchange"></i><span>Expenses</span>
+            </li>
             <li onclick="location.href='view_members.php'"><i class="bi bi-person-badge"></i><span>Members</span></li>
             <li onclick="location.href='membership_pricing.php'"><i class="bi bi-clipboard-check"></i><span>Membership
                     Pricing</span></li>
@@ -261,5 +263,3 @@ $unread_count = $unread_stmt->fetch()['count'];
             
         }
     </style>
-
-</body>

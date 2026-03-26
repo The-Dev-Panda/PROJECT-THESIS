@@ -30,7 +30,8 @@ try {
     $weightKg = isset($input['weight_kg']) && $input['weight_kg'] !== '' ? (float)$input['weight_kg'] : null;
     $fitnessLevel = isset($input['fitness_level']) ? trim((string)$input['fitness_level']) : null;
     $goal = isset($input['goal']) ? trim((string)$input['goal']) : null;
-    $contact = isset($input['contact']) ? trim((string)$input['contact']) : null;
+    $address = isset($input['address']) ? trim((string)$input['address']) : null;
+    $contact = $address !== '' ? $address : (isset($input['contact']) ? trim((string)$input['contact']) : null);
     $gender = isset($input['gender']) ? trim((string)$input['gender']) : null;
 
     $dpaConsent = isset($input['dpa_consent']) ? (bool)$input['dpa_consent'] : false;
@@ -127,7 +128,7 @@ try {
 
     $now = date('Y-m-d H:i:s');
 
-    $insertUserStmt = $db->prepare('INSERT INTO users (username, first_name, last_name, email, password, user_type, is_verified, dpa_consent, dpa_consent_at, points, created_at, updated_at) VALUES (:username, :first_name, :last_name, :email, :password, :user_type, :is_verified, :dpa_consent, :dpa_consent_at, :points, :created_at, :updated_at)');
+    $insertUserStmt = $db->prepare('INSERT INTO users (username, first_name, last_name, email, password, user_type, is_verified, dpa_consent, dpa_consent_at, points, address, created_at, updated_at) VALUES (:username, :first_name, :last_name, :email, :password, :user_type, :is_verified, :dpa_consent, :dpa_consent_at, :points, :address, :created_at, :updated_at)');
 
     $dpaConsentInt = $dpaConsent ? 1 : 0;
     $dpaConsentAt = $dpaConsent ? $now : null;
@@ -143,6 +144,7 @@ try {
         ':dpa_consent' => $dpaConsentInt,
         ':dpa_consent_at' => $dpaConsentAt,
         ':points' => 0,
+        ':address' => $address,
         ':created_at' => $now,
         ':updated_at' => $now
     ]);

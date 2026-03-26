@@ -508,7 +508,7 @@ try {
             <tr>
               <th>ID</th><th>Item Name</th><th>Category</th><th>Quantity</th>
               <th>Price</th><th>Description</th><th>Created At</th><th>Updated At</th>
-              <th>Status</th><th>Actions</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody id="inventoryBody">
@@ -536,11 +536,6 @@ try {
               <td class="created-cell" style="font-size:12px;"><?= $row['created_at'] ?></td>
               <td class="updated-cell" style="font-size:12px;"><?= $row['updated_at'] ?></td>
               <td><span class="status-badge <?= $statusCls ?>"><?= $statusTxt ?></span></td>
-              <td>
-                <button class="btn-icon" title="Customer Bought" onclick="openSoldModal(this)">
-                  <i class="bi bi-cart-dash"></i>
-                </button>
-              </td>
             </tr>
             <?php endforeach; ?>
           </tbody>

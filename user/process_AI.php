@@ -100,8 +100,13 @@ if ($intent === 'general') {
 }
 
 try {
-    $apiUrl = trim((string)($_ENV['API_URL'] ?? ''));
-    $apiToken = trim((string)($_ENV['API_BEARER_TOKEN'] ?? ''));
+    $stmt = $pdo->prepare('SELECT api_url, api_key FROM api_table LIMIT 1');
+    $stmt->execute();
+    $result = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    
+    $apiUrl = trim((string)($result['api_url'] ?? ''));
+    $apiToken = $result['api_key'] ?? null;
+
     if ($apiUrl === '' || $apiToken === '') {
         redirectWithFlash('AI advisor configuration is incomplete. Please contact admin.');
     }
@@ -224,10 +229,10 @@ try {
     }
 
     $systemPrompt = "You are a gym AI advisor for members. You SUPPLEMENT personal trainers, never replace them. "
-        . "Do not provide medical diagnosis. Refuse unsafe/illegal requests (steroids, illegal drugs, self-harm, eating-disorder behaviors, extreme rapid weight loss). "
+        . "Do not provide medical diagnosis or prescription-level guidance; suggest general safe fitness and nutrition ideas. "
         . "When suggesting workouts, strongly prefer exercises from the provided Available exercises in system list. "
         . "If an exercise is not in that list, clearly label it as an optional substitute and provide listed alternatives. "
-        . "Avoid extreme dieting advice. Keep answers concise and practical. "
+        . "Keep recommendations practical, positive, and within standard gym safety guidelines. "
         . "Output plain text in this exact structure:\n"
         . "1) Quick answer (1-2 sentences)\n"
         . "2) Suggestions (3-6 bullets)\n"
