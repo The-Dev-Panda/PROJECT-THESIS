@@ -424,14 +424,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         </div>
 
         <!-- Payment Method -->
+      <!-- Payment Method -->
         <div class="form-group">
           <label>Payment Method</label>
-          <select id="paymentMethod" class="form-input">
+          <select id="paymentMethod" class="form-input" onchange="toggleGcashRef(this.value)">
             <option value="">Select Method</option>
             <option value="Cash">Cash</option>
             <option value="GCash">GCash</option>
           </select>
         </div>
+
+      </div>
+
+      <!-- GCash Reference Number — OUTSIDE form-grid so it spans full width -->
+      <div id="gcashRefGroup" style="display:none;margin-bottom:16px;padding:14px;border:1px solid rgba(255,204,0,0.25);background:rgba(255,204,0,0.04);">
+        <label style="color:var(--text-muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:block;margin-bottom:8px;">
+          GCash Reference No. <span style="color:var(--danger);font-size:11px;text-transform:none;letter-spacing:0;">* Required</span>
+        </label>
+        <input type="text" id="gcashRefNumber" class="form-input"
+          placeholder="Enter 13-digit GCash reference number"
+          maxlength="13"
+          oninput="this.value=this.value.replace(/\D/g,'')"
+          style="max-width:320px;">
+        <span style="font-size:11px;color:var(--text-muted);margin-top:6px;display:block;">
+          <i class="bi bi-info-circle" style="margin-right:4px;"></i>Found in your GCash confirmation SMS after payment.
+        </span>
       </div>
 
       <!-- ADD TO CART ROW -->
@@ -758,6 +775,18 @@ function toggleCustomerType(type) {
   }
 }
 
+function toggleGcashRef(method) {
+  const group = document.getElementById('gcashRefGroup');
+  const input = document.getElementById('gcashRefNumber');
+  if (method === 'GCash') {
+    group.style.display = 'block';
+    input.required = true;
+  } else {
+    group.style.display = 'none';
+    input.required = false;
+    input.value = '';
+  }
+}
 
 
  // ── Cart state ──────────────────────────────────────────────────────────────
@@ -900,6 +929,8 @@ function clearPaymentForm() {
   document.getElementById('memberClearBtn').style.display = 'none';
   document.getElementById('memberDropdownList').classList.remove('open');
   document.getElementById('unitSubtotal').textContent = '0.00';
+  document.getElementById('gcashRefGroup').style.display = 'none';
+  document.getElementById('gcashRefNumber').value = '';
   toggleCustomerType('member');
 }
 
@@ -920,6 +951,13 @@ function processPayment() {
   }
   if (!method) { alert('Please select a payment method.'); return; }
 
+  let gcashRef = '';
+  if (method === 'GCash') {
+    gcashRef = document.getElementById('gcashRefNumber').value.trim();
+    if (!gcashRef) { alert('Please enter the GCash reference number.'); return; }
+    if (gcashRef.length < 13) { alert('GCash reference number must be 13 digits.'); return; }
+  }
+
   btn.disabled = true; btn.textContent = 'Saving...';
 
   const grand = payCart.reduce((s, i) => s + i.price * i.qty, 0);
@@ -935,16 +973,16 @@ function processPayment() {
   fetch('../Database/save_transaction.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+   body: JSON.stringify({
       customer_type:  customerType,
       member_ref:     memberId,
       customer_name:  customerName,
       amount:         grand,
       payment_method: method,
+      gcash_ref:      gcashRef,          // ← add this line
       paid_for:       payCart.map(i => i.displayName).join(', '),
       notes:          payCart.map(i => `${i.displayName} x${i.qty}`).join(' | '),
       line_items:     lineItems,
-      // legacy single-item fields (for backward compat):
       inv_item_id:    null,
       inv_qty:        null,
     })
