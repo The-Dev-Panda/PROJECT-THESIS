@@ -381,115 +381,129 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </div>
     </section>
 
-    <!-- PAYMENT PROCESSING -->
-    <section class="registration-section">
-      <h2>Payment Processing</h2>
-      <div class="registration-card">
-        <form class="registration-form" id="paymentForm">
+   <!-- PAYMENT PROCESSING -->
+<section class="registration-section">
+  <h2>Payment Processing</h2>
+  <div class="registration-card">
+    <form class="registration-form" id="paymentForm">
 
-          <!-- Customer Type -->
-          <div style="margin-bottom:20px;">
-            <label style="color:var(--text-muted);font-size:10.5px;margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:block;">Customer Type</label>
-            <div style="display:flex;gap:20px;">
-              <label style="display:flex;align-items:center;cursor:pointer;color:var(--text-primary);gap:8px;font-size:13px;font-weight:600;">
-                <input type="radio" name="customerType" value="member" checked onchange="toggleCustomerType('member')"> Member
-              </label>
-              <label style="display:flex;align-items:center;cursor:pointer;color:var(--text-primary);gap:8px;font-size:13px;font-weight:600;">
-                <input type="radio" name="customerType" value="non-member" onchange="toggleCustomerType('non-member')"> Walk-In
-              </label>
-            </div>
-          </div>
-
-          <div class="form-grid">
-
-            <!-- Member ID — searchable dropdown from DB -->
-            <div class="form-group" id="memberIdGroup">
-              <label>Member <span style="font-size:10px;color:var(--text-muted);">(users only)</span></label>
-              <div class="member-select-wrap">
-                <div style="display:flex;gap:6px;align-items:center;">
-                  <input type="text"
-                    id="memberSearchInput"
-                    class="member-search-input form-input"
-                    placeholder="Search member name or username..."
-                    autocomplete="off"
-                    oninput="filterMemberDropdown(this.value)"
-                    onfocus="openMemberDropdown()"
-                    style="flex:1;"
-                  >
-                  <button type="button"
-                    id="memberClearBtn"
-                    class="member-clear-btn"
-                    onclick="clearMemberSelection()"
-                    style="display:none;"
-                    title="Clear selection">&#x2715;</button>
-                </div>
-                <input type="hidden" id="paymentMemberID">
-                <div class="member-dropdown-list" id="memberDropdownList"></div>
-              </div>
-            </div>
-
-            <!-- Walk-in name -->
-            <div class="form-group" id="customerNameGroup" style="display:none;">
-              <label>Customer Name</label>
-              <input type="text" id="paymentCustomerName" class="form-input" placeholder="Enter full name">
-            </div>
-
-            <!-- Amount -->
-            <div class="form-group">
-              <label>Paid For</label>
-              <select id="paymentPaidFor" class="form-input" onchange="autoFillAmount(this.value)">
-                <option value="">Select category...</option>
-                <option value="Membership">Membership</option>
-                <option value="Monthly">Monthly</option>
-                <option value="Day Pass / Walk-In">Day Pass / Walk-In</option>
-                <option value="Special Rate">Special Rate</option>
-                <optgroup label="── Inventory Items ──">
-                  <option value="Inventory:2:Sting"        data-inv-id="2"  data-price="20">Sting (Beverage)</option>
-                  <option value="Inventory:3:Amino"        data-inv-id="3"  data-price="10">Amino (Supplements)</option>
-                  <option value="Inventory:4:Pre-Workout"  data-inv-id="4"  data-price="35">Pre-Workout (Supplements)</option>
-                  <option value="Inventory:5:Gatorade"     data-inv-id="5"  data-price="25">Gatorade (Beverage)</option>
-                  <option value="Inventory:6:Creatine"     data-inv-id="6"  data-price="20">Creatine (Supplements)</option>
-                  <option value="Inventory:7:Whey"         data-inv-id="7"  data-price="75">Whey (Supplements)</option>
-                  <option value="Inventory:8:Protein Bar"  data-inv-id="8"  data-price="120">Protein Bar (Snacks)</option>
-                </optgroup>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Quantity</label>
-             <input type="number" id="paymentQty" value="1" class="form-input" min="1" oninput="updateTotal()" onkeyup="updateTotal()">
-            </div>
-           <div class="form-group">
-              <label>Amount (₱)</label>
-            <input type="number" id="paymentAmount" class="form-input" step="0.01" oninput="updateTotal()">
-            </div>
-            <div class="form-group">
-              <label>Optional Notes</label>
-              <input type="text" id="paymentNotes" class="form-input" placeholder="Optional note">
-            </div>
-
-            <div class="form-group">
-              <label>Payment Method</label>
-              <select id="paymentMethod" class="form-input">
-                <option value="">Select Method</option>
-                <option value="Cash">Cash</option>
-                <option value="GCash">GCash</option>
-              </select>
-            </div>
-
-          </div>
-
-                    <div style="margin-top:10px; text-align:right; font-weight:700; font-size:20px;">
-            Total: ₱<span id="paymentTotal">0.00</span>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn-secondary" onclick="clearPaymentForm()">Clear</button>
-            <button type="button" class="btn-primary" id="paymentSubmitBtn" onclick="processPayment()">Generate Receipt</button>
-          </div>
-        </form>
+      <!-- Customer Type -->
+      <div style="margin-bottom:20px;">
+        <label style="color:var(--text-muted);font-size:10.5px;margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:block;">Customer Type</label>
+        <div style="display:flex;gap:20px;">
+          <label style="display:flex;align-items:center;cursor:pointer;color:var(--text-primary);gap:8px;font-size:13px;font-weight:600;">
+            <input type="radio" name="customerType" value="member" checked onchange="toggleCustomerType('member')"> Member
+          </label>
+          <label style="display:flex;align-items:center;cursor:pointer;color:var(--text-primary);gap:8px;font-size:13px;font-weight:600;">
+            <input type="radio" name="customerType" value="non-member" onchange="toggleCustomerType('non-member')"> Walk-In
+          </label>
+        </div>
       </div>
-    </section>
 
+      <div class="form-grid">
+        <!-- Member searchable dropdown -->
+        <div class="form-group" id="memberIdGroup">
+          <label>Member <span style="font-size:10px;color:var(--text-muted);">(users only)</span></label>
+          <div class="member-select-wrap">
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="text" id="memberSearchInput" class="member-search-input form-input"
+                placeholder="Search member name or username..." autocomplete="off"
+                oninput="filterMemberDropdown(this.value)" onfocus="openMemberDropdown()" style="flex:1;">
+              <button type="button" id="memberClearBtn" class="member-clear-btn"
+                onclick="clearMemberSelection()" style="display:none;" title="Clear">&#x2715;</button>
+            </div>
+            <input type="hidden" id="paymentMemberID">
+            <div class="member-dropdown-list" id="memberDropdownList"></div>
+          </div>
+        </div>
+
+        <!-- Walk-in name -->
+        <div class="form-group" id="customerNameGroup" style="display:none;">
+          <label>Customer Name</label>
+          <input type="text" id="paymentCustomerName" class="form-input" placeholder="Enter full name">
+        </div>
+
+        <!-- Payment Method -->
+        <div class="form-group">
+          <label>Payment Method</label>
+          <select id="paymentMethod" class="form-input">
+            <option value="">Select Method</option>
+            <option value="Cash">Cash</option>
+            <option value="GCash">GCash</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ADD TO CART ROW -->
+      <div style="border-top:1px solid var(--border);padding-top:18px;margin-top:4px;">
+        <label style="color:var(--text-muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:block;margin-bottom:12px;">Add Item to Cart</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="form-group" style="flex:2;min-width:160px;margin:0;">
+            <label>Item / Service</label>
+            <select id="paymentPaidFor" class="form-input" onchange="autoFillAmount(this.value)">
+              <option value="">Select category...</option>
+              <option value="Membership">Membership</option>
+              <option value="Monthly">Monthly</option>
+              <option value="Day Pass / Walk-In">Day Pass / Walk-In</option>
+              <option value="Special Rate">Special Rate</option>
+              <optgroup label="── Inventory Items ──">
+                <option value="Inventory:2:Sting"        data-inv-id="2"  data-price="20">Sting (Beverage)</option>
+                <option value="Inventory:3:Amino"        data-inv-id="3"  data-price="10">Amino (Supplements)</option>
+                <option value="Inventory:4:Pre-Workout"  data-inv-id="4"  data-price="35">Pre-Workout (Supplements)</option>
+                <option value="Inventory:5:Gatorade"     data-inv-id="5"  data-price="25">Gatorade (Beverage)</option>
+                <option value="Inventory:6:Creatine"     data-inv-id="6"  data-price="20">Creatine (Supplements)</option>
+                <option value="Inventory:7:Whey"         data-inv-id="7"  data-price="75">Whey (Supplements)</option>
+                <option value="Inventory:8:Protein Bar"  data-inv-id="8"  data-price="120">Protein Bar (Snacks)</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group" style="width:80px;margin:0;">
+            <label>Qty</label>
+            <input type="number" id="paymentQty" value="1" min="1" class="form-input" style="text-align:center;" oninput="updateUnitTotal()">
+          </div>
+          <div class="form-group" style="width:120px;margin:0;">
+            <label>Unit Price (₱)</label>
+            <input type="number" id="paymentAmount" class="form-input" step="0.01" placeholder="0.00" oninput="updateUnitTotal()">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label style="visibility:hidden;">Add</label>
+            <button type="button" class="btn-primary" onclick="addToCart()"
+              style="padding:10px 18px;font-size:12px;white-space:nowrap;">+ Add to Cart</button>
+          </div>
+        </div>
+        <div style="margin-top:6px;text-align:right;font-size:12px;color:var(--text-muted);">
+          Item subtotal: ₱<span id="unitSubtotal">0.00</span>
+        </div>
+      </div>
+
+      <!-- CART TABLE -->
+      <div style="margin-top:20px;">
+        <div style="display:flex;align-items:center;margin-bottom:10px;gap:8px;">
+          <span style="font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;color:var(--text-muted);">Cart</span>
+          <span id="cartBadge" style="background:var(--hazard);color:#000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;font-family:'Chakra Petch',sans-serif;display:none;">0</span>
+        </div>
+        <div id="cartEmpty" style="border:1px dashed var(--border);padding:18px;text-align:center;color:var(--text-muted);font-size:13px;">
+          No items added yet.
+        </div>
+        <div id="cartTableWrap" style="display:none;">
+          <div style="display:grid;grid-template-columns:1fr 90px 90px 90px 34px;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;color:var(--text-muted);">
+            <span>Item</span><span>Unit ₱</span><span>Qty</span><span>Subtotal</span><span></span>
+          </div>
+          <div id="cartRows"></div>
+          <div style="display:flex;justify-content:flex-end;align-items:center;gap:16px;padding:16px 0 0;border-top:1px dashed var(--border);margin-top:8px;">
+            <span style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">Grand Total</span>
+            <span style="font-size:22px;font-weight:700;font-family:'Chakra Petch',sans-serif;color:var(--hazard);">₱<span id="cartGrandTotal">0.00</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions" style="margin-top:20px;">
+        <button type="button" class="btn-secondary" onclick="clearPaymentForm()">Clear All</button>
+        <button type="button" class="btn-primary" id="paymentSubmitBtn" onclick="processPayment()">Generate Receipt</button>
+      </div>
+    </form>
+  </div>
+</section>
     <!-- ATTENDANCE -->
     <section class="attendance-section" id="attendance">
       <h2>Workout / Performance Log</h2>
@@ -746,18 +760,13 @@ function toggleCustomerType(type) {
 
 
 
- function updateTotal() {
-  const amountField = document.getElementById('paymentAmount');
-  const qtyField    = document.getElementById('paymentQty');
-  const totalField  = document.getElementById('paymentTotal');
+ // ── Cart state ──────────────────────────────────────────────────────────────
+let payCart = [];
 
-  let amount = parseFloat(amountField.value);
-  let qty    = parseInt(qtyField.value);
-
-  if (isNaN(amount)) amount = 0;
-  if (isNaN(qty) || qty < 1) qty = 0;
-
-  totalField.textContent = (amount * qty).toFixed(2);
+function updateUnitTotal() {
+  const price = parseFloat(document.getElementById('paymentAmount').value) || 0;
+  const qty   = parseInt(document.getElementById('paymentQty').value) || 0;
+  document.getElementById('unitSubtotal').textContent = (price * qty).toFixed(2);
 }
 
 function autoFillAmount(paidFor) {
@@ -769,47 +778,139 @@ function autoFillAmount(paidFor) {
     const opt   = sel ? sel.options[sel.selectedIndex] : null;
     const price = opt ? parseFloat(opt.dataset.price) : null;
     amountInput.value = (price !== null && !isNaN(price)) ? price.toFixed(2) : '';
-    updateTotal();
+    updateUnitTotal();
     return;
   }
-  const defaults = {
-    'Membership':         500,
-    'Monthly':            650,
-    'Day Pass / Walk-In':  50,
-    'Special Rate':        40,
-  };
-  const walkInOverrides = {
-    'Monthly':            750,
-    'Day Pass / Walk-In':  60,
-  };
-
+  const defaults = { 'Membership': 500, 'Monthly': 650, 'Day Pass / Walk-In': 50, 'Special Rate': 40 };
+  const walkInOverrides = { 'Monthly': 750, 'Day Pass / Walk-In': 60 };
   let price = defaults[paidFor] ?? null;
-  if (customerType === 'non-member' && paidFor in walkInOverrides) {
-    price = walkInOverrides[paidFor];
-  }
+  if (customerType === 'non-member' && paidFor in walkInOverrides) price = walkInOverrides[paidFor];
   amountInput.value = price !== null ? price.toFixed(2) : '';
+  updateUnitTotal();
+}
+
+function addToCart() {
+  const paidFor = document.getElementById('paymentPaidFor').value;
+  const qty     = parseInt(document.getElementById('paymentQty').value) || 1;
+  const price   = parseFloat(document.getElementById('paymentAmount').value) || 0;
+
+  if (!paidFor) { alert('Please select an item or service.'); return; }
+  if (price <= 0) { alert('Please enter a valid price.'); return; }
+  if (qty < 1)   { alert('Quantity must be at least 1.'); return; }
+
+  // Determine display name
+  let displayName = paidFor;
+  let invItemId = null, invItemName = null;
+  if (paidFor.startsWith('Inventory:')) {
+    const parts = paidFor.split(':');
+    invItemId   = parts[1];
+    invItemName = parts[2];
+    displayName = invItemName;
+    const sel = document.getElementById('paymentPaidFor');
+    const opt = sel.options[sel.selectedIndex];
+    if (opt && opt.text) displayName = opt.text.replace(/\s*\(.*\)/, '').trim();
+  }
+
+  // Merge if same item already in cart
+  const existing = payCart.find(i => i.paidFor === paidFor && i.price === price);
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    payCart.push({
+      id: Date.now(),
+      paidFor,
+      displayName,
+      price,
+      qty,
+      invItemId,
+      invItemName,
+    });
+  }
+
+  renderCart();
+  // Reset item selector row
+  document.getElementById('paymentPaidFor').value = '';
+  document.getElementById('paymentAmount').value  = '';
+  document.getElementById('paymentQty').value     = 1;
+  document.getElementById('unitSubtotal').textContent = '0.00';
+}
+
+function cartChangeQty(id, delta) {
+  const item = payCart.find(i => i.id === id);
+  if (!item) return;
+  item.qty = Math.max(1, item.qty + delta);
+  renderCart();
+}
+
+function cartRemove(id) {
+  payCart = payCart.filter(i => i.id !== id);
+  renderCart();
+}
+
+function renderCart() {
+  const badge    = document.getElementById('cartBadge');
+  const empty    = document.getElementById('cartEmpty');
+  const wrap     = document.getElementById('cartTableWrap');
+  const rows     = document.getElementById('cartRows');
+  const grandEl  = document.getElementById('cartGrandTotal');
+
+  badge.textContent = payCart.length;
+  badge.style.display = payCart.length > 0 ? 'inline-block' : 'none';
+
+  if (payCart.length === 0) {
+    empty.style.display = 'block';
+    wrap.style.display  = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  wrap.style.display  = 'block';
+
+  let grand = 0;
+  rows.innerHTML = payCart.map(item => {
+    const sub = item.price * item.qty;
+    grand += sub;
+    return `<div style="display:grid;grid-template-columns:1fr 90px 90px 90px 34px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;">
+      <div>
+        <div style="font-weight:600;color:var(--text-primary);">${escapeHtml(item.displayName)}</div>
+        <div style="font-size:11px;color:var(--text-muted);">₱${item.price.toFixed(2)} each</div>
+      </div>
+      <div style="color:#aaa;">₱${item.price.toFixed(2)}</div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <button type="button" onclick="cartChangeQty(${item.id},-1)"
+          style="background:var(--bg-surface);border:1px solid var(--border);color:#fff;width:24px;height:24px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;">−</button>
+        <span style="min-width:20px;text-align:center;">${item.qty}</span>
+        <button type="button" onclick="cartChangeQty(${item.id},1)"
+          style="background:var(--bg-surface);border:1px solid var(--border);color:#fff;width:24px;height:24px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;">+</button>
+      </div>
+      <div style="font-weight:700;color:var(--hazard);">₱${sub.toFixed(2)}</div>
+      <button type="button" onclick="cartRemove(${item.id})"
+        style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;line-height:1;">×</button>
+    </div>`;
+  }).join('');
+
+  grandEl.textContent = grand.toFixed(2);
 }
 
 function clearPaymentForm() {
+  payCart = [];
+  renderCart();
   document.getElementById('paymentForm').reset();
-  document.getElementById('memberSearchInput').value = '';
-  document.getElementById('paymentMemberID').value   = '';
+  document.getElementById('memberSearchInput').value  = '';
+  document.getElementById('paymentMemberID').value    = '';
   document.getElementById('memberClearBtn').style.display = 'none';
   document.getElementById('memberDropdownList').classList.remove('open');
+  document.getElementById('unitSubtotal').textContent = '0.00';
   toggleCustomerType('member');
 }
 
 function processPayment() {
+  if (payCart.length === 0) { alert('Cart is empty! Add at least one item.'); return; }
+
   const customerType = document.querySelector('input[name="customerType"]:checked').value;
-  const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
-  const paidFor      = document.getElementById('paymentPaidFor').value;
-  const notes        = document.getElementById('paymentNotes').value.trim();
   const method       = document.getElementById('paymentMethod').value;
   const btn          = document.getElementById('paymentSubmitBtn');
-  const qty    = parseInt(document.getElementById('paymentQty').value) || 1;
-  const total  = amount * qty;
-  let memberId = null, customerName = null;
 
+  let memberId = null, customerName = null;
   if (customerType === 'member') {
     memberId = document.getElementById('paymentMemberID').value.trim();
     if (!memberId) { alert('Please select a member from the dropdown.'); return; }
@@ -817,20 +918,19 @@ function processPayment() {
     customerName = document.getElementById('paymentCustomerName').value.trim();
     if (!customerName) { alert('Please enter customer name!'); return; }
   }
-  if (!amount || !method || !paidFor) { alert('Please fill in all required fields!'); return; }
-  if (parseFloat(amount) <= 0) { alert('Amount must be greater than 0!'); return; }
-
-  // Detect if an inventory item is being purchased
-  let invItemId   = null;
-  let invItemName = null;
-  const invQty = qty;
-  if (paidFor.startsWith('Inventory:')) {
-    const parts = paidFor.split(':');
-    invItemId   = parts[1];   // e.g. "2"
-    invItemName = parts[2];   // e.g. "Sting"
-  }
+  if (!method) { alert('Please select a payment method.'); return; }
 
   btn.disabled = true; btn.textContent = 'Saving...';
+
+  const grand = payCart.reduce((s, i) => s + i.price * i.qty, 0);
+
+  // Save all cart items as one combined transaction
+  const lineItems = payCart.map(i => ({
+    paid_for:    i.invItemId ? ('Inventory - ' + i.invItemName) : i.paidFor,
+    amount:      i.price * i.qty,
+    inv_item_id: i.invItemId || null,
+    inv_qty:     i.invItemId ? i.qty : null,
+  }));
 
   fetch('../Database/save_transaction.php', {
     method: 'POST',
@@ -839,32 +939,45 @@ function processPayment() {
       customer_type:  customerType,
       member_ref:     memberId,
       customer_name:  customerName,
-      amount: total,
+      amount:         grand,
       payment_method: method,
-      paid_for:       invItemId ? ('Inventory - ' + invItemName) : paidFor,
-      notes,
-      inv_item_id:    invItemId,
-      inv_qty:        invQty,
+      paid_for:       payCart.map(i => i.displayName).join(', '),
+      notes:          payCart.map(i => `${i.displayName} x${i.qty}`).join(' | '),
+      line_items:     lineItems,
+      // legacy single-item fields (for backward compat):
+      inv_item_id:    null,
+      inv_qty:        null,
     })
   })
   .then(r => r.json())
- .then(data => {
+  .then(data => {
     btn.disabled = false; btn.textContent = 'Generate Receipt';
     if (!data.success) { alert(data.error || 'Failed to save transaction.'); return; }
 
-    if (invItemId) {
-      deductInventoryStock(invItemId, invItemName, invQty);
-    }
-    if (!invItemId) {
-      recordEntryFeeToLocalStorage(paidFor, customerType);
-    }
+    // Deduct inventory stock for each inventory item
+    payCart.forEach(item => {
+      if (item.invItemId) deductInventoryStock(item.invItemId, item.invItemName, item.qty);
+      else recordEntryFeeToLocalStorage(item.paidFor, customerType);
+    });
 
-    displayReceipt(data.receipt);
+    // Build receipt with itemized list
+    const receiptData = {
+      ...data.receipt,
+      amount: grand,
+      lineItems: payCart.map(i => ({
+        name: i.displayName,
+        qty:  i.qty,
+        sub:  i.price * i.qty,
+      })),
+    };
+    displayReceipt(receiptData);
     clearPaymentForm();
   })
-  .catch(() => { btn.disabled = false; btn.textContent = 'Generate Receipt'; alert('Unable to save transaction right now.'); });
+  .catch(() => {
+    btn.disabled = false; btn.textContent = 'Generate Receipt';
+    alert('Unable to save transaction right now.');
+  });
 }
-
 /**
  * Called after a successful inventory item payment.
  * 1. POSTs to inventory.php to deduct stock server-side.
@@ -932,6 +1045,19 @@ function displayReceipt(receipt) {
   const custInfo = receipt.customerType === 'member'
     ? `<p style="margin:5px 0;"><strong>Member ID:</strong> ${receipt.memberId}</p>`
     : `<p style="margin:5px 0;"><strong>Customer:</strong> ${receipt.customerName}</p>`;
+
+  const itemsHtml = (receipt.lineItems && receipt.lineItems.length > 0)
+    ? `<div style="margin:10px 0;padding:10px;background:#111;border:1px solid #2a2a2a;">
+        <div style="font-size:10.5px;color:#666;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Items</div>
+        ${receipt.lineItems.map(li =>
+          `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1e1e1e;font-size:13px;">
+            <span>${escapeHtml(li.name)} <span style="color:#555;">x${li.qty}</span></span>
+            <span style="color:#FFCC00;">₱${li.sub.toFixed(2)}</span>
+          </div>`
+        ).join('')}
+      </div>`
+    : '';
+
   content.innerHTML = `
     <div style="margin-bottom:14px;">
       <p style="margin:5px 0;color:#999;font-size:12px;"><strong style="color:#fff;">Receipt #:</strong> ${receipt.receiptNumber}</p>
@@ -940,20 +1066,19 @@ function displayReceipt(receipt) {
     <div style="padding:14px;background:#111;border:1px solid #2a2a2a;margin:14px 0;">
       ${custInfo}
       <p style="margin:5px 0;"><strong>Type:</strong> ${receipt.customerType === 'member' ? 'Member' : 'Walk-In'}</p>
-      <p style="margin:5px 0;"><strong>Paid For:</strong> ${receipt.paidFor || '-'}</p>
       <p style="margin:5px 0;"><strong>Payment:</strong> ${receipt.method}</p>
       <p style="margin:5px 0;"><strong>Status:</strong> <span style="color:#22d07a;">&#10003; ${receipt.status}</span></p>
-      ${receipt.notes ? `<p style="margin:5px 0;"><strong>Notes:</strong> ${receipt.notes}</p>` : ''}
     </div>
+    ${itemsHtml}
     <div style="border-top:1px dashed #333;padding-top:14px;">
       <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:700;">
         <span>TOTAL:</span><span style="color:#FFCC00;">&#8369;${receipt.amount.toFixed(2)}</span>
       </div>
     </div>`;
+
   window.currentReceipt = receipt;
   document.getElementById('receiptModal').style.display = 'flex';
 }
-
 function closeReceipt() {
   document.getElementById('receiptModal').style.display = 'none';
 }
