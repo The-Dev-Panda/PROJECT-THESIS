@@ -100,8 +100,13 @@ if ($intent === 'general') {
 }
 
 try {
-    $apiUrl = trim((string)($_ENV['API_URL'] ?? ''));
-    $apiToken = trim((string)($_ENV['API_BEARER_TOKEN'] ?? ''));
+    $stmt = $pdo->prepare('SELECT api_url, api_key FROM api_table LIMIT 1');
+    $stmt->execute();
+    $result = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    
+    $apiUrl = trim((string)($result['api_url'] ?? ''));
+    $apiToken = $result['api_key'] ?? null;
+
     if ($apiUrl === '' || $apiToken === '') {
         redirectWithFlash('AI advisor configuration is incomplete. Please contact admin.');
     }
