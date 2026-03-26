@@ -62,7 +62,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             echo json_encode(['success' => true, 'members' => $members]);
             exit;
         }
+if ($action === 'save_monthly') {
+    $memberId = $_POST['member_id'] ?? null;
+    $name     = trim($_POST['name'] ?? '');
 
+    if (empty($name)) {
+        echo json_encode(['success' => false, 'message' => 'Name is required.']);
+        exit;
+    }
+
+    $today = date('Y-m-d');
+
+    // Check for an active (non-expired) monthly record with the same name
+    $checkStmt = $pdo->prepare("
+        SELECT id, expires_in FROM monthly
+        WHERE name = :name AND expires_in >= :today
+        LIMIT 1
+    ");
+    $checkStmt->execute([':name' => $name, ':today' => $today]);
+    $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existing) {
+        echo json_encode([
+            'success'    => false,
+            'duplicate'  => true,
+            'message'    => $name . ' already has an active monthly subscription that expires on ' . $existing['expires_in'] . '.',
+        ]);
+        exit;
+    }
+
+    $expiresIn = date('Y-m-d', strtotime('+30 days'));
+
+    $stmt = $pdo->prepare("
+        INSERT INTO monthly (member, name, expires_in)
+        VALUES (:member, :name, :expires_in)
+    ");
+    $stmt->execute([
+        ':member'     => $memberId ?: null,
+        ':name'       => $name,
+        ':expires_in' => $expiresIn,
+    ]);
+
+    echo json_encode([
+        'success'    => true,
+        'expires_in' => $expiresIn,
+        'insert_id'  => $pdo->lastInsertId(),
+    ]);
+    exit;
+}
         echo json_encode(['success' => false, 'message' => 'Unknown action']);
         exit;
 
@@ -459,7 +506,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <label>Item / Service</label>
             <select id="paymentPaidFor" class="form-input" onchange="autoFillAmount(this.value)">
               <option value="">Select category...</option>
-              <option value="Membership">Membership</option>
+             <option value="Membership">Membership / Renewal</option>
               <option value="Monthly">Monthly</option>
               <option value="Day Pass / Walk-In">Day Pass / Walk-In</option>
               <option value="Special Rate">Special Rate</option>
@@ -810,10 +857,25 @@ function autoFillAmount(paidFor) {
     updateUnitTotal();
     return;
   }
-  const defaults = { 'Membership': 500, 'Monthly': 650, 'Day Pass / Walk-In': 50, 'Special Rate': 40 };
-  const walkInOverrides = { 'Monthly': 750, 'Day Pass / Walk-In': 60 };
-  let price = defaults[paidFor] ?? null;
-  if (customerType === 'non-member' && paidFor in walkInOverrides) price = walkInOverrides[paidFor];
+
+  // Member prices (radio = member)
+  const memberPrices = {
+    'Membership':        650,   // renew membership
+    'Monthly':           650,   // monthly fee for members
+    'Day Pass / Walk-In': 50,   // member walk-in
+    'Special Rate':       40,
+  };
+
+  // Walk-In prices (radio = non-member)
+  const walkInPrices = {
+    'Membership':        500,   // new membership registration
+    'Monthly':           750,   // monthly for walk-in
+    'Day Pass / Walk-In': 60,   // non-member walk-in
+    'Special Rate':       40,
+  };
+
+  const priceTable = customerType === 'non-member' ? walkInPrices : memberPrices;
+  const price = priceTable[paidFor] ?? null;
   amountInput.value = price !== null ? price.toFixed(2) : '';
   updateUnitTotal();
 }
@@ -993,9 +1055,20 @@ function processPayment() {
     if (!data.success) { alert(data.error || 'Failed to save transaction.'); return; }
 
     // Deduct inventory stock for each inventory item
+   // Deduct inventory stock and handle monthly registration
     payCart.forEach(item => {
-      if (item.invItemId) deductInventoryStock(item.invItemId, item.invItemName, item.qty);
-      else recordEntryFeeToLocalStorage(item.paidFor, customerType);
+      if (item.invItemId) {
+        deductInventoryStock(item.invItemId, item.invItemName, item.qty);
+      } else {
+        recordEntryFeeToLocalStorage(item.paidFor, customerType);
+
+        
+
+        // If Monthly payment, insert into monthly table
+        if (item.paidFor === 'Monthly') {
+          saveMonthlyRecord(customerType, memberId, customerName);
+        }
+      }
     });
 
     // Build receipt with itemized list
@@ -1066,18 +1139,60 @@ function recordEntryFeeToLocalStorage(paidFor, customerType) {
   if (paidFor === 'Day Pass / Walk-In' && customerType === 'non-member') {
     tally.non_member = (tally.non_member || 0) + 1;
   } else if (paidFor === 'Day Pass / Walk-In' && customerType === 'member') {
-    tally.member_walkin = (tally.member_walkin || 0) + 1;  // ✅ separated
-  } else if (paidFor === 'Membership') {
-    tally.membership = (tally.membership || 0) + 1;         // ✅ separated
+    tally.member_walkin = (tally.member_walkin || 0) + 1;
+  } else if (paidFor === 'Membership / Renewal' || paidFor === 'Membership') {
+    tally.membership = (tally.membership || 0) + 1;
   } else if (paidFor === 'Special Rate') {
     tally.special = (tally.special || 0) + 1;
   } else if (paidFor === 'Monthly') {
-    tally.monthly = (tally.monthly || 0) + 1;
+    // Store both count AND amount so logsheet can show correct total
+    tally.monthly       = (tally.monthly || 0) + 1;
+    tally.monthly_total = (tally.monthly_total || 0) +
+      (customerType === 'non-member' ? 750 : 650);
   }
 
   localStorage.setItem(ENTRY_KEY, JSON.stringify(tally));
 }
+function saveMonthlyRecord(customerType, memberId, customerName) {
+  let name = '';
+  let mId  = null;
 
+  if (customerType === 'member' && memberId) {
+    const found = allMembers.find(m => String(m.id) === String(memberId));
+    if (found) {
+      name = [found.first_name, found.last_name].filter(Boolean).join(' ') || found.username || '';
+    }
+    mId = memberId;
+  } else {
+    // Walk-in: use the entered customer name, no member_id
+    name = customerName || '';
+    mId  = null;
+  }
+
+  if (!name) {
+    console.warn('saveMonthlyRecord: no name resolved, aborting.');
+    return;
+  }
+
+  const fd = new FormData();
+  fd.append('action',    'save_monthly');
+  fd.append('member_id', mId || '');   // empty string → PHP converts to null
+  fd.append('name',      name);
+
+  fetch('staff.php', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        console.log('Monthly record saved. Expires:', data.expires_in);
+      } else if (data.duplicate) {
+        // Show a clear alert to the staff immediately
+        alert('⚠️ Duplicate Monthly Subscription\n\n' + data.message);
+      } else {
+        console.warn('Monthly save failed:', data.message);
+      }
+    })
+    .catch(err => console.warn('Monthly save error:', err));
+}
 function displayReceipt(receipt) {
   const content = document.getElementById('receiptContent');
   const custInfo = receipt.customerType === 'member'

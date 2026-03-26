@@ -157,8 +157,11 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
     <meta charset="utf-8">
     <title>Expense Management - FITSTOP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../staff/staff.css">
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 
     <style>
         .sortable-header {
@@ -214,23 +217,23 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                 <form method="POST" action="process_expenses.php">
                     <?php echo fitstop_csrf_input(); ?>
                     <input type="hidden" name="action" value="add">
-                    <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr auto;">
-                        <div class="form-group">
+                    <div class="row">
+                        <div class="form-group col-sm-12 col-xl-3">
                             <label class="form-label">Expense Name</label>
                             <input type="text" name="expense_name" class="form-input"
                                 placeholder="e.g., Equipment Purchase" maxlength="100" required>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group col-sm-12 col-xl-3">
                             <label class="form-label">Amount (₱)</label>
                             <input type="text" name="expense" class="form-input number-only" placeholder="0.00"
                                 maxlength="12" required>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group form-group col-sm-12 col-xl-5">
                             <label class="form-label">Description</label>
                             <input type="text" name="description" class="form-input"
                                 placeholder="Details about the expense" maxlength="200">
                         </div>
-                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <div class="form-group col-sm-12 col-xl-1">
                             <button type="submit" class="btn-primary" style="width: 100%;">
                                 <i class="bi bi-plus-circle"></i> Add
                             </button>
@@ -242,42 +245,50 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
 
         <!-- Search & Filter Section -->
         <section>
-            <div class="inventory-header">
-                <form method="GET" class="search-container">
-                    <div class="search-wrapper" style="flex: 2;">
-                        <i class="bi bi-search search-icon"></i>
-                        <input type="text" name="search" class="search-input" placeholder="Search expenses..."
-                            value="<?php echo htmlspecialchars($search); ?>">
+            <form method="GET">
+                <div class="row my-2">
+                    <div class="col-sm-12 col-xl-2">
+                        <div class="search-wrapper" style="flex: 2;">
+                            <i class="bi bi-search search-icon"></i>
+                            <input type="text" name="search" class="search-input" placeholder="Search expenses..."
+                                value="<?php echo htmlspecialchars($search); ?>">
+                        </div>
                     </div>
-
-                    <select name="time" class="search-input">
-                        <option value="">All Time</option>
-                        <option value="today" <?php echo $time_filter === 'today' ? 'selected' : ''; ?>>Today</option>
-                        <option value="week" <?php echo $time_filter === 'week' ? 'selected' : ''; ?>>Last 7 Days</option>
-                        <option value="month" <?php echo $time_filter === 'month' ? 'selected' : ''; ?>>Last 30 Days
-                        </option>
-                        <option value="year" <?php echo $time_filter === 'year' ? 'selected' : ''; ?>>Last Year</option>
-                    </select>
-
+                    <div class="col-sm-12 col-xl-2">
+                        <select name="time" class="search-input">
+                            <option value="">All Time</option>
+                            <option value="today" <?php echo $time_filter === 'today' ? 'selected' : ''; ?>>Today</option>
+                            <option value="week" <?php echo $time_filter === 'week' ? 'selected' : ''; ?>>Last 7 Days
+                            </option>
+                            <option value="month" <?php echo $time_filter === 'month' ? 'selected' : ''; ?>>Last 30 Days
+                            </option>
+                            <option value="year" <?php echo $time_filter === 'year' ? 'selected' : ''; ?>>Last Year
+                            </option>
+                        </select>
+                    </div>
                     <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
                     <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
+                    <div class="col-sm-12 col-xl-2 my-1">
+                        <button type="submit" class="search-btn">
+                            <i class="bi bi-funnel"></i> Filter
+                        </button>
+                    </div>
+                    <div class="col-sm-12 col-xl-2 d-flex justify-content-center my-1">
+                        <?php if ($search || $time_filter): ?>
+                            <a href="expenses.php" class="btn-secondary" style="padding: 11px 22px; text-decoration: none;">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-sm-12 col-xl-2 d-flex justify-content-center my-1">
+                        <a href="export_expenses.php?<?php echo http_build_query(['search' => $search, 'time' => $time_filter]); ?>"
+                            class="add-btn" style="background: var(--success); text-decoration: none;">
+                            <i class="bi bi-file-earmark-excel"></i> Export to Excel
+                        </a>
+                    </div>
+                </div>
+            </form>
 
-                    <button type="submit" class="search-btn">
-                        <i class="bi bi-funnel"></i> Filter
-                    </button>
-                </form>
-
-                <?php if ($search || $time_filter): ?>
-                    <a href="expenses.php" class="btn-secondary" style="padding: 11px 22px; text-decoration: none;">
-                        <i class="bi bi-x-circle"></i> Clear
-                    </a>
-                <?php endif; ?>
-
-                <a href="export_expenses.php?<?php echo http_build_query(['search' => $search, 'time' => $time_filter]); ?>"
-                    class="add-btn" style="background: var(--success); text-decoration: none;">
-                    <i class="bi bi-file-earmark-excel"></i> Export to Excel
-                </a>
-            </div>
 
             <!-- Expense Statistics -->
             <div style="margin-bottom: 20px;">

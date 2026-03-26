@@ -535,7 +535,7 @@ try {
               <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars($row['description'] ?? '—') ?></td>
               <td class="created-cell" style="font-size:12px;"><?= $row['created_at'] ?></td>
               <td class="updated-cell" style="font-size:12px;"><?= $row['updated_at'] ?></td>
-              <td><span class="status-badge <?= $statusCls ?>"><?= $statusTxt ?></span></td>
+             <td><span class="status-badge <?= $statusCls ?>"><?= $statusTxt ?></span></td>
             </tr>
             <?php endforeach; ?>
           </tbody>
@@ -660,7 +660,7 @@ try {
               <td><input type="number" class="sf-input sf-entry" data-rate="0" id="sfMonthly" min="0" value="0" readonly></td>
               <td class="rate">&#8369;650/750</td>
               <td class="tot" id="sfMonthlyTot">&#8369;0.00</td>
-              <td class="tot sf-entry-tally" id="sfMonthlyTally" data-tally="0">—</td>
+              <td class="tot sf-entry-tally" id="sfMonthlyTally" data-tally="0" data-total="0">—</td>
             </tr>
           </tbody>
         </table>
@@ -880,11 +880,20 @@ function closeSalesModal() {
 }
 
 function sfRecalc() {
-  let entryTotal = 0;
+ let entryTotal = 0;
   document.querySelectorAll('.sf-entry').forEach(inp => {
     const count = parseInt(inp.value) || 0;
     const rate  = parseFloat(inp.dataset.rate) || 0;
-    const tot   = count * rate;
+    let tot;
+
+    if (inp.id === 'sfMonthly') {
+      // Monthly has mixed rates (650 member / 750 walk-in), use stored total
+      const tallyCell = document.getElementById('sfMonthlyTally');
+      tot = parseFloat(tallyCell?.dataset.total || 0);
+    } else {
+      tot = count * rate;
+    }
+
     entryTotal += tot;
     const el = document.getElementById(inp.id + 'Tot');
     if (el) el.innerHTML = fmt(tot);
@@ -970,19 +979,29 @@ function applyLocalStorageTally() {
       const prevCount = parseInt(inp.dataset.lastTally || 0);
 
       if (newCount > prevCount) {
-        inp.value            = newCount;
+        inp.value             = newCount;
         inp.dataset.lastTally = newCount;
 
-        // Update tally display column
         if (tallyCell) {
-          const rate = parseFloat(inp.dataset.rate) || 0;
-          const prev = parseInt(tallyCell.dataset.tally) || 0;
+          const rate    = parseFloat(inp.dataset.rate) || 0;
+          const prev    = parseInt(tallyCell.dataset.tally) || 0;
           const updated = Math.max(prev, newCount);
           tallyCell.dataset.tally = updated;
-          tallyCell.innerHTML = `<span style="font-weight:700;">${updated}</span>
-            <span style="font-size:10.5px;color:var(--text-muted);display:block;">
-              ${rate > 0 ? fmt(updated * rate) : '(see rate)'}
-            </span>`;
+
+          // Monthly uses stored total from localStorage (mixed 650/750 rates)
+          if (key === 'monthly') {
+            const monthlyTotal = parseFloat(entryTally['monthly_total']) || 0;
+            tallyCell.dataset.total = monthlyTotal;
+            tallyCell.innerHTML = `<span style="font-weight:700;">${updated}</span>
+              <span style="font-size:10.5px;color:var(--text-muted);display:block;">
+                ${fmt(monthlyTotal)}
+              </span>`;
+          } else {
+            tallyCell.innerHTML = `<span style="font-weight:700;">${updated}</span>
+              <span style="font-size:10.5px;color:var(--text-muted);display:block;">
+                ${rate > 0 ? fmt(updated * rate) : '(see rate)'}
+              </span>`;
+          }
         }
       }
     });
