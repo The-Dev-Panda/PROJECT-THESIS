@@ -37,6 +37,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
+        if ($action === 'check_monthly_dup') {
+            $name  = trim($_POST['name'] ?? '');
+            $today = date('Y-m-d');
+
+            if (empty($name)) {
+                echo json_encode(['duplicate' => false]);
+                exit;
+            }
+
+            $stmt = $pdo->prepare("
+                SELECT id, expires_in FROM monthly
+                WHERE name = :name AND expires_in >= :today
+                LIMIT 1
+            ");
+            $stmt->execute([':name' => $name, ':today' => $today]);
+            $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($existing) {
+                echo json_encode([
+                    'duplicate'  => true,
+                    'monthly_id' => $existing['id'],
+                    'expires_in' => $existing['expires_in'],
+                ]);
+            } else {
+                echo json_encode(['duplicate' => false]);
+            }
+            exit;
+        }
+
         if ($action === 'get_members') {
             $members = $pdo->query("
                 SELECT id, username, first_name, last_name, email
@@ -48,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
-      if ($action === 'get_active_members') {
+        if ($action === 'get_active_members') {
             $members = $pdo->query("
                 SELECT u.id, u.username, u.first_name, u.last_name, u.email,
                        u.points, u.created_at, u.profile_picture,
@@ -62,54 +91,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             echo json_encode(['success' => true, 'members' => $members]);
             exit;
         }
-if ($action === 'save_monthly') {
-    $memberId = $_POST['member_id'] ?? null;
-    $name     = trim($_POST['name'] ?? '');
 
-    if (empty($name)) {
-        echo json_encode(['success' => false, 'message' => 'Name is required.']);
-        exit;
-    }
+        if ($action === 'save_monthly') {
+            $memberId = $_POST['member_id'] ?? null;
+            $name     = trim($_POST['name'] ?? '');
 
-    $today = date('Y-m-d');
+            if (empty($name)) {
+                echo json_encode(['success' => false, 'message' => 'Name is required.']);
+                exit;
+            }
 
-    // Check for an active (non-expired) monthly record with the same name
-    $checkStmt = $pdo->prepare("
-        SELECT id, expires_in FROM monthly
-        WHERE name = :name AND expires_in >= :today
-        LIMIT 1
-    ");
-    $checkStmt->execute([':name' => $name, ':today' => $today]);
-    $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
+            $today = date('Y-m-d');
 
-    if ($existing) {
-        echo json_encode([
-            'success'    => false,
-            'duplicate'  => true,
-            'message'    => $name . ' already has an active monthly subscription that expires on ' . $existing['expires_in'] . '.',
-        ]);
-        exit;
-    }
+            $checkStmt = $pdo->prepare("
+                SELECT id, expires_in FROM monthly
+                WHERE name = :name AND expires_in >= :today
+                LIMIT 1
+            ");
+            $checkStmt->execute([':name' => $name, ':today' => $today]);
+            $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
-    $expiresIn = date('Y-m-d', strtotime('+30 days'));
+            if ($existing) {
+                echo json_encode([
+                    'success'    => false,
+                    'duplicate'  => true,
+                    'message'    => $name . ' already has an active monthly subscription that expires on ' . $existing['expires_in'] . '.',
+                ]);
+                exit;
+            }
 
-    $stmt = $pdo->prepare("
-        INSERT INTO monthly (member, name, expires_in)
-        VALUES (:member, :name, :expires_in)
-    ");
-    $stmt->execute([
-        ':member'     => $memberId ?: null,
-        ':name'       => $name,
-        ':expires_in' => $expiresIn,
-    ]);
+            $expiresIn = date('Y-m-d', strtotime('+30 days'));
 
-    echo json_encode([
-        'success'    => true,
-        'expires_in' => $expiresIn,
-        'insert_id'  => $pdo->lastInsertId(),
-    ]);
-    exit;
-}
+            $stmt = $pdo->prepare("
+                INSERT INTO monthly (member, name, expires_in)
+                VALUES (:member, :name, :expires_in)
+            ");
+            $stmt->execute([
+                ':member'     => $memberId ?: null,
+                ':name'       => $name,
+                ':expires_in' => $expiresIn,
+            ]);
+
+            echo json_encode([
+                'success'    => true,
+                'expires_in' => $expiresIn,
+                'insert_id'  => $pdo->lastInsertId(),
+            ]);
+            exit;
+        }
+
+        if ($action === 'renew_monthly') {
+            $monthlyId = $_POST['monthly_id'] ?? null;
+
+            if (!$monthlyId) {
+                echo json_encode(['success' => false, 'message' => 'Subscription ID missing.']);
+                exit;
+            }
+
+            $stmt = $pdo->prepare("SELECT id, name, expires_in FROM monthly WHERE id = :id LIMIT 1");
+            $stmt->execute([':id' => $monthlyId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$row) {
+                echo json_encode(['success' => false, 'message' => 'Subscription record not found.']);
+                exit;
+            }
+
+            $currentExpiry  = new DateTime($row['expires_in']);
+            $newExpiry      = (clone $currentExpiry)->modify('+30 days');
+            $newExpiryStr   = $newExpiry->format('Y-m-d');
+            $daysLeft       = (new DateTime())->diff($currentExpiry)->days;
+
+            $update = $pdo->prepare("UPDATE monthly SET expires_in = :expires_in WHERE id = :id");
+            $update->execute([':expires_in' => $newExpiryStr, ':id' => $monthlyId]);
+
+            echo json_encode([
+                'success'    => true,
+                'new_expiry' => $newExpiryStr,
+                'days_left'  => $daysLeft,
+                'name'       => $row['name'],
+            ]);
+            exit;
+        }
+
         echo json_encode(['success' => false, 'message' => 'Unknown action']);
         exit;
 
@@ -213,7 +277,7 @@ if ($action === 'save_monthly') {
         <i class="bi bi-person-plus"></i>
         <span>Client Registration</span>
       </li>
-          <li id="inventoryBtn" onclick="window.location.href='inventory.php'" style="cursor:pointer;">
+      <li id="inventoryBtn" onclick="window.location.href='inventory.php'" style="cursor:pointer;">
         <i class="bi bi-box-seam"></i>
         <span>Inventory</span>
       </li>
@@ -290,7 +354,6 @@ if ($action === 'save_monthly') {
       </div>
     </div>
 
-    <!-- DASHBOARD -->
     <section id="dashboard">
       <div class="stats-grid">
         <div class="stat-box">
@@ -360,7 +423,6 @@ if ($action === 'save_monthly') {
       </section>
     </section>
 
-    <!-- CLIENT REGISTRATION -->
     <section class="registration-section" id="clientRegistration">
       <h2>Client Registration</h2>
       <div class="registration-card">
@@ -428,147 +490,137 @@ if ($action === 'save_monthly') {
       </div>
     </section>
 
-   <!-- PAYMENT PROCESSING -->
-<section class="registration-section">
-  <h2>Payment Processing</h2>
-  <div class="registration-card">
-    <form class="registration-form" id="paymentForm">
+    <section class="registration-section">
+      <h2>Payment Processing</h2>
+      <div class="registration-card">
+        <form class="registration-form" id="paymentForm">
 
-      <!-- Customer Type -->
-      <div style="margin-bottom:20px;">
-        <label style="color:var(--text-muted);font-size:10.5px;margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:block;">Customer Type</label>
-        <div style="display:flex;gap:20px;">
-          <label style="display:flex;align-items:center;cursor:pointer;color:var(--text-primary);gap:8px;font-size:13px;font-weight:600;">
-            <input type="radio" name="customerType" value="member" checked onchange="toggleCustomerType('member')"> Member
-          </label>
-          <label style="display:flex;align-items:center;cursor:pointer;color:var(--text-primary);gap:8px;font-size:13px;font-weight:600;">
-            <input type="radio" name="customerType" value="non-member" onchange="toggleCustomerType('non-member')"> Walk-In
-          </label>
-        </div>
-      </div>
-
-      <div class="form-grid">
-        <!-- Member searchable dropdown -->
-        <div class="form-group" id="memberIdGroup">
-          <label>Member <span style="font-size:10px;color:var(--text-muted);">(users only)</span></label>
-          <div class="member-select-wrap">
-            <div style="display:flex;gap:6px;align-items:center;">
-              <input type="text" id="memberSearchInput" class="member-search-input form-input"
-                placeholder="Search member name or username..." autocomplete="off"
-                oninput="filterMemberDropdown(this.value)" onfocus="openMemberDropdown()" style="flex:1;">
-              <button type="button" id="memberClearBtn" class="member-clear-btn"
-                onclick="clearMemberSelection()" style="display:none;" title="Clear">&#x2715;</button>
+          <div style="margin-bottom:20px;">
+            <label style="color:var(--text-muted);font-size:10.5px;margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:block;">Customer Type</label>
+            <div style="display:flex;gap:20px;">
+              <label style="display:flex;align-items:center;cursor:pointer;color:var(--text-primary);gap:8px;font-size:13px;font-weight:600;">
+                <input type="radio" name="customerType" value="member" checked onchange="toggleCustomerType('member')"> Member
+              </label>
+              <label style="display:flex;align-items:center;cursor:pointer;color:var(--text-primary);gap:8px;font-size:13px;font-weight:600;">
+                <input type="radio" name="customerType" value="non-member" onchange="toggleCustomerType('non-member')"> Walk-In
+              </label>
             </div>
-            <input type="hidden" id="paymentMemberID">
-            <div class="member-dropdown-list" id="memberDropdownList"></div>
           </div>
-        </div>
 
-        <!-- Walk-in name -->
-        <div class="form-group" id="customerNameGroup" style="display:none;">
-          <label>Customer Name</label>
-          <input type="text" id="paymentCustomerName" class="form-input" placeholder="Enter full name">
-        </div>
+          <div class="form-grid">
+            <div class="form-group" id="memberIdGroup">
+              <label>Member <span style="font-size:10px;color:var(--text-muted);">(users only)</span></label>
+              <div class="member-select-wrap">
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <input type="text" id="memberSearchInput" class="member-search-input form-input"
+                    placeholder="Search member name or username..." autocomplete="off"
+                    oninput="filterMemberDropdown(this.value)" onfocus="openMemberDropdown()" style="flex:1;">
+                  <button type="button" id="memberClearBtn" class="member-clear-btn"
+                    onclick="clearMemberSelection()" style="display:none;" title="Clear">&#x2715;</button>
+                </div>
+                <input type="hidden" id="paymentMemberID">
+                <div class="member-dropdown-list" id="memberDropdownList"></div>
+              </div>
+            </div>
 
-        <!-- Payment Method -->
-      <!-- Payment Method -->
-        <div class="form-group">
-          <label>Payment Method</label>
-          <select id="paymentMethod" class="form-input" onchange="toggleGcashRef(this.value)">
-            <option value="">Select Method</option>
-            <option value="Cash">Cash</option>
-            <option value="GCash">GCash</option>
-          </select>
-        </div>
+            <div class="form-group" id="customerNameGroup" style="display:none;">
+              <label>Customer Name</label>
+              <input type="text" id="paymentCustomerName" class="form-input" placeholder="Enter full name">
+            </div>
 
+            <div class="form-group">
+              <label>Payment Method</label>
+              <select id="paymentMethod" class="form-input" onchange="toggleGcashRef(this.value)">
+                <option value="">Select Method</option>
+                <option value="Cash">Cash</option>
+                <option value="GCash">GCash</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="gcashRefGroup" style="display:none;margin-bottom:16px;padding:14px;border:1px solid rgba(255,204,0,0.25);background:rgba(255,204,0,0.04);">
+            <label style="color:var(--text-muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:block;margin-bottom:8px;">
+              GCash Reference No. <span style="color:var(--danger);font-size:11px;text-transform:none;letter-spacing:0;">* Required</span>
+            </label>
+            <input type="text" id="gcashRefNumber" class="form-input"
+              placeholder="Enter 13-digit GCash reference number"
+              maxlength="13"
+              oninput="this.value=this.value.replace(/\D/g,'')"
+              style="max-width:320px;">
+            <span style="font-size:11px;color:var(--text-muted);margin-top:6px;display:block;">
+              <i class="bi bi-info-circle" style="margin-right:4px;"></i>Found in your GCash confirmation SMS after payment.
+            </span>
+          </div>
+
+          <div style="border-top:1px solid var(--border);padding-top:18px;margin-top:4px;">
+            <label style="color:var(--text-muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:block;margin-bottom:12px;">Add Item to Cart</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+              <div class="form-group" style="flex:2;min-width:160px;margin:0;">
+                <label>Item / Service</label>
+                <select id="paymentPaidFor" class="form-input" onchange="autoFillAmount(this.value)">
+                  <option value="">Select category...</option>
+                  <option value="Membership">Membership / Renewal</option>
+                  <option value="Monthly">Monthly</option>
+                  <option value="Day Pass / Walk-In">Day Pass / Walk-In</option>
+                  <option value="Special Rate">Special Rate</option>
+                  <optgroup label="── Inventory Items ──">
+                    <option value="Inventory:2:Sting"        data-inv-id="2"  data-price="20">Sting (Beverage)</option>
+                    <option value="Inventory:3:Amino"        data-inv-id="3"  data-price="10">Amino (Supplements)</option>
+                    <option value="Inventory:4:Pre-Workout"  data-inv-id="4"  data-price="35">Pre-Workout (Supplements)</option>
+                    <option value="Inventory:5:Gatorade"     data-inv-id="5"  data-price="25">Gatorade (Beverage)</option>
+                    <option value="Inventory:6:Creatine"     data-inv-id="6"  data-price="20">Creatine (Supplements)</option>
+                    <option value="Inventory:7:Whey"         data-inv-id="7"  data-price="75">Whey (Supplements)</option>
+                    <option value="Inventory:8:Protein Bar"  data-inv-id="8"  data-price="120">Protein Bar (Snacks)</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="form-group" style="width:80px;margin:0;">
+                <label>Qty</label>
+                <input type="number" id="paymentQty" value="1" min="1" class="form-input" style="text-align:center;" oninput="updateUnitTotal()">
+              </div>
+              <div class="form-group" style="width:120px;margin:0;">
+                <label>Unit Price (₱)</label>
+                <input type="number" id="paymentAmount" class="form-input" step="0.01" placeholder="0.00" oninput="updateUnitTotal()">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="visibility:hidden;">Add</label>
+                <button type="button" class="btn-primary" onclick="addToCart()"
+                  style="padding:10px 18px;font-size:12px;white-space:nowrap;">+ Add to Cart</button>
+              </div>
+            </div>
+            <div style="margin-top:6px;text-align:right;font-size:12px;color:var(--text-muted);">
+              Item subtotal: ₱<span id="unitSubtotal">0.00</span>
+            </div>
+          </div>
+
+          <div style="margin-top:20px;">
+            <div style="display:flex;align-items:center;margin-bottom:10px;gap:8px;">
+              <span style="font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;color:var(--text-muted);">Cart</span>
+              <span id="cartBadge" style="background:var(--hazard);color:#000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;font-family:'Chakra Petch',sans-serif;display:none;">0</span>
+            </div>
+            <div id="cartEmpty" style="border:1px dashed var(--border);padding:18px;text-align:center;color:var(--text-muted);font-size:13px;">
+              No items added yet.
+            </div>
+            <div id="cartTableWrap" style="display:none;">
+              <div style="display:grid;grid-template-columns:1fr 90px 90px 90px 34px;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;color:var(--text-muted);">
+                <span>Item</span><span>Unit ₱</span><span>Qty</span><span>Subtotal</span><span></span>
+              </div>
+              <div id="cartRows"></div>
+              <div style="display:flex;justify-content:flex-end;align-items:center;gap:16px;padding:16px 0 0;border-top:1px dashed var(--border);margin-top:8px;">
+                <span style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">Grand Total</span>
+                <span style="font-size:22px;font-weight:700;font-family:'Chakra Petch',sans-serif;color:var(--hazard);">₱<span id="cartGrandTotal">0.00</span></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions" style="margin-top:20px;">
+            <button type="button" class="btn-secondary" onclick="clearPaymentForm()">Clear All</button>
+            <button type="button" class="btn-primary" id="paymentSubmitBtn" onclick="processPayment()">Generate Receipt</button>
+          </div>
+        </form>
       </div>
+    </section>
 
-      <!-- GCash Reference Number — OUTSIDE form-grid so it spans full width -->
-      <div id="gcashRefGroup" style="display:none;margin-bottom:16px;padding:14px;border:1px solid rgba(255,204,0,0.25);background:rgba(255,204,0,0.04);">
-        <label style="color:var(--text-muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:block;margin-bottom:8px;">
-          GCash Reference No. <span style="color:var(--danger);font-size:11px;text-transform:none;letter-spacing:0;">* Required</span>
-        </label>
-        <input type="text" id="gcashRefNumber" class="form-input"
-          placeholder="Enter 13-digit GCash reference number"
-          maxlength="13"
-          oninput="this.value=this.value.replace(/\D/g,'')"
-          style="max-width:320px;">
-        <span style="font-size:11px;color:var(--text-muted);margin-top:6px;display:block;">
-          <i class="bi bi-info-circle" style="margin-right:4px;"></i>Found in your GCash confirmation SMS after payment.
-        </span>
-      </div>
-
-      <!-- ADD TO CART ROW -->
-      <div style="border-top:1px solid var(--border);padding-top:18px;margin-top:4px;">
-        <label style="color:var(--text-muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:block;margin-bottom:12px;">Add Item to Cart</label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-          <div class="form-group" style="flex:2;min-width:160px;margin:0;">
-            <label>Item / Service</label>
-            <select id="paymentPaidFor" class="form-input" onchange="autoFillAmount(this.value)">
-              <option value="">Select category...</option>
-             <option value="Membership">Membership / Renewal</option>
-              <option value="Monthly">Monthly</option>
-              <option value="Day Pass / Walk-In">Day Pass / Walk-In</option>
-              <option value="Special Rate">Special Rate</option>
-              <optgroup label="── Inventory Items ──">
-                <option value="Inventory:2:Sting"        data-inv-id="2"  data-price="20">Sting (Beverage)</option>
-                <option value="Inventory:3:Amino"        data-inv-id="3"  data-price="10">Amino (Supplements)</option>
-                <option value="Inventory:4:Pre-Workout"  data-inv-id="4"  data-price="35">Pre-Workout (Supplements)</option>
-                <option value="Inventory:5:Gatorade"     data-inv-id="5"  data-price="25">Gatorade (Beverage)</option>
-                <option value="Inventory:6:Creatine"     data-inv-id="6"  data-price="20">Creatine (Supplements)</option>
-                <option value="Inventory:7:Whey"         data-inv-id="7"  data-price="75">Whey (Supplements)</option>
-                <option value="Inventory:8:Protein Bar"  data-inv-id="8"  data-price="120">Protein Bar (Snacks)</option>
-              </optgroup>
-            </select>
-          </div>
-          <div class="form-group" style="width:80px;margin:0;">
-            <label>Qty</label>
-            <input type="number" id="paymentQty" value="1" min="1" class="form-input" style="text-align:center;" oninput="updateUnitTotal()">
-          </div>
-          <div class="form-group" style="width:120px;margin:0;">
-            <label>Unit Price (₱)</label>
-            <input type="number" id="paymentAmount" class="form-input" step="0.01" placeholder="0.00" oninput="updateUnitTotal()">
-          </div>
-          <div class="form-group" style="margin:0;">
-            <label style="visibility:hidden;">Add</label>
-            <button type="button" class="btn-primary" onclick="addToCart()"
-              style="padding:10px 18px;font-size:12px;white-space:nowrap;">+ Add to Cart</button>
-          </div>
-        </div>
-        <div style="margin-top:6px;text-align:right;font-size:12px;color:var(--text-muted);">
-          Item subtotal: ₱<span id="unitSubtotal">0.00</span>
-        </div>
-      </div>
-
-      <!-- CART TABLE -->
-      <div style="margin-top:20px;">
-        <div style="display:flex;align-items:center;margin-bottom:10px;gap:8px;">
-          <span style="font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;color:var(--text-muted);">Cart</span>
-          <span id="cartBadge" style="background:var(--hazard);color:#000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;font-family:'Chakra Petch',sans-serif;display:none;">0</span>
-        </div>
-        <div id="cartEmpty" style="border:1px dashed var(--border);padding:18px;text-align:center;color:var(--text-muted);font-size:13px;">
-          No items added yet.
-        </div>
-        <div id="cartTableWrap" style="display:none;">
-          <div style="display:grid;grid-template-columns:1fr 90px 90px 90px 34px;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;color:var(--text-muted);">
-            <span>Item</span><span>Unit ₱</span><span>Qty</span><span>Subtotal</span><span></span>
-          </div>
-          <div id="cartRows"></div>
-          <div style="display:flex;justify-content:flex-end;align-items:center;gap:16px;padding:16px 0 0;border-top:1px dashed var(--border);margin-top:8px;">
-            <span style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">Grand Total</span>
-            <span style="font-size:22px;font-weight:700;font-family:'Chakra Petch',sans-serif;color:var(--hazard);">₱<span id="cartGrandTotal">0.00</span></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-actions" style="margin-top:20px;">
-        <button type="button" class="btn-secondary" onclick="clearPaymentForm()">Clear All</button>
-        <button type="button" class="btn-primary" id="paymentSubmitBtn" onclick="processPayment()">Generate Receipt</button>
-      </div>
-    </form>
-  </div>
-</section>
-    <!-- ATTENDANCE -->
     <section class="attendance-section" id="attendance">
       <h2>Workout / Performance Log</h2>
       <div class="registration-card" style="margin-bottom:20px;">
@@ -627,7 +679,6 @@ if ($action === 'save_monthly') {
       </div>
     </section>
 
-    <!-- ID GENERATION -->
     <section id="idGeneration">
       <h2>ID Generation</h2>
       <div class="registration-card">
@@ -646,7 +697,6 @@ if ($action === 'save_monthly') {
       </div>
     </section>
 
-    <!-- SETTINGS -->
     <section id="settings">
       <h2>Settings</h2>
       <div class="registration-card">
@@ -655,7 +705,6 @@ if ($action === 'save_monthly') {
     </section>
     </div>
 
-<!-- RECEIPT MODAL -->
 <div id="receiptModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#161616;border:1px solid #333;border-top:2px solid #FFCC00;padding:36px;max-width:480px;width:90%;color:#fff;">
     <div style="text-align:center;margin-bottom:24px;padding-bottom:20px;border-bottom:1px dashed #333;">
@@ -815,7 +864,6 @@ function toggleCustomerType(type) {
     document.getElementById('paymentMemberID').value   = '';
     document.getElementById('memberClearBtn').style.display = 'none';
   }
-
   const paidForSelect = document.getElementById('paymentPaidFor');
   if (paidForSelect) {
     autoFillAmount(paidForSelect.value);
@@ -835,8 +883,6 @@ function toggleGcashRef(method) {
   }
 }
 
-
- // ── Cart state ──────────────────────────────────────────────────────────────
 let payCart = [];
 
 function updateUnitTotal() {
@@ -858,19 +904,17 @@ function autoFillAmount(paidFor) {
     return;
   }
 
-  // Member prices (radio = member)
   const memberPrices = {
-    'Membership':        650,   // renew membership
-    'Monthly':           650,   // monthly fee for members
-    'Day Pass / Walk-In': 50,   // member walk-in
+    'Membership':         650,
+    'Monthly':            650,
+    'Day Pass / Walk-In': 50,
     'Special Rate':       40,
   };
 
-  // Walk-In prices (radio = non-member)
   const walkInPrices = {
-    'Membership':        500,   // new membership registration
-    'Monthly':           750,   // monthly for walk-in
-    'Day Pass / Walk-In': 60,   // non-member walk-in
+    'Membership':         500,
+    'Monthly':            750,
+    'Day Pass / Walk-In': 60,
     'Special Rate':       40,
   };
 
@@ -889,7 +933,6 @@ function addToCart() {
   if (price <= 0) { alert('Please enter a valid price.'); return; }
   if (qty < 1)   { alert('Quantity must be at least 1.'); return; }
 
-  // Determine display name
   let displayName = paidFor;
   let invItemId = null, invItemName = null;
   if (paidFor.startsWith('Inventory:')) {
@@ -902,24 +945,14 @@ function addToCart() {
     if (opt && opt.text) displayName = opt.text.replace(/\s*\(.*\)/, '').trim();
   }
 
-  // Merge if same item already in cart
   const existing = payCart.find(i => i.paidFor === paidFor && i.price === price);
   if (existing) {
     existing.qty += qty;
   } else {
-    payCart.push({
-      id: Date.now(),
-      paidFor,
-      displayName,
-      price,
-      qty,
-      invItemId,
-      invItemName,
-    });
+    payCart.push({ id: Date.now(), paidFor, displayName, price, qty, invItemId, invItemName });
   }
 
   renderCart();
-  // Reset item selector row
   document.getElementById('paymentPaidFor').value = '';
   document.getElementById('paymentAmount').value  = '';
   document.getElementById('paymentQty').value     = 1;
@@ -939,11 +972,11 @@ function cartRemove(id) {
 }
 
 function renderCart() {
-  const badge    = document.getElementById('cartBadge');
-  const empty    = document.getElementById('cartEmpty');
-  const wrap     = document.getElementById('cartTableWrap');
-  const rows     = document.getElementById('cartRows');
-  const grandEl  = document.getElementById('cartGrandTotal');
+  const badge   = document.getElementById('cartBadge');
+  const empty   = document.getElementById('cartEmpty');
+  const wrap    = document.getElementById('cartTableWrap');
+  const rows    = document.getElementById('cartRows');
+  const grandEl = document.getElementById('cartGrandTotal');
 
   badge.textContent = payCart.length;
   badge.style.display = payCart.length > 0 ? 'inline-block' : 'none';
@@ -1020,11 +1053,48 @@ function processPayment() {
     if (gcashRef.length < 13) { alert('GCash reference number must be 13 digits.'); return; }
   }
 
+  const hasMonthly = payCart.some(i => i.paidFor === 'Monthly');
+
+  if (hasMonthly) {
+    let monthlyName = '';
+    if (customerType === 'member' && memberId) {
+      const found = allMembers.find(m => String(m.id) === String(memberId));
+      monthlyName = found ? ([found.first_name, found.last_name].filter(Boolean).join(' ') || found.username) : '';
+    } else {
+      monthlyName = customerName || '';
+    }
+
+    const fd = new FormData();
+    fd.append('action', 'check_monthly_dup');
+    fd.append('name', monthlyName);
+
+    btn.disabled = true; btn.textContent = 'Checking...';
+
+    fetch('staff.php', { method: 'POST', body: fd })
+      .then(r => r.json())
+      .then(data => {
+        if (data.duplicate) {
+          btn.disabled = false; btn.textContent = 'Generate Receipt';
+          showMonthlyRenewPrompt(data, monthlyName, null, customerType, memberId, customerName);
+        } else {
+          doSaveTransaction(customerType, memberId, customerName, method, gcashRef, btn);
+        }
+      })
+      .catch(() => {
+        btn.disabled = false; btn.textContent = 'Generate Receipt';
+        alert('Could not verify monthly subscription. Please try again.');
+      });
+
+  } else {
+    btn.disabled = true; btn.textContent = 'Saving...';
+    doSaveTransaction(customerType, memberId, customerName, method, gcashRef, btn);
+  }
+}
+
+function doSaveTransaction(customerType, memberId, customerName, method, gcashRef, btn) {
   btn.disabled = true; btn.textContent = 'Saving...';
 
   const grand = payCart.reduce((s, i) => s + i.price * i.qty, 0);
-
-  // Save all cart items as one combined transaction
   const lineItems = payCart.map(i => ({
     paid_for:    i.invItemId ? ('Inventory - ' + i.invItemName) : i.paidFor,
     amount:      i.price * i.qty,
@@ -1035,13 +1105,13 @@ function processPayment() {
   fetch('../Database/save_transaction.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-   body: JSON.stringify({
+    body: JSON.stringify({
       customer_type:  customerType,
       member_ref:     memberId,
       customer_name:  customerName,
       amount:         grand,
       payment_method: method,
-      gcash_ref:      gcashRef,          // ← add this line
+      gcash_ref:      gcashRef,
       paid_for:       payCart.map(i => i.displayName).join(', '),
       notes:          payCart.map(i => `${i.displayName} x${i.qty}`).join(' | '),
       line_items:     lineItems,
@@ -1054,32 +1124,21 @@ function processPayment() {
     btn.disabled = false; btn.textContent = 'Generate Receipt';
     if (!data.success) { alert(data.error || 'Failed to save transaction.'); return; }
 
-    // Deduct inventory stock for each inventory item
-   // Deduct inventory stock and handle monthly registration
     payCart.forEach(item => {
       if (item.invItemId) {
         deductInventoryStock(item.invItemId, item.invItemName, item.qty);
       } else {
         recordEntryFeeToLocalStorage(item.paidFor, customerType);
-
-        
-
-        // If Monthly payment, insert into monthly table
         if (item.paidFor === 'Monthly') {
           saveMonthlyRecord(customerType, memberId, customerName);
         }
       }
     });
 
-    // Build receipt with itemized list
     const receiptData = {
       ...data.receipt,
       amount: grand,
-      lineItems: payCart.map(i => ({
-        name: i.displayName,
-        qty:  i.qty,
-        sub:  i.price * i.qty,
-      })),
+      lineItems: payCart.map(i => ({ name: i.displayName, qty: i.qty, sub: i.price * i.qty })),
     };
     displayReceipt(receiptData);
     clearPaymentForm();
@@ -1089,19 +1148,12 @@ function processPayment() {
     alert('Unable to save transaction right now.');
   });
 }
-/**
- * Called after a successful inventory item payment.
- * 1. POSTs to inventory.php to deduct stock server-side.
- * 2. Writes the sale into localStorage so inventory.php's Daily Counter
- *    Logsheet automatically shows the tally when opened.
- */
+
 function deductInventoryStock(invItemId, invItemName, qty) {
-  // Server-side stock deduction via inventory.php
   const fd = new FormData();
-  fd.append('action',     'update_stock');
-  fd.append('id',         invItemId);
-  fd.append('change',     -qty);
-  // Pass CSRF token from the meta tag we added to <head>
+  fd.append('action', 'update_stock');
+  fd.append('id',     invItemId);
+  fd.append('change', -qty);
   const csrfMeta = document.querySelector('meta[name="csrf-token"]');
   if (csrfMeta) fd.append('csrf_token', csrfMeta.content);
 
@@ -1112,29 +1164,21 @@ function deductInventoryStock(invItemId, invItemName, qty) {
     })
     .catch(err => console.warn('Stock deduction error:', err));
 
-  // Write to localStorage tally (read by inventory.php Daily Counter Logsheet)
   const TALLY_KEY = 'fitstop_inv_tally';
-  const today     = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  const today     = new Date().toISOString().slice(0, 10);
   let tally = {};
   try { tally = JSON.parse(localStorage.getItem(TALLY_KEY) || '{}'); } catch(e) {}
-
-  // Reset tally if it's a new day
-  if (tally._date !== today) {
-    tally = { _date: today };
-  }
-
+  if (tally._date !== today) { tally = { _date: today }; }
   tally[invItemId] = (tally[invItemId] || 0) + qty;
   localStorage.setItem(TALLY_KEY, JSON.stringify(tally));
 }
+
 function recordEntryFeeToLocalStorage(paidFor, customerType) {
   const ENTRY_KEY = 'fitstop_entry_tally';
   const today     = new Date().toISOString().slice(0, 10);
   let tally = {};
   try { tally = JSON.parse(localStorage.getItem(ENTRY_KEY) || '{}'); } catch(e) {}
-
-  if (tally._date !== today) {
-    tally = { _date: today };
-  }
+  if (tally._date !== today) { tally = { _date: today }; }
 
   if (paidFor === 'Day Pass / Walk-In' && customerType === 'non-member') {
     tally.non_member = (tally.non_member || 0) + 1;
@@ -1145,7 +1189,6 @@ function recordEntryFeeToLocalStorage(paidFor, customerType) {
   } else if (paidFor === 'Special Rate') {
     tally.special = (tally.special || 0) + 1;
   } else if (paidFor === 'Monthly') {
-    // Store both count AND amount so logsheet can show correct total
     tally.monthly       = (tally.monthly || 0) + 1;
     tally.monthly_total = (tally.monthly_total || 0) +
       (customerType === 'non-member' ? 750 : 650);
@@ -1153,6 +1196,7 @@ function recordEntryFeeToLocalStorage(paidFor, customerType) {
 
   localStorage.setItem(ENTRY_KEY, JSON.stringify(tally));
 }
+
 function saveMonthlyRecord(customerType, memberId, customerName) {
   let name = '';
   let mId  = null;
@@ -1164,7 +1208,6 @@ function saveMonthlyRecord(customerType, memberId, customerName) {
     }
     mId = memberId;
   } else {
-    // Walk-in: use the entered customer name, no member_id
     name = customerName || '';
     mId  = null;
   }
@@ -1176,7 +1219,7 @@ function saveMonthlyRecord(customerType, memberId, customerName) {
 
   const fd = new FormData();
   fd.append('action',    'save_monthly');
-  fd.append('member_id', mId || '');   // empty string → PHP converts to null
+  fd.append('member_id', mId || '');
   fd.append('name',      name);
 
   fetch('staff.php', { method: 'POST', body: fd })
@@ -1185,14 +1228,203 @@ function saveMonthlyRecord(customerType, memberId, customerName) {
       if (data.success) {
         console.log('Monthly record saved. Expires:', data.expires_in);
       } else if (data.duplicate) {
-        // Show a clear alert to the staff immediately
-        alert('⚠️ Duplicate Monthly Subscription\n\n' + data.message);
+        console.warn('Monthly duplicate detected after pre-check passed (race condition).');
       } else {
         console.warn('Monthly save failed:', data.message);
       }
     })
     .catch(err => console.warn('Monthly save error:', err));
 }
+
+function showMonthlyRenewPrompt(dupData, name, mId, customerType, memberId, customerName) {
+  const today     = new Date();
+  const expiry    = new Date(dupData.expires_in);
+  const msLeft    = expiry - today;
+  const daysLeft  = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)));
+  const newExpiry = new Date(expiry);
+  newExpiry.setDate(newExpiry.getDate() + 30);
+  const newExpiryStr = newExpiry.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const oldExpiryStr = expiry.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  const modalHtml = `
+    <div id="renewModal" style="
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      background:rgba(0,0,0,0.88);z-index:3000;
+      display:flex;align-items:center;justify-content:center;
+      backdrop-filter:blur(5px);
+    ">
+      <div style="
+        background:#111;border:1px solid #2a2a2a;
+        border-top:2px solid #FFCC00;
+        padding:36px;max-width:440px;width:90%;
+        font-family:'DM Sans',sans-serif;color:#fff;
+        box-shadow:0 0 40px rgba(0,0,0,0.6);
+      ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;">
+          <div style="
+            width:42px;height:42px;border-radius:50%;
+            background:rgba(255,204,0,0.1);border:1px solid rgba(255,204,0,0.3);
+            display:flex;align-items:center;justify-content:center;flex-shrink:0;
+          ">
+            <i class="bi bi-arrow-repeat" style="color:#FFCC00;font-size:18px;"></i>
+          </div>
+          <div>
+            <h3 style="margin:0;font-family:'Chakra Petch',sans-serif;
+              font-size:16px;letter-spacing:1px;text-transform:uppercase;color:#FFCC00;">
+              Active Subscription Found
+            </h3>
+            <p style="margin:3px 0 0;font-size:12px;color:#666;">Advance renewal available</p>
+          </div>
+        </div>
+
+        <div style="
+          background:#0d0d0d;border:1px solid #222;
+          padding:16px;margin-bottom:20px;
+        ">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <span style="font-size:12px;color:#666;text-transform:uppercase;letter-spacing:.8px;">Subscriber</span>
+            <span style="font-weight:700;font-size:14px;">${escapeHtml(name)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <span style="font-size:12px;color:#666;text-transform:uppercase;letter-spacing:.8px;">Current Expiry</span>
+            <span style="color:#ff9f43;font-weight:600;font-size:13px;">${oldExpiryStr}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <span style="font-size:12px;color:#666;text-transform:uppercase;letter-spacing:.8px;">Days Remaining</span>
+            <span style="
+              background:rgba(255,159,67,0.12);color:#ff9f43;
+              font-weight:700;font-size:13px;padding:3px 10px;
+              border:1px solid rgba(255,159,67,0.3);font-family:'Chakra Petch',sans-serif;
+            ">${daysLeft} day${daysLeft !== 1 ? 's' : ''}</span>
+          </div>
+          <div style="border-top:1px dashed #222;padding-top:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:#666;text-transform:uppercase;letter-spacing:.8px;">New Expiry After Renewal</span>
+              <span style="color:#22d07a;font-weight:700;font-size:14px;font-family:'Chakra Petch',sans-serif;">${newExpiryStr}</span>
+            </div>
+            <div style="margin-top:8px;font-size:11px;color:#555;text-align:right;">
+              ${daysLeft} remaining + 30 days = <strong style="color:#22d07a;">${daysLeft + 30} total days</strong>
+            </div>
+          </div>
+        </div>
+
+        <div style="
+          background:rgba(34,208,122,0.05);border:1px solid rgba(34,208,122,0.15);
+          padding:12px;margin-bottom:22px;display:flex;gap:10px;align-items:flex-start;
+        ">
+          <i class="bi bi-info-circle-fill" style="color:#22d07a;margin-top:2px;flex-shrink:0;"></i>
+          <p style="margin:0;font-size:12px;color:#aaa;line-height:1.6;">
+            Renewal stacks on top of the current subscription.
+            The new expiry date will be extended by <strong style="color:#fff;">30 days</strong>
+            from the current expiry — not from today.
+          </p>
+        </div>
+
+        <div style="display:flex;gap:10px;">
+          <button onclick="closeRenewModal()" style="
+            flex:1;padding:13px;background:transparent;
+            border:1px solid #333;color:#888;
+            font-family:'Chakra Petch',sans-serif;font-size:12px;
+            text-transform:uppercase;letter-spacing:.5px;cursor:pointer;
+            transition:all .2s;
+          " onmouseover="this.style.borderColor='#555';this.style.color='#fff'"
+             onmouseout="this.style.borderColor='#333';this.style.color='#888'">
+            Cancel
+          </button>
+          <button onclick="confirmRenewal('${escapeHtml(dupData.monthly_id || '')}', '${escapeHtml(name)}')" style="
+            flex:2;padding:13px;background:#FFCC00;border:none;
+            color:#000;font-family:'Chakra Petch',sans-serif;font-size:12px;
+            font-weight:700;text-transform:uppercase;letter-spacing:1px;
+            cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+            transition:background .2s;
+          " onmouseover="this.style.background='#e6b800'"
+             onmouseout="this.style.background='#FFCC00'">
+            <i class="bi bi-arrow-repeat"></i> Renew +30 Days
+          </button>
+        </div>
+      </div>
+    </div>`;
+
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeRenewModal() {
+  const m = document.getElementById('renewModal');
+  if (m) m.remove();
+}
+
+function confirmRenewal(monthlyId, name) {
+  if (!monthlyId) {
+    alert('Unable to renew: subscription ID missing. Please contact admin.');
+    closeRenewModal();
+    return;
+  }
+
+  const btn = document.querySelector('#renewModal button:last-child');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Renewing...'; }
+
+  const fd = new FormData();
+  fd.append('action',     'renew_monthly');
+  fd.append('monthly_id', monthlyId);
+
+  fetch('staff.php', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      closeRenewModal();
+      if (data.success) {
+        const expStr = new Date(data.new_expiry).toLocaleDateString('en-US',
+          { month: 'long', day: 'numeric', year: 'numeric' });
+        showRenewSuccessToast(name, expStr, data.days_left);
+      } else {
+        alert('Renewal failed: ' + (data.message || 'Unknown error.'));
+      }
+    })
+    .catch(() => {
+      closeRenewModal();
+      alert('Unable to process renewal right now. Please try again.');
+    });
+}
+
+function showRenewSuccessToast(name, newExpiry, daysWereLeft) {
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position:fixed;bottom:28px;right:28px;z-index:4000;
+    background:#111;border:1px solid #2a2a2a;border-left:3px solid #22d07a;
+    padding:18px 22px;max-width:320px;
+    font-family:'DM Sans',sans-serif;
+    box-shadow:0 8px 32px rgba(0,0,0,0.5);
+    animation:slideInToast .25s ease;
+  `;
+  toast.innerHTML = `
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <i class="bi bi-check-circle-fill" style="color:#22d07a;font-size:20px;margin-top:1px;flex-shrink:0;"></i>
+      <div>
+        <p style="margin:0 0 4px;font-weight:700;color:#fff;font-size:14px;">Renewal Confirmed</p>
+        <p style="margin:0;font-size:12px;color:#888;line-height:1.5;">
+          <strong style="color:#ddd;">${escapeHtml(name)}</strong>'s subscription
+          has been extended.<br>
+          <span style="color:#22d07a;font-weight:600;">New expiry: ${escapeHtml(newExpiry)}</span>
+        </p>
+      </div>
+      <button onclick="this.parentElement.parentElement.remove()"
+        style="background:none;border:none;color:#555;font-size:18px;cursor:pointer;
+               margin-left:auto;flex-shrink:0;line-height:1;padding:0;">×</button>
+    </div>`;
+
+  if (!document.getElementById('toastKf')) {
+    const style = document.createElement('style');
+    style.id = 'toastKf';
+    style.textContent = `@keyframes slideInToast {
+      from { transform: translateX(40px); opacity: 0; }
+      to   { transform: translateX(0);   opacity: 1; }
+    }`;
+    document.head.appendChild(style);
+  }
+
+  document.body.appendChild(toast);
+  setTimeout(() => { if (toast.parentElement) toast.remove(); }, 5500);
+}
+
 function displayReceipt(receipt) {
   const content = document.getElementById('receiptContent');
   const custInfo = receipt.customerType === 'member'
@@ -1232,12 +1464,13 @@ function displayReceipt(receipt) {
   window.currentReceipt = receipt;
   document.getElementById('receiptModal').style.display = 'flex';
 }
+
 function closeReceipt() {
   document.getElementById('receiptModal').style.display = 'none';
 }
 
 function printReceipt() {
-  const r       = window.currentReceipt;
+  const r        = window.currentReceipt;
   const custInfo = r.customerType === 'member' ? `Member ID: ${r.memberId}` : `Customer: ${r.customerName}`;
   const pw = window.open('','','height=500,width=700');
   pw.document.write(`<html><head><title>Receipt</title><style>body{font-family:Arial,sans-serif;padding:40px;}h2{margin:0;}.header{text-align:center;margin-bottom:30px;border-bottom:2px dashed #000;padding-bottom:20px;}.row{display:flex;justify-content:space-between;padding:8px 0;}.total{border-top:2px dashed #000;padding-top:20px;display:flex;justify-content:space-between;font-size:18px;font-weight:bold;}.footer{text-align:center;margin-top:30px;font-size:12px;color:#666;}</style></head><body><div class="header"><h2>FIT-STOP GYM</h2><p>Official Receipt</p></div><div><div class="row"><span>Receipt #:</span><span>${r.receiptNumber}</span></div><div class="row"><span>Date/Time:</span><span>${r.date} ${r.time}</span></div><div class="row"><span>${custInfo}</span></div><div class="row"><span>Paid For:</span><span>${r.paidFor||'-'}</span></div><div class="row"><span>Payment:</span><span>${r.method}</span></div>${r.notes?`<div class="row"><span>Notes:</span><span>${r.notes}</span></div>`:''}</div><div class="total"><span>TOTAL:</span><span>&#8369;${r.amount.toFixed(2)}</span></div><div class="footer"><p>Thank you!</p></div></body></html>`);
@@ -1381,14 +1614,6 @@ function logWorkout() {
   .catch(() => alert('Unable to save workout log right now.'));
 }
 
-function addNotification(message) {
-  const list = document.querySelector('.notifications-list');
-  const item = document.createElement('div');
-  item.classList.add('notification-item','priority-low');
-  item.innerHTML = `<i class="bi bi-bell-fill"></i><div><strong>${message}</strong><span class="notification-time">Just now</span></div>`;
-  list.prepend(item);
-}
-
 document.addEventListener('DOMContentLoaded', function() {
   loadExerciseOptions();
   loadAttendanceMembers();
@@ -1413,7 +1638,7 @@ function loadRealtimeAttendance() {
       const list = document.getElementById('realtimeAttendanceList');
       if (!list) return;
       if (!data.success) { list.innerHTML = `<div style="padding:16px;color:var(--danger);font-size:12px;">Error: ${escapeHtml(data.error||'Unknown error')}</div>`; return; }
-     if (data.stats) {
+      if (data.stats) {
         document.getElementById('stat-checked-in').textContent    = data.stats.members_checked_in;
         document.getElementById('stat-registrations').textContent = data.stats.new_registrations;
       }
@@ -1463,7 +1688,6 @@ function toggleNotifPanel() {
     badge.classList.add('hidden');
     const statEl = document.getElementById('stat-notifications');
     if (statEl) statEl.textContent = '0';
-
     if (!notifLoaded) loadNotificationHistory();
   }
 }
@@ -1603,12 +1827,10 @@ function loadActiveMembers() {
         grid.innerHTML = '<div style="padding:24px;color:var(--danger);font-size:13px;">Failed to load members.</div>';
         return;
       }
-
       if (data.members.length === 0) {
         grid.innerHTML = '<div style="padding:24px;color:var(--text-muted);font-size:13px;">No active members found.</div>';
         return;
       }
-
       grid.innerHTML = data.members.map(m => {
         const fullName = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.username;
         const initials = fullName.substring(0, 2).toUpperCase();
@@ -1616,9 +1838,7 @@ function loadActiveMembers() {
         const joined   = m.created_at
           ? new Date(m.created_at.replace(' ', 'T')).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
           : '—';
-        const lastSeen = m.last_attendance
-          ? timeAgo(m.last_attendance)
-          : 'No visits yet';
+        const lastSeen = m.last_attendance ? timeAgo(m.last_attendance) : 'No visits yet';
 
         const avatarHtml = m.profile_picture
           ? `<img src="${escapeHtml(m.profile_picture)}" alt="${escapeHtml(fullName)}" class="member-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
