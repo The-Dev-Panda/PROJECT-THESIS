@@ -716,7 +716,6 @@ try {
           <option value="Pull">Pull</option>
           <option value="Legs">Legs</option>
           <option value="Cardio">Cardio</option>
-          <option value="Core">Core</option>
         </select>
       </div>
 
@@ -729,12 +728,12 @@ try {
 
       <div class="mt-field">
         <label>Sets</label>
-        <input type="number" id="sets" class="form-input" value="3">
+        <input type="number" id="sets" class="mt-number" value="3" min="1" max="20">
       </div>
 
       <div class="mt-field">
         <label>Reps</label>
-        <input type="number" id="reps" class="form-input" value="10">
+        <input type="number" id="reps" class="mt-number" value="10" min="1" max="50">
       </div>
 
       <div class="mt-field">
@@ -755,7 +754,6 @@ try {
 
     <hr class="mt-cards-divider" />
 
-    <!-- WEEKLY GRID -->
     <div class="workout-grid" id="workoutGrid"></div>
   </div>
 </section>
@@ -769,10 +767,18 @@ try {
   border-radius: 8px;
   padding: 10px;
 }
+.mt-select:focus { border-color:#ffcc00; }
 
-.mt-select:focus {
-  border-color: #ffcc00;
+.mt-number {
+  width: 100%;
+  background: #0f0f0f;
+  color: #fff;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  padding: 10px;
+  text-align:center;
 }
+.mt-number:focus { border-color:#ffcc00; }
 
 .workout-grid {
   display: grid;
@@ -802,15 +808,17 @@ try {
   font-size: 0.85rem;
 }
 
-.done-btn {
+.done-btn, .remove-btn {
   margin-top: 6px;
-  background: #ffcc00;
   border: none;
   padding: 4px 8px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.75rem;
 }
+
+.done-btn { background:#ffcc00; }
+.remove-btn { background:#ff4d4d; color:#fff; margin-left:5px; }
 </style>
 
 <script>
@@ -822,7 +830,6 @@ const workoutGrid = document.getElementById("workoutGrid");
 
 const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
-// CREATE DAY CARDS
 function initDays() {
   workoutGrid.innerHTML = "";
   days.forEach(day => {
@@ -839,7 +846,6 @@ function initDays() {
   });
 }
 
-// LOAD EXERCISES
 function loadExercises() {
   const type = workoutType.value;
   workoutName.innerHTML = '<option value="">Select Workout</option>';
@@ -855,12 +861,30 @@ function loadExercises() {
 }
 
 workoutType.addEventListener("change", loadExercises);
+
 window.onload = () => {
   initDays();
   loadExercises();
 };
 
-// ADD WORKOUT TO DAY
+// HARD LIMIT ENFORCER (2 DIGITS + REALISTIC LIMIT)
+function sanitizeInput(input, maxVal) {
+  input.addEventListener("input", () => {
+    let val = input.value.replace(/\D/g, ""); // numbers only
+
+    if (val.length > 2) val = val.slice(0,2); // max 2 digits
+
+    if (parseInt(val) > maxVal) val = maxVal;
+
+    if (val === "" || val === "0") val = 1;
+
+    input.value = val;
+  });
+}
+
+sanitizeInput(document.getElementById("sets"), 20);
+sanitizeInput(document.getElementById("reps"), 50);
+
 function addWorkout() {
   const name = workoutName.value;
   const sets = document.getElementById("sets").value;
@@ -881,12 +905,11 @@ function addWorkout() {
     <strong>${name}</strong><br>
     ${sets} sets × ${reps} reps
     <br>
-    <button class="done-btn" onclick="this.parentElement.remove()">Done</button>
+    <button class="done-btn" onclick="this.parentElement.style.opacity='0.5'">Done</button>
+    <button class="remove-btn" onclick="this.parentElement.remove()">Remove</button>
   `;
 
   dayContainer.appendChild(item);
-
-  // smooth scroll
   item.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 </script>
