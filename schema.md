@@ -1,20 +1,4 @@
-CREATE TABLE "users" (   
-    id INTEGER PRIMARY KEY AUTOINCREMENT,   
-    username VARCHAR(50) NOT NULL UNIQUE,
-    first_name VARCHAR(50) NOT NULL,  
-    last_name VARCHAR(50) NOT NULL,   
-    email VARCHAR(100) NOT NULL UNIQUE,   
-    password VARCHAR(255) NOT NULL,   
-    user_type VARCHAR(50),   
-    verification_code VARCHAR(50) DEFAULT NULL,   
-    verification_code_expiration TIMESTAMP DEFAULT NULL,   
-    is_verified BOOLEAN DEFAULT FALSE,   profile_picture BLOB,   
-    last_logged_in TIMESTAMP DEFAULT NULL,   
-    dpa_consent INTEGER NOT NULL DEFAULT 0,
-    dpa_consent_at TIMESTAMP DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP , 
-    points INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE "users" (   id INTEGER PRIMARY KEY AUTOINCREMENT,   username VARCHAR(50) NOT NULL UNIQUE,   first_name VARCHAR(50) NOT NULL,   last_name VARCHAR(50) NOT NULL,   email VARCHAR(100) NOT NULL UNIQUE,   password VARCHAR(255) NOT NULL,   user_type VARCHAR(50),   verification_code VARCHAR(50) DEFAULT NULL,   verification_code_expiration TIMESTAMP DEFAULT NULL,   is_verified BOOLEAN DEFAULT FALSE,   profile_picture BLOB,   last_logged_in TIMESTAMP DEFAULT NULL,   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP , "points" INTEGER NOT NULL DEFAULT 0, dpa_consent INTEGER NOT NULL DEFAULT 0, dpa_consent_at TIMESTAMP DEFAULT NULL, "address" VARCHAR(255))
 
 
 CREATE TABLE inventory (   
@@ -98,12 +82,10 @@ CREATE TABLE member_profiles (
   weight_kg REAL,
   fitness_level TEXT,
   goal TEXT,
-  contact TEXT,
-  gender TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "contact" text, "gender" text, "remarks" TEXT,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+)
 
 CREATE INDEX IF NOT EXISTS idx_attendance_user_datetime
 ON attendance(user_id, datetime);
@@ -129,7 +111,7 @@ CREATE TABLE meal_logs (
 CREATE INDEX IF NOT EXISTS idx_meal_logs_user_date
 ON meal_logs(user_id, logged_date);
 
-CREATE TABLE IF NOT EXISTS old_member_profiles (
+CREATE TABLE old_member_profiles (
   history_id INTEGER PRIMARY KEY AUTOINCREMENT,
   profile_id INTEGER,
   user_id INTEGER NOT NULL,
@@ -145,11 +127,10 @@ CREATE TABLE IF NOT EXISTS old_member_profiles (
   archived_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   changed_by_user_id INTEGER,
   change_source TEXT NOT NULL DEFAULT 'profile_update',
-  change_note TEXT,
+  change_note TEXT, "remarks" TEXT,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (changed_by_user_id) REFERENCES users(id) ON DELETE SET NULL
-);
-
+)
 CREATE INDEX IF NOT EXISTS idx_old_member_profiles_user_id_archived_at
 ON old_member_profiles(user_id, archived_at DESC);
 
@@ -191,3 +172,5 @@ BEGIN
     'before_update'
   );
 END;
+
+CREATE TABLE "monthly" ("id" integer,"name" text,"expires_in" datetime, "member" INTEGER, PRIMARY KEY ("id"))
