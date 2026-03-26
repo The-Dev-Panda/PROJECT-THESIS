@@ -39,51 +39,6 @@ h5 {
   min-height: 100vh;
 }
 
-/* ========== SIDEBAR ========== */
-.sidebar,
-.sidebar-static {
-  width: 260px;
-  background: var(--bg-surface);
-  padding: 25px 15px;
-  color: var(--text-primary);
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  overflow-y: auto;
-  z-index: 1000;
-  border-right: var(--border-industrial);
-}
-
-.sidebar-offcanvas {
-  width: 260px;
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  padding: 25px 15px;
-  border-right: var(--border-industrial);
-  overflow-y: auto;
-  max-height: 100vh;
-  position: relative;
-}
-
-/* LOGO */
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 40px;
-  padding: 10px;
-  border: 2px solid var(--hazard-yellow);
-  clip-path: polygon(
-    10px 0,
-    100% 0,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    0 100%,
-    0 10px
-  );
-}
-
 .logo-img {
   width: 50px;
   height: 50px;
@@ -265,7 +220,30 @@ h5 {
   border: 1px solid #333;
   background: #111111;
 }
-
+/* ===== AI ADVISOR READABILITY ===== */
+.main-content .card-body h6 {
+  color: #ffffff;
+}
+.main-content .card-body .form-label {
+  color: #ffffff;
+}
+.main-content .card-body .list-group-item strong {
+  color: #ffcc00;
+}
+.main-content .card-body .list-group-item {
+  color: #eeeeee;
+  line-height: 1.7;
+}
+.main-content .card-body .btn-outline-secondary {
+  color: #ffffff;
+  border-color: #444;
+  background: #1a1a1a;
+}
+.main-content .card-body .btn-outline-secondary:hover {
+  background: rgba(255, 204, 0, 0.1);
+  border-color: #ffcc00;
+  color: #ffcc00;
+}
 .menu {
   list-style: none;
   padding: 0;
@@ -1140,14 +1118,6 @@ h5 {
   --blue: #4da6ff;
   --font-h: "Chakra Petch", sans-serif;
   --font-b: "Inter", sans-serif;
-}
-
-body {
-  font-family: var(--font-b);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  display: flex;
 }
 
 /* ══════════════════════════════════════════════════
@@ -11937,4 +11907,39 @@ body.light-mode .toggle-track {
   font-size: 0.73rem;
   color: #6b7280;
   margin: 0;
+}
+@keyframes editSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.form-input {
+  background: #1a1a1a !important;
+  border: 1px solid #444 !important;
+  color: #fff !important;
+  padding: 10px 14px !important;
+  outline: none !important;
+  transition: border-color 0.2s !important;
+  clip-path: polygon(
+    6px 0,
+    100% 0,
+    100% calc(100% - 6px),
+    calc(100% - 6px) 100%,
+    0 100%,
+    0 6px
+  ) !important;
+  width: 100% !important;
+  font-family: "Inter", sans-serif !important;
+  font-size: 13px !important;
+}
+.form-input:focus {
+  border-color: #ffcc00 !important;
+}
+.form-input::placeholder {
+  color: #555 !important;
 }

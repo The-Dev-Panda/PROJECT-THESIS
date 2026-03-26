@@ -93,15 +93,15 @@ JS;
       <!-- MAIN CONTENT -->
       <main class="main-content">
         <div class="container-fluid py-4">
-          <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
-            <div>
-              <h1 class="h3 mb-1">AI Advisor</h1>
-              <p class="text-muted mb-0">Hi <?php echo htmlspecialchars($welcomeName, ENT_QUOTES, 'UTF-8'); ?>! This is your personal fitness assistant.</p>
-            </div>
-            <a href="AI_ADVISOR.php?clear=1" class="btn btn-outline-danger btn-sm mt-3 mt-md-0" onclick="return confirm('Clear all messages?')" title="Clear chat">
-              <i class="bi bi-trash me-1"></i> Clear chat
-            </a>
-          </div>
+          <header class="topbar">
+  <div class="welcome">
+    <h1>AI Advisor</h1>
+    <p>Hi <?php echo htmlspecialchars($welcomeName, ENT_QUOTES, 'UTF-8'); ?>! This is your personal fitness assistant.</p>
+  </div>
+  <a href="AI_ADVISOR.php?clear=1" class="notify-btn" style="text-decoration:none; color:#000;" onclick="return confirm('Clear all messages?')">
+    <i class="bi bi-trash"></i> Clear Chat
+  </a>
+</header>
 
           <div class="row gy-3">
             <div class="col-12 col-lg-8">
