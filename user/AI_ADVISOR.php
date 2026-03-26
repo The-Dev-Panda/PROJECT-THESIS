@@ -33,7 +33,7 @@ if (isset($_SESSION['ai_flash']) && is_string($_SESSION['ai_flash'])) {
 }
 
 $quickPrompts = [
-    'Build a safe 45-minute workout I can do today based on my goal.',
+    'Build a safe workout I can do today based on my goal.',
     'Suggest a post-workout meal and include simple portion sizes.',
     'Give me a recovery plan for tonight with sleep and hydration targets.',
     'Review my progress this week and share 3 practical improvements.'
@@ -100,7 +100,6 @@ JS;
             </p>
           </div>
         </header>
-    <?php include('../includes/header.php') ?>
     
         <?php
         if ($aiFlash !== '') {
