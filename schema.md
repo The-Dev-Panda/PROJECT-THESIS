@@ -174,3 +174,11 @@ BEGIN
 END;
 
 CREATE TABLE "monthly" ("id" integer,"name" text,"expires_in" datetime, "member" INTEGER, PRIMARY KEY ("id"))
+
+CREATE TABLE "emergency_contact" (
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "member_id" INTEGER,
+    "name" TEXT NOT NULL,
+    "contact" TEXT NOT NULL,
+    FOREIGN KEY ("member_id") REFERENCES "members_profile" ("id")
+);
