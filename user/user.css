@@ -258,6 +258,38 @@ h5 {
 }
 
 /* MENU RESET */
+
+/* AI ADVISOR layout fixes */
+.main-content .card {
+  background: #171717;
+  border-color: #2a2a2a;
+}
+.main-content .card-body {
+  min-height: 138px;
+}
+.main-content .list-group-item {
+  background: #101010;
+  border-color: #2b2b2b;
+  color: #eeeeee;
+}
+.main-content .form-control {
+  background: #0d0d0d;
+  color: #ffffff;
+  border-color: #2c2c2c;
+}
+.main-content .form-control:focus {
+  box-shadow: 0 0 0 0.15rem rgba(255, 204, 0, 0.28);
+}
+.main-content .btn-success {
+  background: #ffcc00;
+  border-color: #e6b800;
+  color: #1a1a1a;
+}
+.main-content .alert {
+  border: 1px solid #333;
+  background: #111111;
+}
+
 .menu {
   list-style: none;
   padding: 0;
