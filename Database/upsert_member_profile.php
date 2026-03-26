@@ -43,11 +43,15 @@ try {
     $fitnessLevel = isset($input['fitness_level']) ? trim((string)$input['fitness_level']) : null;
     $goal = isset($input['goal']) ? trim((string)$input['goal']) : null;
     $contact = isset($input['contact']) ? trim((string)$input['contact']) : null;
+    $address = isset($input['address']) ? trim((string)$input['address']) : null;
     $gender = isset($input['gender']) ? trim((string)$input['gender']) : null;
     $remarks = isset($input['remarks']) ? trim((string)$input['remarks']) : null;
 
     if ($contact === '') {
         $contact = null;
+    }
+    if ($address === '') {
+        $address = null;
     }
     if ($gender === '') {
         $gender = null;
@@ -104,6 +108,13 @@ try {
     }
 
     $userId = (int)$user['id'];
+
+    $updateUserSql = 'UPDATE users SET address = :address WHERE id = :id';
+    $updateUserStmt = $db->prepare($updateUserSql);
+    $updateUserStmt->execute([
+        ':address' => $address,
+        ':id' => $userId
+    ]);
 
     $existsStmt = $db->prepare('SELECT id FROM member_profiles WHERE user_id = :user_id LIMIT 1');
     $existsStmt->execute([':user_id' => $userId]);

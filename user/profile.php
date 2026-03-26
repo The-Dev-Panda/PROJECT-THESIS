@@ -319,6 +319,10 @@ try {
                   <input type="text" id="onboardContact" class="form-input" placeholder="e.g. 09xxxxxxxxx" value="<?php echo htmlspecialchars($contactValue, ENT_QUOTES, 'UTF-8'); ?>">
                 </div>
                 <div class="onboard-field">
+                  <label class="onboard-label" for="onboardAddress">Address</label>
+                  <input type="text" id="onboardAddress" class="form-input" placeholder="e.g. Cebu City, Philippines" value="<?php echo htmlspecialchars($addressValue, ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+                <div class="onboard-field">
                   <label class="onboard-label" for="onboardGender">Gender</label>
                   <select id="onboardGender" class="form-input">
                     <option value="">Select gender</option>
@@ -573,6 +577,7 @@ try {
           height_cm: document.getElementById("onboardHeight").value,
           weight_kg: document.getElementById("onboardWeight").value,
           contact: document.getElementById("onboardContact").value,
+          address: document.getElementById("onboardAddress").value,
           gender: document.getElementById("onboardGender").value,
           fitness_level: document.getElementById("onboardFitnessLevel").value,
           goal: document.getElementById("onboardGoal").value,
