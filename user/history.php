@@ -152,7 +152,7 @@ try {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Exercise History</title>
+    <title>My History</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-OERcA2zY1OHt4q4Fv8B+U7MeM3NnN3KK2eEbV5t8JSaI1zlzW3URy9Bv1WTRi7v8Q" crossorigin="anonymous">
     <link rel="stylesheet" href="user.css" />
     <link
@@ -186,63 +186,115 @@ try {
         </header>
 
         <!-- EXERCISE HISTORY -->
-        <section class="history-section">
-          <div class="section-header">
-            <h3>Exercise History</h3>
-            <div class="filter-buttons">
-              <button class="filter-btn active">Latest Workouts</button>
-              <button class="filter-btn" id="showPreviousWorkoutBtn" <?php echo count($workoutDays) <= 1 ? 'disabled' : ''; ?>>Show Previous</button>
+<?php
+$workoutDays = [];
+
+try {
+    require __DIR__ . '/../Login/connection.php';
+
+    // Fetch workout logs joined with exercise names, include sets
+    $stmt = $pdo->prepare("
+      SELECT w.logged_at, w.reps, w.weight, w.sets, e.name
+      FROM workout_logs w
+      LEFT JOIN exercises e ON e.exercise_id = w.exercise_id
+      WHERE w.user_id = :uid
+      ORDER BY w.logged_at DESC
+    ");
+    $stmt->execute([':uid' => 1]); // Replace 1 with dynamic user_id if needed
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach($rows as $r){
+        $dateKey = date('Y-m-d', strtotime($r['logged_at']));
+        $sets = (int)$r['sets']; // use actual sets from DB
+        $volume = $sets * (int)$r['reps'] * (int)$r['weight'];
+
+        if(!isset($workoutDays[$dateKey])){
+            $workoutDays[$dateKey] = [
+                'label' => date('l', strtotime($dateKey)),
+                'sub' => date('F d, Y', strtotime($dateKey)),
+                'total_sets' => $sets,
+                'total_volume' => $volume,
+                'exercises' => [
+                    [
+                        'name' => $r['name'],
+                        'sets' => $sets,
+                        'reps' => (int)$r['reps'],
+                        'max_weight' => (int)$r['weight']
+                    ]
+                ]
+            ];
+        } else {
+            $workoutDays[$dateKey]['total_sets'] += $sets;
+            $workoutDays[$dateKey]['total_volume'] += $volume;
+            $workoutDays[$dateKey]['exercises'][] = [
+                'name' => $r['name'],
+                'sets' => $sets,
+                'reps' => (int)$r['reps'],
+                'max_weight' => (int)$r['weight']
+            ];
+        }
+    }
+
+    $workoutDays = array_values($workoutDays);
+
+} catch(Throwable $e){
+    $workoutDays = [];
+}
+?>
+
+<section class="history-section">
+  <div class="section-header">
+    <h3>Exercise History</h3>
+    <div class="filter-buttons">
+      <button class="filter-btn active">Latest Workouts</button>
+      <button class="filter-btn" <?php echo count($workoutDays) <= 1 ? 'disabled' : ''; ?>>Show Previous</button>
+    </div>
+  </div>
+
+  <div class="history-grid">
+    <?php if(count($workoutDays) === 0): ?>
+      <div class="history-card">
+        <div class="history-date">
+          <span class="date-day">No workouts yet</span>
+          <span class="date-full">Start logging your exercises to see history.</span>
+        </div>
+        <span class="completion-badge">No data</span>
+      </div>
+    <?php else: ?>
+      <?php foreach($workoutDays as $wIdx => $wDay): ?>
+        <div class="history-card" <?php echo $wIdx !== 0 ? 'style="display:none"' : ''; ?>>
+          <div class="history-date">
+            <span class="date-day"><?php echo htmlspecialchars($wDay['label']); ?></span>
+            <span class="date-full"><?php echo htmlspecialchars($wDay['sub']); ?></span>
+          </div>
+          <div class="history-workout">
+            <div class="workout-icon chest"><i class="fas fa-dumbbell"></i></div>
+            <div class="workout-details" style="width:100%;">
+              <h4>Workout Summary</h4>
+              <p>Time not available</p>
+              <div class="workout-stats-mini">
+                <span><i class="fas fa-layer-group"></i> <?php echo (int)$wDay['total_sets']; ?> sets</span>
+                <span><i class="fas fa-weight-hanging"></i> <?php echo number_format((int)$wDay['total_volume'], 0); ?> kg volume</span>
+              </div>
+
+              <div style="display:none; margin-top:10px;">
+                <?php foreach($wDay['exercises'] as $ex): ?>
+                  <div style="display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.08);">
+                    <span><?php echo htmlspecialchars($ex['name']); ?></span>
+                    <span><?php echo (int)$ex['sets']; ?> sets, <?php echo (int)$ex['reps']; ?> reps, max <?php echo (int)$ex['max_weight']; ?> kg</span>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+
+              <button class="notify-btn" style="margin-top:10px;" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none'">Show workout details</button>
             </div>
           </div>
-
-          <div class="history-grid">
-            <?php if (count($workoutDays) === 0): ?>
-              <div class="history-card">
-                <div class="history-date">
-                  <span class="date-day">No workouts yet</span>
-                  <span class="date-full">Start logging your exercises to see history.</span>
-                </div>
-                <span class="completion-badge">No data</span>
-              </div>
-            <?php else: ?>
-              <?php foreach ($workoutDays as $workoutDayIndex => $workoutDay): ?>
-                <div
-                  class="history-card"
-                  data-workout-card="1"
-                  <?php echo $workoutDayIndex === 0 ? '' : 'style="display:none" data-workout-hidden="1"'; ?>
-                >
-                  <div class="history-date">
-                    <span class="date-day"><?php echo htmlspecialchars($workoutDay['label'], ENT_QUOTES, 'UTF-8'); ?></span>
-                    <span class="date-full"><?php echo htmlspecialchars($workoutDay['sub'], ENT_QUOTES, 'UTF-8'); ?></span>
-                  </div>
-                  <div class="history-workout">
-                    <div class="workout-icon chest">
-                      <i class="fas fa-dumbbell"></i>
-                    </div>
-                    <div class="workout-details" style="width:100%;">
-                      <h4>Workout Summary</h4>
-                      <p><?php echo htmlspecialchars($workoutDay['time_range'] !== '' ? $workoutDay['time_range'] : 'Time not available', ENT_QUOTES, 'UTF-8'); ?></p>
-                      <div class="workout-stats-mini">
-                        <span><i class="fas fa-layer-group"></i> <?php echo (int)$workoutDay['total_sets']; ?> sets</span>
-                        <span><i class="fas fa-weight-hanging"></i> <?php echo htmlspecialchars(number_format((float)$workoutDay['total_volume'], 1), ENT_QUOTES, 'UTF-8'); ?> kg volume</span>
-                      </div>
-                      <div id="workoutDayDetail-<?php echo (int)$workoutDayIndex; ?>" style="display:none;margin-top:10px;">
-                        <?php foreach ($workoutDay['exercises'] as $exercise): ?>
-                          <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);">
-                            <span><?php echo htmlspecialchars($exercise['name'], ENT_QUOTES, 'UTF-8'); ?></span>
-                            <span style="opacity:0.9;"><?php echo (int)$exercise['sets']; ?> sets, <?php echo (int)$exercise['reps']; ?> reps, max <?php echo htmlspecialchars(number_format((float)$exercise['max_weight'], 1), ENT_QUOTES, 'UTF-8'); ?> kg</span>
-                          </div>
-                        <?php endforeach; ?>
-                      </div>
-                      <button class="notify-btn" style="margin-top:10px;" onclick="toggleWorkoutDayDetail(<?php echo (int)$workoutDayIndex; ?>)">Show workout details</button>
-                    </div>
-                  </div>
-                  <span class="completion-badge completed">Completed</span>
-                </div>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </div>
-        </section>
+          <span class="completion-badge completed">Completed</span>
+        </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
+  </div>
+</section>
    <!-- E-Receipts -->
           <div class="profile-card terms-card">
             <h4><i class="bi bi-receipt"></i> E-Receipts & Payment History</h4>
