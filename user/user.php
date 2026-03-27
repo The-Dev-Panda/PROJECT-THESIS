@@ -19,10 +19,13 @@ $workoutDays = [];
 $profileInitials = 'MM';
 $monthWeightChangeText = 'No data';
 $totalWeightChangeText = 'No data';
-
+$paymentDueSoon = false;
+$daysLeft = null;
+$monthlyExpiry = null;
+$monthlyId = null;
 try {
   require __DIR__ . '/../Login/connection.php';
-
+  
   $userId = (int)($_SESSION['id'] ?? 0);
   if ($userId > 0) {
     $userStmt = $pdo->prepare('SELECT id, username, first_name, last_name, email FROM users WHERE id = :id LIMIT 1');
@@ -164,6 +167,29 @@ try {
       } else {
         $toGoalText = ($diff > 0 ? '+' : '') . round($diff) . ' kg';
       }
+    }
+    // ── Monthly Membership Lookup ──────────────────────────────────
+    $monthlyStmt = $pdo->prepare(
+        "SELECT id, expires_in
+        FROM monthly
+        WHERE member = :member
+        ORDER BY expires_in DESC
+        LIMIT 1"
+    );
+    $monthlyStmt->execute([':member' => $userId]);
+    $monthlyRecord = $monthlyStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    if (!empty($monthlyRecord['expires_in'])) {
+        $monthlyId     = (int)$monthlyRecord['id'];
+        $monthlyExpiry = (string)$monthlyRecord['expires_in'];
+
+        $expiryDate = new DateTime($monthlyExpiry, new DateTimeZone('Asia/Manila'));
+        $today      = new DateTime('now',          new DateTimeZone('Asia/Manila'));
+        $diff       = (int)$today->diff($expiryDate)->days;
+        $expired    = $expiryDate < $today;
+
+        $daysLeft      = $expired ? 0 : $diff;
+        $paymentDueSoon = !$expired && $daysLeft <= 7; // warn within 7 days
     }
 
     $attendanceStmt = $pdo->prepare('SELECT datetime FROM attendance WHERE user_id = :user_id ORDER BY datetime DESC LIMIT 1');
@@ -366,14 +392,37 @@ $activePage = 'dashboard';
               <p><?php echo htmlspecialchars($attendanceDetail, ENT_QUOTES, 'UTF-8'); ?></p>
             </div>
           </div>
-          <div class="notification-card payment">
-            <i class="bi bi-credit-card-fill"></i>
-            <div class="notification-content">
-              <h4>Payment Due Soon</h4>
-              <p>Monthly membership renews in 5 days • ₱49.99</p>
+          <?php if ($monthlyExpiry !== null): ?>
+            <div class="notification-card payment <?php echo ($daysLeft === 0) ? 'expired' : ($paymentDueSoon ? 'due-soon' : ''); ?>">
+                <i class="bi bi-credit-card-fill"></i>
+                <div class="notification-content">
+                    <?php if ($daysLeft === 0): ?>
+                        <h4>Monthly Gym Access Expired</h4>
+                        <p>Your membership expired on <?php echo htmlspecialchars((new DateTime($monthlyExpiry))->format('M j, Y'), ENT_QUOTES, 'UTF-8'); ?></p>
+                    <?php elseif ($paymentDueSoon): ?>
+                        <h4>Payment Due Soon</h4>
+                        <p>Monthly Gym Access expires in <strong><?php echo $daysLeft; ?> day<?php echo $daysLeft !== 1 ? 's' : ''; ?></strong>
+                          &nbsp;•&nbsp; <?php echo htmlspecialchars((new DateTime($monthlyExpiry))->format('M j, Y'), ENT_QUOTES, 'UTF-8'); ?></p>
+                    <?php else: ?>
+                        <h4>Monthly Gym Access:</h4>
+                        <p>Expires in <strong><?php echo $daysLeft; ?> days</strong>
+                          &nbsp;•&nbsp; <?php echo htmlspecialchars((new DateTime($monthlyExpiry))->format('M j, Y'), ENT_QUOTES, 'UTF-8'); ?></p>
+                    <?php endif; ?>
+                </div>
+                <?php if ($daysLeft <= 7): ?>
+                    <button class="notify-btn">Renew Now</button>
+                <?php endif; ?>
             </div>
-            <button class="notify-btn">Pay Now</button>
-          </div>
+            <?php else: ?>
+            <div class="notification-card payment">
+                <i class="bi bi-credit-card-fill"></i>
+                <div class="notification-content">
+                    <h4>No Active Membership</h4>
+                    <p>No monthly membership record linked to your account.</p>
+                </div>
+                <button class="notify-btn">Subscribe</button>
+            </div>
+            <?php endif; ?>
         </section>
 
         <!-- BMI TRACKER SECTION -->
