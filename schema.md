@@ -434,12 +434,9 @@ CREATE TABLE member_profiles (
   fitness_level TEXT,
   goal TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  "contact" text,
-  "gender" text,
-  "remarks" TEXT,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "contact" text, "gender" text, "remarks" TEXT, "e_contact" text, "e_name" text,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+)
 CREATE TABLE inventory_notifications (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id     INTEGER NOT NULL,
