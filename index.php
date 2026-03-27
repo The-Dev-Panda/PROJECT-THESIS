@@ -138,7 +138,7 @@ include('includes/header.php');
         <div class="map-overlay">
             <h5 class="text-hazard mb-1 brand-font">FIT-STOP CENTER</h5>
             <p class="text-white mb-0 small">Malabon City, Metro Manila</p>
-            <p class="text-muted small mb-0">OPEN DAILY: 6AM - 10PM</p>
+            <p class="text-muted small mb-0">OPEN DAILY: 7AM - 10PM</p>
         </div>
     </section>
 
