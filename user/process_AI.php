@@ -110,17 +110,18 @@ try {
         redirectWithFlash('AI advisor configuration is incomplete. Please contact admin.');
     }
 
-    $profileStmt = $pdo->prepare('SELECT age, height_cm, weight_kg, fitness_level, goal FROM member_profiles WHERE user_id = :user_id LIMIT 1');
+    $profileStmt = $pdo->prepare('SELECT age, height_cm, weight_kg, fitness_level, goal, remarks FROM member_profiles WHERE user_id = :user_id LIMIT 1');
     $profileStmt->execute([':user_id' => $userId]);
     $profile = $profileStmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
     $profileSummary = sprintf(
-        'Member profile: age=%s, height_cm=%s, weight_kg=%s, fitness_level=%s, goal=%s',
+        'Member profile: age=%s, height_cm=%s, weight_kg=%s, fitness_level=%s, goal=%s, remarks=%s',
         ($profile['age'] ?? 'unknown'),
         ($profile['height_cm'] ?? 'unknown'),
         ($profile['weight_kg'] ?? 'unknown'),
         ($profile['fitness_level'] ?? 'unknown'),
-        ($profile['goal'] ?? 'unknown')
+        ($profile['goal'] ?? 'unknown'),
+        ($profile['remarks'] ?? 'not provided')
     );
 
     $progressSummary = '';
@@ -173,47 +174,57 @@ try {
             . ', top_exercises_30d=' . (empty($topExerciseChunks) ? 'none' : implode('; ', $topExerciseChunks));
     }
 
-    if ($intent === 'workout' || $intent === 'progress' || strpos($normalizedQuery, 'exercise') !== false) {
-        $exerciseStmt = $pdo->query('SELECT name, target_muscle, movement_type FROM exercises ORDER BY name ASC LIMIT 120');
+    $exerciseRows = [];
+    try {
+        $exerciseStmt = $pdo->query('SELECT exercise_id, name, target_muscle, movement_type FROM exercises ORDER BY name ASC LIMIT 120');
         $exerciseRows = $exerciseStmt ? ($exerciseStmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+    } catch (Throwable $e) {
+        error_log('process_AI.php: failed to fetch exercises – ' . $e->getMessage());
+        $exerciseRows = [];
+    }
 
-        if (!empty($exerciseRows)) {
-            $movementBuckets = [];
-            $exerciseNameList = [];
+    if (!empty($exerciseRows)) {
+        $movementBuckets = [];
+        $exerciseNameList = [];
 
-            foreach ($exerciseRows as $row) {
-                $name = trim((string)($row['name'] ?? ''));
-                if ($name === '') {
-                    continue;
-                }
-
-                $movementType = trim((string)($row['movement_type'] ?? 'General'));
-                if ($movementType === '') {
-                    $movementType = 'General';
-                }
-
-                $targetMuscle = trim((string)($row['target_muscle'] ?? ''));
-                $label = $targetMuscle !== '' ? ($name . ' [' . $targetMuscle . ']') : $name;
-
-                if (!isset($movementBuckets[$movementType])) {
-                    $movementBuckets[$movementType] = [];
-                }
-                $movementBuckets[$movementType][] = $label;
-                $exerciseNameList[] = $name;
+        foreach ($exerciseRows as $row) {
+            $name = trim((string)($row['name'] ?? ''));
+            if ($name === '') {
+                continue;
             }
 
-            $movementChunks = [];
-            foreach ($movementBuckets as $type => $items) {
-                $movementChunks[] = $type . ': ' . implode(', ', array_slice($items, 0, 8));
+            $movementType = trim((string)($row['movement_type'] ?? 'General'));
+            if ($movementType === '') {
+                $movementType = 'General';
             }
 
-            $availableExercisesSummary = 'Available exercises in system (' . count($exerciseNameList) . '): '
-                . implode(' | ', $movementChunks)
-                . '. Full exercise name list: '
-                . implode(', ', array_slice($exerciseNameList, 0, 120));
-        } else {
-            $availableExercisesSummary = 'Available exercises in system: none found in exercises table.';
+            $targetMuscle = trim((string)($row['target_muscle'] ?? ''));
+            $label = $targetMuscle !== '' ? ($name . ' [' . $targetMuscle . ']') : $name;
+
+            if (!isset($movementBuckets[$movementType])) {
+                $movementBuckets[$movementType] = [];
+            }
+            $movementBuckets[$movementType][] = $label;
+            $exerciseNameList[] = $name;
         }
+
+        $movementChunks = [];
+        foreach ($movementBuckets as $type => $items) {
+            $movementChunks[] = $type . ': ' . implode(', ', array_slice($items, 0, 8));
+        }
+
+        $sampleExercises = $exerciseNameList;
+        if (count($exerciseNameList) > 30) {
+            $sampleExercises = array_slice($exerciseNameList, 0, 30);
+        }
+
+        $availableExercisesSummary = 'Available exercises in system (' . count($exerciseNameList) . '): '
+            . implode(' | ', $movementChunks)
+            . '. Sample exercise names: '
+            . implode(', ', $sampleExercises)
+            . (count($exerciseNameList) > 30 ? ' (and more...)' : '');
+    } else {
+        $availableExercisesSummary = 'Available exercises in system: none found in exercises table.';
     }
 
     $contextBlocks = [$profileSummary, 'Intent: ' . $intent];
