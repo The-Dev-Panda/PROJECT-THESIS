@@ -548,6 +548,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <i class="bi bi-calendar-check"></i>
         <span>Monthly Access</span>
       </li>
+      <li onclick="window.location.href='walkin_attendance.php'" style="cursor:pointer;">
+      <i class="bi bi-person-walking"></i>
+      <span>Walk-In Log</span>
+      </li>
       <li onclick="window.location.href='staff.php#settings'" style="cursor:pointer;">
         <i class="bi bi-gear"></i>
         <span>Settings</span>
