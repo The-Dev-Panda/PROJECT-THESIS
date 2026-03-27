@@ -278,20 +278,6 @@ if (count($smartSuggestions) < 3) {
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
     <style>
-      .mt-plain-input {
-  width: 100%;
-  background: #0f0f0f;
-  color: #fff;
-  border: 1px solid #383838;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 0.87rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.mt-plain-input:focus {
-  border-color: #ffcc00;
-}
       .plan-ai-shell {
         display: grid;
         grid-template-columns: 1.2fr 1fr;
@@ -715,13 +701,10 @@ try {
 
 <section class="workout-tracker-section">
   <div class="mt-stripe"></div>
-
   <div class="mt-panel">
     <h2 class="mt-title">Customize Today's Workout</h2>
     <hr class="mt-title-divider" />
-
     <div class="mt-input-row">
-
       <div class="mt-field">
         <label>Workout Type</label>
         <select id="workoutType" class="mt-select">
@@ -767,95 +750,27 @@ try {
     </div>
 
     <hr class="mt-cards-divider" />
-
     <div class="workout-grid" id="workoutGrid"></div>
   </div>
 </section>
 
 <style>
-.mt-select {
-  width: 100%;
-  background: #0f0f0f;
-  color: #fff;
-  border: 1px solid #383838;
-  border-radius: 8px;
-  padding: 10px;
-}
-.mt-select:focus { border-color:#ffcc00; }
-
-.mt-number {
-  width: 100%;
-  background: #0f0f0f;
-  color: #fff;
-  border: 1px solid #383838;
-  border-radius: 8px;
-  padding: 10px;
-  text-align:center;
-}
-.mt-number:focus { border-color:#ffcc00; }
-
-.workout-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-}
-
-.day-card {
-  background: #101010;
-  border: 1px solid #2b2b2b;
-  border-radius: 10px;
-  padding: 12px;
-}
-
-.day-title {
-  color: #ffcc00;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-
-.workout-item {
-  background: #0d0d0d;
-  border: 1px solid #2e2e2e;
-  border-radius: 8px;
-  padding: 8px;
-  margin-bottom: 8px;
-  font-size: 0.85rem;
-}
-
-.done-btn, .remove-btn {
-  margin-top: 6px;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.75rem;
-}
-
-.done-btn { background:#ffcc00; }
-.remove-btn { background:#ff4d4d; color:#fff; margin-left:5px; }
-.mt-plain-input {
-  width: 100%;
-  background: #0f0f0f;
-  color: #fff;
-  border: 1px solid #383838;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 0.87rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.mt-plain-input:focus {
-  border-color: #ffcc00;
-}
+/* Keep original design */
+.mt-select, .mt-number { width:100%; background:#0f0f0f; color:#fff; border:1px solid #383838; border-radius:8px; padding:10px; }
+.mt-select:focus, .mt-number:focus { border-color:#ffcc00; text-align:center; }
+.workout-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+.day-card { background:#101010; border:1px solid #2b2b2b; border-radius:10px; padding:12px; }
+.day-title { color:#ffcc00; font-weight:700; margin-bottom:10px; }
+.workout-item { background:#0d0d0d; border:1px solid #2e2e2e; border-radius:8px; padding:8px; margin-bottom:8px; font-size:0.85rem; }
+.done-btn, .remove-btn { margin-top:6px; border:none; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:0.75rem; }
+.done-btn { background:#ffcc00; } .remove-btn { background:#ff4d4d; color:#fff; margin-left:5px; }
 </style>
 
 <script>
 const exercises = <?php echo json_encode($exerciseList); ?>;
-
 const workoutType = document.getElementById("workoutType");
 const workoutName = document.getElementById("workoutName");
 const workoutGrid = document.getElementById("workoutGrid");
-
 const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
 function initDays() {
@@ -864,12 +779,7 @@ function initDays() {
     const card = document.createElement("div");
     card.className = "day-card";
     card.id = "day-" + day;
-
-    card.innerHTML = `
-      <div class="day-title">${day}</div>
-      <div class="day-content"></div>
-    `;
-
+    card.innerHTML = `<div class="day-title">${day}</div><div class="day-content"></div>`;
     workoutGrid.appendChild(card);
   });
 }
@@ -877,11 +787,10 @@ function initDays() {
 function loadExercises() {
   const type = workoutType.value;
   workoutName.innerHTML = '<option value="">Select Workout</option>';
-
   exercises.forEach(ex => {
-    if (type === "All" || ex.movement_type === type) {
+    if(type === "All" || ex.movement_type === type) {
       const opt = document.createElement("option");
-      opt.value = ex.name;
+      opt.value = ex.exercise_id;
       opt.textContent = ex.name;
       workoutName.appendChild(opt);
     }
@@ -889,120 +798,177 @@ function loadExercises() {
 }
 
 workoutType.addEventListener("change", loadExercises);
-
-window.onload = () => {
-  initDays();
-  loadExercises();
-};
-
-// HARD LIMIT ENFORCER (2 DIGITS + REALISTIC LIMIT)
-function sanitizeInput(input, maxVal) {
-  input.addEventListener("input", () => {
-    let val = input.value.replace(/\D/g, ""); // numbers only
-
-    if (val.length > 2) val = val.slice(0,2); // max 2 digits
-
-    if (parseInt(val) > maxVal) val = maxVal;
-
-    if (val === "" || val === "0") val = 1;
-
-    input.value = val;
-  });
-}
-
-sanitizeInput(document.getElementById("sets"), 20);
-sanitizeInput(document.getElementById("reps"), 50);
+window.onload = () => { initDays(); loadExercises(); };
 
 function addWorkout() {
-  const name = workoutName.value;
+  const exId = workoutName.value;
+  const exName = workoutName.options[workoutName.selectedIndex].text;
   const sets = document.getElementById("sets").value;
   const reps = document.getElementById("reps").value;
   const day = document.getElementById("workoutDay").value;
 
-  if (!name) {
-    alert("Select workout first");
-    return;
-  }
+  if(!exId) return alert("Select workout");
 
-  const dayContainer = document.querySelector("#day-" + day + " .day-content");
-
+  const container = document.querySelector("#day-" + day + " .day-content");
   const item = document.createElement("div");
   item.className = "workout-item";
 
   item.innerHTML = `
-    <strong>${name}</strong><br>
-    ${sets} sets × ${reps} reps
-    <br>
-    <button class="done-btn" onclick="this.parentElement.style.opacity='0.5'">Done</button>
-    <button class="remove-btn" onclick="this.parentElement.remove()">Remove</button>
+    <strong>${exName}</strong><br>
+    ${sets} sets × ${reps} reps<br>
+    <button class="done-btn">Done</button>
+    <button class="remove-btn">Remove</button>
   `;
 
-  dayContainer.appendChild(item);
-  item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  item.querySelector(".remove-btn").onclick = () => item.remove();
+
+  item.querySelector(".done-btn").onclick = () => {
+    fetch("save_workout.php", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        exercise_id: exId,
+        reps: reps,
+        weight: 0
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.status === "ok") {
+        alert("Workout saved!");
+        item.remove();
+      } else {
+        alert("Error: " + data.error);
+      }
+    })
+    .catch(err => alert("Error: " + err));
+  };
+
+  container.appendChild(item);
 }
 </script>
         <!-- ════════════════════════════════════════════
            MEAL TRACKER — NEW UI (dark/yellow)
            ════════════════════════════════════════════ -->
         <section class="meal-tracker-section">
-  <div class="mt-stripe"></div>
+          <!-- Hazard stripe -->
+          <div class="mt-stripe"></div>
 
-  <div class="mt-panel">
-    <h2 class="mt-title">Customize Today's Meal</h2>
-    <hr class="mt-title-divider" />
+          <!-- Customize panel -->
+          <div class="mt-panel">
+            <h2 class="mt-title">Customize Today's Meal</h2>
+            <hr class="mt-title-divider" />
 
-    <div class="mt-input-row">
-      <!-- Meal type -->
-      <div class="mt-field">
-        <label for="mtMealType">Meal</label>
-        <select id="mtMealType">
-          <option>Breakfast</option>
-          <option>Lunch</option>
-          <option>Dinner</option>
-          <option>Snack</option>
-        </select>
-      </div>
+            <!-- Input row -->
+            <div class="mt-input-row">
+              <!-- Meal type -->
+              <div class="mt-field">
+                <label for="mtMealType">Meal</label>
+                <select id="mtMealType">
+                  <option>Breakfast</option>
+                  <option>Lunch</option>
+                  <option>Dinner</option>
+                  <option>Snack</option>
+                </select>
+              </div>
 
               <!-- Food search -->
               <div class="mt-field" style="flex: 1; min-width: 220px">
-        <label for="mtFoodName">Food Name</label>
-        <input
-          id="mtFoodName"
-          type="text"
-          class="mt-plain-input"
-          placeholder="What did you eat? (e.g. rice, egg, sinigang…)"
-          autocomplete="off"
-        />
-      </div>
+                <label for="mtFoodName">Food Name</label>
+                <div class="mt-suggest-wrap" id="mtSuggestWrap">
+                  <input
+                    id="mtFoodName"
+                    type="text"
+                    placeholder="Type food (e.g. rice, egg, sinigang…)"
+                    autocomplete="off"
+                  />
+                  <div id="mtSuggestions"></div>
+                </div>
+              </div>
 
-             <!-- Qty stepper -->
-      <div class="mt-qty-group">
-        <label style="font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;">
-          Qty / Servings
-        </label>
-        <div class="mt-qty-wrap">
-          <button class="mt-qty-btn" onclick="mtChangeQty(-0.5)">−</button>
-          <input id="mtQtyInput" type="number" value="1" min="0.5" step="0.5" />
-          <button class="mt-qty-btn" onclick="mtChangeQty(0.5)">+</button>
-        </div>
-      </div>
+              <!-- Qty stepper -->
+              <div class="mt-qty-group">
+                <label
+                  style="
+                    font-family: 'Barlow Condensed', sans-serif;
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    letter-spacing: 2px;
+                    text-transform: uppercase;
+                
+                  "
+                  >Qty / Servings</label
+                >
+                <div class="mt-qty-wrap">
+                  <button class="mt-qty-btn" onclick="mtChangeQty(-0.5)">
+                    −
+                  </button>
+                  <input
+                    id="mtQtyInput"
+                    type="number"
+                    value="1"
+                    min="0.5"
+                    step="0.5"
+                  />
+                  <button class="mt-qty-btn" onclick="mtChangeQty(0.5)">
+                    +
+                  </button>
+                </div>
+              </div>
 
-      <button class="mt-add-btn" id="mtAddBtn" onclick="mtAddFood()">Add Food</button>
-    </div>
+              <button
+                class="mt-add-btn"
+                id="mtAddBtn"
+                onclick="mtAddFood()"
+                disabled
+              >
+                Add Food
+              </button>
+            </div>
 
-    <hr class="mt-cards-divider" />
-    <div class="mt-meals-grid" id="mtTodayMeals"></div>
-  </div>
+            <!-- Nutrition preview (auto-filled) -->
+            <div class="mt-nutrition-preview" id="mtNutritionPreview">
+              <div class="mt-preview-top">
+                <div class="mt-nutr-item">
+                  <span class="mt-nutr-val" id="mtPvCal">0</span
+                  ><span class="mt-nutr-lbl">Calories</span>
+                </div>
+                <div class="mt-nutr-item">
+                  <span class="mt-nutr-val" id="mtPvP">0g</span
+                  ><span class="mt-nutr-lbl">Protein</span>
+                </div>
+                <div class="mt-nutr-item">
+                  <span class="mt-nutr-val" id="mtPvC">0g</span
+                  ><span class="mt-nutr-lbl">Carbs</span>
+                </div>
+                <div class="mt-nutr-item">
+                  <span class="mt-nutr-val" id="mtPvF">0g</span
+                  ><span class="mt-nutr-lbl">Fat</span>
+                </div>
+              </div>
+              <div class="mt-preview-serving" id="mtPvServing"></div>
+            </div>
 
-  <!-- Weekly panel -->
-  <div class="mt-weekly-panel">
-    <div class="mt-weekly-header">
-      <h2 class="mt-weekly-title">Weekly Diet Schedule</h2>
-      <button class="mt-clear-btn" onclick="mtClearToday()">✕ Clear Today</button>
-    </div>
-    <div id="mtWeekGrid"></div>
-  </div>
-</section>
+            <div id="mtStatus">
+              Type a food name — nutrition auto-fills based on quantity.
+            </div>
+
+            <!-- Today's meal cards -->
+            <hr class="mt-cards-divider" />
+            <div class="mt-meals-grid" id="mtTodayMeals"></div>
+          </div>
+
+          <!-- Weekly panel -->
+          <div class="mt-weekly-panel">
+            <div class="mt-weekly-header">
+              <h2 class="mt-weekly-title">Weekly Diet Schedule</h2>
+              <button class="mt-clear-btn" onclick="mtClearToday()">
+                ✕ Clear Today
+              </button>
+            </div>
+            <div id="mtWeekGrid"></div>
+          </div>
+        </section>
         <!-- ══════════════════════════════════════════ -->
       </main>
     </div>
@@ -1018,6 +984,7 @@ function addWorkout() {
         csrfToken: <?php echo json_encode(fitstop_csrf_token()); ?>,
       };
     </script>
+    <script src="meal.js"></script>
 
     <script>
       document.querySelectorAll(".plan-ai-chip").forEach((chip) => {
@@ -1034,136 +1001,6 @@ function addWorkout() {
         });
       });
     </script>
-    <script>
-/* ── Simple meal tracker (manual input, no autocomplete, no nutrition auto-fill) ── */
-
-const MT_DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-const MT_TODAY_KEY = "mt_today_" + new Date().toISOString().slice(0, 10);
-
-let mtMeals = JSON.parse(localStorage.getItem(MT_TODAY_KEY) || "{}");
-
-function mtChangeQty(delta) {
-  const input = document.getElementById("mtQtyInput");
-  let val = parseFloat(input.value) || 1;
-  val = Math.max(0.5, Math.round((val + delta) * 2) / 2);
-  input.value = val;
-}
-
-function mtAddFood() {
-  const foodName = document.getElementById("mtFoodName").value.trim();
-  const mealType = document.getElementById("mtMealType").value;
-  const qty = parseFloat(document.getElementById("mtQtyInput").value) || 1;
-
-  if (!foodName) {
-    alert("Please enter a food name.");
-    return;
-  }
-
-  if (!mtMeals[mealType]) mtMeals[mealType] = [];
-  mtMeals[mealType].push({ name: foodName, qty });
-
-  localStorage.setItem(MT_TODAY_KEY, JSON.stringify(mtMeals));
-
-  document.getElementById("mtFoodName").value = "";
-  document.getElementById("mtQtyInput").value = 1;
-
-  mtRenderMeals();
-  mtRenderWeek();
-  mtShowToast();
-}
-
-function mtRemoveFood(mealType, idx) {
-  if (mtMeals[mealType]) {
-    mtMeals[mealType].splice(idx, 1);
-    localStorage.setItem(MT_TODAY_KEY, JSON.stringify(mtMeals));
-    mtRenderMeals();
-    mtRenderWeek();
-  }
-}
-
-function mtClearToday() {
-  mtMeals = {};
-  localStorage.removeItem(MT_TODAY_KEY);
-  mtRenderMeals();
-  mtRenderWeek();
-}
-
-function mtRenderMeals() {
-  const grid = document.getElementById("mtTodayMeals");
-  const mealTypes = ["Breakfast","Lunch","Snack","Dinner"];
-  grid.innerHTML = "";
-
-  mealTypes.forEach(type => {
-    const items = mtMeals[type] || [];
-    const card = document.createElement("div");
-    card.className = "mt-meal-card";
-
-    let body = `<div class="mt-card-header"><span class="mt-card-type">${type}</span></div>`;
-
-    if (items.length === 0) {
-      body += `<p class="mt-card-empty">No food added</p>`;
-    } else {
-      items.forEach((item, idx) => {
-        body += `
-          <div class="mt-card-item">
-            <span>${item.name} <span class="mt-qty-badge">×${item.qty}</span></span>
-            <button class="mt-remove-btn" onclick="mtRemoveFood('${type}', ${idx})">×</button>
-          </div>`;
-      });
-    }
-
-    card.innerHTML = body;
-    grid.appendChild(card);
-  });
-}
-
-function mtRenderWeek() {
-  const grid = document.getElementById("mtWeekGrid");
-  const todayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
-  grid.innerHTML = "";
-
-  MT_DAYS.forEach(day => {
-    const isToday = day === todayName;
-    const data = isToday ? mtMeals : {};
-    const mealTypes = ["Breakfast","Lunch","Snack","Dinner"];
-
-    const card = document.createElement("div");
-    card.className = "mt-week-card" + (isToday ? " mt-week-today" : "");
-
-    let content = `<div class="mt-week-day">${day}${isToday ? ' <span class="mt-today-badge">TODAY</span>' : ''}</div>`;
-
-    let hasItems = false;
-    mealTypes.forEach(type => {
-      const items = isToday && data[type] ? data[type] : [];
-      if (!items.length) return;
-      hasItems = true;
-      content += `<div class="mt-week-meal-label">${type}</div>`;
-      items.forEach(item => {
-        content += `<div class="mt-week-food">${item.name} ×${item.qty}</div>`;
-      });
-    });
-
-    if (!hasItems) {
-      content += `<div class="mt-week-empty">—</div>`;
-    }
-
-    card.innerHTML = content;
-    grid.appendChild(card);
-  });
-}
-
-function mtShowToast() {
-  const toast = document.getElementById("mtToast");
-  if (!toast) return;
-  toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 2000);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  mtRenderMeals();
-  mtRenderWeek();
-});
-</script>
   </body>
 </html>
 
