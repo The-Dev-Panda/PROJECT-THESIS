@@ -63,7 +63,8 @@ $founder = [
     'title' => 'FOUNDER & HEAD COACH',
     'bio' => '"Lorem, ipsum dolor sit amet consectetur adipisicing elit. Odit, quod! Consequatur optio vitae quasi. Velit consequatur at, quod eaque ducimus quibusdam est excepturi iure enim fugiat, consectetur nisi, nostrum maxime!."',
     'socials' => [
-        'facebook' => 'https://web.facebook.com/FitstopMalabon'
+        'facebook' => 'https://web.facebook.com/FitstopMalabon',
+        'instagram'=> 'https://www.instagram.com/dfit.stop/',
     ]
 ];
 
@@ -167,10 +168,15 @@ $staff_members = [
                                 </p>
                                 
                                 <!-- Social Links -->
+                                <!-- Social Links -->
                                 <div class="d-flex gap-2 justify-content-center justify-content-md-start mt-3">
                                     <a href="<?php echo htmlspecialchars($founder['socials']['facebook']); ?>" 
-                                       class="btn btn-sm btn-outline-secondary">
+                                    class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer">
                                         <i class="fa-brands fa-facebook"></i>
+                                    </a>
+                                    <a href="<?php echo htmlspecialchars($founder['socials']['instagram']); ?>" 
+                                    class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer">
+                                        <i class="fa-brands fa-instagram"></i>
                                     </a>
                                 </div>
                             </div>

@@ -24,6 +24,15 @@
                     <a href="<?php echo $base_path ?? ''; ?>admin/Admin_Landing_Page.php" class="footer-link text-hazard">Admin Portal</a>
                 <?php endif; ?>
             </div>
+            <div class="d-flex justify-content-center gap-3 mb-3">
+                <a href="https://www.instagram.com/dfit.stop/" target="_blank" rel="noopener noreferrer" class="footer-link d-flex align-items-center gap-2">
+                    <i class="fa-brands fa-instagram"></i> @dfit.stop
+                </a>
+                <span class="text-muted">|</span>
+                <a href="https://web.facebook.com/dfitstop" target="_blank" rel="noopener noreferrer" class="footer-link d-flex align-items-center gap-2">
+                    <i class="fa-brands fa-facebook"></i> dfitstop
+                </a>
+            </div>
             <p class="text-muted small mb-0">
                 &copy; <?php echo date('Y'); ?> FIT-STOP FITNESS CENTER.
                 <?php if ($is_logged_in ?? false): ?>
