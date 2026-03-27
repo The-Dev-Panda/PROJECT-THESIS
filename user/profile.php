@@ -241,9 +241,14 @@ try {
             </div>
           </div>
         </header>
-
-        <!-- PROFILE SECTIONS -->
-        <section class="profile-page">
+       <section class="profile-page">
+  <!-- ACTION BUTTONS -->
+  <div style="display:flex; justify-content:flex-end; margin-bottom:20px;">
+    <button class="btn-action primary" id="editProfileToggleBtn" onclick="toggleEditPanel()" style="width:auto;">
+      <i class="fas fa-edit" id="editProfileIcon"></i>
+      <span id="editProfileBtnText">Edit Profile</span>
+    </button>
+  </div>
           <!-- USER INFORMATION -->
           <div class="profile-card">
             <div class="card-header-hazard">
@@ -287,9 +292,25 @@ try {
                 <span class="info-value" id="profileMemberId"><?php echo htmlspecialchars($memberIdDisplay, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
             </div>
-
-            <div class="emergency-contact" style="margin-top: 18px;">
-              <h4><i class="fas fa-user-edit"></i> Profile Setup</h4>
+ <div class="emergency-contact">
+              <h4><i class="fas fa-phone-alt"></i> Emergency Contact</h4>
+              <div class="info-grid-small">
+                <div class="info-item">
+                  <span class="info-label">Name</span>
+                  <span class="info-value">Maria Walker</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Relationship</span>
+                  <span class="info-value">Mother</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Mobile</span>
+                  <span class="info-value">+63 921 123 4567</span>
+                </div>
+              </div>
+            </div>
+<div class="emergency-contact" id="editDropdownPanel" style="margin-top:18px; display:none;">
+                <h4><i class="fas fa-user-edit"></i> Profile Setup</h4>
               <div class="info-grid-small" style="margin-bottom: 12px;">
                 <div class="info-item">
                   <span class="info-label">Fitness Experience</span>
@@ -358,24 +379,6 @@ try {
                   <button type="submit" class="btn-action primary" style="border:none; width:100%;">Save Profile</button>
                 </div>
               </form>
-            </div>
-
-            <div class="emergency-contact">
-              <h4><i class="fas fa-phone-alt"></i> Emergency Contact</h4>
-              <div class="info-grid-small">
-                <div class="info-item">
-                  <span class="info-label">Name</span>
-                  <span class="info-value">Maria Walker</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Relationship</span>
-                  <span class="info-value">Mother</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Mobile</span>
-                  <span class="info-value">+63 921 123 4567</span>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -458,10 +461,10 @@ try {
               </div>
               <div class="signature-section">
                 <div class="signature-box">
-                  <span class="signature-text">Sharien Salarda</span>
+                  <span class="signature-text"></span>
                 </div>
                 <p class="signature-note">
-                  Digital signature authenticated on May 10, 2024
+                  Digital signature authenticated on March 27, 2026
                 </p>
                 <button class="btn-signature">
                   <i class="fas fa-pen"></i> Update Signature
@@ -521,35 +524,7 @@ try {
                   membership may be immediately suspended or cancelled.
                 </p>
               </div>
-
-              <div class="agreement-checkbox">
-                <i class="fas fa-check-square"></i>
-                <span
-                  >I have read and agree to the Terms & Conditions and Privacy
-                  Policy</span
-                >
-              </div>
             </div>
-          </div>
-
-          <!-- ACTION BUTTONS -->
-          <div class="profile-actions">
-            <button class="btn-action primary">
-              <i class="fas fa-edit"></i>
-              Edit Profile
-            </button>
-            <button class="btn-action secondary">
-              <i class="fas fa-download"></i>
-              Download All Documents
-            </button>
-            <button class="btn-action secondary">
-              <i class="bi bi-arrow-repeat"></i>
-              Renewal Membership
-            </button>
-            <button class="btn-action danger">
-              <i class="fas fa-user-times"></i>
-              Cancel Membership
-            </button>
           </div>
         </section>
       </main>
@@ -618,6 +593,25 @@ try {
         link.click();
       }
     </script>
+    <script>
+function toggleEditPanel() {
+  const panel = document.getElementById('editDropdownPanel');
+  const btn = document.getElementById('editProfileToggleBtn');
+  const icon = document.getElementById('editProfileIcon');
+  const txt = document.getElementById('editProfileBtnText');
+  const isOpen = panel.style.display === 'none' || panel.style.display === '';
+  panel.style.display = isOpen ? 'block' : 'none';
+  if (isOpen) {
+    panel.style.animation = 'editSlideDown 0.3s ease';
+    txt.textContent = 'Close Editor';
+    icon.className = 'fas fa-times';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else {
+    txt.textContent = 'Edit Profile';
+    icon.className = 'fas fa-edit';
+  }
+}
+</script>
   </body>
 </html>
 
