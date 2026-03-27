@@ -12,17 +12,14 @@ include("../Login/connection.php");
 if (isset($_GET['delete'])) {
     $id = (int) $_GET['delete'];
 
-    // Get expense details before deleting
     $stmt = $pdo->prepare("SELECT expense_name, expense, author FROM expense_history WHERE expense_id = :id");
     $stmt->execute(['id' => $id]);
     $expense = $stmt->fetch();
 
     if ($expense) {
-        // Delete expense
         $stmt = $pdo->prepare("DELETE FROM expense_history WHERE expense_id = :id");
         $stmt->execute(['id' => $id]);
 
-        // Log to notification history
         $notif = $pdo->prepare("INSERT INTO notification_history (name, description, remarks, category) VALUES (?, ?, ?, ?)");
         $notif->execute([
             'EXPENSE DELETED',
@@ -42,31 +39,25 @@ $time_filter = isset($_GET['time']) ? $_GET['time'] : '';
 $sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'created_at';
 $sort_order = isset($_GET['order']) ? $_GET['order'] : 'DESC';
 
-// Pagination
 $records_per_page = 15;
 $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $offset = ($page - 1) * $records_per_page;
 
-// Allowed sort columns
 $allowed_sort = ['expense_id', 'expense_name', 'expense', 'author', 'created_at'];
 if (!in_array($sort_by, $allowed_sort)) {
     $sort_by = 'created_at';
 }
 
-// Validate sort order
 $sort_order = ($sort_order === 'ASC') ? 'ASC' : 'DESC';
 
-// Build WHERE clause
 $where_conditions = [];
 $params = [];
 
-// Search filter
 if ($search !== '') {
     $where_conditions[] = "(expense_name LIKE :search OR description LIKE :search OR author LIKE :search)";
     $params['search'] = "%$search%";
 }
 
-// Time filter
 if ($time_filter) {
     switch ($time_filter) {
         case 'today':
@@ -86,13 +77,11 @@ if ($time_filter) {
 
 $where_clause = count($where_conditions) > 0 ? "WHERE " . implode(" AND ", $where_conditions) : "";
 
-// Get total records
 $total_query = $pdo->prepare("SELECT COUNT(*) as total FROM expense_history $where_clause");
 $total_query->execute($params);
 $total_records = $total_query->fetch()['total'];
 $total_pages = ceil($total_records / $records_per_page);
 
-// Get expenses
 $query = "SELECT * FROM expense_history $where_clause ORDER BY $sort_by $sort_order LIMIT :limit OFFSET :offset";
 $stmt = $pdo->prepare($query);
 foreach ($params as $key => $value) {
@@ -103,12 +92,10 @@ $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $expenses = $stmt->fetchAll();
 
-// Calculate total expenses
 $total_stmt = $pdo->prepare("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history $where_clause");
 $total_stmt->execute($params);
 $total_expenses = $total_stmt->fetch()['total'];
 
-// Helper functions
 function getSortUrl($column, $current_sort, $current_order, $search, $time, $page)
 {
     $new_order = 'ASC';
@@ -158,7 +145,7 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
     <title>Expense Management - FITSTOP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../staff/staff.css">
-    
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
@@ -180,7 +167,6 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
     <?php include('includes/header_admin.php') ?>
 
     <div class="main-content">
-        <!-- Topbar -->
         <div class="topbar">
             <div class="topbar-left">
                 <h1><i class="bi bi-wallet2"></i> Expense Management</h1>
@@ -194,7 +180,6 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
             </div>
         </div>
 
-        <!-- Success/Error Messages -->
         <?php if (isset($_GET['success'])): ?>
             <div
                 style="background: rgba(34, 208, 122, 0.1); border: 1px solid var(--success); color: var(--success); padding: 10px 14px; margin-bottom: 20px; font-size: 12px; text-transform: uppercase;">
@@ -210,30 +195,33 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
             </div>
         <?php endif; ?>
 
-        <!-- Add New Expense -->
         <section>
             <h2><i class="bi bi-plus-circle"></i> Add New Expense</h2>
             <div class="registration-card">
                 <form method="POST" action="process_expenses.php">
-                    <?php echo fitstop_csrf_input(); ?>
                     <input type="hidden" name="action" value="add">
                     <div class="row">
-                        <div class="form-group col-sm-12 col-xl-3">
+                        <div class="form-group col-sm-12 col-xl-2">
                             <label class="form-label">Expense Name</label>
                             <input type="text" name="expense_name" class="form-input"
                                 placeholder="e.g., Equipment Purchase" maxlength="100" required>
                         </div>
-                        <div class="form-group col-sm-12 col-xl-3">
-                            <label class="form-label">Amount (₱)</label>
-                            <input type="text" name="expense" class="form-input number-only" placeholder="0.00"
+                        <div class="form-group col-sm-6 col-xl-1">
+                            <label class="form-label">Quantity</label>
+                            <input type="text" name="quantity" class="form-input integer-only" placeholder="1"
+                                maxlength="5" required>
+                        </div>
+                        <div class="form-group col-sm-6 col-xl-2">
+                            <label class="form-label">Unit Price (₱)</label>
+                            <input type="text" name="unit_price" class="form-input number-only" placeholder="0.00"
                                 maxlength="12" required>
                         </div>
-                        <div class="form-group form-group col-sm-12 col-xl-5">
-                            <label class="form-label">Description</label>
-                            <input type="text" name="description" class="form-input"
-                                placeholder="Details about the expense" maxlength="200">
+                        <div class="form-group col-sm-12 col-xl-5">
+                            <label class="form-label">Additional Notes</label>
+                            <input type="text" name="notes" class="form-input" placeholder="Optional details"
+                                maxlength="150">
                         </div>
-                        <div class="form-group col-sm-12 col-xl-1">
+                        <div class="form-group col-sm-12 col-xl-2 mt-4">
                             <button type="submit" class="btn-primary" style="width: 100%;">
                                 <i class="bi bi-plus-circle"></i> Add
                             </button>
@@ -243,54 +231,55 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
             </div>
         </section>
 
-        <!-- Search & Filter Section -->
         <section>
-            <form method="GET">
-                <div class="row my-2">
-                    <div class="col-sm-12 col-xl-2">
-                        <div class="search-wrapper" style="flex: 2;">
-                            <i class="bi bi-search search-icon"></i>
-                            <input type="text" name="search" class="search-input" placeholder="Search expenses..."
-                                value="<?php echo htmlspecialchars($search); ?>">
+            <div class="my-2">
+                <form method="GET">
+                    <div class="row">
+                        <div class="col-sm-12 col-md-4">
+                            <div class="search-wrapper" style="flex: 2;">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" name="search" class="search-input" placeholder="Search expenses..."
+                                    value="<?php echo htmlspecialchars($search); ?>">
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-2">
+                            <select name="time" class="search-input">
+                                <option value="">All Time</option>
+                                <option value="today" <?php echo $time_filter === 'today' ? 'selected' : ''; ?>>Today
+                                </option>
+                                <option value="week" <?php echo $time_filter === 'week' ? 'selected' : ''; ?>>Last 7 Days
+                                </option>
+                                <option value="month" <?php echo $time_filter === 'month' ? 'selected' : ''; ?>>Last 30
+                                    Days
+                                </option>
+                                <option value="year" <?php echo $time_filter === 'year' ? 'selected' : ''; ?>>Last Year
+                                </option>
+                            </select>
+                        </div>
+                        <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
+                        <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
+                        <div class="col-sm-12 col-md-1 d-flex justify-content-center">
+                            <button type="submit" class="search-btn">
+                                <i class="bi bi-funnel"></i> Filter
+                            </button>
+                        </div>
+                        <div class="col-sm-12 col-md-3 mt-2 d-flex justify-content-center">
+                            <?php if ($search || $time_filter): ?>
+                                <a href="expenses.php" class="btn-secondary" style="text-decoration: none;">
+                                    <i class="bi bi-x-circle"></i> Clear
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                        <div class="col-sm-12 col-md-2 d-flex justify-content-center text-center">
+                            <a href="export_expenses.php?<?php echo http_build_query(['search' => $search, 'time' => $time_filter]); ?>"
+                                class="add-btn" style="background: var(--success); text-decoration: none;">
+                                <i class="bi bi-file-earmark-excel"></i> Export to Excel
+                            </a>
                         </div>
                     </div>
-                    <div class="col-sm-12 col-xl-2">
-                        <select name="time" class="search-input">
-                            <option value="">All Time</option>
-                            <option value="today" <?php echo $time_filter === 'today' ? 'selected' : ''; ?>>Today</option>
-                            <option value="week" <?php echo $time_filter === 'week' ? 'selected' : ''; ?>>Last 7 Days
-                            </option>
-                            <option value="month" <?php echo $time_filter === 'month' ? 'selected' : ''; ?>>Last 30 Days
-                            </option>
-                            <option value="year" <?php echo $time_filter === 'year' ? 'selected' : ''; ?>>Last Year
-                            </option>
-                        </select>
-                    </div>
-                    <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
-                    <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
-                    <div class="col-sm-12 col-xl-2 my-1">
-                        <button type="submit" class="search-btn">
-                            <i class="bi bi-funnel"></i> Filter
-                        </button>
-                    </div>
-                    <div class="col-sm-12 col-xl-2 d-flex justify-content-center my-1">
-                        <?php if ($search || $time_filter): ?>
-                            <a href="expenses.php" class="btn-secondary" style="padding: 11px 22px; text-decoration: none;">
-                                <i class="bi bi-x-circle"></i> Clear
-                            </a>
-                        <?php endif; ?>
-                    </div>
-                    <div class="col-sm-12 col-xl-2 d-flex justify-content-center my-1">
-                        <a href="export_expenses.php?<?php echo http_build_query(['search' => $search, 'time' => $time_filter]); ?>"
-                            class="add-btn" style="background: var(--success); text-decoration: none;">
-                            <i class="bi bi-file-earmark-excel"></i> Export to Excel
-                        </a>
-                    </div>
-                </div>
-            </form>
+                </form>
+            </div>
 
-
-            <!-- Expense Statistics -->
             <div style="margin-bottom: 20px;">
                 <h2 style="margin: 0; border: none; padding: 0; font-size: 11px;">
                     <i class="bi bi-list-ul"></i> Expense History
@@ -302,7 +291,6 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                 </h2>
             </div>
 
-            <!-- Expenses Table -->
             <div class="inventory-table">
                 <table>
                     <thead>
@@ -317,7 +305,7 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                             </th>
                             <th class="sortable-header"
                                 onclick="window.location.href='<?php echo getSortUrl('expense', $sort_by, $sort_order, $search, $time_filter, $page); ?>'">
-                                Amount <?php echo getSortIcon('expense', $sort_by, $sort_order); ?>
+                                Total Amount <?php echo getSortIcon('expense', $sort_by, $sort_order); ?>
                             </th>
                             <th>Description</th>
                             <th class="sortable-header"
@@ -368,7 +356,8 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                             <tr style="background: var(--bg-card); font-weight: 700;">
                                 <td colspan="2" style="text-align: right; padding: 12px;">TOTAL:</td>
                                 <td style="color: var(--danger); font-size: 16px;">
-                                    ₱<?php echo number_format($total_expenses, 2); ?></td>
+                                    ₱<?php echo number_format($total_expenses, 2); ?>
+                                </td>
                                 <td colspan="4"></td>
                             </tr>
                         </tfoot>
@@ -376,7 +365,6 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                 </table>
             </div>
 
-            <!-- Pagination -->
             <?php if ($total_pages > 1): ?>
                 <div style="margin-top: 20px; text-align: center;">
                     <?php if ($page > 1): ?>
@@ -417,7 +405,6 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                     style="background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer;">&times;</button>
             </div>
             <form method="POST" action="process_expenses.php">
-                <?php echo fitstop_csrf_input(); ?>
                 <input type="hidden" name="action" value="update">
                 <input type="hidden" name="expense_id" id="edit_id">
                 <div style="padding: 20px;">
@@ -427,7 +414,7 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                             required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Amount (₱)</label>
+                        <label class="form-label">Total Amount (₱)</label>
                         <input type="text" name="expense" id="edit_expense" class="form-input number-only"
                             maxlength="12" required>
                     </div>

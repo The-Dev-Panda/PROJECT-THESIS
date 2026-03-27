@@ -53,6 +53,51 @@ for ($i = 5; $i >= 0; $i--) {
         'total' => $total
     ];
 }
+// FINANCIAL ANALYTICS - Add after existing stats
+
+// Total Expenses
+$stmt = $pdo->query("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history");
+$total_expenses = $stmt->fetch()['total'];
+
+// Today's Expenses
+$stmt = $pdo->query("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE DATE(created_at) = DATE('now')");
+$today_expenses = $stmt->fetch()['total'];
+
+// This Month's Expenses
+$stmt = $pdo->query("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')");
+$month_expenses = $stmt->fetch()['total'];
+
+// Calculate Net Profit
+$gross_profit = $stats['total_revenue']; // Total Revenue
+$net_profit = $gross_profit - $total_expenses;
+$profit_margin = $gross_profit > 0 ? ($net_profit / $gross_profit) * 100 : 0;
+
+// Monthly Net Profit (last 6 months)
+$net_profit_by_month = [];
+for ($i = 5; $i >= 0; $i--) {
+    $date = date('Y-m', strtotime("-$i months"));
+    
+    // Revenue for this month
+    $stmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', transaction_date) = :date");
+    $stmt->execute(['date' => $date]);
+    $monthly_revenue = $stmt->fetch()['total'];
+    
+    // Expenses for this month
+    $stmt = $pdo->prepare("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE strftime('%Y-%m', created_at) = :date");
+    $stmt->execute(['date' => $date]);
+    $monthly_expenses = $stmt->fetch()['total'];
+    
+    $net_profit_by_month[] = [
+        'month' => date('M', strtotime("-$i months")),
+        'revenue' => $monthly_revenue,
+        'expenses' => $monthly_expenses,
+        'net' => $monthly_revenue - $monthly_expenses
+    ];
+}
+
+// Expense Categories (Top 5)
+$stmt = $pdo->query("SELECT expense_name, SUM(expense) as total FROM expense_history GROUP BY expense_name ORDER BY total DESC LIMIT 5");
+$expense_categories = $stmt->fetchAll();
 
 // Low Stock Items
 $stmt = $pdo->query("SELECT item_name, quantity FROM inventory WHERE quantity < 10 ORDER BY quantity ASC LIMIT 5");
@@ -188,7 +233,7 @@ $revenue_by_payment = $stmt->fetchAll();
 
         <!-- Stats Grid -->
         <div class="row g-3 mb-3" id="statsGrid">
-            <div class="col-12 col-sm-6 col-lg-3">
+            <div class="col-12 col-sm-12 col-lg-3">
                 <a href="view_members.php" class="text-decoration-none text-dark">
                     <div class="stat-box h-100">
                         <div class="stat-icon members"><i class="bi bi-people-fill"></i></div>
@@ -200,7 +245,7 @@ $revenue_by_payment = $stmt->fetchAll();
                 </a>
             </div>
 
-            <div class="col-12 col-sm-6 col-lg-3">
+            <div class="col-12 col-sm-12 col-lg-3">
                 <a href="view_staff.php" class="text-decoration-none text-dark">
                     <div class="stat-box h-100">
                         <div class="stat-icon registrations"><i class="bi bi-person-badge"></i></div>
@@ -212,19 +257,7 @@ $revenue_by_payment = $stmt->fetchAll();
                 </a>
             </div>
 
-            <div class="col-12 col-sm-6 col-lg-3">
-                <a href="transaction.php" class="text-decoration-none text-dark">
-                    <div class="stat-box h-100">
-                        <div class="stat-icon equipment"><i class="bi bi-currency-dollar"></i></div>
-                        <div>
-                            <div class="stat-value" id="stat-revenue">₱<?php echo number_format($stats['total_revenue'], 2); ?></div>
-                            <div class="stat-label">Total Revenue</div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-12 col-sm-6 col-lg-3">
+            <div class="col-12 col-sm-12 col-lg-3">
                 <a href="notification.php" class="text-decoration-none text-dark">
                     <div class="stat-box h-100">
                         <div class="stat-icon notifications"><i class="bi bi-bell-fill"></i></div>
@@ -235,8 +268,98 @@ $revenue_by_payment = $stmt->fetchAll();
                     </div>
                 </a>
             </div>
+            <!-- Enhanced Stats Grid with Financial Metrics -->
+            <div class="col-12 col-sm-12 col-xl-3">
+                <a href="transaction.php" class="text-decoration-none text-dark">
+                    <div class="stat-box h-100">
+                        <div class="stat-icon equipment"><i class="bi bi-cash-coin"></i></div>
+                        <div>
+                            <div class="stat-value" id="stat-revenue">₱<?php echo number_format($stats['total_revenue'], 0); ?></div>
+                            <div class="stat-label">Gross Revenue</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-12 col-xl-3">
+                <a href="expenses.php" class="text-decoration-none text-dark">
+                    <div class="stat-box h-100">
+                        <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i class="bi bi-wallet2"></i></div>
+                        <div>
+                            <div class="stat-value" style="color: var(--danger);">₱<?php echo number_format($total_expenses, 0); ?></div>
+                            <div class="stat-label">Total Expenses</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-12 col-sm-12 col-xl-3">
+                <a href="expenses.php" class="text-decoration-none text-dark">
+                    <div class="stat-box h-100">
+                        <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i class="bi bi-wallet2"></i></div>
+                        <div>
+                            <div class="stat-value" style="color: var(--danger);">₱<?php echo number_format($today_expenses, 0); ?></div>
+                            <div class="stat-label">Today's Expenses</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-12 col-sm-12 col-xl-3">
+                <a href="expenses.php" class="text-decoration-none text-dark">
+                    <div class="stat-box h-100">
+                        <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i class="bi bi-wallet2"></i></div>
+                        <div>
+                            <div class="stat-value" style="color: var(--danger);">₱<?php echo number_format($month_expenses, 0); ?></div>
+                            <div class="stat-label">Semi-Annual Expenses </br>(Last 6 Months)</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-12 col-xl-3">
+                <div class="stat-box h-100" style="border-left: 3px solid <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">
+                    <div class="stat-icon" style="background: <?php echo $net_profit >= 0 ? 'rgba(34, 208, 122, 0.1)' : 'rgba(255, 71, 87, 0.1)'; ?>; color: <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;"><i class="bi bi-graph-up-arrow"></i></div>
+                    <div>
+                        <div class="stat-value" style="color: <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">₱<?php echo number_format($net_profit, 0); ?></div>
+                        <div class="stat-label">Net Profit</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-12 col-xl-3">
+                <div class="stat-box h-100">
+                    <div class="stat-icon registrations"><i class="bi bi-percent"></i></div>
+                    <div>
+                        <div class="stat-value"><?php echo number_format($profit_margin, 1); ?>%</div>
+                        <div class="stat-label">Profit Margin</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
+                <!-- Financial Performance Chart -->
+        <section>
+            <h2><i class="bi bi-bank"></i> Financial Performance</h2>
+            <div class="row g-3">
+                <div class="col-12 col-lg-8">
+                    <div class="registration-card">
+                        <h3 style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                            <i class="bi bi-graph-up"></i> Net Profit Analysis (6 Months)
+                        </h3>
+                        <div style="position: relative; height: 300px;">
+                            <canvas id="netProfitChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-4">
+                    <div class="registration-card">
+                        <h3 style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                            <i class="bi bi-pie-chart"></i> Top Expenses
+                        </h3>
+                        <canvas id="expenseCategoriesChart" style="max-height: 250px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
         <!-- Charts Row 1 -->
         <section class="container-fluid">
             <h2><i class="bi bi-bar-chart-line"></i> Growth & Revenue Trends</h2>
@@ -403,7 +526,91 @@ $revenue_by_payment = $stmt->fetchAll();
 
         // Initialize Charts
         let memberGrowthChart, revenueChart, checkinChart, paymentMethodChart;
+        // Net Profit Chart
+        new Chart(document.getElementById('netProfitChart'), {
+            type: 'bar',
+            data: {
+                labels: <?php echo json_encode(array_column($net_profit_by_month, 'month')); ?>,
+                datasets: [
+                    {
+                        label: 'Revenue',
+                        data: <?php echo json_encode(array_column($net_profit_by_month, 'revenue')); ?>,
+                        backgroundColor: 'rgba(34, 208, 122, 0.7)',
+                        borderColor: '#22d07a',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Expenses',
+                        data: <?php echo json_encode(array_column($net_profit_by_month, 'expenses')); ?>,
+                        backgroundColor: 'rgba(255, 71, 87, 0.7)',
+                        borderColor: '#ff4757',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Net Profit',
+                        data: <?php echo json_encode(array_column($net_profit_by_month, 'net')); ?>,
+                        backgroundColor: 'rgba(255, 204, 0, 0.7)',
+                        borderColor: '#FFCC00',
+                        borderWidth: 2,
+                        type: 'line'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₱' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: true, position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ₱' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
+        // Expense Categories Chart
+        new Chart(document.getElementById('expenseCategoriesChart'), {
+            type: 'doughnut',
+            data: {
+                labels: <?php echo json_encode(array_column($expense_categories, 'expense_name')); ?>,
+                datasets: [{
+                    data: <?php echo json_encode(array_column($expense_categories, 'total')); ?>,
+                    backgroundColor: ['#ff4757', '#ff9f43', '#FFCC00', '#22d07a', '#17a2b8'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 10, font: { size: 10 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ₱' + context.parsed.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
         // Member Growth Chart
         memberGrowthChart = new Chart(document.getElementById('memberGrowthChart'), {
             type: 'line',

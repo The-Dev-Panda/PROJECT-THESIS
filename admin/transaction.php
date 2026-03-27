@@ -280,6 +280,12 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
         <!-- Search & Filter Section -->
         <section>
             <div>
+                <div class="col-12 p-1 d-flex justify-content-end">
+                    <button class="add-btn" data-bs-toggle="modal" data-bs-target="#exportModal"
+                        style="background: var(--success); text-decoration: none; border: none; cursor: pointer;">
+                        <i class="bi bi-file-earmark-excel"></i> Export to Excel
+                    </button>
+                </div>
                 <form method="GET">
                     <div class="row">
                         <div class="search-wrapper col-sm-12 col-xl-2 p-1">
@@ -323,12 +329,11 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
                             </button>
                         </div>
                         <div class="col-sm-12 col-xl-2 p-1 d-flex justify-content-center">
-                        <?php if ($search || $payment_method || $time_filter): ?>
-                            <a href="transaction.php" class="btn-secondary"
-                                style="text-decoration: none;">
-                                <i class="bi bi-x-circle"></i> Clear Filters
-                            </a>
-                        <?php endif; ?>
+                            <?php if ($search || $payment_method || $time_filter): ?>
+                                <a href="transaction.php" class="btn-secondary" style="text-decoration: none;">
+                                    <i class="bi bi-x-circle"></i> Clear Filters
+                                </a>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </form>
@@ -448,6 +453,72 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
         </section>
     </div>
 
+    <!-- Export Modal -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: var(--bg-surface); border: 1px solid var(--border);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border);">
+                    <h5 class="modal-title" id="exportModalLabel"
+                        style="font-family: 'Chakra Petch', sans-serif; color: var(--hazard); text-transform: uppercase;">
+                        <i class="bi bi-file-earmark-excel"></i> Export Transactions to Excel
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        style="filter: invert(1);"></button>
+                </div>
+                <form method="GET" action="export_transaction.php">
+                    <div class="modal-body">
+                        <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 20px;">
+                            Select the date range for the transactions you want to export. Leave blank for all
+                            transactions.
+                        </p>
+
+                        <div class="row g-3">
+                            <div class="col-sm-12 col-xl-6">
+                                <div class="form-group">
+                                    <label class="form-label">From Date</label>
+                                    <input type="date" name="from_date" class="form-input" value="">
+                                </div>
+                            </div>
+                            <div class="col-sm-12 col-xl-6">
+                                <div class="form-group">
+                                    <label class="form-label">To Date</label>
+                                    <input type="date" name="to_date" class="form-input"
+                                        value="<?php echo date('Y-m-d'); ?>">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label class="form-label">Payment Method (Optional)</label>
+                            <select name="payment_method" class="form-input">
+                                <option value="">All Payment Methods</option>
+                                <?php foreach ($payment_methods as $method): ?>
+                                    <option value="<?php echo htmlspecialchars($method); ?>">
+                                        <?php echo htmlspecialchars($method); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div
+                            style="background: rgba(255, 204, 0, 0.1); border: 1px solid var(--hazard); padding: 12px; margin-top: 15px; border-radius: 2px;">
+                            <p style="color: var(--text-muted); font-size: 11px; margin: 0;">
+                                <i class="bi bi-info-circle" style="color: var(--hazard);"></i>
+                                The export will include: ID, Receipt #, Customer, Type, Amount, Payment Method, Date,
+                                Staff, and Description.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="border-top: 1px solid var(--border);">
+                        <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn-primary">
+                            <i class="bi bi-download"></i> Export to Excel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <!-- Transaction Details Modal -->
     <div id="transactionModal"
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
