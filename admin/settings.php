@@ -44,7 +44,7 @@ $admin = $stmt->fetch();
         <section>
             <div class="row">
                 <!-- Account Settings -->
-                <a href="admin_profile.php" style="text-decoration: none;" class="col-sm-12 col-xl-3">
+                <a href="admin_profile.php" style="text-decoration: none;" class="col-sm-12 col-xl-6">
                     <div class="registration-card"
                         style="cursor: pointer; transition: all 0.2s; border-left: 3px solid var(--hazard);">
                         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
@@ -73,6 +73,9 @@ $admin = $stmt->fetch();
                         </div>
                     </div>
                 </a>
+
+                <!-- backup part (DEPRECATED) -->
+                <!-- 
                 <a href="backup.php" style="text-decoration: none;" class="col-sm-12 col-xl-3">
                     <div class="registration-card"
                         style="cursor: pointer; transition: all 0.2s; border-left: 3px solid var(--success);">
@@ -101,7 +104,8 @@ $admin = $stmt->fetch();
                             <i class="bi bi-arrow-right" style="color: var(--hazard);"></i>
                         </div>
                     </div>
-                </a>
+                </a> 
+                -->
             </div>
         </section>
     </div>
