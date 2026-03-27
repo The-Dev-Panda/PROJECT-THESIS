@@ -615,6 +615,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       <li class="active">
         <i class="bi bi-person-walking"></i><span>Walk-In Log</span>
       </li>
+      <li id="settingsBtn" data-target="settings">
+        <i class="bi bi-gear"></i>
+        <span>Settings</span>
+      </li>
       <li onclick="document.getElementById('logoutForm').submit()">
         <i class="bi bi-box-arrow-right"></i><span>Logout</span>
       </li>
