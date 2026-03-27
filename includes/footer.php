@@ -16,8 +16,8 @@
         <div class="container text-center">
             <div class="d-flex justify-content-center gap-4 mb-4">
                 <a href="<?php echo $base_path ?? ''; ?>index.php" class="footer-link">Home</a>
-                <a href="Login/DPA_Consent.php" class="footer-link">Privacy Policy</a>
-                <a href="Login/DPA_Consent.php" class="footer-link">Terms of Service</a>
+                <a href="<?php echo $base_path ?? ''; ?>terms.php" class="footer-link">Privacy Policy</a>
+                <a href="<?php echo $base_path ?? ''; ?>terms.php" class="footer-link">Terms of Service</a>
                 <?php if (!empty($_SESSION['user_type']) && $_SESSION['user_type'] === 'staff'): ?>
                     <a href="<?php echo $base_path ?? ''; ?>staff/staff.php" class="footer-link text-hazard">Staff Portal</a>
                 <?php elseif (!empty($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin'): ?>

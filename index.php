@@ -156,7 +156,7 @@ include('includes/header.php');
                         <div class="pricing-header">
                             <h4 class="mb-0">WALK-IN</h4>
                             <div class="display-6 fw-bold mt-2 text-white">₱60<span class="fs-6 text-muted">/day</span></div>
-                            <div class="mt-1 small text-muted">or <strong>₱750</strong><span class="fs-6 text-muted">/mo</span> (Monthly Walk-In) - ₱9000 /yr</div>
+                            <div class="mt-1 small text-muted">or <strong>₱750</strong><span class="fs-6 text-muted">/mo</span> (Monthly Walk-In) -> ₱9000 /yr</div>
                         </div>
                         <div class="pricing-body">
                             <ul class="check-list ps-0">
@@ -172,9 +172,9 @@ include('includes/header.php');
                 <div class="col-md-5 col-lg-4">
                     <div class="pricing-card featured">
                         <div class="pricing-header">
-                            <h4 class="mb-0 text-hazard">SMART MEMBER</h4>
+                            <h4 class="mb-0 text-hazard">MEMBER</h4>
                             <div class="display-6 fw-bold mt-2 text-white">₱650<span class="fs-6 text-muted">/mo</span></div>
-                            <div class="mt-1 small text-muted">+ <strong>₱500</strong><span class="fs-6 text-muted">/yr</span> (Membership) - ₱8300 /yr </div>
+                            <div class="mt-1 small text-muted">+ <strong>₱500</strong><span class="fs-6 text-muted">/yr</span> (Membership) -> ₱8300 /yr </div>
                         </div>
                         <div class="pricing-body">
                             <ul class="check-list ps-0">
