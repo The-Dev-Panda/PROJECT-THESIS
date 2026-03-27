@@ -701,13 +701,10 @@ try {
 
 <section class="workout-tracker-section">
   <div class="mt-stripe"></div>
-
   <div class="mt-panel">
     <h2 class="mt-title">Customize Today's Workout</h2>
     <hr class="mt-title-divider" />
-
     <div class="mt-input-row">
-
       <div class="mt-field">
         <label>Workout Type</label>
         <select id="workoutType" class="mt-select">
@@ -753,81 +750,27 @@ try {
     </div>
 
     <hr class="mt-cards-divider" />
-
     <div class="workout-grid" id="workoutGrid"></div>
   </div>
 </section>
 
 <style>
-.mt-select {
-  width: 100%;
-  background: #0f0f0f;
-  color: #fff;
-  border: 1px solid #383838;
-  border-radius: 8px;
-  padding: 10px;
-}
-.mt-select:focus { border-color:#ffcc00; }
-
-.mt-number {
-  width: 100%;
-  background: #0f0f0f;
-  color: #fff;
-  border: 1px solid #383838;
-  border-radius: 8px;
-  padding: 10px;
-  text-align:center;
-}
-.mt-number:focus { border-color:#ffcc00; }
-
-.workout-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-}
-
-.day-card {
-  background: #101010;
-  border: 1px solid #2b2b2b;
-  border-radius: 10px;
-  padding: 12px;
-}
-
-.day-title {
-  color: #ffcc00;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-
-.workout-item {
-  background: #0d0d0d;
-  border: 1px solid #2e2e2e;
-  border-radius: 8px;
-  padding: 8px;
-  margin-bottom: 8px;
-  font-size: 0.85rem;
-}
-
-.done-btn, .remove-btn {
-  margin-top: 6px;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.75rem;
-}
-
-.done-btn { background:#ffcc00; }
-.remove-btn { background:#ff4d4d; color:#fff; margin-left:5px; }
+/* Keep original design */
+.mt-select, .mt-number { width:100%; background:#0f0f0f; color:#fff; border:1px solid #383838; border-radius:8px; padding:10px; }
+.mt-select:focus, .mt-number:focus { border-color:#ffcc00; text-align:center; }
+.workout-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+.day-card { background:#101010; border:1px solid #2b2b2b; border-radius:10px; padding:12px; }
+.day-title { color:#ffcc00; font-weight:700; margin-bottom:10px; }
+.workout-item { background:#0d0d0d; border:1px solid #2e2e2e; border-radius:8px; padding:8px; margin-bottom:8px; font-size:0.85rem; }
+.done-btn, .remove-btn { margin-top:6px; border:none; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:0.75rem; }
+.done-btn { background:#ffcc00; } .remove-btn { background:#ff4d4d; color:#fff; margin-left:5px; }
 </style>
 
 <script>
 const exercises = <?php echo json_encode($exerciseList); ?>;
-
 const workoutType = document.getElementById("workoutType");
 const workoutName = document.getElementById("workoutName");
 const workoutGrid = document.getElementById("workoutGrid");
-
 const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
 function initDays() {
@@ -836,12 +779,7 @@ function initDays() {
     const card = document.createElement("div");
     card.className = "day-card";
     card.id = "day-" + day;
-
-    card.innerHTML = `
-      <div class="day-title">${day}</div>
-      <div class="day-content"></div>
-    `;
-
+    card.innerHTML = `<div class="day-title">${day}</div><div class="day-content"></div>`;
     workoutGrid.appendChild(card);
   });
 }
@@ -849,11 +787,10 @@ function initDays() {
 function loadExercises() {
   const type = workoutType.value;
   workoutName.innerHTML = '<option value="">Select Workout</option>';
-
   exercises.forEach(ex => {
-    if (type === "All" || ex.movement_type === type) {
+    if(type === "All" || ex.movement_type === type) {
       const opt = document.createElement("option");
-      opt.value = ex.name;
+      opt.value = ex.exercise_id;
       opt.textContent = ex.name;
       workoutName.appendChild(opt);
     }
@@ -861,59 +798,56 @@ function loadExercises() {
 }
 
 workoutType.addEventListener("change", loadExercises);
-
-window.onload = () => {
-  initDays();
-  loadExercises();
-};
-
-// HARD LIMIT ENFORCER (2 DIGITS + REALISTIC LIMIT)
-function sanitizeInput(input, maxVal) {
-  input.addEventListener("input", () => {
-    let val = input.value.replace(/\D/g, ""); // numbers only
-
-    if (val.length > 2) val = val.slice(0,2); // max 2 digits
-
-    if (parseInt(val) > maxVal) val = maxVal;
-
-    if (val === "" || val === "0") val = 1;
-
-    input.value = val;
-  });
-}
-
-sanitizeInput(document.getElementById("sets"), 20);
-sanitizeInput(document.getElementById("reps"), 50);
+window.onload = () => { initDays(); loadExercises(); };
 
 function addWorkout() {
-  const name = workoutName.value;
+  const exId = workoutName.value;
+  const exName = workoutName.options[workoutName.selectedIndex].text;
   const sets = document.getElementById("sets").value;
   const reps = document.getElementById("reps").value;
   const day = document.getElementById("workoutDay").value;
 
-  if (!name) {
-    alert("Select workout first");
-    return;
-  }
+  if(!exId) return alert("Select workout");
 
-  const dayContainer = document.querySelector("#day-" + day + " .day-content");
-
+  const container = document.querySelector("#day-" + day + " .day-content");
   const item = document.createElement("div");
   item.className = "workout-item";
 
   item.innerHTML = `
-    <strong>${name}</strong><br>
-    ${sets} sets × ${reps} reps
-    <br>
-    <button class="done-btn" onclick="this.parentElement.style.opacity='0.5'">Done</button>
-    <button class="remove-btn" onclick="this.parentElement.remove()">Remove</button>
+    <strong>${exName}</strong><br>
+    ${sets} sets × ${reps} reps<br>
+    <button class="done-btn">Done</button>
+    <button class="remove-btn">Remove</button>
   `;
 
-  dayContainer.appendChild(item);
-  item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  item.querySelector(".remove-btn").onclick = () => item.remove();
+
+  item.querySelector(".done-btn").onclick = () => {
+    fetch("save_workout.php", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        exercise_id: exId,
+        reps: reps,
+        weight: 0
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.status === "ok") {
+        alert("Workout saved!");
+        item.remove();
+      } else {
+        alert("Error: " + data.error);
+      }
+    })
+    .catch(err => alert("Error: " + err));
+  };
+
+  container.appendChild(item);
 }
 </script>
-<!-- ════════════════════════════════════════════
+ <!-- ════════════════════════════════════════════
            MEAL TRACKER — NEW UI (dark/yellow)
            ════════════════════════════════════════════ -->
 <section class="meal-tracker-section">
