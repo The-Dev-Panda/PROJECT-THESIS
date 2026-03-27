@@ -14,6 +14,8 @@ $contactValue = '';
 $genderValue = 'Not set';
 $fitnessLevel = 'Not set';
 $goal = 'Not set';
+$eNameValue = 'Not set';
+$eContactValue = 'Not set';
 $attendanceStreakDays = 0;
 $avatarInitials = 'M';
 $selectedGender = '';
@@ -21,15 +23,24 @@ $selectedFitnessLevel = '';
 $selectedGoal = '';
 $qrPayload = json_encode(['member_ref' => (string)($_SESSION['id'] ?? ''), 'username' => '']);
 
+// Initialize Monthly variables
+$monthlyId = null;
+$monthlyName = 'None';
+$monthlyExpiry = null;
+$monthlyStatus = 'None';
+$daysRemaining = 0;
+
 try {
   require __DIR__ . '/../Login/connection.php';
 
   $userId = (int)($_SESSION['id'] ?? 0);
   if ($userId > 0) {
+    // 1. Fetch User Data
     $userStmt = $pdo->prepare('SELECT id, username, first_name, last_name, email, address FROM users WHERE id = :id LIMIT 1');
     $userStmt->execute([':id' => $userId]);
     $user = $userStmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
+    // 2. Fetch Profile Data (dynamic schema check)
     $profileColumns = [];
     $profileColumnStmt = $pdo->query('PRAGMA table_info(member_profiles)');
     if ($profileColumnStmt) {
@@ -49,13 +60,39 @@ try {
       . (in_array('gender', $profileColumns, true) ? 'gender' : 'NULL AS gender') . ', '
       . (in_array('fitness_level', $profileColumns, true) ? 'fitness_level' : 'NULL AS fitness_level') . ', '
       . (in_array('goal', $profileColumns, true) ? 'goal' : 'NULL AS goal') . ', '
-      . (in_array('remarks', $profileColumns, true) ? 'remarks' : 'NULL AS remarks')
+      . (in_array('remarks', $profileColumns, true) ? 'remarks' : 'NULL AS remarks') . ', '
+      . (in_array('e_name', $profileColumns, true) ? 'e_name' : 'NULL AS e_name') . ', '
+      . (in_array('e_contact', $profileColumns, true) ? 'e_contact' : 'NULL AS e_contact')
       . ' FROM member_profiles WHERE user_id = :user_id LIMIT 1';
 
     $profileStmt = $pdo->prepare($profileSelectSql);
     $profileStmt->execute([':user_id' => $userId]);
     $profile = $profileStmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
+    // 3. Fetch Monthly Membership Link
+    $monthly = null;
+    $mStmt = $pdo->prepare("
+      SELECT id, name, expires_in, member
+      FROM monthly
+      WHERE member = :user_id
+      ORDER BY date(expires_in) DESC
+      LIMIT 1
+    ");
+    $mStmt->execute([':user_id' => $userId]);
+    $monthly = $mStmt->fetch(PDO::FETCH_ASSOC);
+
+    $monthlyId = $monthly ? $monthly['id'] : null;
+    $monthlyName = $monthly ? $monthly['name'] : 'None';
+    $monthlyExpiry = $monthly ? $monthly['expires_in'] : null;
+    
+    if ($monthlyExpiry) {
+        $nowDate = new DateTime('now', new DateTimeZone('Asia/Manila'));
+        $expDate = new DateTime($monthlyExpiry);
+        $daysRemaining = (int) $nowDate->diff($expDate)->format('%r%a');
+        $monthlyStatus = $daysRemaining >= 0 ? "Active ($daysRemaining days)" : "Expired (" . abs($daysRemaining) . " days)";
+    }
+
+    // Assign mapped values
     $nameRaw = trim(((string)($user['first_name'] ?? '')) . ' ' . ((string)($user['last_name'] ?? '')));
     if ($nameRaw !== '') {
       $displayName = $nameRaw;
@@ -117,6 +154,14 @@ try {
     if (!empty($profile['goal'])) {
       $goal = (string)$profile['goal'];
       $selectedGoal = $goal;
+    }
+    
+    if (!empty($profile['e_name'])) {
+      $eNameValue = (string)$profile['e_name'];
+    }
+    
+    if (!empty($profile['e_contact'])) {
+      $eContactValue = (string)$profile['e_contact'];
     }
 
     $attendanceStmt = $pdo->prepare("SELECT DISTINCT date(datetime, 'localtime') AS attendance_day FROM attendance WHERE user_id = :user_id ORDER BY attendance_day DESC");
@@ -206,15 +251,22 @@ try {
         display: flex;
         align-items: flex-end;
       }
+      
+      .status-badge {
+        font-size: 0.8em;
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-left: 5px;
+      }
+      .status-badge.active { background-color: #d4edda; color: #155724; }
+      .status-badge.expired { background-color: #f8d7da; color: #721c24; }
     </style>
   </head>
   <body>
     <div class="dashboard">
       <?php include __DIR__ . '/includes/sidebar.php'; ?>
 
-      <!-- MAIN CONTENT -->
       <main class="main-content">
-        <!-- TOP PROFILE BANNER -->
         <header class="profile-banner">
           <div class="banner-bg"></div>
           <div class="profile-header-content">
@@ -223,7 +275,7 @@ try {
             </div>
             <div class="profile-header-info">
               <h1 id="profileHeaderName"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h1>
-              <p class="profile-subtitle">New Member • Active Since 2026</p>
+              <p class="profile-subtitle"><?php echo htmlspecialchars($monthlyName, ENT_QUOTES, 'UTF-8'); ?> • Active Since <?php echo date('Y'); ?></p>
               <div class="profile-stats-mini">
                 <div class="stat-badge">
                   <i class="fas fa-fire"></i>
@@ -231,7 +283,7 @@ try {
                 </div>
                 <div class="stat-badge">
                   <i class="fas fa-dumbbell"></i>
-                  <span>New Member Plan</span>
+                  <span><?php echo htmlspecialchars($monthlyName, ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
                 <div class="stat-badge">
                   <i class="fas fa-check-circle"></i>
@@ -241,15 +293,14 @@ try {
             </div>
           </div>
         </header>
-       <section class="profile-page">
-  <!-- ACTION BUTTONS -->
-  <div style="display:flex; justify-content:flex-end; margin-bottom:20px;">
-    <button class="btn-action primary" id="editProfileToggleBtn" onclick="toggleEditPanel()" style="width:auto;">
-      <i class="fas fa-edit" id="editProfileIcon"></i>
-      <span id="editProfileBtnText">Edit Profile</span>
-    </button>
-  </div>
-          <!-- USER INFORMATION -->
+        <section class="profile-page">
+          <div style="display:flex; justify-content:flex-end; margin-bottom:20px;">
+            <button class="btn-action primary" id="editProfileToggleBtn" onclick="toggleEditPanel()" style="width:auto;">
+              <i class="fas fa-edit" id="editProfileIcon"></i>
+              <span id="editProfileBtnText">Edit Profile</span>
+            </button>
+          </div>
+          
           <div class="profile-card">
             <div class="card-header-hazard">
               <h3><i class="bi bi-person-badge"></i> User Information</h3>
@@ -264,10 +315,6 @@ try {
                 <span class="info-value" id="profileAge"><?php echo htmlspecialchars($ageDisplay, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
               <div class="info-item">
-                <span class="info-label">Birthdate</span>
-                <span class="info-value">Jan 15, 2002</span>
-              </div>
-              <div class="info-item">
                 <span class="info-label">Gender</span>
                 <span class="info-value"><?php echo htmlspecialchars($genderValue, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
@@ -276,7 +323,7 @@ try {
                 <span class="info-value"><?php echo htmlspecialchars($remarksValue !== '' ? $remarksValue : 'Not set', ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
               <div class="info-item"> 
-                <span class="info-label"></span>Address</span>
+                <span class="info-label">Address</span>
                 <span class="info-value"><?php echo htmlspecialchars($addressValue !== '' ? $addressValue : 'Not set', ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
               <div class="info-item">
@@ -291,26 +338,35 @@ try {
                 <span class="info-label">Member ID</span>
                 <span class="info-value" id="profileMemberId"><?php echo htmlspecialchars($memberIdDisplay, ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
+              <div class="info-item" style="grid-column: 1 / -1;">
+                <span class="info-label">Monthly Access</span>
+                <span class="info-value">
+                  <?php if ($monthly): ?>
+                    ID <?= htmlspecialchars($monthlyId) ?>, Expires <?= htmlspecialchars(date('M j, Y', strtotime($monthlyExpiry))) ?> 
+                    <span class="status-badge <?= $daysRemaining >= 0 ? 'active' : 'expired' ?>"><?= htmlspecialchars($monthlyStatus) ?></span>
+                  <?php else: ?>
+                    <span style="color: #a0a0a0;">No monthly link yet. <a href="#" style="color:#ffcc00; text-decoration:none;">Subscribe Now</a></span>
+                  <?php endif; ?>
+                </span>
+              </div>
             </div>
- <div class="emergency-contact">
+            
+            <div class="emergency-contact">
               <h4><i class="fas fa-phone-alt"></i> Emergency Contact</h4>
               <div class="info-grid-small">
                 <div class="info-item">
                   <span class="info-label">Name</span>
-                  <span class="info-value">Maria Walker</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Relationship</span>
-                  <span class="info-value">Mother</span>
+                  <span class="info-value"><?php echo htmlspecialchars($eNameValue, ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Mobile</span>
-                  <span class="info-value">+63 921 123 4567</span>
+                  <span class="info-value"><?php echo htmlspecialchars($eContactValue, ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
               </div>
             </div>
-<div class="emergency-contact" id="editDropdownPanel" style="margin-top:18px; display:none;">
-                <h4><i class="fas fa-user-edit"></i> Profile Setup</h4>
+
+            <div class="emergency-contact" id="editDropdownPanel" style="margin-top:18px; display:none;">
+              <h4><i class="fas fa-user-edit"></i> Profile Setup</h4>
               <div class="info-grid-small" style="margin-bottom: 12px;">
                 <div class="info-item">
                   <span class="info-label">Fitness Experience</span>
@@ -372,68 +428,26 @@ try {
                   </select>
                 </div>
                 <div class="onboard-field">
+                  <label class="onboard-label" for="onboardEName">Emergency Contact Name</label>
+                  <input type="text" id="onboardEName" class="form-input" placeholder="e.g. Maria Clara" value="<?php echo htmlspecialchars($eNameValue !== 'Not set' ? $eNameValue : '', ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+                <div class="onboard-field">
+                  <label class="onboard-label" for="onboardEContact">Emergency Contact Number</label>
+                  <input type="text" id="onboardEContact" class="form-input" placeholder="e.g. 09xxxxxxxxx" value="<?php echo htmlspecialchars($eContactValue !== 'Not set' ? $eContactValue : '', ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+                <div class="onboard-field" style="grid-column: 1 / -1;">
                   <label class="onboard-label" for="onboardRemarks">Health Concerns (for trainer / AI)</label>
                   <textarea id="onboardRemarks" class="form-input" rows="3" placeholder="e.g. asthma, high blood pressure"><?php echo htmlspecialchars($remarksValue !== 'Not set' ? $remarksValue : '', ENT_QUOTES, 'UTF-8'); ?></textarea>
                 </div>
-                <div class="onboard-actions">
+                <div class="onboard-actions" style="grid-column: 1 / -1;">
                   <button type="submit" class="btn-action primary" style="border:none; width:100%;">Save Profile</button>
                 </div>
               </form>
             </div>
           </div>
 
-          <!-- MEMBERSHIP DETAILS -->
-           <section class="profile-page">
-          <!-- MEMBERSHIP DETAILS -->
-          <div class="profile-card membership-card">
-            <div class="card-header-hazard">
-              <h3><i class="fas fa-id-card"></i> Gym Annual Membership</h3>
-              <span class="membership-status active">ACTIVE</span>
-            </div>
-            <div class="membership-details-grid">
-              <div class="membership-info-section">
-                <h4>Package Details</h4>
-                <div class="info-grid-small">
-                  <div class="info-item">
-                    <span class="info-label">Membership Type</span>
-                    <span class="info-value highlight">New Member</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Duration</span>
-                    <span class="info-value">1 Month</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Start Date</span>
-                    <span class="info-value">Feb 10, 2026</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Expiry Date</span>
-                    <span class="info-value">March 10, 2026</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Add-ons</span>
-                    <span class="info-value">Personal Trainer</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Monthly Rate</span>
-                    <span class="info-value">₱1,050</span>
-                  </div>
-                </div>
-              </div>
-              <div class="membership-total">
-                <div class="total-amount">
-                  <span class="total-label">Total</span>
-                  <span class="total-value">₱1,700</span>
-                </div>
-                <div class="payment-status paid">
-                  <i class="fas fa-check-circle"></i>
-                  Fully Paid
-                </div>
-              </div>
-            </div>
-          </div>
+      
 
-          <!-- ATTENDANCE QR CODE -->
           <div class="profile-grid-2">
             <div class="profile-card">
               <div class="card-header-hazard">
@@ -444,8 +458,7 @@ try {
                   <div id="qrcode"></div>
                 </div>
                 <p class="qr-instruction">
-                  Scan this code at the entrance for real-time attendance
-                  tracking
+                  Scan this code at the entrance for real-time attendance tracking
                 </p>
                 <div class="qr-actions">
                   <button class="btn-qr" onclick="downloadQR()">
@@ -464,7 +477,7 @@ try {
                   <span class="signature-text"></span>
                 </div>
                 <p class="signature-note">
-                  Digital signature authenticated on March 27, 2026
+                  Digital signature authenticated on <?php echo date('F j, Y'); ?>
                 </p>
                 <button class="btn-signature">
                   <i class="fas fa-pen"></i> Update Signature
@@ -473,7 +486,6 @@ try {
             </div>
           </div>
 
-          <!-- TERMS & POLICY -->
           <div class="profile-card terms-card">
             <div class="card-header-hazard">
               <h3><i class="fas fa-file-contract"></i> Membership Agreement</h3>
@@ -556,6 +568,8 @@ try {
           gender: document.getElementById("onboardGender").value,
           fitness_level: document.getElementById("onboardFitnessLevel").value,
           goal: document.getElementById("onboardGoal").value,
+          e_name: document.getElementById("onboardEName").value,
+          e_contact: document.getElementById("onboardEContact").value,
           remarks: document.getElementById("onboardRemarks").value
         };
 
@@ -594,24 +608,23 @@ try {
       }
     </script>
     <script>
-function toggleEditPanel() {
-  const panel = document.getElementById('editDropdownPanel');
-  const btn = document.getElementById('editProfileToggleBtn');
-  const icon = document.getElementById('editProfileIcon');
-  const txt = document.getElementById('editProfileBtnText');
-  const isOpen = panel.style.display === 'none' || panel.style.display === '';
-  panel.style.display = isOpen ? 'block' : 'none';
-  if (isOpen) {
-    panel.style.animation = 'editSlideDown 0.3s ease';
-    txt.textContent = 'Close Editor';
-    icon.className = 'fas fa-times';
-    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  } else {
-    txt.textContent = 'Edit Profile';
-    icon.className = 'fas fa-edit';
-  }
-}
-</script>
+      function toggleEditPanel() {
+        const panel = document.getElementById('editDropdownPanel');
+        const btn = document.getElementById('editProfileToggleBtn');
+        const icon = document.getElementById('editProfileIcon');
+        const txt = document.getElementById('editProfileBtnText');
+        const isOpen = panel.style.display === 'none' || panel.style.display === '';
+        panel.style.display = isOpen ? 'block' : 'none';
+        if (isOpen) {
+          panel.style.animation = 'editSlideDown 0.3s ease';
+          txt.textContent = 'Close Editor';
+          icon.className = 'fas fa-times';
+          panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          txt.textContent = 'Edit Profile';
+          icon.className = 'fas fa-edit';
+        }
+      }
+    </script>
   </body>
 </html>
-

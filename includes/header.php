@@ -79,7 +79,7 @@ if ($is_logged_in) {
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
             <a class="navbar-brand brand-font" href="<?php echo $base_path; ?>index.php">
-                [FIT-STOP]
+                FIT-STOP
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
