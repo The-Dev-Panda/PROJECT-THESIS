@@ -4,7 +4,6 @@ use PHPMailer\PHPMailer\Exception;
 
 require 'vendor/autoload.php';
 require_once __DIR__ . '/../includes/security.php';
-require_once __DIR__ . '/../load_env.php';
 session_start();
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     fitstop_validate_csrf_or_exit($_POST['csrf_token'] ?? null);
@@ -19,8 +18,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $email_code = random_int(100000, 999999);
         $mail = new PHPMailer(true);
         try {
-            $smtpUsername = trim((string)($_ENV['SMTP_USERNAME'] ?? ''));
-            $smtpPassword = trim((string)($_ENV['SMTP_PASSWORD'] ?? ''));
+            $smtpUsername = 'noreplayfitstop@gmail.com';
+            $smtpPassword = 'qtuw htmw qvpy pmmt';
             if ($smtpUsername === '' || $smtpPassword === '') {
                 throw new Exception('SMTP credentials are not configured.');
             }

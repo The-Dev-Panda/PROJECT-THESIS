@@ -144,6 +144,7 @@ $unread_count = $unread_stmt->fetch()['count'];
                     Pricing</span></li>
             <li onclick="location.href='exercises.php'"><i class="bi bi-person-walking"></i><span>Exercises</span></li>
             <li onclick="location.href='view_feedback.php'"><i class="bi bi-chat-dots"></i><span>Feedbacks</span></li>
+            <li onclick="location.href='settings.php'"><i class="bi bi-gear"></i><span>Settings</span></li>
             <li onclick="document.getElementById('logoutForm').submit()"><i
                     class="bi bi-box-arrow-right"></i><span>Logout</span></li>
         </ul>

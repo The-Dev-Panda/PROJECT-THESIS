@@ -32,7 +32,6 @@ require_once __DIR__ . '/../includes/security.php';
                             <h3 class="text-center mb-4">Password Change - <span style="color:rgb(197, 184, 0);">FitStop
                                     Gym</span></h3>
                             <h4 class="text-center mb-4 border border-dark shadow p-1 rounded"><?php
-                            session_start();
                             echo $_SESSION['reset_password_email'];
                             ?></h4>
                             <form action="Process_Change_Password.php" method="POST">

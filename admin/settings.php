@@ -40,9 +40,8 @@ $admin = $stmt->fetch();
         <!-- Settings Grid -->
         <section>
             <div class="row">
-
                 <!-- Account Settings -->
-                <a href="admin_profile.php" style="text-decoration: none;">
+                <a href="admin_profile.php" style="text-decoration: none;" class="col-sm-12 col-xl-3">
                     <div class="registration-card"
                         style="cursor: pointer; transition: all 0.2s; border-left: 3px solid var(--hazard);">
                         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
@@ -60,6 +59,35 @@ $admin = $stmt->fetch();
                         </div>
                         <p style="color: var(--text-sub); font-size: 12px; line-height: 1.6; margin-bottom: 12px;">
                             Update your personal information, change password, and manage your admin account settings.
+                        </p>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border);">
+                            <span
+                                style="color: var(--text-muted); font-size: 11px; text-transform: uppercase; font-family: 'Chakra Petch', sans-serif;">
+                                <i class="bi bi-person-badge"></i> <?php echo htmlspecialchars($admin['username']); ?>
+                            </span>
+                            <i class="bi bi-arrow-right" style="color: var(--hazard);"></i>
+                        </div>
+                    </div>
+                </a>
+                <a href="backup.php" style="text-decoration: none;" class="col-sm-12 col-xl-3">
+                    <div class="registration-card"
+                        style="cursor: pointer; transition: all 0.2s; border-left: 3px solid var(--success);">
+                        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                            <div
+                                style="width: 60px; height: 60px; background: rgba(0, 255, 76, 0.1); border: 2px solid var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-person-circle" style="font-size: 30px; color: var(--success);"></i>
+                            </div>
+                            <div>
+                                <h3
+                                    style="font-family: 'Chakra Petch', sans-serif; font-size: 16px; margin: 0; color: var(--text-primary); text-transform: uppercase;">
+                                    Backup Settings</h3>
+                                <p style="color: var(--text-muted); font-size: 11px; margin: 5px 0 0 0;">Manually backup
+                                    your database</p>
+                            </div>
+                        </div>
+                        <p style="color: var(--text-sub); font-size: 12px; line-height: 1.6; margin-bottom: 12px;">
+                            Create a manual backup of your database and send it to your email.
                         </p>
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border);">

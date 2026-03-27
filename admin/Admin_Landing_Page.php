@@ -26,10 +26,10 @@ $stats['total_revenue'] = $stmt->fetch()['total'];
 
 // today Revenue (from transactions)
 $stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE DATE(created_at) = DATE('now')");
-$today_revenue = $stmt->fetch()['total'];
+$stats['today_revenue'] = $stmt->fetch()['total'];
 
 $stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')");
-$this_month_revenue = $stmt->fetch()['total'];
+$stats['this_month_revenue'] = $stmt->fetch()['total'];
 
 // Unread Notifications
 $stmt = $pdo->query("SELECT COUNT(*) as total FROM notification_history WHERE is_read = 0");
@@ -310,8 +310,8 @@ $revenue_by_payment = $stmt->fetchAll();
                         <div class="stat-box h-100">
                             <div class="stat-icon equipment"><i class="bi bi-cash-coin"></i></div>
                             <div>
-                                <div class="stat-value" id="stat-revenue">
-                                    ₱<?php echo number_format($today_revenue, 2); ?>
+                                <div class="stat-value" id="stat-today-revenue">
+                                    ₱<?php echo number_format($stats['today_revenue'], 2); ?>
                                 </div>
                                 <div class="stat-label">Today's Gross Revenue</div>
                             </div>
@@ -323,10 +323,10 @@ $revenue_by_payment = $stmt->fetchAll();
                         <div class="stat-box h-100">
                             <div class="stat-icon equipment"><i class="bi bi-cash-coin"></i></div>
                             <div>
-                                <div class="stat-value" id="stat-revenue">
-                                    ₱<?php echo number_format($this_month_revenue, 2); ?>
+                                <div class="stat-value" id="stat-month-revenue">
+                                    ₱<?php echo number_format($stats['this_month_revenue'], 2); ?>
                                 </div>
-                                <div class="stat-label">Today's Gross Revenue</div>
+                                <div class="stat-label">This Month's Gross Revenue</div>
                             </div>
                         </div>
                     </a>
@@ -340,7 +340,7 @@ $revenue_by_payment = $stmt->fetchAll();
                             <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i
                                     class="bi bi-wallet2"></i></div>
                             <div>
-                                <div class="stat-value" style="color: var(--danger);">
+                                <div class="stat-value" style="color: var(--danger);" id="stat-total-expenses">
                                     ₱<?php echo number_format($total_expenses, 2); ?></div>
                                 <div class="stat-label">Total Expenses</div>
                             </div>
@@ -353,7 +353,7 @@ $revenue_by_payment = $stmt->fetchAll();
                             <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i
                                     class="bi bi-wallet2"></i></div>
                             <div>
-                                <div class="stat-value" style="color: var(--danger);">
+                                <div class="stat-value" style="color: var(--danger);" id="stat-today-expenses">
                                     ₱<?php echo number_format($today_expenses, 2); ?></div>
                                 <div class="stat-label">Today's Expenses</div>
                             </div>
@@ -366,7 +366,7 @@ $revenue_by_payment = $stmt->fetchAll();
                             <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i
                                     class="bi bi-wallet2"></i></div>
                             <div>
-                                <div class="stat-value" style="color: var(--danger);">
+                                <div class="stat-value" style="color: var(--danger);" id="stat-month-expenses">
                                     ₱<?php echo number_format($month_expenses, 2); ?></div>
                                 <div class="stat-label">This Month's Expenses</div>
                             </div>
@@ -384,7 +384,7 @@ $revenue_by_payment = $stmt->fetchAll();
                         </div>
                         <div>
                             <div class="stat-value"
-                                style="color: <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">
+                                style="color: <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;" id="stat-net-profit">
                                 ₱<?php echo number_format($net_profit, 2); ?></div>
                             <div class="stat-label">Net Profit</div>
                         </div>
@@ -395,7 +395,7 @@ $revenue_by_payment = $stmt->fetchAll();
                     <div class="stat-box h-100">
                         <div class="stat-icon registrations"><i class="bi bi-percent"></i></div>
                         <div>
-                            <div class="stat-value"><?php echo number_format($profit_margin, 1); ?>%</div>
+                            <div class="stat-value" id="stat-profit-margin"><?php echo number_format($profit_margin, 1); ?>%</div>
                             <div class="stat-label">Profit Margin</div>
                         </div>
                     </div>
@@ -617,9 +617,10 @@ $revenue_by_payment = $stmt->fetchAll();
         Chart.defaults.font.family = "'DM Sans', sans-serif";
 
         // Initialize Charts
-        let memberGrowthChart, revenueChart, checkinChart, paymentMethodChart;
+        let netProfitChart, expenseCategoriesChart;
+
         // Net Profit Chart
-        new Chart(document.getElementById('netProfitChart'), {
+        netProfitChart = new Chart(document.getElementById('netProfitChart'), {
             type: 'bar',
             data: {
                 labels: <?php echo json_encode(array_column($net_profit_by_month, 'month')); ?>,
@@ -675,7 +676,7 @@ $revenue_by_payment = $stmt->fetchAll();
         });
 
         // Expense Categories Chart
-        new Chart(document.getElementById('expenseCategoriesChart'), {
+        expenseCategoriesChart = new Chart(document.getElementById('expenseCategoriesChart'), {
             type: 'doughnut',
             data: {
                 labels: <?php echo json_encode(array_column($expense_categories, 'expense_name')); ?>,
@@ -827,18 +828,26 @@ $revenue_by_payment = $stmt->fetchAll();
             fetch('get_dashboard_data.php')
                 .then(response => response.json())
                 .then(data => {
-                    // Update stats with animation
-                    document.getElementById('stat-members').classList.add('updating');
+                    // Update basic stats
                     document.getElementById('stat-members').textContent = data.stats.total_members;
-
-                    document.getElementById('stat-staff').classList.add('updating');
-                    document.getElementById('stat-staff').textContent = data.stats.total_staff;
-
-                    document.getElementById('stat-revenue').classList.add('updating');
                     document.getElementById('stat-revenue').textContent = '₱' + parseFloat(data.stats.total_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
-
-                    document.getElementById('stat-notifications').classList.add('updating');
+                    document.getElementById('stat-today-revenue').textContent = '₱' + parseFloat(data.stats.today_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
+                    document.getElementById('stat-month-revenue').textContent = '₱' + parseFloat(data.stats.this_month_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
+                    document.getElementById('stat-total-expenses').textContent = '₱' + parseFloat(data.stats.total_expenses).toLocaleString('en-US', { minimumFractionDigits: 2 });
+                    document.getElementById('stat-today-expenses').textContent = '₱' + parseFloat(data.stats.today_expenses).toLocaleString('en-US', { minimumFractionDigits: 2 });
+                    document.getElementById('stat-month-expenses').textContent = '₱' + parseFloat(data.stats.month_expenses).toLocaleString('en-US', { minimumFractionDigits: 2 });
                     document.getElementById('stat-notifications').textContent = data.stats.unread_notifications;
+
+                    // Update financial stats if elements exist
+                    if (document.getElementById('stat-expenses')) {
+                        document.getElementById('stat-expenses').textContent = '₱' + parseFloat(data.stats.total_expenses).toLocaleString('en-US', { minimumFractionDigits: 2 });
+                    }
+                    if (document.getElementById('stat-net-profit')) {
+                        document.getElementById('stat-net-profit').textContent = '₱' + parseFloat(data.stats.net_profit).toLocaleString('en-US', { minimumFractionDigits: 2 });
+                    }
+                    if (document.getElementById('stat-profit-margin')) {
+                        document.getElementById('stat-profit-margin').textContent = parseFloat(data.stats.profit_margin).toFixed(1) + '%';
+                    }
 
                     // Update charts
                     revenueChart.data.datasets[0].data = data.revenue_by_month.map(item => item.total);
@@ -851,16 +860,26 @@ $revenue_by_payment = $stmt->fetchAll();
                     paymentMethodChart.data.datasets[0].data = data.revenue_by_payment.map(item => item.total);
                     paymentMethodChart.update('none');
 
+                    // Update net profit chart if exists
+                    if (typeof netProfitChart !== 'undefined') {
+                        netProfitChart.data.datasets[0].data = data.net_profit_by_month.map(item => item.revenue);
+                        netProfitChart.data.datasets[1].data = data.net_profit_by_month.map(item => item.expenses);
+                        netProfitChart.data.datasets[2].data = data.net_profit_by_month.map(item => item.net);
+                        netProfitChart.update('none');
+                    }
+
+                    // Update expense categories chart if exists
+                    if (typeof expenseCategoriesChart !== 'undefined' && data.expense_categories.length > 0) {
+                        expenseCategoriesChart.data.labels = data.expense_categories.map(item => item.expense_name);
+                        expenseCategoriesChart.data.datasets[0].data = data.expense_categories.map(item => item.total);
+                        expenseCategoriesChart.update('none');
+                    }
+
                     // Update recent transactions
                     updateRecentTransactions(data.recent_transactions);
 
                     // Update last update time
                     document.getElementById('lastUpdate').textContent = 'Just now';
-
-                    // Remove updating class after animation
-                    setTimeout(() => {
-                        document.querySelectorAll('.updating').forEach(el => el.classList.remove('updating'));
-                    }, 300);
                 })
                 .catch(error => console.error('Update error:', error));
         }
