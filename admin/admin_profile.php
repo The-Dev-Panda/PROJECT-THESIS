@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../includes/security.php';
 
 if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     header('Location: Login_Page.php');
@@ -173,9 +174,11 @@ $admin = $stmt->fetch();
                                 style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid var(--hazard);"
                                 class="col-sm-12 col-xl-3">
                         <?php else: ?>
-                            <div
+                            <div class="row d-flex justify-content-center align-items-center">
+                            <div class="col-sm-12"
                                 style="width: 150px; height: 150px; border-radius: 50%; background: rgba(255, 204, 0, 0.1); border: 3px solid var(--hazard); display: flex; align-items: center; justify-content: center;">
                                 <i class="bi bi-person-circle" style="font-size: 80px; color: var(--hazard);"></i>
+                            </div>
                             </div>
                         <?php endif; ?>
                         <div class="col-12">
@@ -186,6 +189,7 @@ $admin = $stmt->fetch();
                         </div>
 
                         <form method="POST" enctype="multipart/form-data" id="pictureForm" style="display: none;">
+                            <?php echo fitstop_csrf_input(); ?>
                             <input type="hidden" name="action" value="update_picture">
                             <input type="file" name="profile_picture" id="pictureUpload" accept="image/*"
                                 onchange="document.getElementById('pictureForm').submit()">
@@ -232,6 +236,7 @@ $admin = $stmt->fetch();
             <h2><i class="bi bi-pencil-square"></i> Edit Profile Information</h2>
             <div class="registration-card">
                 <form method="POST">
+                    <?php echo fitstop_csrf_input(); ?>
                     <input type="hidden" name="action" value="update_profile">
                     <div class="row">
                         <div class="form-group col-sm-12 col-xl-6">
@@ -262,6 +267,7 @@ $admin = $stmt->fetch();
             <h2><i class="bi bi-shield-lock"></i> Change Password</h2>
             <div class="registration-card">
                 <form method="POST">
+                    <?php echo fitstop_csrf_input(); ?>
                     <input type="hidden" name="action" value="change_password">
                     <div class="form-grid" style="grid-template-columns: 1fr;">
                         <div class="form-group">

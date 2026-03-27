@@ -199,6 +199,7 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
             <h2><i class="bi bi-plus-circle"></i> Add New Expense</h2>
             <div class="registration-card">
                 <form method="POST" action="process_expenses.php">
+                    <?php echo fitstop_csrf_input(); ?>
                     <input type="hidden" name="action" value="add">
                     <div class="row">
                         <div class="form-group col-sm-12 col-xl-2">
@@ -238,8 +239,8 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                         <div class="col-sm-12 col-md-4">
                             <div class="search-wrapper" style="flex: 2;">
                                 <i class="bi bi-search search-icon"></i>
-                                <input type="text" name="search" class="search-input" placeholder="Search expenses..." maxlength="30"
-                                    value="<?php echo htmlspecialchars($search); ?>">
+                                <input type="text" name="search" class="search-input" placeholder="Search expenses..."
+                                    maxlength="30" value="<?php echo htmlspecialchars($search); ?>">
                             </div>
                         </div>
                         <div class="col-sm-12 col-md-2">
@@ -407,6 +408,7 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                     style="background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer;">&times;</button>
             </div>
             <form method="POST" action="process_expenses.php">
+                <?php echo fitstop_csrf_input(); ?>
                 <input type="hidden" name="action" value="update">
                 <input type="hidden" name="expense_id" id="edit_id">
                 <div style="padding: 20px;">
