@@ -45,57 +45,10 @@ try {
       <main class="main-content">
         <!-- PROFILE SECTIONS -->
         <section class="profile-page">
-          <!-- MEMBERSHIP DETAILS -->
-          <div class="profile-card membership-card">
-            <div class="card-header-hazard">
-              <h3><i class="fas fa-id-card"></i> Gym Annual Membership</h3>
-              <span class="membership-status active">ACTIVE</span>
-            </div>
-            <div class="membership-details-grid">
-              <div class="membership-info-section">
-                <h4>Package Details</h4>
-                <div class="info-grid-small">
-                  <div class="info-item">
-                    <span class="info-label">Membership Type</span>
-                    <span class="info-value highlight">New Member</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Duration</span>
-                    <span class="info-value">1 Month</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Start Date</span>
-                    <span class="info-value">Feb 10, 2026</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Expiry Date</span>
-                    <span class="info-value">March 10, 2026</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Add-ons</span>
-                    <span class="info-value">Personal Trainer</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Monthly Rate</span>
-                    <span class="info-value">₱1,050</span>
-                  </div>
-                </div>
-              </div>
-              <div class="membership-total">
-                <div class="total-amount">
-                  <span class="total-label">Total</span>
-                  <span class="total-value">₱1,700</span>
-                </div>
-                <div class="payment-status paid">
-                  <i class="fas fa-check-circle"></i>
-                  Fully Paid
-                </div>
-              </div>
-            </div>
-          </div>
+        
           <!-- E-Receipts -->
           <div class="profile-card terms-card">
-            <h4><i class="bi bi-receipt"></i> E-Receipts & Payment History</h4>
+            <h4><i class="bi bi-receipt"></i> E-Receipts</h4>
             <hr class="section-divider" />
 
             <?php if (empty($transactions)): ?>

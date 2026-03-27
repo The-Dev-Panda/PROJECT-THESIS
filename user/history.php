@@ -1,5 +1,21 @@
 <?php
 require_once __DIR__ . '/auth_user.php';
+$transactions = [];
+try {
+    $dbPath = __DIR__ . '/../Database/DB.sqlite';
+    if (file_exists($dbPath)) {
+        $db = new PDO('sqlite:' . $dbPath);
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        $stmt = $db->prepare('SELECT receipt_number, amount, payment_method, status, "desc", created_at FROM transactions WHERE user_id = :user_id ORDER BY created_at DESC');
+        $stmt->execute([':user_id' => $_SESSION['id']]);
+        $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Exception $e) {
+    // Database error - continue without transactions
+}
+?>
+<?php $activePage = 'payments'; 
 $workoutDays = [];
 $welcomeName = 'Member';
 $selectedPeriod = isset($_GET['period']) ? strtolower(trim((string)$_GET['period'])) : 'week';

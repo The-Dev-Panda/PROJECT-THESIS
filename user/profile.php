@@ -467,23 +467,6 @@ try {
                 </div>
               </div>
             </div>
-      
-            <div class="profile-card">
-              <div class="card-header-hazard">
-                <h3><i class="fas fa-file-signature"></i> E-Signature</h3>
-              </div>
-              <div class="signature-section">
-                <div class="signature-box">
-                  <span class="signature-text"></span>
-                </div>
-                <p class="signature-note">
-                  Digital signature authenticated on <?php echo date('F j, Y'); ?>
-                </p>
-                <button class="btn-signature">
-                  <i class="fas fa-pen"></i> Update Signature
-                </button>
-              </div>
-            </div>
           </div>
 
           <div class="profile-card terms-card">
