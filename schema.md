@@ -536,5 +536,4 @@ CREATE INDEX idx_old_member_profiles_profile_id
 ON old_member_profiles(profile_id);
 COMMIT;
 ```
-
-CREATE TABLE "walk_attendance" ("id" integer,"name" varchar(255),"month_id" integer, PRIMARY KEY ("id"))
+CREATE TABLE "walk_attendance" ("id" integer,"name" varchar(255),"month_id" integer, "datetime" datetime, PRIMARY KEY ("id"))

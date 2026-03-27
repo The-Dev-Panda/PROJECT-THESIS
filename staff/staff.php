@@ -173,6 +173,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             ]);
             exit;
         }
+    if ($action === 'record_monthly_walkin_attendance') {
+        $name     = trim($_POST['name'] ?? '');
+        $monthId  = (int)($_POST['month_id'] ?? 0);
+
+        if (empty($name) || !$monthId) {
+            echo json_encode(['success' => false, 'message' => 'Missing data.']);
+            exit;
+        }
+
+        $today = date('Y-m-d');
+
+        $dupCheck = $pdo->prepare("
+            SELECT id FROM walk_attendance
+            WHERE month_id = :mid AND DATE(datetime) = :today
+            LIMIT 1
+        ");
+        $dupCheck->execute([':mid' => $monthId, ':today' => $today]);
+        if ($dupCheck->fetch()) {
+            echo json_encode(['success' => true, 'duplicate' => true, 'message' => 'Already logged today.']);
+            exit;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $ins = $pdo->prepare("
+            INSERT INTO walk_attendance (name, month_id, datetime)
+            VALUES (:name, :mid, :datetime)
+        ");
+        $ins->execute([':name' => $name, ':mid' => $monthId, ':datetime' => $now]);
+
+        echo json_encode(['success' => true, 'insert_id' => $pdo->lastInsertId()]);
+        exit;
+    }
 
         echo json_encode(['success' => false, 'message' => 'Unknown action']);
         exit;
@@ -296,6 +328,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       <li id="monthlyBtn" onclick="window.location.href='monthly.php'" style="cursor:pointer;">
         <i class="bi bi-calendar-check"></i>
         <span>Monthly Access</span>
+      </li>
+
+      <li onclick="window.location.href='walkin_attendance.php'" style="cursor:pointer;">
+      <i class="bi bi-person-walking"></i>
+      <span>Walk-In Log</span>
       </li>
       <li id="settingsBtn" data-target="settings">
         <i class="bi bi-gear"></i>
@@ -1129,15 +1166,46 @@ function doSaveTransaction(customerType, memberId, customerName, method, gcashRe
     if (!data.success) { alert(data.error || 'Failed to save transaction.'); return; }
 
     payCart.forEach(item => {
-      if (item.invItemId) {
-        deductInventoryStock(item.invItemId, item.invItemName, item.qty);
+  if (item.invItemId) {
+    deductInventoryStock(item.invItemId, item.invItemName, item.qty);
+  } else {
+    recordEntryFeeToLocalStorage(item.paidFor, customerType);
+     if (item.paidFor === 'Monthly') {
+      // For walk-in non-members paying Monthly: save record then log attendance with month_id
+      if (customerType === 'non-member') {
+        saveMonthlyRecord(customerType, memberId, customerName, function(newMonthId, resolvedName) {
+          if (!newMonthId) return;
+          const fd3 = new FormData();
+          fd3.append('action',   'record_monthly_walkin_attendance');
+          fd3.append('name',     resolvedName);
+          fd3.append('month_id', newMonthId);
+          fetch('staff.php', { method: 'POST', body: fd3 })
+            .then(r => r.json())
+            .then(d => {
+              if (d.success && !d.duplicate) {
+                console.log('Monthly walk-in attendance logged with month_id:', newMonthId);
+              }
+            })
+            .catch(err => console.warn('Monthly walk-in attendance error:', err));
+        });
       } else {
-        recordEntryFeeToLocalStorage(item.paidFor, customerType);
-        if (item.paidFor === 'Monthly') {
-          saveMonthlyRecord(customerType, memberId, customerName);
-        }
+        // Member paying monthly — save record without attendance log
+        saveMonthlyRecord(customerType, memberId, customerName, null);
       }
-    });
+    }
+    // ✅ Auto-log walk-in to walk_attendance table
+    if (item.paidFor === 'Day Pass / Walk-In' && customerType === 'non-member') {
+      const walkName = customerName || 'Walk-In Guest';
+      const fd2 = new FormData();
+      fd2.append('action', 'record_walkin_from_receipt');
+      fd2.append('name',   walkName);
+      fetch('staff.php', { method: 'POST', body: fd2 })
+        .then(r => r.json())
+        .then(d => { if (!d.success) console.warn('Walk-in log failed:', d.message); })
+        .catch(err => console.warn('Walk-in log error:', err));
+    }
+  }
+});
 
     const receiptData = {
       ...data.receipt,
@@ -1201,7 +1269,7 @@ function recordEntryFeeToLocalStorage(paidFor, customerType) {
   localStorage.setItem(ENTRY_KEY, JSON.stringify(tally));
 }
 
-function saveMonthlyRecord(customerType, memberId, customerName) {
+function saveMonthlyRecord(customerType, memberId, customerName, onSaved) {
   let name = '';
   let mId  = null;
 
@@ -1230,7 +1298,11 @@ function saveMonthlyRecord(customerType, memberId, customerName) {
     .then(r => r.json())
     .then(data => {
       if (data.success) {
-        console.log('Monthly record saved. Expires:', data.expires_in);
+        console.log('Monthly record saved. Expires:', data.expires_in, 'ID:', data.insert_id);
+        // Fire callback with the new monthly ID and name
+        if (typeof onSaved === 'function') {
+          onSaved(data.insert_id, name);
+        }
       } else if (data.duplicate) {
         console.warn('Monthly duplicate detected after pre-check passed (race condition).');
       } else {
