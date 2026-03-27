@@ -293,6 +293,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <i class="bi bi-qr-code"></i>
         <span>ID Generation</span>
       </li>
+      <li id="monthlyBtn" onclick="window.location.href='monthly.php'" style="cursor:pointer;">
+        <i class="bi bi-calendar-check"></i>
+        <span>Monthly Access</span>
+      </li>
       <li id="settingsBtn" data-target="settings">
         <i class="bi bi-gear"></i>
         <span>Settings</span>
