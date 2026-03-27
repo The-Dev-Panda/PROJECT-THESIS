@@ -161,3 +161,29 @@
 .reveal-delay-3 { animation-delay: 0.3s; }
 .reveal-delay-4 { animation-delay: 0.4s; }
 .reveal-delay-5 { animation-delay: 0.5s; }
+
+/* CUSTOM CURSOR */
+*, *::before, *::after {
+    cursor: none !important;
+}
+
+.cursor {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--hazard);
+    border-radius: 50%;
+    opacity: 90%;
+    background-color: var(--hazard);
+    position: fixed;
+    pointer-events: none;
+    z-index: 99999;
+    translate: -50% -50%;
+    transition: background-color 0.2s ease, border-color 0.2s ease, scale 0.2s ease;
+}
+
+.cursor.hovered {
+    background-color: var(--bg-void);
+    border-color: var(--hazard);
+    opacity: 100%;
+    scale: 1.2;
+}

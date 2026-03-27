@@ -22,6 +22,31 @@ $unread_count = $unread_stmt->fetch()['count'];
 
 <body>
 
+    <!-- CUSOTM CURSOR -->
+    <div class="cursor" id="cursor"></div>
+    <script>
+        const cursor = document.getElementById('cursor');
+
+        document.addEventListener('mousemove', e => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        const clickables = 'a, button, [onclick], input, select, textarea, label';
+
+        document.addEventListener('mouseover', (e) => {
+            if (e.target.closest(clickables)) {
+                cursor.classList.add('hovered');
+            }
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            if (e.target.closest(clickables)) {
+                cursor.classList.remove('hovered');
+            }
+        });
+    </script>
+
     <!-- ================= MOBILE TOPBAR ================= -->
     <div class="mobile-topbar">
         <button id="hamburgerBtn" class="hamburger-btn">
@@ -149,7 +174,8 @@ $unread_count = $unread_stmt->fetch()['count'];
                 onclick="location.href='transaction.php'"><i class="bi bi-bar-chart-line"></i><span>Transactions</span>
             </li>
             <li class="<?= $current_page === 'expenses.php' ? 'active' : '' ?>" onclick="location.href='expenses.php'">
-                <i class="bi bi-currency-exchange"></i><span>Expenses</span></li>
+                <i class="bi bi-currency-exchange"></i><span>Expenses</span>
+            </li>
             <li class="<?= $current_page === 'view_members.php' ? 'active' : '' ?>"
                 onclick="location.href='view_members.php'"><i class="bi bi-person-badge"></i><span>Members</span></li>
             <li class="<?= $current_page === 'membership_pricing.php' ? 'active' : '' ?>"
@@ -160,7 +186,8 @@ $unread_count = $unread_stmt->fetch()['count'];
             <li class="<?= $current_page === 'view_feedback.php' ? 'active' : '' ?>"
                 onclick="location.href='view_feedback.php'"><i class="bi bi-chat-dots"></i><span>Feedbacks</span></li>
             <li class="<?= $current_page === 'settings.php' ? 'active' : '' ?>" onclick="location.href='settings.php'">
-                <i class="bi bi-gear"></i><span>Settings</span></li>
+                <i class="bi bi-gear"></i><span>Settings</span>
+            </li>
             <li onclick="document.getElementById('logoutForm').submit()"><i
                     class="bi bi-box-arrow-right"></i><span>Logout</span></li>
         </ul>
