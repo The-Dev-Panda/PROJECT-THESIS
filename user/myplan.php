@@ -685,13 +685,12 @@ if ($workoutMode === 'heavy') $targetBurn = 600;
 }
 </style>
 
-<!-- ── WORKOUT PLAN ── -->
+<!-- ── WORKOUT PLAN ── --> 
 <?php
 $exerciseList = [];
 
 try {
     require __DIR__ . '/../Login/connection.php';
-
     $stmt = $pdo->query("SELECT exercise_id, name, movement_type FROM exercises ORDER BY name ASC");
     $exerciseList = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
@@ -734,6 +733,11 @@ try {
       </div>
 
       <div class="mt-field">
+        <label>Weight</label>
+        <input type="number" id="weight" class="mt-number" value="0" min="0" max="999">
+      </div>
+
+      <div class="mt-field">
         <label>Day</label>
         <select id="workoutDay" class="mt-select">
           <option>Monday</option>
@@ -773,6 +777,9 @@ const workoutName = document.getElementById("workoutName");
 const workoutGrid = document.getElementById("workoutGrid");
 const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
+// Load saved workouts from localStorage
+let savedWorkouts = JSON.parse(localStorage.getItem("workoutLogs") || "[]");
+
 function initDays() {
   workoutGrid.innerHTML = "";
   days.forEach(day => {
@@ -782,13 +789,35 @@ function initDays() {
     card.innerHTML = `<div class="day-title">${day}</div><div class="day-content"></div>`;
     workoutGrid.appendChild(card);
   });
+
+  // Reload saved workouts into page
+  savedWorkouts.forEach(w => {
+    const container = document.querySelector("#day-" + w.day + " .day-content");
+    if(container){
+      const item = document.createElement("div");
+      item.className = "workout-item";
+      item.innerHTML = `
+        <strong>${w.name}</strong><br>
+        ${w.sets} sets × ${w.reps} reps × ${w.weight} kg<br>
+        <button class="done-btn">Done</button>
+        <button class="remove-btn">Remove</button>
+      `;
+      item.querySelector(".remove-btn").onclick = () => { 
+        item.remove(); 
+        savedWorkouts = savedWorkouts.filter(s => !(s.id === w.id));
+        localStorage.setItem("workoutLogs", JSON.stringify(savedWorkouts));
+      };
+      item.querySelector(".done-btn").onclick = () => saveWorkout(w);
+      container.appendChild(item);
+    }
+  });
 }
 
 function loadExercises() {
   const type = workoutType.value;
   workoutName.innerHTML = '<option value="">Select Workout</option>';
   exercises.forEach(ex => {
-    if(type === "All" || ex.movement_type === type) {
+    if(type === "All" || ex.movement_type === type){
       const opt = document.createElement("option");
       opt.value = ex.exercise_id;
       opt.textContent = ex.name;
@@ -805,46 +834,67 @@ function addWorkout() {
   const exName = workoutName.options[workoutName.selectedIndex].text;
   const sets = document.getElementById("sets").value;
   const reps = document.getElementById("reps").value;
+  const weight = document.getElementById("weight").value;
   const day = document.getElementById("workoutDay").value;
 
   if(!exId) return alert("Select workout");
 
   const container = document.querySelector("#day-" + day + " .day-content");
+  const id = Date.now(); // unique id for localStorage
   const item = document.createElement("div");
   item.className = "workout-item";
 
   item.innerHTML = `
     <strong>${exName}</strong><br>
-    ${sets} sets × ${reps} reps<br>
+    ${sets} sets × ${reps} reps × ${weight} kg<br>
     <button class="done-btn">Done</button>
     <button class="remove-btn">Remove</button>
   `;
 
-  item.querySelector(".remove-btn").onclick = () => item.remove();
+  item.querySelector(".remove-btn").onclick = () => { 
+    item.remove(); 
+    savedWorkouts = savedWorkouts.filter(s => s.id !== id);
+    localStorage.setItem("workoutLogs", JSON.stringify(savedWorkouts));
+  };
 
   item.querySelector(".done-btn").onclick = () => {
-    fetch("save_workout.php", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        exercise_id: exId,
-        reps: reps,
-        weight: 0
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.status === "ok") {
-        alert("Workout saved!");
-        item.remove();
-      } else {
-        alert("Error: " + data.error);
-      }
-    })
-    .catch(err => alert("Error: " + err));
+    saveWorkout({id, exercise_id: exId, name: exName, sets, reps, weight, day});
   };
 
   container.appendChild(item);
+
+  // Save to localStorage
+  savedWorkouts.push({id, exercise_id: exId, name: exName, sets, reps, weight, day});
+  localStorage.setItem("workoutLogs", JSON.stringify(savedWorkouts));
+}
+
+function saveWorkout(workout){
+  fetch("save_workout.php", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      exercise_id: workout.exercise_id,
+      reps: workout.reps,
+      sets: workout.sets,
+      weight: workout.weight
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.status === "ok"){
+      alert("Workout saved!");
+      // Remove from localStorage and page
+      savedWorkouts = savedWorkouts.filter(s => s.id !== workout.id);
+      localStorage.setItem("workoutLogs", JSON.stringify(savedWorkouts));
+      const container = document.querySelector("#day-" + workout.day + " .day-content");
+      if(container) container.querySelectorAll(".workout-item").forEach(el => {
+        if(el.querySelector("strong").textContent === workout.name) el.remove();
+      });
+    } else {
+      alert("Error: " + data.error);
+    }
+  })
+  .catch(err => alert("Error: " + err));
 }
 </script>
  <!-- ════════════════════════════════════════════
