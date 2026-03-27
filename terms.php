@@ -458,8 +458,8 @@
   <!-- NAVBAR -->
   <nav class="navbar">
     <div class="navbar-inner">
-      <a href="#" class="navbar-brand">[FIT-STOP]</a>
-      <a href="#" class="nav-back"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+      <a href="index.php" class="navbar-brand">[FIT-STOP]</a>
+      <a href="index.php" class="nav-back"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
     </div>
   </nav>
 
