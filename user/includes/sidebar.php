@@ -23,12 +23,27 @@ $bottomLinks = [
 function renderSidebarLinks($links, $activePage) {
   foreach ($links as $link) {
     $active = $link['key'] === $activePage ? 'active' : '';
-    echo '<li class="' . $active . '">
-            <a href="' . htmlspecialchars($link['href'], ENT_QUOTES, 'UTF-8') . '">
-              <i class="bi ' . htmlspecialchars($link['icon'], ENT_QUOTES, 'UTF-8') . '"></i>
-              <span>' . htmlspecialchars($link['label'], ENT_QUOTES, 'UTF-8') . '</span>
-            </a>
-          </li>';
+    
+    // Special handling for the logout link to skip the confirmation page
+    if ($link['key'] === 'logout') {
+      echo '<li class="' . $active . '">
+              <form action="../Login/logout.php" method="POST" style="display: none;">
+                ' . fitstop_csrf_input() . '
+              </form>
+              <a href="#" onclick="event.preventDefault(); this.previousElementSibling.submit();">
+                <i class="bi ' . htmlspecialchars($link['icon'], ENT_QUOTES, 'UTF-8') . '"></i>
+                <span>' . htmlspecialchars($link['label'], ENT_QUOTES, 'UTF-8') . '</span>
+              </a>
+            </li>';
+    } else {
+      // Standard link rendering for all other menu items
+      echo '<li class="' . $active . '">
+              <a href="' . htmlspecialchars($link['href'], ENT_QUOTES, 'UTF-8') . '">
+                <i class="bi ' . htmlspecialchars($link['icon'], ENT_QUOTES, 'UTF-8') . '"></i>
+                <span>' . htmlspecialchars($link['label'], ENT_QUOTES, 'UTF-8') . '</span>
+              </a>
+            </li>';
+    }
   }
 }
 
