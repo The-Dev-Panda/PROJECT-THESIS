@@ -35,25 +35,6 @@ try {
         crossorigin="anonymous"></script>
     <link rel="stylesheet" href="../staff/staff.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <style>
-        .feedback-message {
-            font-size: 11px;
-            min-height: 1.2rem;
-            display: inline-block;
-            margin-left: 10px;
-            font-family: 'Chakra Petch', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .text-success {
-            color: var(--success) !important;
-        }
-
-        .text-danger {
-            color: var(--danger) !important;
-        }
-    </style>
 </head>
 
 <body>

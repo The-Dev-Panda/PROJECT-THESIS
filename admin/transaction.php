@@ -185,18 +185,6 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
-
-    <style>
-        .sortable-header {
-            cursor: pointer;
-            user-select: none;
-            transition: color 0.2s;
-        }
-
-        .sortable-header:hover {
-            color: var(--hazard);
-        }
-    </style>
 </head>
 
 <body>

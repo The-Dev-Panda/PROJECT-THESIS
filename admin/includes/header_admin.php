@@ -12,6 +12,10 @@ $unread_count = $unread_stmt->fetch()['count'];
     <link rel="stylesheet" href="../staff/staff.css">
     <link rel="icon" href="../images/Fitstop.png" type="image/x-icon" />
     <link href="../styles.css" rel="stylesheet">
+
+    <!-- ADMIN CUSTOM CSS -->
+    <link rel="stylesheet" href="admin_custom_styles.css">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 </head>
@@ -126,25 +130,37 @@ $unread_count = $unread_stmt->fetch()['count'];
         </div>
 
         <ul class="menu">
-            <li onclick="location.href='Admin_Landing_Page.php'"><i class="bi bi-graph-up"></i><span>Analytics</span>
+            <li class="<?= $current_page === 'Admin_Landing_Page.php' ? 'active' : '' ?>"
+                onclick="location.href='Admin_Landing_Page.php'"><i class="bi bi-graph-up"></i><span>Analytics</span>
             </li>
-            <li onclick="location.href='create_announcement.php'"><i
+            <li class="<?= $current_page === 'create_announcement.php' ? 'active' : '' ?>"
+                onclick="location.href='create_announcement.php'"><i
                     class="bi bi-megaphone"></i><span>Announcements</span></li>
-            <li onclick="location.href='notification.php'"><i class="bi bi-bell"></i><span>Notifications</span></li>
-            <li onclick="location.href='create_staff.php'"><i class="bi bi-person-plus"></i><span>Create Staff</span>
+            <li class="<?= $current_page === 'notification.php' ? 'active' : '' ?>"
+                onclick="location.href='notification.php'"><i class="bi bi-bell"></i><span>Notifications</span></li>
+            <li class="<?= $current_page === 'create_staff.php' ? 'active' : '' ?>"
+                onclick="location.href='create_staff.php'"><i class="bi bi-person-plus"></i><span>Create Staff</span>
             </li>
-            <li onclick="location.href='view_inventory.php'"><i class="bi bi-box-seam"></i><span>Inventory</span></li>
-            <li onclick="location.href='view_staff.php'"><i class="bi bi-people"></i><span>Staff</span></li>
-            <li onclick="location.href='transaction.php'"><i class="bi bi-bar-chart-line"></i><span>Transactions</span>
+            <li class="<?= $current_page === 'view_inventory.php' ? 'active' : '' ?>"
+                onclick="location.href='view_inventory.php'"><i class="bi bi-box-seam"></i><span>Inventory</span></li>
+            <li class="<?= $current_page === 'view_staff.php' ? 'active' : '' ?>"
+                onclick="location.href='view_staff.php'"><i class="bi bi-people"></i><span>Staff</span></li>
+            <li class="<?= $current_page === 'transaction.php' ? 'active' : '' ?>"
+                onclick="location.href='transaction.php'"><i class="bi bi-bar-chart-line"></i><span>Transactions</span>
             </li>
-            <li onclick="location.href='expenses.php'"><i class="bi bi-currency-exchange"></i><span>Expenses</span>
-            </li>
-            <li onclick="location.href='view_members.php'"><i class="bi bi-person-badge"></i><span>Members</span></li>
-            <li onclick="location.href='membership_pricing.php'"><i class="bi bi-clipboard-check"></i><span>Membership
+            <li class="<?= $current_page === 'expenses.php' ? 'active' : '' ?>" onclick="location.href='expenses.php'">
+                <i class="bi bi-currency-exchange"></i><span>Expenses</span></li>
+            <li class="<?= $current_page === 'view_members.php' ? 'active' : '' ?>"
+                onclick="location.href='view_members.php'"><i class="bi bi-person-badge"></i><span>Members</span></li>
+            <li class="<?= $current_page === 'membership_pricing.php' ? 'active' : '' ?>"
+                onclick="location.href='membership_pricing.php'"><i class="bi bi-clipboard-check"></i><span>Membership
                     Pricing</span></li>
-            <li onclick="location.href='exercises.php'"><i class="bi bi-person-walking"></i><span>Exercises</span></li>
-            <li onclick="location.href='view_feedback.php'"><i class="bi bi-chat-dots"></i><span>Feedbacks</span></li>
-            <li onclick="location.href='settings.php'"><i class="bi bi-gear"></i><span>Settings</span></li>
+            <li class="<?= $current_page === 'exercises.php' ? 'active' : '' ?>"
+                onclick="location.href='exercises.php'"><i class="bi bi-person-walking"></i><span>Exercises</span></li>
+            <li class="<?= $current_page === 'view_feedback.php' ? 'active' : '' ?>"
+                onclick="location.href='view_feedback.php'"><i class="bi bi-chat-dots"></i><span>Feedbacks</span></li>
+            <li class="<?= $current_page === 'settings.php' ? 'active' : '' ?>" onclick="location.href='settings.php'">
+                <i class="bi bi-gear"></i><span>Settings</span></li>
             <li onclick="document.getElementById('logoutForm').submit()"><i
                     class="bi bi-box-arrow-right"></i><span>Logout</span></li>
         </ul>
@@ -161,7 +177,7 @@ $unread_count = $unread_stmt->fetch()['count'];
             const panel = document.getElementById('notifPanel');
             const hamburger = document.getElementById('hamburgerBtn');
             const sidebar = document.querySelector('.sidebar');
-            
+
             if (bellBtn && panel) {
                 bellBtn.addEventListener('click', function (e) {
                     e.stopPropagation();
@@ -258,9 +274,10 @@ $unread_count = $unread_stmt->fetch()['count'];
             .notif-panel {
                 display: none !important;
             }
+
             #notifBellBtn {
                 display: none !important;
             }
-            
+
         }
     </style>
