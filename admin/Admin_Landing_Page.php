@@ -169,44 +169,6 @@ $revenue_by_payment = $stmt->fetchAll();
             navigator.serviceWorker.register('/service-worker.js');
         }
     </script>
-
-    <style>
-        .live-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: #22d07a;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-            margin-right: 8px;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        .updating {
-            animation: fadeIn 0.3s;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0.5;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-    </style>
 </head>
 
 <body>
@@ -215,17 +177,17 @@ $revenue_by_payment = $stmt->fetchAll();
     <div class="main-content">
         <!-- Topbar -->
         <div class="topbar row">
-            <div class="topbar-left col-sm-12 col-xl-6">
+            <div class="topbar-left col-sm-12 col-xl-6 reveal-left">
                 <h1><i class="bi bi-graph-up"></i> Analytics Dashboard</h1>
                 <p>Real-time insights and performance metrics</p>
             </div>
-            <div class="topbar-right col-sm-12 col-xl-3">
+            <div class="topbar-right col-sm-12 col-xl-3 reveal-right">
                 <div class="topbar-badge">
                     <span class="live-indicator"></span>
                     <span>Live Data • <span id="lastUpdate">Just now</span></span>
                 </div>
             </div>
-            <div class="topbar-right col-sm-12 col-xl-3">
+            <div class="topbar-right col-sm-12 col-xl-3 reveal-right">
                 <button id="installBtn" class="topbar-badge my-3 p-3" style="display: none;">Install App</button>
             </div>
         </div>
@@ -251,9 +213,9 @@ $revenue_by_payment = $stmt->fetchAll();
         </script>
 
         <!-- Stats Grid -->
-        <div class="row g-3 mb-3" id="statsGrid">
+        <div class="row g-3 mb-3 " id="statsGrid">
             <div class="row my-2 d-flex justify-content-center">
-                <div class="col-12 col-sm-12 col-lg-3">
+                <div class="col-12 col-sm-12 col-lg-3 reveal-left">
                     <a href="view_members.php" class="text-decoration-none text-dark">
                         <div class="stat-box h-100">
                             <div class="stat-icon members"><i class="bi bi-people-fill"></i></div>
@@ -265,7 +227,7 @@ $revenue_by_payment = $stmt->fetchAll();
                     </a>
                 </div>
 
-                <div class="col-12 col-sm-12 col-lg-3">
+                <div class="col-12 col-sm-12 col-lg-3 reveal-left">
                     <a href="view_staff.php" class="text-decoration-none text-dark">
                         <div class="stat-box h-100">
                             <div class="stat-icon registrations"><i class="bi bi-person-badge"></i></div>
@@ -277,7 +239,7 @@ $revenue_by_payment = $stmt->fetchAll();
                     </a>
                 </div>
 
-                <div class="col-12 col-sm-12 col-lg-3">
+                <div class="col-12 col-sm-12 col-lg-3 reveal-left">
                     <a href="notification.php" class="text-decoration-none text-dark">
                         <div class="stat-box h-100">
                             <div class="stat-icon notifications"><i class="bi bi-bell-fill"></i></div>
@@ -293,7 +255,7 @@ $revenue_by_payment = $stmt->fetchAll();
             </div>
             <div class="row my-2 d-flex justify-content-center">
                 <!-- Enhanced Stats Grid with Financial Metrics -->
-                <div class="col-12 col-sm-12 col-xl-3">
+                <div class="col-12 col-sm-12 col-xl-3 reveal-right">
                     <a href="transaction.php" class="text-decoration-none text-dark">
                         <div class="stat-box h-100">
                             <div class="stat-icon equipment"><i class="bi bi-cash-coin"></i></div>
@@ -305,7 +267,7 @@ $revenue_by_payment = $stmt->fetchAll();
                         </div>
                     </a>
                 </div>
-                <div class="col-12 col-sm-12 col-xl-3">
+                <div class="col-12 col-sm-12 col-xl-3  reveal-right">
                     <a href="transaction.php" class="text-decoration-none text-dark">
                         <div class="stat-box h-100">
                             <div class="stat-icon equipment"><i class="bi bi-cash-coin"></i></div>
@@ -318,7 +280,7 @@ $revenue_by_payment = $stmt->fetchAll();
                         </div>
                     </a>
                 </div>
-                <div class="col-12 col-sm-12 col-xl-3">
+                <div class="col-12 col-sm-12 col-xl-3  reveal-right">
                     <a href="transaction.php" class="text-decoration-none text-dark">
                         <div class="stat-box h-100">
                             <div class="stat-icon equipment"><i class="bi bi-cash-coin"></i></div>
@@ -334,7 +296,7 @@ $revenue_by_payment = $stmt->fetchAll();
             </div>
 
             <div class="row my-2 d-flex justify-content-center">
-                <div class="col-12 col-sm-12 col-xl-3">
+                <div class="col-12 col-sm-12 col-xl-3  reveal-left">
                     <a href="expenses.php" class="text-decoration-none text-dark">
                         <div class="stat-box h-100">
                             <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i
@@ -347,7 +309,7 @@ $revenue_by_payment = $stmt->fetchAll();
                         </div>
                     </a>
                 </div>
-                <div class="col-12 col-sm-12 col-xl-3">
+                <div class="col-12 col-sm-12 col-xl-3 reveal-left">
                     <a href="expenses.php" class="text-decoration-none text-dark">
                         <div class="stat-box h-100">
                             <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i
@@ -360,7 +322,7 @@ $revenue_by_payment = $stmt->fetchAll();
                         </div>
                     </a>
                 </div>
-                <div class="col-12 col-sm-12 col-xl-3">
+                <div class="col-12 col-sm-12 col-xl-3 reveal-left">
                     <a href="expenses.php" class="text-decoration-none text-dark">
                         <div class="stat-box h-100">
                             <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i
@@ -375,7 +337,7 @@ $revenue_by_payment = $stmt->fetchAll();
                 </div>
             </div>
             <div class="row my-2 d-flex justify-content-center">
-                <div class="col-12 col-sm-12 col-xl-3">
+                <div class="col-12 col-sm-12 col-xl-3 reveal-right">
                     <div class="stat-box h-100"
                         style="border-left: 3px solid <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">
                         <div class="stat-icon"
@@ -391,7 +353,7 @@ $revenue_by_payment = $stmt->fetchAll();
                     </div>
                 </div>
 
-                <div class="col-12 col-sm-12 col-xl-3">
+                <div class="col-12 col-sm-12 col-xl-3 reveal-right">
                     <div class="stat-box h-100">
                         <div class="stat-icon registrations"><i class="bi bi-percent"></i></div>
                         <div>
@@ -406,7 +368,7 @@ $revenue_by_payment = $stmt->fetchAll();
         <!-- Financial Performance Chart -->
         <section>
             <h2><i class="bi bi-bank"></i> Financial Performance</h2>
-            <div class="row g-3">
+            <div class="row g-3 reveal">
                 <div class="col-12 col-lg-8">
                     <div class="registration-card">
                         <h3

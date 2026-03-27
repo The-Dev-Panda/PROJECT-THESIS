@@ -53,37 +53,6 @@ function timeAgo($datetime) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <style>
-        .notification-row {
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .notification-row:hover {
-            background: var(--bg-card-hover) !important;
-        }
-        .notification-details {
-            display: none;
-            background: var(--bg-surface);
-            border-top: 1px solid var(--border);
-        }
-        .notification-details.expanded {
-            display: table-row;
-        }
-        .category-badge {
-            padding: 4px 11px;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-family: 'Chakra Petch', sans-serif;
-            letter-spacing: 0.5px;
-            background: rgba(255, 204, 0, 0.1);
-            color: var(--hazard);
-            border: 1px solid rgba(255, 204, 0, 0.3);
-        }
-    </style>
 </head>
 <body>
     <?php include('includes/header_admin.php') ?>

@@ -190,6 +190,93 @@ include('includes/header.php');
             </div>
         </div>
     </section>
+    
+        <!-- Visual Separator -->
+        <div class="hazard-stripes"></div>
+
+    <!-- ANNOUNCEMENTS SECTION -->
+    <section id="announcements" class="py-5">
+        <div class="container py-5">
+            <div class="row mb-5 text-center">
+                <div class="col-12">
+                    <h2 class="text-white">ANNOUNCEMENTS <span class="text-hazard">&amp; UPDATES</span></h2>
+                    <p class="text-muted">Stay in the loop with what's happening at Fit-Stop.</p>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <?php
+                include('Login/connection.php');
+                $announcements = [];
+
+                if (isset($pdo)) {
+                    try {
+                        $stmt = $pdo->prepare("
+                            SELECT id, title, description, image, created_by, created_at, updated_at
+                            FROM announcements
+                            ORDER BY created_at DESC
+                            LIMIT 6
+                        ");
+                        $stmt->execute();
+                        $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    } catch (Throwable $e) {
+                        error_log('index.php: announcements query failed - ' . $e->getMessage());
+                    }
+                }
+
+                if (!empty($announcements)):
+                    foreach ($announcements as $post):
+                        $formattedDate = date('M d, Y', strtotime($post['created_at']));
+                        $wasUpdated = $post['updated_at'] && $post['updated_at'] !== $post['created_at'];
+                ?>
+               <div class="col-sm-12 col-xl-6 d-flex flex-column" style="height: min-content;">
+                    <div class="announcement-card">
+                        <?php if (!empty($post['image'])): ?>
+                        <div class="announcement-img-fluid d-flex justify-content-center">
+                            <?php
+                                // Convert BLOB to base64
+                                $imageData = base64_encode($post['image']);
+
+                                // Optional: detect mime type (default to jpeg if unknown)
+                                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                                $mimeType = $finfo->buffer($post['image']) ?: 'image/jpeg';
+                            ?>
+                            <img src="data:<?= $mimeType ?>;base64,<?= $imageData ?>" 
+                                alt="<?= htmlspecialchars($post['title']) ?>">
+                        </div>
+                        <?php endif; ?>
+                        <div class="announcement-body">
+                            <div class="announcement-meta">
+                                <span class="text-hazard brand-font" style="font-size: 0.7rem; letter-spacing: 2px;">
+                                    <i class="fa-solid fa-bolt me-1"></i>UPDATE
+                                </span>
+                                <span class="text-muted" style="font-size: 0.75rem;">
+                                    <?= $formattedDate ?>
+                                    <?php if ($wasUpdated): ?>
+                                        &middot; <em>edited</em>
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                            <h5 class="text-white mt-2 mb-2"><?= htmlspecialchars($post['title']) ?></h5>
+                            <p class="text-muted small mb-0"><?= nl2br(htmlspecialchars($post['description'])) ?></p>
+                            <div class="mt-3" style="font-size: 0.75rem; color: #555;">
+                                <i class="fa-solid fa-user me-1"></i><?= htmlspecialchars($post['created_by']) ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php
+                    endforeach;
+                else:
+                ?>
+                <div class="col-12 text-center text-muted py-5">
+                    <i class="fa-solid fa-bullhorn fa-2x mb-3 d-block" style="color: #333;"></i>
+                    No announcements yet. Check back soon.
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </section>
 
 <?php
 // Include reusable footer component
