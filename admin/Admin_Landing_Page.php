@@ -24,6 +24,13 @@ $stats['total_staff'] = $stmt->fetch()['total'];
 $stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions");
 $stats['total_revenue'] = $stmt->fetch()['total'];
 
+// today Revenue (from transactions)
+$stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE DATE(created_at) = DATE('now')");
+$today_revenue = $stmt->fetch()['total'];
+
+$stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')");
+$this_month_revenue = $stmt->fetch()['total'];
+
 // Unread Notifications
 $stmt = $pdo->query("SELECT COUNT(*) as total FROM notification_history WHERE is_read = 0");
 $stats['unread_notifications'] = $stmt->fetch()['total'];
@@ -76,17 +83,17 @@ $profit_margin = $gross_profit > 0 ? ($net_profit / $gross_profit) * 100 : 0;
 $net_profit_by_month = [];
 for ($i = 5; $i >= 0; $i--) {
     $date = date('Y-m', strtotime("-$i months"));
-    
+
     // Revenue for this month
     $stmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', transaction_date) = :date");
     $stmt->execute(['date' => $date]);
     $monthly_revenue = $stmt->fetch()['total'];
-    
+
     // Expenses for this month
     $stmt = $pdo->prepare("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE strftime('%Y-%m', created_at) = :date");
     $stmt->execute(['date' => $date]);
     $monthly_expenses = $stmt->fetch()['total'];
-    
+
     $net_profit_by_month[] = [
         'month' => date('M', strtotime("-$i months")),
         'revenue' => $monthly_revenue,
@@ -162,7 +169,7 @@ $revenue_by_payment = $stmt->fetchAll();
             navigator.serviceWorker.register('/service-worker.js');
         }
     </script>
-    
+
     <style>
         .live-indicator {
             display: inline-block;
@@ -173,19 +180,31 @@ $revenue_by_payment = $stmt->fetchAll();
             animation: pulse 2s infinite;
             margin-right: 8px;
         }
-        
+
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
-        
+
         .updating {
             animation: fadeIn 0.3s;
         }
-        
+
         @keyframes fadeIn {
-            from { opacity: 0.5; }
-            to { opacity: 1; }
+            from {
+                opacity: 0.5;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
     </style>
 </head>
@@ -233,116 +252,165 @@ $revenue_by_payment = $stmt->fetchAll();
 
         <!-- Stats Grid -->
         <div class="row g-3 mb-3" id="statsGrid">
-            <div class="col-12 col-sm-12 col-lg-3">
-                <a href="view_members.php" class="text-decoration-none text-dark">
-                    <div class="stat-box h-100">
-                        <div class="stat-icon members"><i class="bi bi-people-fill"></i></div>
-                        <div>
-                            <div class="stat-value" id="stat-members"><?php echo $stats['total_members']; ?></div>
-                            <div class="stat-label">Total Members</div>
+            <div class="row my-2 d-flex justify-content-center">
+                <div class="col-12 col-sm-12 col-lg-3">
+                    <a href="view_members.php" class="text-decoration-none text-dark">
+                        <div class="stat-box h-100">
+                            <div class="stat-icon members"><i class="bi bi-people-fill"></i></div>
+                            <div>
+                                <div class="stat-value" id="stat-members"><?php echo $stats['total_members']; ?></div>
+                                <div class="stat-label">Total Members</div>
+                            </div>
                         </div>
-                    </div>
-                </a>
-            </div>
+                    </a>
+                </div>
 
-            <div class="col-12 col-sm-12 col-lg-3">
-                <a href="view_staff.php" class="text-decoration-none text-dark">
-                    <div class="stat-box h-100">
-                        <div class="stat-icon registrations"><i class="bi bi-person-badge"></i></div>
-                        <div>
-                            <div class="stat-value" id="stat-staff"><?php echo $stats['total_staff']; ?></div>
-                            <div class="stat-label">Active Staff</div>
+                <div class="col-12 col-sm-12 col-lg-3">
+                    <a href="view_staff.php" class="text-decoration-none text-dark">
+                        <div class="stat-box h-100">
+                            <div class="stat-icon registrations"><i class="bi bi-person-badge"></i></div>
+                            <div>
+                                <div class="stat-value" id="stat-staff"><?php echo $stats['total_staff']; ?></div>
+                                <div class="stat-label">Active Staff</div>
+                            </div>
                         </div>
-                    </div>
-                </a>
-            </div>
+                    </a>
+                </div>
 
-            <div class="col-12 col-sm-12 col-lg-3">
-                <a href="notification.php" class="text-decoration-none text-dark">
-                    <div class="stat-box h-100">
-                        <div class="stat-icon notifications"><i class="bi bi-bell-fill"></i></div>
-                        <div>
-                            <div class="stat-value" id="stat-notifications"><?php echo $stats['unread_notifications']; ?></div>
-                            <div class="stat-label">Unread Notifications</div>
+                <div class="col-12 col-sm-12 col-lg-3">
+                    <a href="notification.php" class="text-decoration-none text-dark">
+                        <div class="stat-box h-100">
+                            <div class="stat-icon notifications"><i class="bi bi-bell-fill"></i></div>
+                            <div>
+                                <div class="stat-value" id="stat-notifications">
+                                    <?php echo $stats['unread_notifications']; ?>
+                                </div>
+                                <div class="stat-label">Unread Notifications</div>
+                            </div>
                         </div>
-                    </div>
-                </a>
+                    </a>
+                </div>
             </div>
-            <!-- Enhanced Stats Grid with Financial Metrics -->
-            <div class="col-12 col-sm-12 col-xl-3">
-                <a href="transaction.php" class="text-decoration-none text-dark">
-                    <div class="stat-box h-100">
-                        <div class="stat-icon equipment"><i class="bi bi-cash-coin"></i></div>
-                        <div>
-                            <div class="stat-value" id="stat-revenue">₱<?php echo number_format($stats['total_revenue'], 2); ?></div>
-                            <div class="stat-label">Gross Revenue</div>
+            <div class="row my-2 d-flex justify-content-center">
+                <!-- Enhanced Stats Grid with Financial Metrics -->
+                <div class="col-12 col-sm-12 col-xl-3">
+                    <a href="transaction.php" class="text-decoration-none text-dark">
+                        <div class="stat-box h-100">
+                            <div class="stat-icon equipment"><i class="bi bi-cash-coin"></i></div>
+                            <div>
+                                <div class="stat-value" id="stat-revenue">
+                                    ₱<?php echo number_format($stats['total_revenue'], 2); ?></div>
+                                <div class="stat-label">Total Gross Revenue</div>
+                            </div>
                         </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-12 col-sm-12 col-xl-3">
-                <a href="expenses.php" class="text-decoration-none text-dark">
-                    <div class="stat-box h-100">
-                        <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i class="bi bi-wallet2"></i></div>
-                        <div>
-                            <div class="stat-value" style="color: var(--danger);">₱<?php echo number_format($total_expenses, 2); ?></div>
-                            <div class="stat-label">Total Expenses</div>
+                    </a>
+                </div>
+                <div class="col-12 col-sm-12 col-xl-3">
+                    <a href="transaction.php" class="text-decoration-none text-dark">
+                        <div class="stat-box h-100">
+                            <div class="stat-icon equipment"><i class="bi bi-cash-coin"></i></div>
+                            <div>
+                                <div class="stat-value" id="stat-revenue">
+                                    ₱<?php echo number_format($today_revenue, 2); ?>
+                                </div>
+                                <div class="stat-label">Today's Gross Revenue</div>
+                            </div>
                         </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-12 col-sm-12 col-xl-3">
-                <a href="expenses.php" class="text-decoration-none text-dark">
-                    <div class="stat-box h-100">
-                        <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i class="bi bi-wallet2"></i></div>
-                        <div>
-                            <div class="stat-value" style="color: var(--danger);">₱<?php echo number_format($today_expenses, 2); ?></div>
-                            <div class="stat-label">Today's Expenses</div>
+                    </a>
+                </div>
+                <div class="col-12 col-sm-12 col-xl-3">
+                    <a href="transaction.php" class="text-decoration-none text-dark">
+                        <div class="stat-box h-100">
+                            <div class="stat-icon equipment"><i class="bi bi-cash-coin"></i></div>
+                            <div>
+                                <div class="stat-value" id="stat-revenue">
+                                    ₱<?php echo number_format($this_month_revenue, 2); ?>
+                                </div>
+                                <div class="stat-label">Today's Gross Revenue</div>
+                            </div>
                         </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-12 col-sm-12 col-xl-3">
-                <a href="expenses.php" class="text-decoration-none text-dark">
-                    <div class="stat-box h-100">
-                        <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i class="bi bi-wallet2"></i></div>
-                        <div>
-                            <div class="stat-value" style="color: var(--danger);">₱<?php echo number_format($month_expenses, 2); ?></div>
-                            <div class="stat-label">This Month's Expenses</div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-12 col-sm-12 col-xl-3">
-                <div class="stat-box h-100" style="border-left: 3px solid <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">
-                    <div class="stat-icon" style="background: <?php echo $net_profit >= 0 ? 'rgba(34, 208, 122, 0.1)' : 'rgba(255, 71, 87, 0.1)'; ?>; color: <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;"><i class="bi bi-graph-up-arrow"></i></div>
-                    <div>
-                        <div class="stat-value" style="color: <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">₱<?php echo number_format($net_profit, 2); ?></div>
-                        <div class="stat-label">Net Profit</div>
-                    </div>
+                    </a>
                 </div>
             </div>
 
-            <div class="col-12 col-sm-12 col-xl-3">
-                <div class="stat-box h-100">
-                    <div class="stat-icon registrations"><i class="bi bi-percent"></i></div>
-                    <div>
-                        <div class="stat-value"><?php echo number_format($profit_margin, 1); ?>%</div>
-                        <div class="stat-label">Profit Margin</div>
+            <div class="row my-2 d-flex justify-content-center">
+                <div class="col-12 col-sm-12 col-xl-3">
+                    <a href="expenses.php" class="text-decoration-none text-dark">
+                        <div class="stat-box h-100">
+                            <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i
+                                    class="bi bi-wallet2"></i></div>
+                            <div>
+                                <div class="stat-value" style="color: var(--danger);">
+                                    ₱<?php echo number_format($total_expenses, 2); ?></div>
+                                <div class="stat-label">Total Expenses</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-12 col-sm-12 col-xl-3">
+                    <a href="expenses.php" class="text-decoration-none text-dark">
+                        <div class="stat-box h-100">
+                            <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i
+                                    class="bi bi-wallet2"></i></div>
+                            <div>
+                                <div class="stat-value" style="color: var(--danger);">
+                                    ₱<?php echo number_format($today_expenses, 2); ?></div>
+                                <div class="stat-label">Today's Expenses</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-12 col-sm-12 col-xl-3">
+                    <a href="expenses.php" class="text-decoration-none text-dark">
+                        <div class="stat-box h-100">
+                            <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i
+                                    class="bi bi-wallet2"></i></div>
+                            <div>
+                                <div class="stat-value" style="color: var(--danger);">
+                                    ₱<?php echo number_format($month_expenses, 2); ?></div>
+                                <div class="stat-label">This Month's Expenses</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <div class="row my-2 d-flex justify-content-center">
+                <div class="col-12 col-sm-12 col-xl-3">
+                    <div class="stat-box h-100"
+                        style="border-left: 3px solid <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">
+                        <div class="stat-icon"
+                            style="background: <?php echo $net_profit >= 0 ? 'rgba(34, 208, 122, 0.1)' : 'rgba(255, 71, 87, 0.1)'; ?>; color: <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <div>
+                            <div class="stat-value"
+                                style="color: <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">
+                                ₱<?php echo number_format($net_profit, 2); ?></div>
+                            <div class="stat-label">Net Profit</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-sm-12 col-xl-3">
+                    <div class="stat-box h-100">
+                        <div class="stat-icon registrations"><i class="bi bi-percent"></i></div>
+                        <div>
+                            <div class="stat-value"><?php echo number_format($profit_margin, 1); ?>%</div>
+                            <div class="stat-label">Profit Margin</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-                <!-- Financial Performance Chart -->
+        <!-- Financial Performance Chart -->
         <section>
             <h2><i class="bi bi-bank"></i> Financial Performance</h2>
             <div class="row g-3">
                 <div class="col-12 col-lg-8">
                     <div class="registration-card">
-                        <h3 style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
                             <i class="bi bi-graph-up"></i> Net Profit Analysis (6 Months)
                         </h3>
                         <div style="position: relative; height: 300px;">
@@ -352,7 +420,8 @@ $revenue_by_payment = $stmt->fetchAll();
                 </div>
                 <div class="col-12 col-lg-4">
                     <div class="registration-card">
-                        <h3 style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
                             <i class="bi bi-pie-chart"></i> Top Expenses
                         </h3>
                         <canvas id="expenseCategoriesChart" style="max-height: 250px;"></canvas>
@@ -366,7 +435,8 @@ $revenue_by_payment = $stmt->fetchAll();
             <div class="row g-3">
                 <div class="col-12 col-lg-6">
                     <div class="registration-card">
-                        <h3 style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
                             <i class="bi bi-graph-up-arrow"></i> Member Growth (6 Months)
                         </h3>
                         <div style="position: relative; height: 250px;">
@@ -376,7 +446,8 @@ $revenue_by_payment = $stmt->fetchAll();
                 </div>
                 <div class="col-12 col-lg-6">
                     <div class="registration-card">
-                        <h3 style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
                             <i class="bi bi-cash-stack"></i> Revenue by Month
                         </h3>
                         <div style="position: relative; height: 250px;">
@@ -393,7 +464,8 @@ $revenue_by_payment = $stmt->fetchAll();
             <div class="row g-3">
                 <div class="col-12 col-lg-8">
                     <div class="registration-card">
-                        <h3 style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
                             <i class="bi bi-calendar-check"></i> Daily Check-ins (Last 7 Days)
                         </h3>
                         <canvas id="checkinActivityChart" style="max-height: 250px;"></canvas>
@@ -402,7 +474,8 @@ $revenue_by_payment = $stmt->fetchAll();
                 <div class="col-12 col-lg-4">
                     <!-- Revenue by Payment Method -->
                     <div class="registration-card">
-                        <h3 style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
                             <i class="bi bi-credit-card"></i> Revenue by Payment
                         </h3>
                         <canvas id="paymentMethodChart" style="max-height: 250px;"></canvas>
@@ -417,36 +490,46 @@ $revenue_by_payment = $stmt->fetchAll();
             <div class="row g-3">
                 <div class="col-12 col-lg-6">
                     <div class="registration-card">
-                        <h3 style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
                             <i class="bi bi-exclamation-triangle"></i> Low Stock Alert
                         </h3>
                         <div id="lowStockContainer" style="display: flex; flex-direction: column; gap: 10px;">
                             <?php foreach ($low_stock as $item): ?>
-                                <div style="display: flex; justify-content: space-between; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
-                                    <span style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($item['item_name']); ?></span>
+                                <div
+                                    style="display: flex; justify-content: space-between; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
+                                    <span
+                                        style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($item['item_name']); ?></span>
                                     <span class="status-badge low-stock"><?php echo $item['quantity']; ?> left</span>
                                 </div>
                             <?php endforeach; ?>
                             <?php if (empty($low_stock)): ?>
-                                <div style="text-align: center; padding: 20px; color: var(--text-muted);">All items well stocked</div>
+                                <div style="text-align: center; padding: 20px; color: var(--text-muted);">All items well
+                                    stocked</div>
                             <?php endif; ?>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 col-lg-6">
                     <div class="registration-card">
-                        <h3 style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
                             <i class="bi bi-trophy"></i> Most Popular Exercises
                         </h3>
                         <div id="topExercisesContainer" style="display: flex; flex-direction: column; gap: 10px;">
                             <?php foreach ($top_exercises as $exercise): ?>
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
-                                    <span style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($exercise['name']); ?></span>
-                                    <span style="color: var(--hazard); font-family: 'Chakra Petch', sans-serif; font-weight: 700;"><?php echo $exercise['usage_count']; ?> logs</span>
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
+                                    <span
+                                        style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($exercise['name']); ?></span>
+                                    <span
+                                        style="color: var(--hazard); font-family: 'Chakra Petch', sans-serif; font-weight: 700;"><?php echo $exercise['usage_count']; ?>
+                                        logs</span>
                                 </div>
                             <?php endforeach; ?>
                             <?php if (empty($top_exercises)): ?>
-                                <div style="text-align: center; padding: 20px; color: var(--text-muted);">No workout logs yet</div>
+                                <div style="text-align: center; padding: 20px; color: var(--text-muted);">No workout logs
+                                    yet</div>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -459,7 +542,8 @@ $revenue_by_payment = $stmt->fetchAll();
             <div class="row">
                 <div class="col-12 col-lg-6">
                     <div class="registration-card">
-                        <h3 style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
                             <i class="bi bi-receipt"></i> Recent Transactions
                         </h3>
                         <div class="table-responsive inventory-table">
@@ -483,7 +567,8 @@ $revenue_by_payment = $stmt->fetchAll();
                                     <?php endforeach; ?>
                                     <?php if (empty($recent_transactions)): ?>
                                         <tr>
-                                            <td colspan="4" style="text-align: center; color: var(--text-muted);">No transactions</td>
+                                            <td colspan="4" style="text-align: center; color: var(--text-muted);">No
+                                                transactions</td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>
@@ -493,23 +578,30 @@ $revenue_by_payment = $stmt->fetchAll();
                 </div>
                 <div class="col-12 col-lg-6">
                     <div class="registration-card">
-                        <h3 style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+                        <h3
+                            style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
                             <i class="bi bi-chat-dots"></i> Recent Feedback
                         </h3>
                         <div id="recentFeedbackContainer" style="display: flex; flex-direction: column; gap: 10px;">
                             <?php foreach ($recent_feedback as $fb): ?>
                                 <?php
                                 $statusClass = 'maintenance';
-                                if ($fb['status'] === 'resolved') $statusClass = 'active';
-                                if ($fb['status'] === 'closed') $statusClass = 'inactive';
+                                if ($fb['status'] === 'resolved')
+                                    $statusClass = 'active';
+                                if ($fb['status'] === 'closed')
+                                    $statusClass = 'inactive';
                                 ?>
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
-                                    <span style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($fb['about']); ?></span>
-                                    <span class="status-badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($fb['status']); ?></span>
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border);">
+                                    <span
+                                        style="color: var(--text-primary); font-size: 13px;"><?php echo htmlspecialchars($fb['about']); ?></span>
+                                    <span
+                                        class="status-badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($fb['status']); ?></span>
                                 </div>
                             <?php endforeach; ?>
                             <?php if (empty($recent_feedback)): ?>
-                                <div style="text-align: center; padding: 20px; color: var(--text-muted);">No feedback yet</div>
+                                <div style="text-align: center; padding: 20px; color: var(--text-muted);">No feedback yet
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -563,7 +655,7 @@ $revenue_by_payment = $stmt->fetchAll();
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                                 return '₱' + value.toLocaleString();
                             }
                         }
@@ -573,7 +665,7 @@ $revenue_by_payment = $stmt->fetchAll();
                     legend: { display: true, position: 'top' },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 return context.dataset.label + ': ₱' + context.parsed.y.toLocaleString();
                             }
                         }
@@ -603,7 +695,7 @@ $revenue_by_payment = $stmt->fetchAll();
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 return context.label + ': ₱' + context.parsed.toLocaleString();
                             }
                         }
@@ -652,7 +744,7 @@ $revenue_by_payment = $stmt->fetchAll();
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                                 return '₱' + value.toLocaleString();
                             }
                         }
@@ -662,7 +754,7 @@ $revenue_by_payment = $stmt->fetchAll();
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 return 'Revenue: ₱' + context.parsed.y.toLocaleString();
                             }
                         }
@@ -721,7 +813,7 @@ $revenue_by_payment = $stmt->fetchAll();
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 return context.label + ': ₱' + context.parsed.toLocaleString();
                             }
                         }
@@ -738,33 +830,33 @@ $revenue_by_payment = $stmt->fetchAll();
                     // Update stats with animation
                     document.getElementById('stat-members').classList.add('updating');
                     document.getElementById('stat-members').textContent = data.stats.total_members;
-                    
+
                     document.getElementById('stat-staff').classList.add('updating');
                     document.getElementById('stat-staff').textContent = data.stats.total_staff;
-                    
+
                     document.getElementById('stat-revenue').classList.add('updating');
-                    document.getElementById('stat-revenue').textContent = '₱' + parseFloat(data.stats.total_revenue).toLocaleString('en-US', {minimumFractionDigits: 2});
-                    
+                    document.getElementById('stat-revenue').textContent = '₱' + parseFloat(data.stats.total_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
                     document.getElementById('stat-notifications').classList.add('updating');
                     document.getElementById('stat-notifications').textContent = data.stats.unread_notifications;
-                    
+
                     // Update charts
                     revenueChart.data.datasets[0].data = data.revenue_by_month.map(item => item.total);
                     revenueChart.update('none');
-                    
+
                     checkinChart.data.datasets[0].data = data.checkin_activity.map(item => item.count);
                     checkinChart.update('none');
-                    
+
                     paymentMethodChart.data.labels = data.revenue_by_payment.map(item => item.payment_method);
                     paymentMethodChart.data.datasets[0].data = data.revenue_by_payment.map(item => item.total);
                     paymentMethodChart.update('none');
-                    
+
                     // Update recent transactions
                     updateRecentTransactions(data.recent_transactions);
-                    
+
                     // Update last update time
                     document.getElementById('lastUpdate').textContent = 'Just now';
-                    
+
                     // Remove updating class after animation
                     setTimeout(() => {
                         document.querySelectorAll('.updating').forEach(el => el.classList.remove('updating'));
@@ -772,27 +864,27 @@ $revenue_by_payment = $stmt->fetchAll();
                 })
                 .catch(error => console.error('Update error:', error));
         }
-        
+
         function updateRecentTransactions(transactions) {
             const tbody = document.getElementById('recentTransactionsTable');
             if (transactions.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No transactions</td></tr>';
                 return;
             }
-            
+
             tbody.innerHTML = transactions.map(txn => `
                 <tr>
                     <td>${txn.customer_name}</td>
-                    <td>₱${parseFloat(txn.amount).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td>₱${parseFloat(txn.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                     <td>${txn.payment_method}</td>
-                    <td>${new Date(txn.transaction_date).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}</td>
+                    <td>${new Date(txn.transaction_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                 </tr>
             `).join('');
         }
-        
+
         // Update every 5 seconds
         setInterval(updateDashboard, 5000);
-        
+
         // Update time ago every minute
         setInterval(() => {
             const lastUpdate = document.getElementById('lastUpdate');
