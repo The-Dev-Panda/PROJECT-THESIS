@@ -16,13 +16,22 @@
         <div class="container text-center">
             <div class="d-flex justify-content-center gap-4 mb-4">
                 <a href="<?php echo $base_path ?? ''; ?>index.php" class="footer-link">Home</a>
-                <a href="Login/DPA_Consent.php" class="footer-link">Privacy Policy</a>
-                <a href="Login/DPA_Consent.php" class="footer-link">Terms of Service</a>
+                <a href="<?php echo $base_path ?? ''; ?>terms.php" class="footer-link">Privacy Policy</a>
+                <a href="<?php echo $base_path ?? ''; ?>terms.php" class="footer-link">Terms of Service</a>
                 <?php if (!empty($_SESSION['user_type']) && $_SESSION['user_type'] === 'staff'): ?>
                     <a href="<?php echo $base_path ?? ''; ?>staff/staff.php" class="footer-link text-hazard">Staff Portal</a>
                 <?php elseif (!empty($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin'): ?>
                     <a href="<?php echo $base_path ?? ''; ?>admin/Admin_Landing_Page.php" class="footer-link text-hazard">Admin Portal</a>
                 <?php endif; ?>
+            </div>
+            <div class="d-flex justify-content-center gap-3 mb-3">
+                <a href="https://www.instagram.com/dfit.stop/" target="_blank" rel="noopener noreferrer" class="footer-link d-flex align-items-center gap-2">
+                    <i class="fa-brands fa-instagram"></i> @dfit.stop
+                </a>
+                <span class="text-muted">|</span>
+                <a href="https://web.facebook.com/dfitstop" target="_blank" rel="noopener noreferrer" class="footer-link d-flex align-items-center gap-2">
+                    <i class="fa-brands fa-facebook"></i> dfitstop
+                </a>
             </div>
             <p class="text-muted small mb-0">
                 &copy; <?php echo date('Y'); ?> FIT-STOP FITNESS CENTER.

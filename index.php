@@ -34,52 +34,35 @@ include('includes/header.php');
                     </p>
                     <div class="d-flex gap-3">
                         <a href="#pricing" class="btn btn-hazard btn-lg">JOIN US</a>
-                        <a href="Login/Login_Page.php" class="btn btn-outline-hazard btn-lg">SYSTEM LOGIN</a>
                     </div>
                 </div>
 
-                <!-- App Mockup Interface -->
-                <div class="col-lg-6 mt-5 mt-lg-0">
-                    <div class="phone-mockup-container">
-                        <div class="app-interface">
-                            <div class="app-screen p-3">
-                                <div class="d-flex justify-content-between mb-3 border-bottom border-secondary pb-2">
-                                    <small class="text-hazard font-monospace">FIT-STOP OS v2.0</small>
-                                    <i class="fa-solid fa-wifi text-secondary"></i>
-                                </div>
-                                
-                                <!-- Stats Display -->
-                                <div class="row g-2 mb-3">
-                                    <div class="col-6">
-                                        <div class="bg-dark p-2 rounded border border-secondary">
-                                            <small class="text-muted d-block" style="font-size: 0.6rem;">WORKOUTS</small>
-                                            <span class="fw-bold text-white">142</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="bg-dark p-2 rounded border border-secondary">
-                                            <small class="text-muted d-block" style="font-size: 0.6rem;">STREAK</small>
-                                            <span class="fw-bold text-hazard">12 DAYS</span>
-                                        </div>
-                                    </div>
-                                </div>
+                <?php
+                $attendanceToday = 0;
+                $attendance7d = 0;
+                $workouts24h = 0;
 
-                                <!-- Progress Chart Visualization -->
-                                <div class="bg-dark p-2 rounded border border-secondary mb-3" style="height: 100px; display: flex; align-items: flex-end; justify-content: space-around;">
-                                    <div style="width: 10%; height: 40%; background: #333;"></div>
-                                    <div style="width: 10%; height: 60%; background: #333;"></div>
-                                    <div style="width: 10%; height: 50%; background: #333;"></div>
-                                    <div style="width: 10%; height: 80%; background: var(--hazard-yellow);"></div>
-                                    <div style="width: 10%; height: 70%; background: #333;"></div>
-                                </div>
+                if (isset($pdo)) {
+                    try {
+                        $today = date('Y-m-d');
+                        $attendanceTodayStmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE date(datetime) = :today");
+                        $attendanceTodayStmt->execute([':today' => $today]);
+                        $attendanceToday = (int)$attendanceTodayStmt->fetchColumn();
 
-                                <div class="d-grid">
-                                    <button class="btn btn-sm btn-outline-light" style="font-size: 0.8rem;">START NOW</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                        $attendance7dStmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE date(datetime) >= date('now', '-6 days')");
+                        $attendance7dStmt->execute();
+                        $attendance7d = (int)$attendance7dStmt->fetchColumn();
+
+                        $workouts24hStmt = $pdo->prepare("SELECT COUNT(*) FROM workout_logs WHERE datetime(logged_at, 'localtime') >= datetime('now', '-24 hours')");
+                        $workouts24hStmt->execute();
+                        $workouts24h = (int)$workouts24hStmt->fetchColumn();
+                    } catch (Throwable $e) {
+                        error_log('index.php: live stats query failed - ' . $e->getMessage());
+                    }
+                }
+                ?>
+
+                
             </div>
         </div>
     </section>
@@ -155,7 +138,7 @@ include('includes/header.php');
         <div class="map-overlay">
             <h5 class="text-hazard mb-1 brand-font">FIT-STOP CENTER</h5>
             <p class="text-white mb-0 small">Malabon City, Metro Manila</p>
-            <p class="text-muted small mb-0">OPEN DAILY: 6AM - 10PM</p>
+            <p class="text-muted small mb-0">OPEN DAILY: 7AM - 10PM</p>
         </div>
     </section>
 
@@ -173,12 +156,12 @@ include('includes/header.php');
                         <div class="pricing-header">
                             <h4 class="mb-0">WALK-IN</h4>
                             <div class="display-6 fw-bold mt-2 text-white">₱60<span class="fs-6 text-muted">/day</span></div>
-                            <div class="mt-1 small text-muted">or <strong>₱750</strong><span class="fs-6 text-muted">/mo</span> (Monthly Walk-In) - ₱9000 /yr</div>
+                            <div class="mt-1 small text-muted">or <strong>₱750</strong><span class="fs-6 text-muted">/mo</span> (Monthly Walk-In) -> ₱9000 /yr</div>
                         </div>
                         <div class="pricing-body">
                             <ul class="check-list ps-0">
                                 <li><i class="fa-solid fa-check"></i> Gym Floor Access</li>
-                                <li><i class="fa-solid fa-check"></i> Locker Use</li>
+                                <li class="text-muted"><i class="fa-solid fa-xmark"></i> Locker Use</li>
                                 <li class="text-muted"><i class="fa-solid fa-xmark"></i> App Tracking</li>
                             </ul>
                         </div>
@@ -189,9 +172,9 @@ include('includes/header.php');
                 <div class="col-md-5 col-lg-4">
                     <div class="pricing-card featured">
                         <div class="pricing-header">
-                            <h4 class="mb-0 text-hazard">SMART MEMBER</h4>
+                            <h4 class="mb-0 text-hazard">MEMBER</h4>
                             <div class="display-6 fw-bold mt-2 text-white">₱650<span class="fs-6 text-muted">/mo</span></div>
-                            <div class="mt-1 small text-muted">+ <strong>₱500</strong><span class="fs-6 text-muted">/yr</span> (Membership) - ₱8300 /yr </div>
+                            <div class="mt-1 small text-muted">+ <strong>₱500</strong><span class="fs-6 text-muted">/yr</span> (Membership) -> ₱8300 /yr </div>
                         </div>
                         <div class="pricing-body">
                             <ul class="check-list ps-0">
