@@ -238,7 +238,7 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                         <div class="col-sm-12 col-md-4">
                             <div class="search-wrapper" style="flex: 2;">
                                 <i class="bi bi-search search-icon"></i>
-                                <input type="text" name="search" class="search-input" placeholder="Search expenses..."
+                                <input type="text" name="search" class="search-input" placeholder="Search expenses..." maxlength="30"
                                     value="<?php echo htmlspecialchars($search); ?>">
                             </div>
                         </div>
@@ -272,7 +272,9 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                         </div>
                         <div class="col-sm-12 col-md-2 d-flex justify-content-center text-center">
                             <a href="export_expenses.php?<?php echo http_build_query(['search' => $search, 'time' => $time_filter]); ?>"
-                                class="add-btn" style="background: var(--success); text-decoration: none;">
+                                class="add-btn"
+                                onclick="return confirm('Are you sure you want to export these expenses to Excel?');"
+                                style="background: var(--success); text-decoration: none;">
                                 <i class="bi bi-file-earmark-excel"></i> Export to Excel
                             </a>
                         </div>

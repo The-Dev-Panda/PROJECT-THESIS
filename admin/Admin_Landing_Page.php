@@ -274,7 +274,7 @@ $revenue_by_payment = $stmt->fetchAll();
                     <div class="stat-box h-100">
                         <div class="stat-icon equipment"><i class="bi bi-cash-coin"></i></div>
                         <div>
-                            <div class="stat-value" id="stat-revenue">₱<?php echo number_format($stats['total_revenue'], 0); ?></div>
+                            <div class="stat-value" id="stat-revenue">₱<?php echo number_format($stats['total_revenue'], 2); ?></div>
                             <div class="stat-label">Gross Revenue</div>
                         </div>
                     </div>
@@ -286,7 +286,7 @@ $revenue_by_payment = $stmt->fetchAll();
                     <div class="stat-box h-100">
                         <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i class="bi bi-wallet2"></i></div>
                         <div>
-                            <div class="stat-value" style="color: var(--danger);">₱<?php echo number_format($total_expenses, 0); ?></div>
+                            <div class="stat-value" style="color: var(--danger);">₱<?php echo number_format($total_expenses, 2); ?></div>
                             <div class="stat-label">Total Expenses</div>
                         </div>
                     </div>
@@ -297,7 +297,7 @@ $revenue_by_payment = $stmt->fetchAll();
                     <div class="stat-box h-100">
                         <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i class="bi bi-wallet2"></i></div>
                         <div>
-                            <div class="stat-value" style="color: var(--danger);">₱<?php echo number_format($today_expenses, 0); ?></div>
+                            <div class="stat-value" style="color: var(--danger);">₱<?php echo number_format($today_expenses, 2); ?></div>
                             <div class="stat-label">Today's Expenses</div>
                         </div>
                     </div>
@@ -308,8 +308,8 @@ $revenue_by_payment = $stmt->fetchAll();
                     <div class="stat-box h-100">
                         <div class="stat-icon" style="background: rgba(255, 71, 87, 0.1); color: var(--danger);"><i class="bi bi-wallet2"></i></div>
                         <div>
-                            <div class="stat-value" style="color: var(--danger);">₱<?php echo number_format($month_expenses, 0); ?></div>
-                            <div class="stat-label">Semi-Annual Expenses </br>(Last 6 Months)</div>
+                            <div class="stat-value" style="color: var(--danger);">₱<?php echo number_format($month_expenses, 2); ?></div>
+                            <div class="stat-label">This Month's Expenses</div>
                         </div>
                     </div>
                 </a>
@@ -319,7 +319,7 @@ $revenue_by_payment = $stmt->fetchAll();
                 <div class="stat-box h-100" style="border-left: 3px solid <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">
                     <div class="stat-icon" style="background: <?php echo $net_profit >= 0 ? 'rgba(34, 208, 122, 0.1)' : 'rgba(255, 71, 87, 0.1)'; ?>; color: <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;"><i class="bi bi-graph-up-arrow"></i></div>
                     <div>
-                        <div class="stat-value" style="color: <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">₱<?php echo number_format($net_profit, 0); ?></div>
+                        <div class="stat-value" style="color: <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">₱<?php echo number_format($net_profit, 2); ?></div>
                         <div class="stat-label">Net Profit</div>
                     </div>
                 </div>
