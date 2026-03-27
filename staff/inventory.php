@@ -434,6 +434,10 @@ $jsNotifTotal = $notifCount;
   <li onclick="window.location.href='staff.php#idGeneration'" style="cursor:pointer;">
     <i class="bi bi-qr-code"></i><span>ID Generation</span>
   </li>
+  <li id="monthlyBtn" onclick="window.location.href='monthly.php'" style="cursor:pointer;">
+        <i class="bi bi-calendar-check"></i>
+        <span>Monthly Access</span>
+  </li>
   <li onclick="window.location.href='staff.php#settings'" style="cursor:pointer;">
     <i class="bi bi-gear"></i><span>Settings</span>
   </li>
