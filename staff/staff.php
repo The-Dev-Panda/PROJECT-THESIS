@@ -173,7 +173,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             ]);
             exit;
         }
-
+    if ($action === 'record_walkin_from_receipt') {
+        $name = trim($_POST['name'] ?? '');
+        if (empty($name)) {
+            echo json_encode(['success' => false, 'message' => 'Name is required.']);
+            exit;
+        }
+       $now = date('Y-m-d H:i:s');
+        $ins = $pdo->prepare("
+            INSERT INTO walk_attendance (name, month_id, datetime)
+            VALUES (:name, NULL, :datetime)
+        ");
+        $ins->execute([':name' => $name, ':datetime' => $now]);
+        exit;
+    }
         echo json_encode(['success' => false, 'message' => 'Unknown action']);
         exit;
 
@@ -296,6 +309,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       <li id="monthlyBtn" onclick="window.location.href='monthly.php'" style="cursor:pointer;">
         <i class="bi bi-calendar-check"></i>
         <span>Monthly Access</span>
+      </li>
+
+      <li onclick="window.location.href='walkin_attendance.php'" style="cursor:pointer;">
+      <i class="bi bi-person-walking"></i>
+      <span>Walk-In Log</span>
       </li>
       <li id="settingsBtn" data-target="settings">
         <i class="bi bi-gear"></i>
@@ -1129,15 +1147,26 @@ function doSaveTransaction(customerType, memberId, customerName, method, gcashRe
     if (!data.success) { alert(data.error || 'Failed to save transaction.'); return; }
 
     payCart.forEach(item => {
-      if (item.invItemId) {
-        deductInventoryStock(item.invItemId, item.invItemName, item.qty);
-      } else {
-        recordEntryFeeToLocalStorage(item.paidFor, customerType);
-        if (item.paidFor === 'Monthly') {
-          saveMonthlyRecord(customerType, memberId, customerName);
-        }
-      }
-    });
+  if (item.invItemId) {
+    deductInventoryStock(item.invItemId, item.invItemName, item.qty);
+  } else {
+    recordEntryFeeToLocalStorage(item.paidFor, customerType);
+    if (item.paidFor === 'Monthly') {
+      saveMonthlyRecord(customerType, memberId, customerName);
+    }
+    // ✅ Auto-log walk-in to walk_attendance table
+    if (item.paidFor === 'Day Pass / Walk-In' && customerType === 'non-member') {
+      const walkName = customerName || 'Walk-In Guest';
+      const fd2 = new FormData();
+      fd2.append('action', 'record_walkin_from_receipt');
+      fd2.append('name',   walkName);
+      fetch('staff.php', { method: 'POST', body: fd2 })
+        .then(r => r.json())
+        .then(d => { if (!d.success) console.warn('Walk-in log failed:', d.message); })
+        .catch(err => console.warn('Walk-in log error:', err));
+    }
+  }
+});
 
     const receiptData = {
       ...data.receipt,
