@@ -173,47 +173,51 @@ try {
             . ', top_exercises_30d=' . (empty($topExerciseChunks) ? 'none' : implode('; ', $topExerciseChunks));
     }
 
-    if ($intent === 'workout' || $intent === 'progress' || strpos($normalizedQuery, 'exercise') !== false) {
-        $exerciseStmt = $pdo->query('SELECT name, target_muscle, movement_type FROM exercises ORDER BY name ASC LIMIT 120');
+    // Always fetch exercises so the AI has context regardless of query intent.
+    // Wrapped in its own try/catch so a DB failure never blocks the AI response.
+    $exerciseRows = [];
+    try {
+        $exerciseStmt = $pdo->query('SELECT exercise_id, name, target_muscle, movement_type FROM exercises ORDER BY name ASC LIMIT 120');
         $exerciseRows = $exerciseStmt ? ($exerciseStmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+    } catch (Throwable $e) {
+        error_log('process_AI.php: failed to fetch exercises – ' . $e->getMessage());
+        $exerciseRows = [];
+    }
 
-        if (!empty($exerciseRows)) {
-            $movementBuckets = [];
-            $exerciseNameList = [];
+    if (!empty($exerciseRows)) {
+        $movementBuckets = [];
+        $exerciseNameList = [];
 
-            foreach ($exerciseRows as $row) {
-                $name = trim((string)($row['name'] ?? ''));
-                if ($name === '') {
-                    continue;
-                }
-
-                $movementType = trim((string)($row['movement_type'] ?? 'General'));
-                if ($movementType === '') {
-                    $movementType = 'General';
-                }
-
-                $targetMuscle = trim((string)($row['target_muscle'] ?? ''));
-                $label = $targetMuscle !== '' ? ($name . ' [' . $targetMuscle . ']') : $name;
-
-                if (!isset($movementBuckets[$movementType])) {
-                    $movementBuckets[$movementType] = [];
-                }
-                $movementBuckets[$movementType][] = $label;
-                $exerciseNameList[] = $name;
+        foreach ($exerciseRows as $row) {
+            $name = trim((string)($row['name'] ?? ''));
+            if ($name === '') {
+                continue;
             }
 
-            $movementChunks = [];
-            foreach ($movementBuckets as $type => $items) {
-                $movementChunks[] = $type . ': ' . implode(', ', array_slice($items, 0, 8));
+            $movementType = trim((string)($row['movement_type'] ?? 'General'));
+            if ($movementType === '') {
+                $movementType = 'General';
             }
 
-            $availableExercisesSummary = 'Available exercises in system (' . count($exerciseNameList) . '): '
-                . implode(' | ', $movementChunks)
-                . '. Full exercise name list: '
-                . implode(', ', array_slice($exerciseNameList, 0, 120));
-        } else {
-            $availableExercisesSummary = 'Available exercises in system: none found in exercises table.';
+            $targetMuscle = trim((string)($row['target_muscle'] ?? ''));
+            $label = $targetMuscle !== '' ? ($name . ' [' . $targetMuscle . ']') : $name;
+
+            if (!isset($movementBuckets[$movementType])) {
+                $movementBuckets[$movementType] = [];
+            }
+            $movementBuckets[$movementType][] = $label;
+            $exerciseNameList[] = $name;
         }
+
+        $movementChunks = [];
+        foreach ($movementBuckets as $type => $items) {
+            $movementChunks[] = $type . ': ' . implode(', ', array_slice($items, 0, 8));
+        }
+
+        $availableExercisesSummary = 'Available exercises in system (' . count($exerciseNameList) . '): '
+            . implode(' | ', $movementChunks)
+            . '. Full exercise name list: '
+            . implode(', ', array_slice($exerciseNameList, 0, 120));
     }
 
     $contextBlocks = [$profileSummary, 'Intent: ' . $intent];
