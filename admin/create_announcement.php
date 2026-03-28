@@ -37,7 +37,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
         <section>
             <h2><i class="bi bi-plus-circle"></i> Create New Announcement</h2>
 
-            <div class="registration-card">
+            <div class="registration-card reveal">
                 <form action="process_create_announcement.php" method="POST" enctype="multipart/form-data">
                     <?php echo fitstop_csrf_input(); ?>
                     <div class="form-grid">
@@ -156,6 +156,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                 if (count($announcements) > 0) {
                     foreach ($announcements as $announcement) {
                         $image_html = '';
+                        $counter = 0;
                         if ($announcement['image']) {
                             $image_src = 'data:image/jpeg;base64,' . base64_encode($announcement['image']);
                             $image_alt = $announcement['title'];
@@ -168,7 +169,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                         $date = date('M j, Y \a\t g:i A', strtotime($announcement['created_at']));
 
                         echo "
-            <div class=' col-sm-12 col-xl-3 registration-card' style='margin: 1%; aspect-ratio: 4/5'>
+            <div class=' col-sm-12 col-xl-3 registration-card reveal-delay-announcement-1' style='margin: 1%; aspect-ratio: 4/5'>
                 $image_html
                 <div style='border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;'>
                     <h3 style='font-family: \"Chakra Petch\", sans-serif; font-size: 20px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px;'>$title</h3>
@@ -178,6 +179,10 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
                 </div>
                 <p style='color: var(--text-sub); font-size: 14px; line-height: 1.7; margin: 0;'>$description</p>
             </div>
+            <style>
+
+            .reveal-delay-announcement-1 { animation-delay: 0.1s; }
+            </style>
             ";
                     }
                 } else {

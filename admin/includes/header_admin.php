@@ -30,6 +30,7 @@ $unread_count = $unread_stmt->fetch()['count'];
         document.addEventListener('mousemove', e => {
             cursor.style.left = e.clientX + 'px';
             cursor.style.top = e.clientY + 'px';
+            cursor.style.display = 'block';
         });
 
         const clickables = 'a, button, [onclick], input, select, textarea, label';
