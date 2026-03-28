@@ -9,9 +9,10 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
 }
 
 require_once("../Login/connection.php");
-
 try {
     // Basic Stats
+    date_default_timezone_set('Asia/Manila');
+    $date = date('Y-m-d');
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM users WHERE user_type = 'user'");
     $total_members = $stmt->fetch()['total'];
 
