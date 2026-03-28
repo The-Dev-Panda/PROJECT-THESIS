@@ -82,6 +82,16 @@ $targetProtein = 140;
 $targetCarbs = 240;
 $targetFat = 70;
 
+$exerciseList = [];
+try {
+    if (isset($pdo)) {
+        $exerciseStmt = $pdo->query('SELECT exercise_id, name, target_muscle, movement_type FROM exercises ORDER BY name ASC');
+        $exerciseList = $exerciseStmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Throwable $e) {
+    $exerciseList = [];
+}
+
 if (strpos($goalLower, 'lose') !== false || strpos($goalLower, 'fat') !== false || strpos($goalLower, 'weight') !== false) {
   $targetCalories = 1800;
   $targetProtein = 160;
