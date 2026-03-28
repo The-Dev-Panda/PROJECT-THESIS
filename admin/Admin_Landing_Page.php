@@ -28,7 +28,7 @@ $stats['total_revenue'] = $stmt->fetch()['total'];
 $stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE DATE(created_at) = DATE('now')");
 $stats['today_revenue'] = $stmt->fetch()['total'];
 
-$stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')");
+$stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT('now', '%Y-%m')");
 $stats['this_month_revenue'] = $stmt->fetch()['total'];
 
 // Unread Notifications
@@ -39,7 +39,7 @@ $stats['unread_notifications'] = $stmt->fetch()['total'];
 $member_growth = [];
 for ($i = 5; $i >= 0; $i--) {
     $date = date('Y-m', strtotime("-$i months"));
-    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM users WHERE user_type = 'user' AND strftime('%Y-%m', created_at) = :date");
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM users WHERE user_type = 'user' AND DATE_FORMAT(created_at, '%Y-%m') = :date");
     $stmt->execute(['date' => $date]);
     $count = $stmt->fetch()['count'];
     $member_growth[] = [
@@ -52,7 +52,7 @@ for ($i = 5; $i >= 0; $i--) {
 $revenue_by_month = [];
 for ($i = 5; $i >= 0; $i--) {
     $date = date('Y-m', strtotime("-$i months"));
-    $stmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', transaction_date) = :date");
+    $stmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE DATE_FORMAT(transaction_date, '%Y-%m') = :date");
     $stmt->execute(['date' => $date]);
     $total = $stmt->fetch()['total'];
     $revenue_by_month[] = [
@@ -83,7 +83,7 @@ $stmt = $pdo->query("SELECT COALESCE(SUM(expense), 0) as total FROM expense_hist
 $today_expenses = $stmt->fetch()['total'];
 
 // This Month's Expenses
-$stmt = $pdo->query("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')");
+$stmt = $pdo->query("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT('now', '%Y-%m')");
 $month_expenses = $stmt->fetch()['total'];
 
 // Calculate Net Profit
@@ -97,12 +97,12 @@ for ($i = 5; $i >= 0; $i--) {
     $date = date('Y-m', strtotime("-$i months"));
 
     // Revenue for this month
-    $stmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', transaction_date) = :date");
+    $stmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE DATE_FORMAT(transaction_date, '%Y-%m') = :date");
     $stmt->execute(['date' => $date]);
     $monthly_revenue = $stmt->fetch()['total'];
 
     // Expenses for this month
-    $stmt = $pdo->prepare("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE strftime('%Y-%m', created_at) = :date");
+    $stmt = $pdo->prepare("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE DATE_FORMAT(created_at, '%Y-%m') = :date");
     $stmt->execute(['date' => $date]);
     $monthly_expenses = $stmt->fetch()['total'];
 
@@ -308,7 +308,7 @@ $revenue_by_payment = $stmt->fetchAll();
                             <div class="stat-icon equipment"><i class="bi bi-cash-coin"></i></div>
                             <div>
                                 <div class="stat-value" id="stat-month-revenue">
-                                    ₱<?php echo number_format($stats['this_month_revenue'], 2); ?>
+                                    ₱<?php echo number_format($monthly_revenue, 2); ?>
                                 </div>
                                 <div class="stat-label">This Month's Gross Revenue</div>
                             </div>

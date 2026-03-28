@@ -49,16 +49,20 @@ if ($status_filter === 'verified') {
 if ($time_filter) {
     switch ($time_filter) {
         case 'today':
-            $where_conditions[] = "DATE(created_at) = DATE('now')";
+            $where_conditions[] = "created_at >= CURDATE() 
+                                   AND created_at < CURDATE() + INTERVAL 1 DAY";
             break;
+    
         case 'week':
-            $where_conditions[] = "created_at >= DATE('now', '-7 days')";
+            $where_conditions[] = "created_at >= CURDATE() - INTERVAL 7 DAY";
             break;
+    
         case 'month':
-            $where_conditions[] = "created_at >= DATE('now', '-30 days')";
+            $where_conditions[] = "created_at >= CURDATE() - INTERVAL 30 DAY";
             break;
+    
         case 'year':
-            $where_conditions[] = "created_at >= DATE('now', '-365 days')";
+            $where_conditions[] = "created_at >= CURDATE() - INTERVAL 365 DAY";
             break;
     }
 }
@@ -156,18 +160,33 @@ function getPaginationUrl($page_num, $search, $status, $time, $sort, $order)
 }
 
 //stats bar
-//new members today
+// new members today
 $stmt = $pdo->query("
-    SELECT COUNT(*) as total FROM users WHERE user_type = 'user'AND DATE(created_at) = DATE('now')");
+    SELECT COUNT(*) as total 
+    FROM users 
+    WHERE user_type = 'user' 
+    AND created_at >= CURDATE() 
+    AND created_at < CURDATE() + INTERVAL 1 DAY
+");
 $new_today = $stmt->fetch()['total'];
-//new members this month
+
+
+// new members this month
 $stmt = $pdo->query("
-    SELECT COUNT(*) as total FROM users WHERE user_type = 'user'AND strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')
+    SELECT COUNT(*) as total 
+    FROM users 
+    WHERE user_type = 'user' 
+    AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
 ");
 $new_month = $stmt->fetch()['total'];
-//active members (logged in last 7 days)
+
+
+// active members (logged in last 7 days)
 $stmt = $pdo->query("
-    SELECT COUNT(*) as total FROM users WHERE user_type = 'user'AND last_logged_in >= DATE('now', '-7 days')
+    SELECT COUNT(*) as total 
+    FROM users 
+    WHERE user_type = 'user' 
+    AND last_logged_in >= CURDATE() - INTERVAL 7 DAY
 ");
 $active_members = $stmt->fetch()['total'];
 ?>

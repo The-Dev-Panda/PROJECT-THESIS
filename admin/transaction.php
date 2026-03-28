@@ -98,12 +98,23 @@ $payment_methods = $payment_methods_stmt->fetchAll(PDO::FETCH_COLUMN);
 // Calculate stats
 $stmt = $pdo->query("
     SELECT 
-        SUM(CASE WHEN DATE(transaction_date) = DATE('now') THEN amount ELSE 0 END) AS today,
-        SUM(CASE WHEN DATE(transaction_date) = DATE('now','-1 day') THEN amount ELSE 0 END) AS yesterday
+        COALESCE(SUM(CASE 
+            WHEN transaction_date >= CURDATE() 
+            AND transaction_date < CURDATE() + INTERVAL 1 DAY 
+            THEN amount 
+        END), 0) AS today,
+
+        COALESCE(SUM(CASE 
+            WHEN transaction_date >= CURDATE() - INTERVAL 1 DAY 
+            AND transaction_date < CURDATE() 
+            THEN amount 
+        END), 0) AS yesterday
+
     FROM transactions
     WHERE status = 'completed'
 ");
-$data = $stmt->fetch();
+
+$data = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $growth = ($data['yesterday'] > 0)
     ? (($data['today'] - $data['yesterday']) / $data['yesterday']) * 100 : 0;
@@ -114,7 +125,11 @@ $total_revenue = $total_revenue_stmt->fetch()['total'];
 $today_revenue_stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE DATE(transaction_date) = DATE('now')");
 $today_revenue = $today_revenue_stmt->fetch()['total'];
 
-$month_revenue_stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', transaction_date) = strftime('%Y-%m', 'now')");
+$month_revenue_stmt = $pdo->query("
+    SELECT COALESCE(SUM(amount), 0) as total 
+    FROM transactions 
+    WHERE DATE_FORMAT(transaction_date, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')
+");
 $month_revenue = $month_revenue_stmt->fetch()['total'];
 
 $total_count_stmt = $pdo->query("SELECT COUNT(*) as total FROM transactions");

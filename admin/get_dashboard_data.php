@@ -33,7 +33,7 @@ try {
     $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM walk_attendance WHERE DATE(datetime) = :date");
     $stmt->execute(['date' => $date]);
     $today_walk_attendance = $stmt->fetch()['count'];
-    
+
     // Financial Stats
     $stmt = $pdo->query("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history");
     $total_expenses = $stmt->fetch()['total'];
@@ -48,14 +48,14 @@ try {
     $stmt = $pdo->query("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE DATE(created_at) = DATE('now')");
     $today_expenses = $stmt->fetch()['total'];
 
-    $stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')");
+    $stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE DATE_FORMAT('%Y-%m', created_at) = DATE_FORMAT('%Y-%m', 'now')");
     $this_month_revenue = $stmt->fetch()['total'];
 
     // Revenue by Month (6 months)
     $revenue_by_month = [];
     for ($i = 5; $i >= 0; $i--) {
         $date = date('Y-m', strtotime("-$i months"));
-        $stmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', transaction_date) = :date");
+        $stmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE DATE_FORMAT('%Y-%m', transaction_date) = :date");
         $stmt->execute(['date' => $date]);
         $revenue_by_month[] = [
             'month' => date('M', strtotime("-$i months")),
@@ -68,11 +68,11 @@ try {
     for ($i = 5; $i >= 0; $i--) {
         $date = date('Y-m', strtotime("-$i months"));
 
-        $stmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE strftime('%Y-%m', transaction_date) = :date");
+        $stmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE DATE_FORMAT('%Y-%m', transaction_date) = :date");
         $stmt->execute(['date' => $date]);
         $monthly_revenue = $stmt->fetch()['total'];
 
-        $stmt = $pdo->prepare("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE strftime('%Y-%m', created_at) = :date");
+        $stmt = $pdo->prepare("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE DATE_FORMAT('%Y-%m', created_at) = :date");
         $stmt->execute(['date' => $date]);
         $monthly_expenses = $stmt->fetch()['total'];
 
@@ -92,7 +92,7 @@ try {
     $today_expenses = $stmt->fetch()['total'];
 
     // This Month's Expenses
-    $stmt = $pdo->query("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')");
+    $stmt = $pdo->query("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE DATE_FORMAT('%Y-%m', created_at) = DATE_FORMAT('%Y-%m', 'now')");
     $month_expenses = $stmt->fetch()['total'];
 
     // Check-in Activity (7 days) - Members and Walk-ins

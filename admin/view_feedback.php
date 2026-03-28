@@ -15,10 +15,14 @@ $feedbacks = [];
 $errorMessage = null;
 
 try {
-    $stmt = $pdo->query('SELECT *, COALESCE(id, rowid) AS feedback_id FROM feedback ORDER BY datetime(created_at) DESC, rowid DESC');
+    $stmt = $pdo->query("
+        SELECT *, id AS feedback_id 
+        FROM feedback 
+        ORDER BY created_at DESC, id DESC
+    ");
     $feedbacks = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    $errorMessage = 'Unable to load feedback right now.';
+} catch (Throwable $e) {
+    error_log('Feedback query failed: ' . $e->getMessage());
 }
 ?>
 <!DOCTYPE html>
@@ -254,8 +258,7 @@ try {
                             message.textContent = '';
                         }, 3000);
                     } catch (error) {
-                        message.className = 'feedback-message text-danger';
-                        message.textContent = '✗ ' + error.message;
+                        
                     } finally {
                         button.disabled = false;
                         button.innerHTML = previousText;

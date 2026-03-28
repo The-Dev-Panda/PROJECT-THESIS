@@ -5,6 +5,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     header('Location: ../Login/Login_Page.php');
     exit();
 }
+date_default_timezone_set('Asia/Manila');
 
 include("../Login/connection.php");
 

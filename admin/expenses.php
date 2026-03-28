@@ -61,16 +61,20 @@ if ($search !== '') {
 if ($time_filter) {
     switch ($time_filter) {
         case 'today':
-            $where_conditions[] = "DATE(created_at) = DATE('now')";
+            $where_conditions[] = "created_at >= CURDATE() 
+                                   AND created_at < CURDATE() + INTERVAL 1 DAY";
             break;
+    
         case 'week':
-            $where_conditions[] = "created_at >= DATE('now', '-7 days')";
+            $where_conditions[] = "created_at >= CURDATE() - INTERVAL 7 DAY";
             break;
+    
         case 'month':
-            $where_conditions[] = "created_at >= DATE('now', '-30 days')";
+            $where_conditions[] = "created_at >= CURDATE() - INTERVAL 30 DAY";
             break;
+    
         case 'year':
-            $where_conditions[] = "created_at >= DATE('now', '-365 days')";
+            $where_conditions[] = "created_at >= CURDATE() - INTERVAL 365 DAY";
             break;
     }
 }
