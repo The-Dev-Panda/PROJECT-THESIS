@@ -204,7 +204,9 @@ foreach ($transactions as $txn) {
     echo '<Cell><Data ss:Type="String">' . htmlspecialchars($txn['customer_type']) . '</Data></Cell>';
     echo '<Cell ss:StyleID="currency"><Data ss:Type="Number">' . $txn['amount'] . '</Data></Cell>';
     echo '<Cell><Data ss:Type="String">' . htmlspecialchars($txn['payment_method']) . '</Data></Cell>';
-    echo '<Cell ss:StyleID="dateStyle"><Data ss:Type="DateTime">' . date('Y-m-d\TH:i:s', strtotime($txn['transaction_date'])) . '</Data></Cell>';
+    // Fix DateTime format for Excel
+    $excelDate = date('Y-m-d\TH:i:s', strtotime($txn['transaction_date']));
+    echo '<Cell ss:StyleID="dateStyle"><Data ss:Type="DateTime">' . $excelDate . '</Data></Cell>';
     echo '<Cell><Data ss:Type="String">' . htmlspecialchars($staff_name) . '</Data></Cell>';
     echo '<Cell><Data ss:Type="String">' . htmlspecialchars($txn['desc'] ?? '') . '</Data></Cell>';
     echo '</Row>';
