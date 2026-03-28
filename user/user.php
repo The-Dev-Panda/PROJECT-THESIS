@@ -229,14 +229,6 @@ try {
     $attendanceHistoryStmt->execute([':user_id' => $userId]);
     $rawHistoryRows = $attendanceHistoryStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 $attendanceHistory = [
-  ['display_date' => 'Friday, Mar 27',    'time' => 'Check-in: 10:13 PM', 'status' => 'Present'],
-  ['display_date' => 'Thursday, Mar 26',  'time' => 'Check-in: 4:26 PM',  'status' => 'Present'],
-  ['display_date' => 'Wednesday, Mar 25', 'time' => 'Check-in: 9:07 AM',  'status' => 'Present'],
-  ['display_date' => 'Monday, Mar 24',    'time' => 'Check-in: 10:49 AM', 'status' => 'Present'],
-  ['display_date' => 'Sunday, Mar 23',    'time' => 'Check-in: 8:59 PM',  'status' => 'Present'],
-  ['display_date' => 'Friday, Mar 20',    'time' => 'Check-in: 12:25 PM', 'status' => 'Present'],
-  ['display_date' => 'Friday, Mar 13',    'time' => 'Check-in: 12:49 AM', 'status' => 'Present'],
-  ['display_date' => 'Friday, Mar 6',     'time' => 'Check-in: 8:45 AM',  'status' => 'Present'],
 ];
  
 $previewCount = 5;
@@ -809,13 +801,6 @@ $activePage = 'dashboard';
       </button>
     </div>
  
-    <!-- Summary pills -->
-    <div class="att-modal-summary">
-      <span class="att-sum-pill present">
-        <i class="bi bi-check-circle"></i>&nbsp; <?php echo $counts['present']; ?> Present
-      </span>
-
-    </div>
  
     <div class="att-hr" style="margin: 14px 20px 0;"></div>
  
