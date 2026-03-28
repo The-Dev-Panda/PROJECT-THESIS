@@ -10,7 +10,6 @@ try {
 
     if (session_status() === PHP_SESSION_NONE) session_start();
 
-    // Allow both staff and regular users
     if (empty($_SESSION['id']) || empty($_SESSION['user_type'])) {
         http_response_code(401);
         echo json_encode(['success' => false, 'error' => 'Unauthorized. Please login.']);
@@ -28,12 +27,10 @@ try {
     $sets       = isset($input['sets'])        ? (int)$input['sets']        : 1;
     $weight     = isset($input['weight'])      ? (float)$input['weight']    : 0.0;
 
-    // Staff sends user_id directly; members use their own session id
     if ($sessionUserType === 'staff' || $sessionUserType === 'admin') {
         $userId = isset($input['user_id']) ? (int)$input['user_id'] : 0;
         if ($userId <= 0) throw new Exception('Missing user_id for staff log entry');
     } else {
-        // Regular member — always use their own session id
         $userId = $sessionUserId;
     }
 
@@ -49,21 +46,18 @@ try {
     $db->exec('PRAGMA synchronous = NORMAL');
     $db->exec('PRAGMA foreign_keys = ON');
 
-    // Verify user exists
     $userStmt = $db->prepare('SELECT id FROM users WHERE id = :id LIMIT 1');
     $userStmt->execute([':id' => $userId]);
     if (!$userStmt->fetch(PDO::FETCH_ASSOC)) {
         throw new Exception('Member not found');
     }
 
-    // Verify exercise exists
     $exStmt = $db->prepare('SELECT exercise_id FROM exercises WHERE exercise_id = :eid LIMIT 1');
     $exStmt->execute([':eid' => $exerciseId]);
     if (!$exStmt->fetch(PDO::FETCH_ASSOC)) {
         throw new Exception('Invalid exercise selection');
     }
 
-    // INSERT with sets
     $insertStmt = $db->prepare('
     INSERT INTO workout_logs (user_id, exercise_id, weight, sets, reps, logged_at)
     VALUES (:user_id, :exercise_id, :weight, :sets, :reps, :logged_at)

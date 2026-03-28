@@ -352,10 +352,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <i class="bi bi-calendar-check"></i>
         <span>Monthly Access</span>
       </li>
-
       <li onclick="window.location.href='walkin_attendance.php'" style="cursor:pointer;">
-      <i class="bi bi-person-walking"></i>
-      <span>Walk-In Log</span>
+        <i class="bi bi-person-walking"></i>
+        <span>Walk-In Log</span>
       </li>
       <li id="settingsBtn" data-target="settings">
         <i class="bi bi-gear"></i>
@@ -689,15 +688,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       <h2>Workout / Performance Log</h2>
       <div class="registration-card" style="margin-bottom:20px;">
         <div class="form-grid">
-                <div class="form-group">
-        <label>Member ID</label>
-        <div style="display:flex;gap:10px;align-items:center;">
-          <select id="perfID" class="form-input" style="flex:1;" onchange="updateWorkoutMemberName(this)">
-            <option value="">Select member...</option>
-          </select>
-          <span id="workoutMemberName" style="color:var(--text-muted);font-size:13px;min-width:140px;"></span>
-        </div>
-      </div>
+          <div class="form-group">
+            <label>Member ID</label>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <select id="perfID" class="form-input" style="flex:1;" onchange="updateWorkoutMemberName(this)">
+                <option value="">Select member...</option>
+              </select>
+              <span id="workoutMemberName" style="color:var(--text-muted);font-size:13px;min-width:140px;"></span>
+            </div>
+          </div>
           <div class="form-group">
             <label>Exercise</label>
             <input type="text" id="exercise" class="form-input" list="exerciseOptions" placeholder="Select or type exercise">
@@ -707,21 +706,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <label id="performanceMetricLabel">Weight (kg)</label>
             <input type="number" id="performanceMetric" class="form-input" placeholder="Enter weight" step="0.1" min="0">
           </div>
-          <!-- ADD this before the Reps group -->
           <div class="form-group">
             <label>Sets</label>
             <input type="number" id="sets" class="form-input" placeholder="Enter sets" min="1">
           </div>
-            <div class="form-group">
+          <div class="form-group">
             <label>Reps</label>
-            <input type="number" id="reps" class="form-input">
+            <input type="number" id="reps" class="form-input" placeholder="Enter reps" min="1">
           </div>
         </div>
         <div class="form-actions">
           <button class="btn-primary" onclick="logWorkout()">Save Workout</button>
         </div>
       </div>
-      <div id="workoutLogs"></div>
+
+      <!-- Collapsible Workout Log Records -->
+      <div style="margin-top:16px;">
+        <div onclick="toggleWorkoutLogs()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg-surface);border:1px solid var(--border);cursor:pointer;user-select:none;">
+          <span style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;color:var(--text-muted);">
+            <i class="bi bi-journal-text" style="margin-right:6px;"></i>Workout Log Records
+            <span id="workoutLogCount" style="display:none;background:var(--hazard);color:#000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;font-family:'Chakra Petch',sans-serif;margin-left:8px;">0</span>
+          </span>
+          <i class="bi bi-chevron-down" id="workoutLogsChevron" style="color:var(--text-muted);font-size:13px;transition:transform .25s;"></i>
+        </div>
+        <div id="workoutLogs" style="display:none;border:1px solid var(--border);border-top:none;max-height:320px;overflow-y:auto;"></div>
+      </div>
 
       <h2 style="margin-top:32px;">Real-Time Attendance</h2>
       <div class="attendance-grid">
@@ -1257,9 +1266,6 @@ function deductInventoryStock(invItemId, invItemName, qty) {
   localStorage.setItem(TALLY_KEY, JSON.stringify(tally));
 }
 
-// FIX: Accept the actual item price so the amount is always correct regardless of customer type.
-// Previously the tally used hardcoded 650/750 which was wrong during renewals and
-// when the price had been manually changed in the cart.
 function recordEntryFeeToLocalStorage(paidFor, customerType, itemPrice) {
   const ENTRY_KEY = 'fitstop_entry_tally';
   const today     = new Date().toISOString().slice(0, 10);
@@ -1276,8 +1282,6 @@ function recordEntryFeeToLocalStorage(paidFor, customerType, itemPrice) {
   } else if (paidFor === 'Special Rate') {
     tally.special = (tally.special || 0) + 1;
   } else if (paidFor === 'Monthly') {
-    // FIX: Use the actual cart price instead of a hardcoded value.
-    // This ensures renewals and walk-in monthly both record the correct amount.
     tally.monthly       = (tally.monthly || 0) + 1;
     tally.monthly_total = (tally.monthly_total || 0) + (parseFloat(itemPrice) || 0);
   }
@@ -1337,7 +1341,6 @@ function showMonthlyRenewPrompt(dupData, name, mId, customerType, memberId, cust
   const newExpiryStr = newExpiry.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const oldExpiryStr = expiry.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-  // Determine the renewal price from the cart (the Monthly item's actual price)
   const monthlyCartItem = payCart.find(i => i.paidFor === 'Monthly');
   const renewalPrice = monthlyCartItem ? monthlyCartItem.price : (customerType === 'non-member' ? 750 : 650);
 
@@ -1448,10 +1451,6 @@ function closeRenewModal() {
   if (m) m.remove();
 }
 
-// FIX: Added renewalPrice parameter so the tally records the correct amount.
-// Removed the duplicate manual localStorage tally block that was here before —
-// doSaveTransaction → recordEntryFeeToLocalStorage now handles it correctly,
-// preventing the daily counter from being incremented twice.
 function confirmRenewal(monthlyId, name, customerType, memberId, customerName, renewalPrice) {
   if (!monthlyId) {
     alert('Unable to renew: subscription ID missing. Please contact admin.');
@@ -1475,16 +1474,10 @@ function confirmRenewal(monthlyId, name, customerType, memberId, customerName, r
           { month: 'long', day: 'numeric', year: 'numeric' });
         showRenewSuccessToast(name, expStr, data.days_left);
 
-        // Save transaction — this calls recordEntryFeeToLocalStorage internally
-        // with the correct customerType and itemPrice (renewalPrice), so the
-        // daily counter gets +1 and the amount is accurate (650 member / 750 walk-in).
         const method   = document.getElementById('paymentMethod').value;
         const gcashRef = document.getElementById('gcashRefNumber').value.trim();
         const payBtn   = document.getElementById('paymentSubmitBtn');
         doSaveTransaction(customerType, memberId, customerName, method, gcashRef, payBtn);
-
-        // NOTE: No manual tally update here — doSaveTransaction handles it via
-        // recordEntryFeeToLocalStorage using the cart item's actual price.
 
       } else {
         alert('Renewal failed: ' + (data.message || 'Unknown error.'));
@@ -1622,7 +1615,6 @@ function loadAttendanceMembers() {
     .then(data => {
       if (!data.success || !Array.isArray(data.members)) return;
 
-      // Manual attendance dropdown
       const select = document.getElementById('manualAttendanceUser');
       if (select) {
         select.innerHTML = '<option value="">Select a member...</option>';
@@ -1633,8 +1625,6 @@ function loadAttendanceMembers() {
         });
       }
 
-      // Workout member dropdown — show "FS-YYYY-ID · Name" while open,
-      // after select only the member_ref shows as the value
       const perfSelect = document.getElementById('perfID');
       if (perfSelect) {
         perfSelect.innerHTML = '<option value="">Select member...</option>';
@@ -1655,7 +1645,6 @@ function updateWorkoutMemberName(sel) {
   const selected = sel.options[sel.selectedIndex];
   if (selected && selected.dataset.name) {
     nameSpan.textContent = selected.dataset.name;
-    // After selecting, show only the member_ref in the option text
     selected.textContent = selected.value;
   } else {
     nameSpan.textContent = '';
@@ -1742,7 +1731,6 @@ function logWorkout() {
   const setsNum = parseInt(sets, 10);
   if (isNaN(setsNum)||setsNum<1) { alert('Please enter a valid number of sets.'); return; }
 
-  // Extract numeric user_id from FS-2024-7 → 7
   let userId = null;
   const fsMatch = id.match(/^FS-\d{4}-(\d+)$/i);
   if (fsMatch) userId = parseInt(fsMatch[1], 10);
@@ -1752,29 +1740,45 @@ function logWorkout() {
   fetch('../Database/save_workout_log.php', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
-      user_id: userId, exercise_id: exerciseId,
-      weight: metricNum, sets: setsNum, reps: parseInt(reps, 10)
+      user_id:     userId,
+      exercise_id: exerciseId,
+      weight:      metricNum,
+      sets:        setsNum,
+      reps:        parseInt(reps, 10)
     })
   })
-  // ... rest of .then() stays the same
   .then(r => r.json())
   .then(data => {
     if (!data.success) { alert(data.error||'Failed to save workout log.'); return; }
-    const logs  = document.getElementById('workoutLogs');
+
+    const logs = document.getElementById('workoutLogs');
+    logs.style.display = 'block';
+    document.getElementById('workoutLogsChevron').style.transform = 'rotate(180deg)';
+    const countBadge = document.getElementById('workoutLogCount');
+    countBadge.style.display = 'inline-block';
+    countBadge.textContent = (parseInt(countBadge.textContent) || 0) + 1;
+
     const entry = document.createElement('div');
-entry.classList.add('attendance-item');
-const ms = (exerciseNameToType[exercise.toLowerCase()]||'')==='cardio' ? 'min' : 'kg';
+    entry.classList.add('attendance-item');
+    const ms = (exerciseNameToType[exercise.toLowerCase()]||'')==='cardio' ? 'min' : 'kg';
 
-// Resolve member name from allMembers list using userId
-const foundMember = allMembers.find(m => m.id === userId);
-const displayName = foundMember
-  ? ([foundMember.first_name, foundMember.last_name].filter(Boolean).join(' ') || foundMember.username)
-  : id;
+    const foundMember = allMembers.find(m => m.id === userId);
+    const displayName = foundMember
+      ? ([foundMember.first_name, foundMember.last_name].filter(Boolean).join(' ') || foundMember.username)
+      : id;
 
-entry.innerHTML = `<strong style="color:var(--text-primary);font-family:'Chakra Petch',sans-serif;">${escapeHtml(displayName)}</strong> <span style="color:var(--text-muted);font-size:13px;margin-left:10px;">${exercise} · ${metricNum} ${ms} · ${setsNum} sets · ${reps} reps</span>`;
-logs.prepend(entry);
+    entry.innerHTML = `<strong style="color:var(--text-primary);font-family:'Chakra Petch',sans-serif;">${escapeHtml(displayName)}</strong> <span style="color:var(--text-muted);font-size:13px;margin-left:10px;">${escapeHtml(exercise)} · ${metricNum} ${ms} · ${setsNum} sets · ${reps} reps</span>`;
+    logs.prepend(entry);
   })
   .catch(() => alert('Unable to save workout log right now.'));
+}
+
+function toggleWorkoutLogs() {
+  const panel   = document.getElementById('workoutLogs');
+  const chevron = document.getElementById('workoutLogsChevron');
+  const isHidden = panel.style.display === 'none';
+  panel.style.display     = isHidden ? 'block' : 'none';
+  chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
 }
 
 document.addEventListener('DOMContentLoaded', function() {

@@ -87,9 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
-        // ── Get users who have a membership purchase but NO linked monthly record ──
-        // Shows users from the memberships/purchases table who haven't been connected
-        // to any monthly record yet (member column is NULL for them in monthly table)
+      
         if ($action === 'get_unconverted_users') {
             $stmt = $pdo->prepare("
                 SELECT u.id, u.username, u.first_name, u.last_name, u.email
@@ -107,7 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
-        // ── Convert walk-in monthly record to a registered member ──
         if ($action === 'convert_to_member') {
             $monthlyId = (int)($_POST['monthly_id'] ?? 0);
             $userId    = (int)($_POST['user_id']    ?? 0);
@@ -116,7 +113,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 exit;
             }
 
-            // Fetch user name to update the name field
             $userStmt = $pdo->prepare("SELECT first_name, last_name, username FROM users WHERE id = ? AND user_type = 'user' LIMIT 1");
             $userStmt->execute([$userId]);
             $user = $userStmt->fetch(PDO::FETCH_ASSOC);
@@ -135,7 +131,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
-        // ── Renew (member gets 650, walk-in gets 750) ──
         if ($action === 'renew_monthly') {
             $id = intval($_POST['id'] ?? 0);
             if (!$id) { echo json_encode(['success' => false, 'message' => 'Invalid ID.']); exit; }
@@ -153,7 +148,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $upd = $pdo->prepare("UPDATE monthly SET expires_in = ? WHERE id = ?");
             $upd->execute([$newExpiry, $id]);
 
-            // Determine rate based on whether member is linked
             $rate = $row['member'] ? 650 : 750;
 
             echo json_encode(['success' => true, 'new_expiry' => $newExpiry, 'rate' => $rate, 'is_member' => !empty($row['member'])]);
@@ -588,7 +582,6 @@ function buildCard(r) {
     ? '<span style="font-size:9px;background:rgba(99,102,241,0.1);color:#818cf8;border:1px solid rgba(99,102,241,0.3);padding:2px 7px;font-family:\'Chakra Petch\',sans-serif;letter-spacing:.5px;text-transform:uppercase;display:inline-block;margin-top:4px;">Walk-In Rate ₱750</span>'
     : '<span style="font-size:9px;background:rgba(34,208,122,0.1);color:var(--success);border:1px solid rgba(34,208,122,0.3);padding:2px 7px;font-family:\'Chakra Petch\',sans-serif;letter-spacing:.5px;text-transform:uppercase;display:inline-block;margin-top:4px;">Member Rate ₱650</span>';
 
-  // Convert button only for walk-in (no linked member)
   const convertBtn = isWalkIn
     ? `<button class="card-btn btn-convert" onclick="openConvertModal('${r.id}','${esc(displayName)}')">
          <i class="bi bi-person-badge"></i> Convert
@@ -626,7 +619,6 @@ function buildCard(r) {
     </div>`;
 }
 
-// ── Convert to Member Modal ────────────────────────────────────────────
 let convertMonthlyId = null;
 let convertSelectedUserId = null;
 let allUnconvertedUsers = [];
@@ -731,12 +723,10 @@ function confirmConvert() {
     });
 }
 
-// Close modal on outside click
 document.getElementById('convertOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeConvertModal();
 });
 
-// Init
 document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
 document.addEventListener('DOMContentLoaded', function() {
   loadMonthly();
