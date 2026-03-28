@@ -671,13 +671,13 @@ $smartSuggestions = $liveNutritionData['smartSuggestions'];
       </div>
 
       <div class="meals">
-        <div class="meal-item<?php echo $dayData['is_today'] ? ' completed' : ''; ?>">
+        <div class="meal-item">
           <span class="meal-time">Meal Types</span>
           <span class="meal-name"><?php echo (int)$dayData['meal_count']; ?> types logged</span>
           <span class="meal-cal"><?php echo (int)$dayData['meal_pct']; ?>%</span>
         </div>
 
-        <div class="meal-item<?php echo $dayData['is_today'] ? ' completed' : ''; ?>">
+        <div class="meal-item">
           <span class="meal-time">Entries</span>
           <span class="meal-name"><?php echo (int)$dayData['entry_count']; ?> food entries</span>
           <span class="meal-cal"><?php echo (int)$dayData['entry_pct']; ?>%</span>
@@ -985,6 +985,149 @@ $weeklyAttendanceCount = $liveDashboardData['weeklyAttendanceCount'];
 $smartSuggestions = $liveDashboardData['smartSuggestions'];
 ?>
 
+<script>
+(function () {
+  const liveUrl = window.location.pathname + '?dashboard_live=1';
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function renderCalendar(days, targets) {
+    const wrap = document.getElementById('liveDietCalendar');
+    if (!wrap) return;
+
+    wrap.innerHTML = days.map(function (day) {
+      return `
+        <div class="diet-day${day.is_today ? ' active' : ''}">
+          <div class="day-header">
+            <span class="day-name">${escapeHtml(day.day_name)}</span>
+            <span class="day-calories">${day.entry_count} entries</span>
+          </div>
+
+          <div class="meals">
+            <div class="meal-item">
+              <span class="meal-time">Meal Types</span>
+              <span class="meal-name">${day.meal_count} types logged</span>
+              <span class="meal-cal">${day.meal_pct}%</span>
+            </div>
+
+            <div class="meal-item">
+              <span class="meal-time">Entries</span>
+              <span class="meal-name">${day.entry_count} food entries</span>
+              <span class="meal-cal">${day.entry_pct}%</span>
+            </div>
+
+            <div class="meal-item">
+              <span class="meal-time">Target</span>
+              <span class="meal-name">${targets.targetMeals} meal types</span>
+              <span class="meal-cal">${targets.targetEntries} entries</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderSuggestions(items) {
+    const wrap = document.getElementById('liveSuggestionCards');
+    if (!wrap) return;
+
+    wrap.innerHTML = items.map(function (text) {
+      return `
+        <div class="suggestion-card" data-tab="workout" style="display: flex">
+          <div class="suggestion-icon workout">
+            <i class="fas fa-bolt"></i>
+          </div>
+          <div class="suggestion-text">
+            <h5>Action Item</h5>
+            <p>${escapeHtml(text)}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function applyNutritionData(data) {
+    renderCalendar(data.calendarDays, data.targets);
+    renderSuggestions(data.smartSuggestions);
+
+    const liveMealTypesValue = document.getElementById('liveMealTypesValue');
+    const liveMealTypesBar = document.getElementById('liveMealTypesBar');
+    const liveEntriesValue = document.getElementById('liveEntriesValue');
+    const liveEntriesBar = document.getElementById('liveEntriesBar');
+    const liveGoalProgressBar = document.getElementById('liveGoalProgressBar');
+    const myPlanPrimaryGoalHint = document.getElementById('myPlanPrimaryGoalHint');
+    const liveAttendanceBar = document.getElementById('liveAttendanceBar');
+    const liveAttendanceText = document.getElementById('liveAttendanceText');
+    const liveMealLoggingBar = document.getElementById('liveMealLoggingBar');
+    const liveMealLoggingText = document.getElementById('liveMealLoggingText');
+
+    if (liveMealTypesValue) {
+      liveMealTypesValue.textContent = data.todayTotals.meal_count + ' / ' + data.targets.targetMeals;
+    }
+    if (liveMealTypesBar) {
+      liveMealTypesBar.style.width = data.percentages.mealsPct + '%';
+    }
+    if (liveEntriesValue) {
+      liveEntriesValue.textContent = data.todayTotals.entry_count + ' / ' + data.targets.targetEntries + ' entries';
+    }
+    if (liveEntriesBar) {
+      liveEntriesBar.style.width = data.percentages.entriesPct + '%';
+    }
+    if (liveGoalProgressBar) {
+      liveGoalProgressBar.style.width = data.percentages.goalProgressPct + '%';
+    }
+    if (myPlanPrimaryGoalHint) {
+      myPlanPrimaryGoalHint.textContent = data.weeklyWorkoutCount + '/' + data.weeklyWorkoutTarget + ' workout sessions this week (' + data.fitnessLevel + ')';
+    }
+    if (liveAttendanceBar) {
+      liveAttendanceBar.style.width = data.percentages.attendancePct + '%';
+    }
+    if (liveAttendanceText) {
+      liveAttendanceText.textContent = data.weeklyAttendanceCount + ' check-ins this week';
+    }
+    if (liveMealLoggingBar) {
+      liveMealLoggingBar.style.width = data.percentages.entriesPct + '%';
+    }
+    if (liveMealLoggingText) {
+      liveMealLoggingText.textContent = data.todayTotals.entry_count + ' / ' + data.targets.targetEntries + ' food entries today';
+    }
+  }
+
+  async function refreshNutritionLive() {
+    try {
+      const response = await fetch(liveUrl, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      });
+
+      if (!response.ok) return;
+      const data = await response.json();
+      applyNutritionData(data);
+    } catch (error) {
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    refreshNutritionLive();
+    setInterval(refreshNutritionLive, 3000);
+  });
+
+  document.addEventListener('mealLogUpdated', function () {
+    refreshNutritionLive();
+  });
+
+  window.refreshNutritionLive = refreshNutritionLive;
+})();
+</script>
+
 <!-- ── GOALS & SUGGESTIONS ── -->
 <section class="bottom-grid" id="liveGoalsSection">
   <div class="box goals-box">
@@ -994,18 +1137,7 @@ $smartSuggestions = $liveDashboardData['smartSuggestions'];
     </div>
 
     <ul class="goals-list">
-      <li>
-        <div class="icon-circle cycling">
-          <i class="fas fa-bicycle"></i>
-        </div>
-        <div class="goal-info">
-          <span class="goal-name" id="myPlanPrimaryGoalName"><?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?></span>
-          <div class="progress-container">
-            <div class="progress-bar yellow" id="liveGoalProgressBar" style="width: <?php echo $goalProgressPct; ?>%"></div>
-          </div>
-          <span class="days-count" id="myPlanPrimaryGoalHint"><?php echo $weeklyWorkoutCount; ?>/<?php echo $weeklyWorkoutTarget; ?> workout sessions this week (<?php echo htmlspecialchars($fitnessLevel, ENT_QUOTES, 'UTF-8'); ?>)</span>
-        </div>
-      </li>
+
 
       <li>
         <div class="icon-circle running">
@@ -1052,85 +1184,6 @@ $smartSuggestions = $liveDashboardData['smartSuggestions'];
     </div>
   </div>
 </section>
-
-<!-- ── NUTRITION SNAPSHOT ── -->
-<section class="diet-schedule-section" id="liveNutritionSection">
-  <div class="section-header">
-    <h3>Weekly Nutrition Snapshot</h3>
-    <span class="btn-outline">Live from your meal logs</span>
-  </div>
-
-  <div class="diet-calendar" id="liveDietCalendar">
-    <?php foreach ($liveDashboardData['calendarDays'] as $dayData): ?>
-    <div class="diet-day<?php echo $dayData['is_today'] ? ' active' : ''; ?>">
-      <div class="day-header">
-        <span class="day-name"><?php echo htmlspecialchars($dayData['day_name'], ENT_QUOTES, 'UTF-8'); ?></span>
-        <span class="day-calories"><?php echo (int)$dayData['entry_count']; ?> entries</span>
-      </div>
-
-      <div class="meals">
-        <div class="meal-item<?php echo $dayData['is_today'] ? ' completed' : ''; ?>">
-          <span class="meal-time">Meal Types</span>
-          <span class="meal-name"><?php echo (int)$dayData['meal_count']; ?> types logged</span>
-          <span class="meal-cal"><?php echo (int)$dayData['meal_pct']; ?>%</span>
-        </div>
-
-        <div class="meal-item<?php echo $dayData['is_today'] ? ' completed' : ''; ?>">
-          <span class="meal-time">Entries</span>
-          <span class="meal-name"><?php echo (int)$dayData['entry_count']; ?> food entries</span>
-          <span class="meal-cal"><?php echo (int)$dayData['entry_pct']; ?>%</span>
-        </div>
-
-        <div class="meal-item">
-          <span class="meal-time">Target</span>
-          <span class="meal-name"><?php echo (int)$targetMeals; ?> meal types</span>
-          <span class="meal-cal"><?php echo (int)$targetEntries; ?> entries</span>
-        </div>
-      </div>
-    </div>
-    <?php endforeach; ?>
-  </div>
-
-  <div class="nutrition-summary">
-    <div class="nutrition-card">
-      <div class="nutrition-icon fats">
-        <i class="fas fa-utensils"></i>
-      </div>
-      <div class="nutrition-info">
-        <span class="nutrition-label">Meal Types</span>
-        <span class="nutrition-value" id="liveMealTypesValue"><?php echo (int)$todayTotals['meal_count']; ?> / <?php echo (int)$targetMeals; ?></span>
-        <div class="nutrition-bar">
-          <div class="bar-fill" id="liveMealTypesBar" style="width: <?php echo $mealsPct; ?>%"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="nutrition-card">
-      <div class="nutrition-icon fiber">
-        <i class="fas fa-clipboard-list"></i>
-      </div>
-      <div class="nutrition-info">
-        <span class="nutrition-label">Food Entries</span>
-        <span class="nutrition-value" id="liveEntriesValue"><?php echo (int)$todayTotals['entry_count']; ?> / <?php echo (int)$targetEntries; ?> entries</span>
-        <div class="nutrition-bar">
-          <div class="bar-fill" id="liveEntriesBar" style="width: <?php echo $entriesPct; ?>%"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<?php
-$exerciseList = [];
-
-try {
-  require __DIR__ . '/../Login/connection.php';
-  $stmt = $pdo->query("SELECT exercise_id, name, movement_type FROM exercises ORDER BY name ASC");
-  $exerciseList = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (Throwable $e) {
-  $exerciseList = [];
-}
-?>
 
 <!-- ── WORKOUT PLAN ── -->
 <section class="workout-tracker-section">
