@@ -221,16 +221,7 @@ if ($userId > 0) {
             </div>
           </div>
  
-    <!-- Today's Stats -->
-    <div class="bmi-card quick-stats">
-      <h3>Today's Stats</h3>
-      <div class="quick-stat-grid">
-        <div class="quick-stat"><i class="fas fa-fire"></i><div><span class="stat-number">1,458</span><span class="stat-text">Calories Burned</span></div></div>
-        <div class="quick-stat"><i class="fas fa-shoe-prints"></i><div><span class="stat-number">13,946</span><span class="stat-text">Steps</span></div></div>
-        <div class="quick-stat"><i class="fas fa-moon"></i><div><span class="stat-number">8h 54m</span><span class="stat-text">Sleep</span></div></div>
-        <div class="quick-stat"><i class="fas fa-tint"></i><div><span class="stat-number">2.1 L</span><span class="stat-text">Water Intake</span></div></div>
-      </div>
-    </div>
+    
  
   </section>
  
