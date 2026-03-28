@@ -370,6 +370,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     </ul>
   </aside>
 
+  <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu">
+    <i class="bi bi-list"></i>
+</button>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
   <main class="main-content">
 
     <div class="topbar">
@@ -786,6 +791,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
 
 <script>
+  const hamburgerBtn   = document.getElementById('hamburgerBtn');
+const sidebar        = document.querySelector('.sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+function openSidebar() {
+    sidebar.classList.add('open');
+    sidebarOverlay.classList.add('open');
+    hamburgerBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+}
+
+function closeSidebar() {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('open');
+    hamburgerBtn.innerHTML = '<i class="bi bi-list"></i>';
+}
+
+hamburgerBtn.addEventListener('click', function () {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+});
+
+sidebarOverlay.addEventListener('click', closeSidebar);
+
+// Close sidebar when a nav item is tapped on mobile
+document.querySelectorAll('.menu li').forEach(item => {
+    item.addEventListener('click', function () {
+        if (window.innerWidth <= 768) closeSidebar();
+    });
+});
+
 document.querySelectorAll('.menu li').forEach(item => {
   item.addEventListener('click', function () {
     const targetId = this.getAttribute('data-target');

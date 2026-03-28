@@ -3482,21 +3482,65 @@ h5 {
 }
 
 @media (max-width: 768px) {
+  .mobile-topbar {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    background: #111;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+    z-index: 2000;
+  }
+
+  .hamburger-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+  }
+
+  .topbar-title {
+    font-family: 'Chakra Petch', sans-serif;
+    font-weight: 700;
+    color: var(--hazard-yellow);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-size: 14px;
+  }
+
+  .notif-bell-btn {
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  body {
+    padding-top: 50px;
+  }
+
   .sidebar {
-    width: 80px;
+    position: fixed !important;
+    top: 50px !important;
+    left: -100% !important;
+    width: 260px !important;
+    height: calc(100% - 50px);
+    transition: 0.3s ease;
+    z-index: 1500;
   }
 
-  .sidebar-header span {
-    display: none;
-  }
-
-  .menu li span {
-    display: none;
+  .sidebar.mobile-active {
+    left: 0 !important;
   }
 
   .main-content {
-    margin-left: 80px;
-    width: calc(100% - 80px);
+    margin-left: 0 !important;
+    width: 100% !important;
   }
 
   .quick-stat-grid {
@@ -11673,6 +11717,81 @@ body.light-mode .toggle-track {
     grid-template-columns: 1fr;
   }
 }
+
+/* Overriding and matching admin mobile sidebar behavior */
+@media (max-width: 768px) {
+  .mobile-topbar {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    background: #111;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+    z-index: 2000;
+  }
+
+  .hamburger-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+  }
+
+  .topbar-title {
+    font-family: 'Chakra Petch', sans-serif;
+    font-weight: 700;
+    color: var(--hazard-yellow);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-size: 14px;
+  }
+
+  .notif-bell-btn {
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  body {
+    padding-top: 50px;
+  }
+
+  .sidebar {
+    position: fixed !important;
+    top: 50px !important;
+    left: -100% !important;
+    width: 260px !important;
+    height: calc(100% - 50px);
+    transition: 0.3s ease;
+    z-index: 1500;
+  }
+
+  .sidebar.mobile-active {
+    left: 0 !important;
+  }
+
+  .sidebar-header span,
+  .menu li span {
+    display: inline-block !important;
+  }
+
+  .menu li {
+    justify-content: flex-start !important;
+    padding: 12px 14px !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}
+
 /* ── AI ADVISER ── */
 .ai-adviser-section {
   margin: 28px 0;
@@ -12219,3 +12338,4 @@ body.light-mode .toggle-track {
 .receipt-toast.show {
   opacity: 1;
 }
+
