@@ -479,7 +479,7 @@ VALUES(
 );
 CREATE TABLE IF NOT EXISTS `exercises`(
     exercise_id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    NAME TEXT NOT NULL,
+    name TEXT NOT NULL,
     target_muscle TEXT,
     `movement_type` TEXT NOT NULL
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4; INSERT INTO `exercises`
@@ -884,7 +884,7 @@ CREATE TABLE IF NOT EXISTS `transactions`(
     payment_method TEXT NOT NULL,
     staff_id INTEGER,
     transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    STATUS TEXT
+    status TEXT
         DEFAULT 'Confirmed',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         `desc` TEXT
@@ -2309,7 +2309,7 @@ CREATE TABLE IF NOT EXISTS `expense_history`(
     api_name TEXT NOT NULL,
     api_url TEXT NOT NULL,
     api_key TEXT NOT NULL UNIQUE,
-    STATUS TEXT
+    status TEXT
         DEFAULT 'active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -2338,7 +2338,7 @@ CREATE TABLE IF NOT EXISTS `workout_logs`(
     backup_size INTEGER,
     backup_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     backup_type VARCHAR(20),
-    STATUS VARCHAR
+    status VARCHAR
         (20),
         sent_to_email VARCHAR(255),
         created_by VARCHAR(100),

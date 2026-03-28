@@ -6,20 +6,21 @@ header('Content-Type: application/json');
 try {
     $txStmt = $pdo->query("
         SELECT
-            id,
-            receipt_number,
-            customer_type,
-            user_id,
-            customer_name,
-            amount,
-            payment_method,
-            staff_id,
-            transaction_date,
-            status,
-            created_at,
-            `desc`
-        FROM transactions
-        ORDER BY transaction_date DESC, created_at DESC
+            t.id,
+            t.receipt_number,
+            t.customer_type,
+            t.user_id,
+            COALESCE(NULLIF(t.customer_name, ''), CONCAT_WS(' ', u.first_name, u.last_name), u.username, CONCAT('Member #', t.user_id), 'Walk-In') AS customer_name,
+            t.amount,
+            t.payment_method,
+            t.staff_id,
+            t.transaction_date,
+            t.status,
+            t.created_at,
+            t.`desc`
+        FROM transactions t
+        LEFT JOIN users u ON u.id = t.user_id
+        ORDER BY t.transaction_date DESC, t.created_at DESC
         LIMIT 30
     ");
     $transactions = $txStmt->fetchAll(PDO::FETCH_ASSOC);

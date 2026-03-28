@@ -1,13 +1,8 @@
 <?php
 header('Content-Type: application/json');
 
-$dbPath = __DIR__ . '/DB.sqlite';
 
 try {
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
     if (session_status() === PHP_SESSION_NONE) session_start();
 
     if (empty($_SESSION['id']) || empty($_SESSION['user_type'])) {
@@ -38,13 +33,10 @@ try {
         throw new Exception('Missing required fields');
     }
 
-    $db = new PDO('sqlite:' . $dbPath);
+    require_once __DIR__ . '/../Login/connection.php';
+    $db = $pdo;
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
-    $db->exec('PRAGMA busy_timeout = 10000');
-    $db->exec('PRAGMA journal_mode = WAL');
-    $db->exec('PRAGMA synchronous = NORMAL');
-    $db->exec('PRAGMA foreign_keys = ON');
 
     $userStmt = $db->prepare('SELECT id FROM users WHERE id = :id LIMIT 1');
     $userStmt->execute([':id' => $userId]);

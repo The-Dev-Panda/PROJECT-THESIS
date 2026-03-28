@@ -2,7 +2,6 @@
 header('Content-Type: application/json');
 
 date_default_timezone_set('Asia/Manila');
-$dbPath = __DIR__ . '/DB.sqlite';
 
 function requireUserSession(): int
 {
@@ -37,28 +36,24 @@ function ensureMealLogsTable(PDO $db): void
 {
     $db->exec(
         'CREATE TABLE IF NOT EXISTS meal_logs (
-            meal_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            logged_date TEXT NOT NULL,
-            meal_type TEXT NOT NULL,
-            food_name TEXT NOT NULL,
-            quantity REAL NOT NULL,
-            calories INTEGER NOT NULL,
-            protein REAL NOT NULL,
-            carbs REAL NOT NULL,
-            fat REAL NOT NULL,
+            meal_id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            logged_date DATE NOT NULL,
+            meal_type VARCHAR(50) NOT NULL,
+            food_name VARCHAR(255) NOT NULL,
+            quantity DOUBLE NOT NULL,
+            calories INT NOT NULL,
+            protein DOUBLE NOT NULL,
+            carbs DOUBLE NOT NULL,
+            fat DOUBLE NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )'
+        ) ENGINE=InnoDB'
     );
-    $db->exec('CREATE INDEX IF NOT EXISTS idx_meal_logs_user_date ON meal_logs(user_id, logged_date)');
+    $db->exec('CREATE INDEX idx_meal_logs_user_date ON meal_logs(user_id, logged_date)');
 }
 
 try {
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
     if (strtoupper($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
         http_response_code(405);
         echo json_encode(['success' => false, 'error' => 'Method not allowed']);
@@ -97,15 +92,12 @@ try {
         throw new Exception('Invalid nutrition values');
     }
 
-    $db = new PDO('sqlite:' . $dbPath);
+    require_once __DIR__ . '/../Login/connection.php';
+    $db = $pdo;
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
-    $db->exec('PRAGMA busy_timeout = 10000');
-    $db->exec('PRAGMA journal_mode = WAL');
-    $db->exec('PRAGMA synchronous = NORMAL');
-    $db->exec('PRAGMA foreign_keys = ON');
 
-    ensureMealLogsTable($db);
+    // MySQL table should be created separately. Ensure table exists in migration step.
 
     $insertStmt = $db->prepare(
         'INSERT INTO meal_logs (user_id, logged_date, meal_type, food_name, quantity, calories, protein, carbs, fat)

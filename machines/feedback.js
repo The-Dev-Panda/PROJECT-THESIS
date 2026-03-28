@@ -52,7 +52,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.json())
+            .then(async response => {
+                const text = await response.text();
+                if (!response.ok) {
+                    throw new Error(text || `HTTP ${response.status}`);
+                }
+                try {
+                    return JSON.parse(text || '{}');
+                } catch (e) {
+                    throw new Error(text || 'Invalid server response');
+                }
+            })
             .then(data => {
                 if (data.success) {
                     // Success message
@@ -61,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     charCounter.textContent = '0 / 1000 characters';
                 } else {
                     // Error message
-                    showMessage(messageDiv, 'danger', data.message);
+                    showMessage(messageDiv, 'danger', data.message || 'Unable to submit feedback.');
                 }
             })
             .catch(error => {

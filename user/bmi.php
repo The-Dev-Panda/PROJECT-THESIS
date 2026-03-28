@@ -42,11 +42,11 @@ if ($userId > 0) {
   }
 
   $profileColumns = [];
-  $colStmt = $pdo->query("PRAGMA table_info(member_profiles)");
+  $colStmt = $pdo->query("SHOW COLUMNS FROM member_profiles");
   if ($colStmt) {
     foreach ($colStmt->fetchAll(PDO::FETCH_ASSOC) as $colInfo) {
-      if (!empty($colInfo['name'])) {
-        $profileColumns[] = $colInfo['name'];
+      if (!empty($colInfo['Field'])) {
+        $profileColumns[] = $colInfo['Field'];
       }
     }
   }
@@ -98,13 +98,13 @@ if ($userId > 0) {
 
   // Build chart data from historical weight records and include current weight as final point.
   $weightHistory = [];
-  $historyTableStmt = $pdo->query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'old_member_profiles' LIMIT 1");
+  $historyTableStmt = $pdo->query("SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'old_member_profiles' LIMIT 1");
   $hasHistoryTable = $historyTableStmt && $historyTableStmt->fetchColumn();
   if ($hasHistoryTable) {
-    $chartStmt = $pdo->prepare("SELECT date(archived_at, 'localtime') as log_date, weight_kg
+    $chartStmt = $pdo->prepare("SELECT DATE(archived_at) as log_date, weight_kg
       FROM old_member_profiles
       WHERE user_id = :user_id AND weight_kg IS NOT NULL
-      ORDER BY datetime(archived_at, 'localtime') ASC
+      ORDER BY archived_at ASC
       LIMIT 10");
     $chartStmt->execute([':user_id' => $userId]);
     $weightHistory = $chartStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];

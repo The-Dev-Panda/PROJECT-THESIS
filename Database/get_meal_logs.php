@@ -2,7 +2,6 @@
 header('Content-Type: application/json');
 
 date_default_timezone_set('Asia/Manila');
-$dbPath = __DIR__ . '/DB.sqlite';
 
 function requireUserSession(): int
 {
@@ -41,10 +40,6 @@ function ensureMealLogsTable(PDO $db): void
 }
 
 try {
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
     if (strtoupper($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
         http_response_code(405);
         echo json_encode(['success' => false, 'error' => 'Method not allowed']);
@@ -73,15 +68,12 @@ try {
 
     $startDate = date('Y-m-d', strtotime('-' . ($days - 1) . ' days', $endTs));
 
-    $db = new PDO('sqlite:' . $dbPath);
+    require_once __DIR__ . '/../Login/connection.php';
+    $db = $pdo;
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
-    $db->exec('PRAGMA busy_timeout = 10000');
-    $db->exec('PRAGMA journal_mode = WAL');
-    $db->exec('PRAGMA synchronous = NORMAL');
-    $db->exec('PRAGMA foreign_keys = ON');
 
-    ensureMealLogsTable($db);
+    // MySQL table should already exist from migration.
 
     $stmt = $db->prepare(
         'SELECT meal_id, logged_date, meal_type, food_name, quantity, calories, protein, carbs, fat, created_at

@@ -38,16 +38,17 @@ $where_clause = count($where_conditions) > 0 ? "WHERE " . implode(" AND ", $wher
 $query = "SELECT 
             t.id,
             t.receipt_number,
-            t.customer_name,
+            COALESCE(NULLIF(t.customer_name, ''), CONCAT_WS(' ', u_member.first_name, u_member.last_name), u_member.username, CONCAT('Member #', t.user_id), 'Walk-In') AS customer_name,
             t.customer_type,
             t.amount,
             t.payment_method,
             t.transaction_date,
-            t.desc,
-            u.first_name,
-            u.last_name
+            t.`desc`,
+            u_staff.first_name AS staff_first_name,
+            u_staff.last_name AS staff_last_name
           FROM transactions t
-          LEFT JOIN users u ON t.staff_id = u.id
+          LEFT JOIN users u_member ON t.user_id = u_member.id
+          LEFT JOIN users u_staff ON t.staff_id = u_staff.id
           $where_clause
           ORDER BY t.transaction_date DESC";
 

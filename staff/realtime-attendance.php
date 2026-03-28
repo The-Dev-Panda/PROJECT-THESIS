@@ -11,22 +11,22 @@ try {
             a.user_id,
             a.datetime,
             COALESCE(
-                NULLIF(TRIM(u.first_name || ' ' || u.last_name), ''),
+                NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''),
                 u.username,
-                'Member #' || a.user_id
+                CONCAT('Member #', a.user_id)
             ) AS display_name
         FROM attendance a
         LEFT JOIN users u ON u.id = a.user_id
-        WHERE DATE(a.datetime) = DATE('now', 'localtime')
+        WHERE DATE(a.datetime) = CURDATE()
         ORDER BY a.datetime DESC
         LIMIT 20
     ")->fetchAll(PDO::FETCH_ASSOC);
 
     $weekRows = $pdo->query("
-        SELECT strftime('%w', datetime) AS dow, COUNT(*) AS cnt
+        SELECT (DAYOFWEEK(datetime) + 5) % 7 AS dow, COUNT(*) AS cnt
         FROM attendance
-        WHERE DATE(datetime) >= DATE('now', 'localtime', '-6 days')
-        GROUP BY strftime('%w', datetime)
+        WHERE DATE(datetime) >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+        GROUP BY dow
     ")->fetchAll(PDO::FETCH_ASSOC);
 
     $weekly = array_fill(0, 7, 0);
@@ -39,14 +39,14 @@ try {
     $membersCheckedIn = (int)$pdo->query("
         SELECT COUNT(DISTINCT user_id)
         FROM attendance
-        WHERE DATE(datetime) = DATE('now', 'localtime')
+        WHERE DATE(datetime) = CURDATE()
     ")->fetchColumn();
 
-  $newRegistrations = (int)$pdo->query("
+    $newRegistrations = (int)$pdo->query("
         SELECT COUNT(*)
         FROM users
         WHERE user_type = 'user'
-        AND DATE(created_at) = DATE('now', 'localtime')
+        AND DATE(created_at) = CURDATE()
     ")->fetchColumn();
 
     $pendingNotifications = (int)$pdo->query("

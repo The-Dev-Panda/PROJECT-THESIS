@@ -2,15 +2,10 @@
 
 $transactions = [];
 try {
-    $dbPath = __DIR__ . '/../Database/DB.sqlite';
-    if (file_exists($dbPath)) {
-        $db = new PDO('sqlite:' . $dbPath);
-        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        
-        $stmt = $db->prepare('SELECT receipt_number, amount, payment_method, status, "desc", created_at FROM transactions WHERE user_id = :user_id ORDER BY created_at DESC');
-        $stmt->execute([':user_id' => $_SESSION['id']]);
-        $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+    require __DIR__ . '/../Login/connection.php';
+    $stmt = $pdo->prepare('SELECT receipt_number, amount, payment_method, status, `desc`, created_at FROM transactions WHERE user_id = :user_id ORDER BY created_at DESC');
+    $stmt->execute([':user_id' => $_SESSION['id']]);
+    $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     // Database error - continue without transactions
 }
