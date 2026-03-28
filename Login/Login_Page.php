@@ -106,6 +106,15 @@ if (isset($_SESSION["username"]) && $_SESSION["username"] != "") {
         .btn-ghost:hover {
             color: var(--hazard-yellow);
         }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: url('BACKGROUND.svg') repeat;
+            background-size: 1/2;
+            opacity: 0.4;
+            z-index: -1;
+        }
     </style>
 </head>
 
@@ -113,21 +122,10 @@ if (isset($_SESSION["username"]) && $_SESSION["username"] != "") {
 
     <div class="cursor" id="cursor"></div>
     <?php include('../includes/header.php'); ?>
-    <div class="row bg-dark" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: -1;">
-        <div class="auth-background">
-            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="opacity: 0.4;">
-                <use xlink:href="BACKGROUND.svg" />
-            </svg>
-        </div>
-        <div class="auth-background">
-            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="opacity: 0.4;">
-                <use xlink:href="BACKGROUND.svg" />
-            </svg>
-        </div>
-    </div>
+
     <div class="auth-wrapper">
         <div class="auth-left">
-            <div class="auth-card">
+            <div class="auth-card shadow-lg">
                 <div class="hazard-stripes mb-4"></div>
 
                 <div class="d-inline-block bg-warning text-black px-2 py-1 mb-3 fw-bold small brand-font">
@@ -143,14 +141,14 @@ if (isset($_SESSION["username"]) && $_SESSION["username"] != "") {
                     <div class="mb-4">
                         <label class="text-muted small brand-font"
                             style="font-size: 0.7rem; letter-spacing: 2px;">Username</label>
-                        <input type="text" name="username" id="username" class="form-control-custom" required
+                        <input type="text" name="username" id="username" class="form-control-custom" maxlength="50" required
                             placeholder="e.g. johndoe">
                     </div>
 
                     <div class="mb-4">
                         <label class="text-muted small brand-font"
                             style="font-size: 0.7rem; letter-spacing: 2px;">Password</label>
-                        <input type="password" name="password" id="password" class="form-control-custom" required
+                        <input type="password" name="password" id="password" class="form-control-custom" maxlength="24" required
                             placeholder="••••••••">
                     </div>
 
@@ -176,7 +174,7 @@ if (isset($_SESSION["username"]) && $_SESSION["username"] != "") {
             </div>
         </div>
 
-        <div class="auth-right">
+        <div class="auth-right" style="box-shadow: -40px 0 15px 0 rgba(0,0,0,0.2);">
             <img src="../images/Fitstop.png" alt="FitStop Gym">
             <div class="auth-right-overlay">
                 <h1 class="brand-font text-white">Bakal Meets <span class="text-hazard">Tech</span></h1>

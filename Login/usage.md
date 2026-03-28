@@ -1,6 +1,6 @@
 alexthompson (admin)      = password
 mariarodriguez (staff)    = secret
-michaelchen (user)        = user12
+michaelchen (user)        = user1234
 emilypark (user)          = emily2024
 lancechua (user)          = chuachua30
 --Starting php server--
