@@ -1,6 +1,10 @@
 <?php
 session_start();
 
+if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
+    header('Location: ../Login/Login_Page.php');
+    exit();
+}
 header('Content-Type: application/json');
 
 function respondWithError(int $statusCode, string $message): void {

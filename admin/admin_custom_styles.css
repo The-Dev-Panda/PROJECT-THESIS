@@ -168,9 +168,10 @@
 }
 
 .cursor {
+    display: none;
     width: 16px;
     height: 16px;
-    border: 2px solid var(--hazard);
+    border: 1px solid var(--hazard);
     border-radius: 50%;
     opacity: 90%;
     background-color: var(--hazard);
@@ -178,11 +179,11 @@
     pointer-events: none;
     z-index: 99999;
     translate: -50% -50%;
-    transition: background-color 0.2s ease, border-color 0.2s ease, scale 0.2s ease;
+    transition: background-color 0.1s ease, border-color 0.1s ease, scale 0.1s ease;
 }
 
 .cursor.hovered {
-    background-color: var(--bg-void);
+    background-color: white;
     border-color: var(--hazard);
     opacity: 100%;
     scale: 1.2;

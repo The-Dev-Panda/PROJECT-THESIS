@@ -4,6 +4,7 @@ header('Content-Type: application/json');
 
 if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     echo json_encode(['error' => 'Unauthorized']);
+    header('location: ../Login/Login_Page.php');
     exit();
 }
 
