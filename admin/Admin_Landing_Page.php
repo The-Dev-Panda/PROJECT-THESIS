@@ -60,6 +60,18 @@ for ($i = 5; $i >= 0; $i--) {
         'total' => $total
     ];
 }
+
+// Member check-ins
+$stmt = $pdo->prepare("SELECT COUNT(*) as count FROM attendance WHERE DATE(datetime) = :date");
+$stmt->execute(['date' => $date]);
+$today_member_attendance = $stmt->fetch()['count'];
+
+// Walk-in check-ins
+$stmt = $pdo->prepare("SELECT COUNT(*) as count FROM walk_attendance WHERE DATE(datetime) = :date");
+$stmt->execute(['date' => $date]);
+$today_walk_attendance = $stmt->fetch()['count'];
+
+
 // FINANCIAL ANALYTICS - Add after existing stats
 
 // Total Expenses
@@ -118,12 +130,22 @@ $recent_feedback = $stmt->fetchAll();
 $checkin_activity = [];
 for ($i = 6; $i >= 0; $i--) {
     $date = date('Y-m-d', strtotime("-$i days"));
+
+    // Member check-ins
     $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM attendance WHERE DATE(datetime) = :date");
     $stmt->execute(['date' => $date]);
-    $count = $stmt->fetch()['count'];
+    $member_count = $stmt->fetch()['count'];
+
+    // Walk-in check-ins
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM walk_attendance WHERE DATE(datetime) = :date");
+    $stmt->execute(['date' => $date]);
+    $walkin_count = $stmt->fetch()['count'];
+
     $checkin_activity[] = [
         'day' => date('D', strtotime("-$i days")),
-        'count' => $count
+        'member_count' => $member_count,
+        'walkin_count' => $walkin_count,
+        'total' => $member_count + $walkin_count
     ];
 }
 
@@ -346,7 +368,8 @@ $revenue_by_payment = $stmt->fetchAll();
                         </div>
                         <div>
                             <div class="stat-value"
-                                style="color: <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;" id="stat-net-profit">
+                                style="color: <?php echo $net_profit >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;"
+                                id="stat-net-profit">
                                 ₱<?php echo number_format($net_profit, 2); ?></div>
                             <div class="stat-label">Net Profit</div>
                         </div>
@@ -357,7 +380,9 @@ $revenue_by_payment = $stmt->fetchAll();
                     <div class="stat-box h-100">
                         <div class="stat-icon registrations"><i class="bi bi-percent"></i></div>
                         <div>
-                            <div class="stat-value" id="stat-profit-margin"><?php echo number_format($profit_margin, 1); ?>%</div>
+                            <div class="stat-value" id="stat-profit-margin">
+                                <?php echo number_format($profit_margin, 1); ?>%
+                            </div>
                             <div class="stat-label">Profit Margin</div>
                         </div>
                     </div>
@@ -423,12 +448,38 @@ $revenue_by_payment = $stmt->fetchAll();
         <!-- Charts Row 2 -->
         <section>
             <h2><i class="bi bi-activity"></i> Activity & Revenue Insights</h2>
+            <div class="row reveal-left my-2">
+                <div class="col-12 col-sm-12 col-xl-3">
+                    <div class="stat-box h-100">
+                        <div class="stat-icon" style="background: rgba(255, 71, 71, 0.1); color: var(--danger);"><i
+                                class="bi bi-person"></i></div>
+                        <div>
+                            <div class="stat-value" style="color: var(--danger);" id="today_walk_attendace">
+                                <?php echo $today_walk_attendance; ?>
+                            </div>
+                            <div class="stat-label">Today's Walk-In Check-Ins</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-12 col-xl-3">
+                    <div class="stat-box h-100">
+                        <div class="stat-icon" style="background: rgba(252, 255, 71, 0.1); color: var(--hazard);"><i
+                                class="bi bi-person"></i></div>
+                        <div>
+                            <div class="stat-value" style="color: var(--hazard);" id="stat-today-member-attendance">
+                                <?php echo $today_member_attendance; ?>
+                            </div>
+                            <div class="stat-label">Today's Mmeber Check-Ins</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="row g-3">
                 <div class="col-12 col-lg-8">
                     <div class="registration-card">
                         <h3
                             style="font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
-                            <i class="bi bi-calendar-check"></i> Daily Check-ins (Last 7 Days)
+                            <i class="bi bi-calendar-check"></i> Check-ins | Members & Walk-ins | (Last 7 Days)
                         </h3>
                         <canvas id="checkinActivityChart" style="max-height: 250px;"></canvas>
                     </div>
@@ -726,21 +777,35 @@ $revenue_by_payment = $stmt->fetchAll();
             }
         });
 
-        // Daily Check-ins Chart
+        // Daily Check-ins Chart with Walk-ins
         checkinChart = new Chart(document.getElementById('checkinActivityChart'), {
             type: 'line',
             data: {
                 labels: <?php echo json_encode(array_column($checkin_activity, 'day')); ?>,
-                datasets: [{
-                    label: 'Member Check-ins',
-                    data: <?php echo json_encode(array_column($checkin_activity, 'count')); ?>,
-                    borderColor: '#22d07a',
-                    backgroundColor: 'rgba(34, 208, 122, 0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                }]
+                datasets: [
+                    {
+                        label: 'Member Check-ins',
+                        data: <?php echo json_encode(array_column($checkin_activity, 'member_count')); ?>,
+                        borderColor: '#22d07a',
+                        backgroundColor: 'rgba(34, 208, 122, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Walk-in Check-ins',
+                        data: <?php echo json_encode(array_column($checkin_activity, 'walkin_count')); ?>,
+                        borderColor: '#ff4757',
+                        backgroundColor: 'rgba(255, 71, 87, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        borderWidth: 2
+                    }
+                ]
             },
             options: {
                 responsive: true,
@@ -751,7 +816,39 @@ $revenue_by_payment = $stmt->fetchAll();
                         ticks: { stepSize: 1 }
                     }
                 },
-                plugins: { legend: { display: false } }
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 11,
+                                family: "'DM Sans', sans-serif"
+                            },
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ': ' + context.parsed.y + ' check-ins';
+                            },
+                            footer: function (tooltipItems) {
+                                let total = 0;
+                                tooltipItems.forEach(function (tooltipItem) {
+                                    total += tooltipItem.parsed.y;
+                                });
+                                return 'Total: ' + total + ' check-ins';
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                }
             }
         });
 
@@ -799,6 +896,9 @@ $revenue_by_payment = $stmt->fetchAll();
                     document.getElementById('stat-today-expenses').textContent = '₱' + parseFloat(data.stats.today_expenses).toLocaleString('en-US', { minimumFractionDigits: 2 });
                     document.getElementById('stat-month-expenses').textContent = '₱' + parseFloat(data.stats.month_expenses).toLocaleString('en-US', { minimumFractionDigits: 2 });
                     document.getElementById('stat-notifications').textContent = data.stats.unread_notifications;
+                    //ATTENDANCE TRACK
+                    document.getElementById('stat-today-member-attendance').textContent = data.stats.today_member_attendance;
+                    document.getElementById('stat-members').textContent = data.stats.total_members;
 
                     // Update financial stats if elements exist
                     if (document.getElementById('stat-expenses')) {
@@ -815,7 +915,9 @@ $revenue_by_payment = $stmt->fetchAll();
                     revenueChart.data.datasets[0].data = data.revenue_by_month.map(item => item.total);
                     revenueChart.update('none');
 
-                    checkinChart.data.datasets[0].data = data.checkin_activity.map(item => item.count);
+                    // Update check-in chart in the updateDashboard function
+                    checkinChart.data.datasets[0].data = data.checkin_activity.map(item => item.member_count);
+                    checkinChart.data.datasets[1].data = data.checkin_activity.map(item => item.walkin_count);
                     checkinChart.update('none');
 
                     paymentMethodChart.data.labels = data.revenue_by_payment.map(item => item.payment_method);

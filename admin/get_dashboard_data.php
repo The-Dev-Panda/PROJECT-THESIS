@@ -24,6 +24,16 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM notification_history WHERE is_read = 0");
     $unread_notifications = $stmt->fetch()['total'];
 
+    // Member check-ins
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM attendance WHERE DATE(datetime) = :date");
+    $stmt->execute(['date' => $date]);
+    $today_member_attendance = $stmt->fetch()['count'];
+
+    // Walk-in check-ins
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM walk_attendance WHERE DATE(datetime) = :date");
+    $stmt->execute(['date' => $date]);
+    $today_walk_attendance = $stmt->fetch()['count'];
+    
     // Financial Stats
     $stmt = $pdo->query("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history");
     $total_expenses = $stmt->fetch()['total'];
@@ -85,15 +95,26 @@ try {
     $stmt = $pdo->query("SELECT COALESCE(SUM(expense), 0) as total FROM expense_history WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')");
     $month_expenses = $stmt->fetch()['total'];
 
-    // Check-in Activity (7 days)
+    // Check-in Activity (7 days) - Members and Walk-ins
     $checkin_activity = [];
     for ($i = 6; $i >= 0; $i--) {
         $date = date('Y-m-d', strtotime("-$i days"));
+
+        // Member check-ins
         $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM attendance WHERE DATE(datetime) = :date");
         $stmt->execute(['date' => $date]);
+        $member_count = $stmt->fetch()['count'];
+
+        // Walk-in check-ins
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM walk_attendance WHERE DATE(datetime) = :date");
+        $stmt->execute(['date' => $date]);
+        $walkin_count = $stmt->fetch()['count'];
+
         $checkin_activity[] = [
             'day' => date('D', strtotime("-$i days")),
-            'count' => $stmt->fetch()['count']
+            'member_count' => $member_count,
+            'walkin_count' => $walkin_count,
+            'total' => $member_count + $walkin_count
         ];
     }
 
@@ -125,7 +146,9 @@ try {
             'this_month_revenue' => $this_month_revenue,
             'total_expenses' => $total_expenses,
             'today_expenses' => $today_expenses,
-            'month_expenses' => $month_expenses
+            'month_expenses' => $month_expenses,
+            'today_walk_attendance' => $today_walk_attendance,
+            'today_member_attendance' => $today_member_attendance
         ],
         'revenue_by_month' => $revenue_by_month,
         'net_profit_by_month' => $net_profit_by_month,

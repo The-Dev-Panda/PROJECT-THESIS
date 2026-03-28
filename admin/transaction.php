@@ -201,7 +201,7 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
 
         <!-- Stats Grid -->
         <div class="stat-grid row p-0 mb-1 g-2">
-            <div class="stat-box col-sm-12 col-xl-3">
+            <div class="stat-box col-sm-12 col-xl-3 reveal">
                 <div class="stat-icon members">
                     <i class="bi bi-calendar-day"></i>
                 </div>
@@ -211,7 +211,7 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
                 </div>
             </div>
 
-            <div class="stat-box col-sm-12 col-xl-3">
+            <div class="stat-box col-sm-12 col-xl-3 reveal">
                 <div class="stat-icon registrations">
                     <i class="bi bi-calendar-month"></i>
                 </div>
@@ -221,7 +221,7 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
                 </div>
             </div>
 
-            <div class="stat-box col-sm-12 col-xl-3">
+            <div class="stat-box col-sm-12 col-xl-3 reveal">
                 <div class="stat-icon equipment">
                     <i class="bi bi-wallet2"></i>
                 </div>
@@ -231,7 +231,7 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
                 </div>
             </div>
 
-            <div class="stat-box col-sm-12 col-xl-3">
+            <div class="stat-box col-sm-12 col-xl-3 reveal">
                 <div class="stat-icon notifications">
                     <i class="bi bi-receipt-cutoff"></i>
                 </div>
@@ -241,7 +241,7 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
                 </div>
             </div>
 
-            <div class="stat-box col-sm-12 col-xl-3">
+            <div class="stat-box col-sm-12 col-xl-3 reveal">
                 <div class="stat-icon notifications">
                     <i class="bi bi-receipt-cutoff bi-success"></i>
                 </div>
@@ -251,7 +251,7 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
                 </div>
             </div>
 
-            <div class="stat-box col-sm-12 col-xl-3">
+            <div class="stat-box col-sm-12 col-xl-3 reveal">
                 <div class="stat-icon registrations"
                     style="color: <?php echo $growth >= 0 ? 'var(--success)' : 'var(--danger)'; ?>;">
                     <i class="bi bi-currency-exchange"></i>
@@ -268,13 +268,13 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
         <!-- Search & Filter Section -->
         <section>
             <div>
-                <div class="col-12 p-1 d-flex justify-content-end">
+                <div class="col-12 p-1 d-flex justify-content-end reveal-right">
                     <button class="add-btn" data-bs-toggle="modal" data-bs-target="#exportModal"
                         style="background: var(--success); text-decoration: none; border: none; cursor: pointer;">
                         <i class="bi bi-file-earmark-excel"></i> Export to Excel
                     </button>
                 </div>
-                <form method="GET">
+                <form method="GET" class="reveal-left">
                     <div class="row">
                         <div class="search-wrapper col-sm-12 col-xl-2 p-1">
                             <i class="bi bi-search search-icon"></i>
@@ -372,7 +372,7 @@ function getPaginationUrl($page_num, $search, $payment_method, $time, $sort, $or
                 <tbody>
                     <?php if (count($transactions) > 0): ?>
                         <?php foreach ($transactions as $txn): ?>
-                            <tr>
+                            <tr class="reveal">
                                 <td><?php echo $txn['id']; ?></td>
                                 <td><strong><?php echo htmlspecialchars($txn['receipt_number']); ?></strong></td>
                                 <td><?php echo htmlspecialchars($txn['customer_name']); ?></td>

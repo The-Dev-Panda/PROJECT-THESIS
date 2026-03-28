@@ -120,7 +120,7 @@ $pricing = $stmt->fetchAll();
         <?php endif; ?>
 
         <!-- Add New Pricing -->
-        <section>
+        <section class="reveal-right">
             <h2><i class="bi bi-plus-circle"></i> Add New Pricing</h2>
             <div class="registration-card">
                 <form method="POST" id="addPricingForm">
@@ -164,7 +164,7 @@ $pricing = $stmt->fetchAll();
                     <tbody>
                         <?php if (count($pricing) > 0): ?>
                             <?php foreach ($pricing as $plan): ?>
-                                <tr>
+                                <tr class="reveal">
                                     <td><?php echo $plan['m_price_id']; ?></td>
                                     <td>
                                         <span

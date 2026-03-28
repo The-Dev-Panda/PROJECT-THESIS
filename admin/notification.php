@@ -84,7 +84,7 @@ function timeAgo($datetime) {
                         </thead>
                         <tbody>
                             <?php foreach ($unread_notifications as $notif): ?>
-                                <tr class="notification-row" onclick="toggleRow(<?php echo $notif['notif_id']; ?>)" style="background: rgba(255, 204, 0, 0.05);">
+                                <tr class="notification-row reveal" onclick="toggleRow(<?php echo $notif['notif_id']; ?>)" style="background: rgba(255, 204, 0, 0.05);">
                                     <td>
                                         <i class="bi bi-chevron-right" id="icon-<?php echo $notif['notif_id']; ?>" style="color: var(--hazard); transition: transform 0.2s;"></i>
                                     </td>
@@ -105,7 +105,7 @@ function timeAgo($datetime) {
                                         </form>
                                     </td>
                                 </tr>
-                                <tr class="notification-details" id="details-<?php echo $notif['notif_id']; ?>">
+                                <tr class="notification-details".$counter id="details-<?php echo $notif['notif_id']; ?>">
                                     <td colspan="5" style="padding: 20px;">
                                         <div style="background: var(--bg-card); padding: 16px; border: 1px solid var(--border); border-radius: 2px;">
                                             <h4 style="font-family: 'Chakra Petch', sans-serif; font-size: 14px; color: var(--hazard); margin-bottom: 10px; text-transform: uppercase;">

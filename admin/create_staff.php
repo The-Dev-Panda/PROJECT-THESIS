@@ -45,7 +45,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     if (isset($_GET['success'])) {
         //DISPLAY SUCCESS MESSAGE
         echo '
-         <div style="background: rgba(34, 208, 122, 0.1); border: 1px solid var(--success); color: var(--success); padding: 10px 14px; margin-bottom: 20px; font-size: 12px; text-transform: uppercase;">
+         <div style="background: rgba(34, 208, 122, 0.1); border: 1px solid var(--success); color: var(--success); padding: 10px 14px; margin-bottom: 20px; font-size: 12px; text-transform: uppercase; class="reveal"">
                 <i class="bi bi-check-circle"></i> Staff member created successfully!
             </div>
         ';
@@ -53,7 +53,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
     if (isset($_GET['error'])) {
         //DISPLAY ERROR MESSAGE
         echo '
-        <div style="background: rgba(255, 71, 87, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 10px 14px; margin-bottom: 20px; font-size: 12px; text-transform: uppercase;">
+        <div style="background: rgba(255, 71, 87, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 10px 14px; margin-bottom: 20px; font-size: 12px; text-transform: uppercase;" class="reveal">
                 <i class="bi bi-exclamation-triangle"></i> ';
         if ($_GET['error'] == 'username_exists') {
             echo 'Username already exists!';
@@ -77,7 +77,7 @@ if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
         ';
     } ?>
 
-    <section>
+    <section class="reveal-left">
         <h2><i class="bi bi-person-plus"></i> Staff Information</h2>
 
         <div class="registration-card">

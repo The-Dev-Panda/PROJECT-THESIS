@@ -199,7 +199,7 @@ $active_members = $stmt->fetch()['total'];
                 <p>Manage gym member accounts</p>
             </div>
         </div>
-        <div class="row">
+        <div class="row reveal-left">
             <div class="stat-box col-sm-12 col-xl">
                 <div class="stat-icon members">
                     <i class="bi bi-person"></i>
@@ -247,7 +247,7 @@ $active_members = $stmt->fetch()['total'];
 
         <!-- Search & Filter Section -->
         <section>
-            <form method="GET">
+            <form method="GET" class="reveal-right">
                 <div class="row my-2">
                     <div class="col-sm-12 col-xl-3">
                         <div class="search-wrapper" style="flex: 2;">
@@ -355,7 +355,7 @@ $active_members = $stmt->fetch()['total'];
                                     ? "<span class='status-badge active'>Verified</span>"
                                     : "<span class='status-badge maintenance'>Not Verified</span>";
                                 ?>
-                                <tr>
+                                <tr class="reveal">
                                     <td>
                                         <i class='bi bi-person-circle' style='color: var(--hazard); margin-right: 8px;'></i>
                                         <strong><?php echo $full_name; ?></strong>
