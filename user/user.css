@@ -11978,26 +11978,29 @@ body.light-mode .toggle-track {
 .receipt-info {
   flex: 1;
   min-width: 0;
+  color: var(--text-primary, #fff);
 }
-.rname {
+.receipt-info .rname,
+.receipt-entry .rname {
   font-size: 13px;
   font-weight: 600;
-  color: #fff;
+  color: #fff !important;
   display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.rdate {
+.receipt-info .rdate,
+.receipt-entry .rdate {
   font-size: 11px;
-  color: #888;
+  color: #ccc !important;
   margin-top: 2px;
   display: block;
 }
 .receipt-amount {
   font-size: 14px;
   font-weight: 700;
-  color: #10b981;
+  color: #10b981 !important;
   white-space: nowrap;
 }
 
@@ -12091,6 +12094,7 @@ body.light-mode .toggle-track {
 
 .modal-body {
   padding: 20px;
+  color: #fff !important;
 }
 .modal-icon-wrap {
   text-align: center;
