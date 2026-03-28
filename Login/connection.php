@@ -17,13 +17,14 @@
 // $pdo->exec('PRAGMA foreign_keys = ON');
 
 //MYSQL CONNECTION
-$dsn = 'mysql:host=localhost;dbname=fitstopdb;charset=utf8';
-$db_username = 'root';
-$db_password = '';
+$dsn = 'mysql:host=localhost;dbname=u963267033_fitstopdb;charset=utf8';
+$db_username = 'u963267033_fitstop';
+$db_password = 'FitStop2019';
 
 try {
     $pdo = new PDO($dsn, $db_username, $db_password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+   // echo "Database connected successfully!";
 } catch (PDOException $e) {
     die('Database connection failed: ' . $e->getMessage());
 }
