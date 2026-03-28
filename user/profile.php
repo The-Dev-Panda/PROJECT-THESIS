@@ -42,12 +42,12 @@ try {
 
     // 2. Fetch Profile Data (dynamic schema check)
     $profileColumns = [];
-    $profileColumnStmt = $pdo->query('PRAGMA table_info(member_profiles)');
+    $profileColumnStmt = $pdo->query('SHOW COLUMNS FROM member_profiles');
     if ($profileColumnStmt) {
       $profileColumnRows = $profileColumnStmt->fetchAll(PDO::FETCH_ASSOC);
       foreach ($profileColumnRows as $profileColumnRow) {
-        if (isset($profileColumnRow['name'])) {
-          $profileColumns[] = (string)$profileColumnRow['name'];
+        if (isset($profileColumnRow['Field'])) {
+          $profileColumns[] = (string)$profileColumnRow['Field'];
         }
       }
     }
@@ -164,7 +164,7 @@ try {
       $eContactValue = (string)$profile['e_contact'];
     }
 
-    $attendanceStmt = $pdo->prepare("SELECT DISTINCT date(datetime, 'localtime') AS attendance_day FROM attendance WHERE user_id = :user_id ORDER BY attendance_day DESC");
+    $attendanceStmt = $pdo->prepare("SELECT DISTINCT DATE(`datetime`) AS attendance_day FROM attendance WHERE user_id = :user_id ORDER BY attendance_day DESC");
     $attendanceStmt->execute([':user_id' => $userId]);
     $attendanceDays = $attendanceStmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
 

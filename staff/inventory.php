@@ -163,11 +163,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
         if ($action === 'get_notifications') {
             $txRows = $pdo->query("
-                SELECT id, receipt_number, customer_type, user_id,
-                    customer_name, amount, payment_method, staff_id,
-                    transaction_date, status, created_at, `desc`
-                FROM transactions
-                ORDER BY transaction_date DESC, created_at DESC
+                SELECT
+                    t.id,
+                    t.receipt_number,
+                    t.customer_type,
+                    t.user_id,
+                    COALESCE(NULLIF(t.customer_name, ''), CONCAT_WS(' ', u.first_name, u.last_name), u.username, CONCAT('Member #', t.user_id), 'Walk-In') AS customer_name,
+                    t.amount,
+                    t.payment_method,
+                    t.staff_id,
+                    t.transaction_date,
+                    t.status,
+                    t.created_at,
+                    t.`desc`
+                FROM transactions t
+                LEFT JOIN users u ON u.id = t.user_id
+                ORDER BY t.transaction_date DESC, t.created_at DESC
                 LIMIT 50
             ")->fetchAll(PDO::FETCH_ASSOC);
             $stockRows = $pdo->query("

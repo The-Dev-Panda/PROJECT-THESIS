@@ -127,23 +127,23 @@ try {
     $progressSummary = '';
     $availableExercisesSummary = '';
     if ($intent === 'progress') {
-        $attendance7Stmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE user_id = :user_id AND datetime(datetime, 'localtime') >= datetime('now', 'localtime', '-6 days')");
+        $attendance7Stmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE user_id = :user_id AND `datetime` >= DATE_SUB(NOW(), INTERVAL 6 DAY)");
         $attendance7Stmt->execute([':user_id' => $userId]);
         $attendance7d = (int)$attendance7Stmt->fetchColumn();
 
-        $attendance30Stmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE user_id = :user_id AND datetime(datetime, 'localtime') >= datetime('now', 'localtime', '-29 days')");
+        $attendance30Stmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE user_id = :user_id AND `datetime` >= DATE_SUB(NOW(), INTERVAL 29 DAY)");
         $attendance30Stmt->execute([':user_id' => $userId]);
         $attendance30d = (int)$attendance30Stmt->fetchColumn();
 
-        $workout7Stmt = $pdo->prepare("SELECT COUNT(*) FROM workout_logs WHERE user_id = :user_id AND datetime(logged_at, 'localtime') >= datetime('now', 'localtime', '-6 days')");
+        $workout7Stmt = $pdo->prepare("SELECT COUNT(*) FROM workout_logs WHERE user_id = :user_id AND logged_at >= DATE_SUB(NOW(), INTERVAL 6 DAY)");
         $workout7Stmt->execute([':user_id' => $userId]);
         $workoutLogs7d = (int)$workout7Stmt->fetchColumn();
 
-        $workout30Stmt = $pdo->prepare("SELECT COUNT(*) FROM workout_logs WHERE user_id = :user_id AND datetime(logged_at, 'localtime') >= datetime('now', 'localtime', '-29 days')");
+        $workout30Stmt = $pdo->prepare("SELECT COUNT(*) FROM workout_logs WHERE user_id = :user_id AND logged_at >= DATE_SUB(NOW(), INTERVAL 29 DAY)");
         $workout30Stmt->execute([':user_id' => $userId]);
         $workoutLogs30d = (int)$workout30Stmt->fetchColumn();
 
-        $trainingDaysStmt = $pdo->prepare("SELECT COUNT(DISTINCT date(logged_at, 'localtime')) FROM workout_logs WHERE user_id = :user_id AND datetime(logged_at, 'localtime') >= datetime('now', 'localtime', '-29 days')");
+        $trainingDaysStmt = $pdo->prepare("SELECT COUNT(DISTINCT DATE(logged_at)) FROM workout_logs WHERE user_id = :user_id AND logged_at >= DATE_SUB(NOW(), INTERVAL 29 DAY)");
         $trainingDaysStmt->execute([':user_id' => $userId]);
         $trainingDays30d = (int)$trainingDaysStmt->fetchColumn();
 
@@ -151,7 +151,7 @@ try {
             FROM workout_logs wl
             LEFT JOIN exercises e ON e.exercise_id = wl.exercise_id
             WHERE wl.user_id = :user_id
-              AND datetime(wl.logged_at, 'localtime') >= datetime('now', 'localtime', '-29 days')
+              AND wl.logged_at >= DATE_SUB(NOW(), INTERVAL 29 DAY)
             GROUP BY wl.exercise_id, e.name
             ORDER BY sets_logged DESC, max_weight DESC
             LIMIT 5");

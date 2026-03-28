@@ -471,13 +471,10 @@ if (session_status() === PHP_SESSION_NONE) {
 date_default_timezone_set('Asia/Manila');
 
 if (!isset($conn)) {
-  $dbPath = __DIR__ . '/../Database/DB.sqlite';
-  try {
-    $conn = new PDO("sqlite:" . $dbPath);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-  } catch (Exception $e) {
-    die("Database connection failed: " . $e->getMessage());
-  }
+  require_once __DIR__ . '/../Login/connection.php';
+  $conn = $pdo;
+  $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  $conn->setAttribute(PDO::ATTR_TIMEOUT, 10);
 }
 
 if (!function_exists('progressPct')) {
@@ -740,13 +737,10 @@ if (session_status() === PHP_SESSION_NONE) {
 date_default_timezone_set('Asia/Manila');
 
 if (!isset($conn)) {
-  $dbPath = __DIR__ . '/../Database/DB.sqlite';
-  try {
-    $conn = new PDO("sqlite:" . $dbPath);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-  } catch (Exception $e) {
-    die("Database connection failed: " . $e->getMessage());
-  }
+  require_once __DIR__ . '/../Login/connection.php';
+  $conn = $pdo;
+  $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  $conn->setAttribute(PDO::ATTR_TIMEOUT, 10);
 }
 
 if (!function_exists('progressPct')) {
@@ -1624,11 +1618,11 @@ if (!function_exists('fitstop_csrf_token')) {
     }
 }
 
-$dbPath = __DIR__ . '/../Database/DB.sqlite';
-
 try {
-    $conn = new PDO("sqlite:" . $dbPath);
+    require_once __DIR__ . '/../Login/connection.php';
+    $conn = $pdo;
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $conn->setAttribute(PDO::ATTR_TIMEOUT, 10);
 } catch (Exception $e) {
     die("Database connection failed: " . $e->getMessage());
 }

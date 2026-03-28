@@ -2,46 +2,37 @@
 header('Content-Type: application/json');
 
 date_default_timezone_set('Asia/Manila');
-$dbPath = __DIR__ . '/DB.sqlite';
-
 function requireUserSession() {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['id']) || empty($_SESSION['user_type']) || strtolower($_SESSION['user_type']) !== 'user') {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'Unauthorized access. Please login as member.']);
+            exit();
+        }
+
+        return (int)$_SESSION['id'];
     }
 
-    if (empty($_SESSION['id']) || empty($_SESSION['user_type']) || strtolower($_SESSION['user_type']) !== 'user') {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Unauthorized access. Please login as member.']);
-        exit();
-    }
+    try {
+        $sessionUserId = requireUserSession();
 
-    return (int)$_SESSION['id'];
-}
+        $memberRef = (string)$sessionUserId;
 
-try {
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
-    $sessionUserId = requireUserSession();
-
-    $memberRef = (string)$sessionUserId;
-
-    $db = new PDO('sqlite:' . $dbPath);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
-    $db->exec('PRAGMA busy_timeout = 10000');
-    $db->exec('PRAGMA journal_mode = WAL');
-    $db->exec('PRAGMA synchronous = NORMAL');
-    $db->exec('PRAGMA foreign_keys = ON');
+        require_once __DIR__ . '/../Login/connection.php';
+        $db = $pdo;
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
 
     $profileColumns = [];
-    $profileColumnStmt = $db->query('PRAGMA table_info(member_profiles)');
+    $profileColumnStmt = $db->query('SHOW COLUMNS FROM member_profiles');
     if ($profileColumnStmt) {
         $profileColumnRows = $profileColumnStmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($profileColumnRows as $profileColumnRow) {
-            if (isset($profileColumnRow['name'])) {
-                $profileColumns[] = (string)$profileColumnRow['name'];
+            if (isset($profileColumnRow['Field'])) {
+                $profileColumns[] = (string)$profileColumnRow['Field'];
             }
         }
     }

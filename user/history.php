@@ -2,14 +2,10 @@
 require_once __DIR__ . '/auth_user.php';
 $transactions = [];
 try {
-    $dbPath = __DIR__ . '/../Database/DB.sqlite';
-    if (file_exists($dbPath)) {
-        $db = new PDO('sqlite:' . $dbPath);
-        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $stmt = $db->prepare('SELECT receipt_number, amount, payment_method, status, "desc", created_at FROM transactions WHERE user_id = :user_id ORDER BY created_at DESC');
-        $stmt->execute([':user_id' => $_SESSION['id']]);
-        $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+    require __DIR__ . '/../Login/connection.php';
+    $stmt = $pdo->prepare('SELECT receipt_number, amount, payment_method, status, `desc`, created_at FROM transactions WHERE user_id = :user_id ORDER BY created_at DESC');
+    $stmt->execute([':user_id' => $_SESSION['id']]);
+    $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     // Database error - continue without transactions
 }
@@ -60,10 +56,16 @@ try {
             $welcomeName = (string)$user['username'];
         }
 
+        $windowDays = [
+            'week' => 6,
+            'month' => 29,
+            'year' => 364,
+        ][$selectedPeriod] ?? 6;
+
         $historyStmt = $pdo->prepare("SELECT
-            date(datetime(wl.logged_at, 'localtime')) AS workout_day,
-            MIN(datetime(wl.logged_at, 'localtime')) AS first_log_time,
-            MAX(datetime(wl.logged_at, 'localtime')) AS last_log_time,
+            DATE(wl.logged_at) AS workout_day,
+            MIN(wl.logged_at) AS first_log_time,
+            MAX(wl.logged_at) AS last_log_time,
             COUNT(*) AS total_sets,
             COUNT(DISTINCT wl.exercise_id) AS exercise_count,
             SUM(COALESCE(wl.weight, 0) * COALESCE(wl.reps, 0)) AS total_volume,
@@ -71,11 +73,11 @@ try {
           FROM workout_logs wl
           LEFT JOIN exercises e ON e.exercise_id = wl.exercise_id
           WHERE wl.user_id = :user_id
-            AND datetime(wl.logged_at, 'localtime') >= datetime('now', 'localtime', :window)
+            AND wl.logged_at >= DATE_SUB(NOW(), INTERVAL :window_days DAY)
           GROUP BY workout_day
           ORDER BY workout_day DESC
           LIMIT 60");
-        $historyStmt->execute([':user_id' => $userId, ':window' => $windowModifier]);
+        $historyStmt->execute([':user_id' => $userId, ':window_days' => $windowDays]);
         $rows = $historyStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
         foreach ($rows as $row) {

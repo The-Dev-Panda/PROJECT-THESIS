@@ -2,7 +2,6 @@
 header('Content-Type: application/json');
 
 date_default_timezone_set('Asia/Manila');
-$dbPath = __DIR__ . '/DB.sqlite';
 
 function requireUserSession() {
     if (session_status() === PHP_SESSION_NONE) {
@@ -19,15 +18,16 @@ function requireUserSession() {
 }
 
 try {
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
     $sessionUserId = requireUserSession();
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
+
+    require_once __DIR__ . '/../Login/connection.php';
+    $db = $pdo;
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
 
     $input = json_decode(file_get_contents('php://input'), true);
     if (!is_array($input)) {
@@ -67,22 +67,19 @@ try {
     if ($bmi !== null && $bmi <= 0) throw new Exception('Invalid BMI value');
 
     // Database Connection
-    $db = new PDO('sqlite:' . $dbPath);
+    require_once __DIR__ . '/../Login/connection.php';
+    $db = $pdo;
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
-    $db->exec('PRAGMA busy_timeout = 10000');
-    $db->exec('PRAGMA journal_mode = WAL');
-    $db->exec('PRAGMA synchronous = NORMAL');
-    $db->exec('PRAGMA foreign_keys = ON');
 
     // Dynamically check columns to ensure backward/forward schema compatibility
     $profileColumns = [];
-    $profileColumnStmt = $db->query('PRAGMA table_info(member_profiles)');
+    $profileColumnStmt = $db->query('SHOW COLUMNS FROM member_profiles');
     if ($profileColumnStmt) {
         $profileColumnRows = $profileColumnStmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($profileColumnRows as $profileColumnRow) {
-            if (isset($profileColumnRow['name'])) {
-                $profileColumns[] = (string)$profileColumnRow['name'];
+            if (isset($profileColumnRow['Field'])) {
+                $profileColumns[] = (string)$profileColumnRow['Field'];
             }
         }
     }

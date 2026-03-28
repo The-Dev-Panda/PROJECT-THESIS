@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     COALESCE(u.first_name, '') AS first_name,
                     COALESCE(u.last_name, '') AS last_name,
                     COALESCE(u.email, '') AS email,
-                    CAST(julianday(date(m.expires_in)) - julianday(date(?)) AS INTEGER) AS days_left
+                    DATEDIFF(m.expires_in, ?) AS days_left
                 FROM monthly m
                 LEFT JOIN users u ON u.id = m.member
                 {$whereClause}
@@ -477,7 +477,21 @@ function esc(v) {
 
 function fmtDate(dateStr) {
   if (!dateStr) return '—';
-  const d = new Date(dateStr + 'T00:00:00');
+  let raw = String(dateStr).trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    raw += 'T00:00:00';
+  } else if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)) {
+    raw = raw.replace(' ', 'T');
+  }
+
+  let d = new Date(raw);
+  if (Number.isNaN(d.getTime())) {
+    d = new Date(dateStr);
+  }
+  if (Number.isNaN(d.getTime())) {
+    return 'Invalid Date';
+  }
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
@@ -551,10 +565,23 @@ function loadMonthly() {
     .catch(() => { document.getElementById('monthlyGrid').innerHTML = `<div class="empty-state"><i class="bi bi-wifi-off"></i><p>Server unreachable.</p></div>`; });
 }
 
+function parseExpiryDate(value) {
+  if (!value) return null;
+  let raw = String(value).trim();
+  // support MySQL date-only and datetime strings
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    raw += 'T00:00:00';
+  } else if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)) {
+    raw = raw.replace(' ', 'T');
+  }
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 function buildCard(r) {
-  const daysLeft = parseInt(r.days_left || 0);
-  const today    = new Date(); today.setHours(0,0,0,0);
-  const expiry   = new Date(r.expires_in + 'T00:00:00');
+  const daysLeft = parseInt(r.days_left || 0, 10);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const expiry = parseExpiryDate(r.expires_in);
   const isWalkIn = !r.member;
 
   let statusClass, badgeClass, badgeLabel, daysLabel;

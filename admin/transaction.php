@@ -73,11 +73,22 @@ $total_pages = ceil($total_records / $records_per_page);
 
 // Get transactions with sorting
 $query = "SELECT 
-            t.*, 
-            u.first_name, 
-            u.last_name
+            t.id,
+            t.receipt_number,
+            COALESCE(NULLIF(t.customer_name, ''), CONCAT_WS(' ', u_member.first_name, u_member.last_name), u_member.username, CONCAT('Member #', t.user_id), 'Walk-In') AS customer_name,
+            t.customer_type,
+            t.user_id,
+            t.amount,
+            t.payment_method,
+            t.transaction_date,
+            t.`status`,
+            t.created_at,
+            t.`desc`,
+            u_staff.first_name AS staff_first_name,
+            u_staff.last_name AS staff_last_name
           FROM transactions t
-          LEFT JOIN users u ON t.staff_id = u.id
+          LEFT JOIN users u_member ON t.user_id = u_member.id
+          LEFT JOIN users u_staff ON t.staff_id = u_staff.id
           $where_clause
           ORDER BY t.$sort_by $sort_order
           LIMIT :limit OFFSET :offset";

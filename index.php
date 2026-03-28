@@ -49,11 +49,11 @@ include('includes/header.php');
                         $attendanceTodayStmt->execute([':today' => $today]);
                         $attendanceToday = (int)$attendanceTodayStmt->fetchColumn();
 
-                        $attendance7dStmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE date(datetime) >= date('now', '-6 days')");
+                        $attendance7dStmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE DATE(`datetime`) >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)");
                         $attendance7dStmt->execute();
                         $attendance7d = (int)$attendance7dStmt->fetchColumn();
 
-                        $workouts24hStmt = $pdo->prepare("SELECT COUNT(*) FROM workout_logs WHERE datetime(logged_at, 'localtime') >= datetime('now', '-24 hours')");
+                        $workouts24hStmt = $pdo->prepare("SELECT COUNT(*) FROM workout_logs WHERE logged_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)");
                         $workouts24hStmt->execute();
                         $workouts24h = (int)$workouts24hStmt->fetchColumn();
                     } catch (Throwable $e) {

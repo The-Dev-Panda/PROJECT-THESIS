@@ -8,7 +8,7 @@ if (empty($_SESSION['username']) || strtolower((string)($_SESSION['user_type'] ?
 $memberId = isset($_SESSION['id']) ? (int)$_SESSION['id'] : 0;
 try {
     include('connection.php');
-    $columns = $pdo->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_ASSOC);
+    $columns = $pdo->query("SHOW COLUMNS FROM users")->fetchAll(PDO::FETCH_ASSOC);
     $hasConsent = false;
     $hasConsentAt = false;
     foreach ($columns as $col) {

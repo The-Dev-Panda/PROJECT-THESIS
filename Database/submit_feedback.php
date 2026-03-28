@@ -22,6 +22,7 @@ function sendResponse($success, $message, $redirect = null) {
     }
 }
 
+// Legacy helper kept for compatibility, but not used in auto-increment insert mode.
 function getNextFeedbackId(PDO $pdo) {
     $stmt = $pdo->query('SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM feedback');
     $row = $stmt ? $stmt->fetch(PDO::FETCH_ASSOC) : null;
@@ -89,7 +90,12 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     sendResponse(false, 'Invalid request method');
 }
 
-fitstop_validate_csrf_or_exit($_POST['csrf_token'] ?? null);
+// Strong CSRF validation for AJAX response path
+$csrfPost = isset($_POST['csrf_token']) ? (string)$_POST['csrf_token'] : '';
+$sessionToken = isset($_SESSION['csrf_token']) ? (string)$_SESSION['csrf_token'] : '';
+if ($csrfPost === '' || $sessionToken === '' || !hash_equals($sessionToken, $csrfPost)) {
+    sendResponse(false, 'Invalid CSRF token.');
+}
 
 if (!isSameOriginRequest()) {
     sendResponse(false, 'Invalid request origin');
@@ -155,15 +161,12 @@ try {
             sendResponse(false, 'Too many guest submissions. Please wait a few minutes');
         }
 
-        $feedbackId = getNextFeedbackId($pdo);
-
         $stmt = $pdo->prepare("
-            INSERT INTO feedback (id, about, reporterID, last_name, created_at, desc, status)
-            VALUES (:id, :about, NULL, :last_name, datetime('now'), :desc, 'pending')
+            INSERT INTO feedback (`about`, `reporterID`, `last_name`, `created_at`, `desc`, `status`)
+            VALUES (:about, NULL, :last_name, NOW(), :desc, 'pending')
         ");
 
         $stmt->execute([
-            'id' => $feedbackId,
             'about' => $about,
             'last_name' => $guestName !== '' ? $guestName : 'Anonymous Guest',
             'desc' => $desc
@@ -177,7 +180,7 @@ try {
             SELECT COUNT(*) as recent_count
             FROM feedback
             WHERE reporterID = :reporterID
-            AND created_at > datetime('now', '-5 minutes')
+            AND created_at > DATE_SUB(NOW(), INTERVAL 5 MINUTE)
         ");
         $rateLimitStmt->execute(['reporterID' => $reporterID]);
         $rateLimitResult = $rateLimitStmt->fetch(PDO::FETCH_ASSOC);
@@ -192,15 +195,12 @@ try {
 
         $lastName = $user ? $user['last_name'] : null;
 
-        $feedbackId = getNextFeedbackId($pdo);
-
         $stmt = $pdo->prepare("
-            INSERT INTO feedback (id, about, reporterID, last_name, created_at, desc, status)
-            VALUES (:id, :about, :reporterID, :last_name, datetime('now'), :desc, 'pending')
+            INSERT INTO feedback (`about`, `reporterID`, `last_name`, `created_at`, `desc`, `status`)
+            VALUES (:about, :reporterID, :last_name, NOW(), :desc, 'pending')
         ");
 
         $stmt->execute([
-            'id' => $feedbackId,
             'about' => $about,
             'reporterID' => $reporterID,
             'last_name' => $lastName,
@@ -210,8 +210,8 @@ try {
     sendResponse(true, 'Thank you! Your feedback has been submitted successfully');
     
 } catch (PDOException $e) {
-    // Log error for debugging (don't expose to user)
+    // Log error for debugging
     error_log("Feedback submission error: " . $e->getMessage());
-    sendResponse(false, 'An error occurred while submitting your feedback. Please try again');
+    sendResponse(false, 'Database error: ' . $e->getMessage());
 }
 ?>

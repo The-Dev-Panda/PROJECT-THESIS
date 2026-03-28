@@ -84,18 +84,10 @@ try {
         $gender = null;
     }
 
-    $dbPath = __DIR__ . '/DB.sqlite';
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
-    $db = new PDO('sqlite:' . $dbPath);
+    require_once __DIR__ . '/../Login/connection.php';
+    $db = $pdo;
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
-    $db->exec('PRAGMA busy_timeout = 10000');
-    $db->exec('PRAGMA journal_mode = WAL');
-    $db->exec('PRAGMA synchronous = NORMAL');
-    $db->exec('PRAGMA foreign_keys = ON');
 
     // duplicate check
     $emailCheckStmt = $db->prepare('SELECT id FROM users WHERE email = :email LIMIT 1');

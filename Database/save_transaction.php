@@ -3,8 +3,6 @@ header('Content-Type: application/json');
 
 date_default_timezone_set('Asia/Manila');
 
-$dbPath = __DIR__ . '/DB.sqlite';
-
 function requireStaffSession() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -19,10 +17,6 @@ function requireStaffSession() {
 }
 
 try {
-    if (!file_exists($dbPath)) {
-        throw new Exception('Database file not found');
-    }
-
     $staffId = requireStaffSession();
 
     $input = json_decode(file_get_contents('php://input'), true);
@@ -45,13 +39,10 @@ try {
     if ($customerType === 'member'     && $memberRef === '')           throw new Exception('Member ID is required');
     if ($customerType === 'non-member' && $customerName === '')        throw new Exception('Customer name is required');
 
-    $db = new PDO('sqlite:' . $dbPath);
+    require_once __DIR__ . '/../Login/connection.php';
+    $db = $pdo;
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $db->setAttribute(PDO::ATTR_TIMEOUT, 10);
-    $db->exec('PRAGMA busy_timeout = 10000');
-    $db->exec('PRAGMA journal_mode = WAL');
-    $db->exec('PRAGMA synchronous = NORMAL');
-    $db->exec('PRAGMA foreign_keys = ON');
 
     $now  = date('Y-m-d H:i:s');
     $date = date('m/d/Y');
@@ -89,7 +80,7 @@ try {
     $insertStmt = $db->prepare('
         INSERT INTO transactions
             (receipt_number, customer_type, user_id, customer_name, amount,
-             payment_method, staff_id, status, "desc", transaction_date)
+             payment_method, staff_id, status, `desc`, transaction_date)
         VALUES
             (:receipt_number, :customer_type, :user_id, :customer_name, :amount,
              :payment_method, :staff_id, :status, :desc, :transaction_date)

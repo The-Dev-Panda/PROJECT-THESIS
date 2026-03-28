@@ -50,6 +50,7 @@ function renderSidebarStatic($activePage) {
     <aside class="sidebar sidebar-static">
         <div class="sidebar-header">
             <img src="userimage/FIT-STOP LOGO.png" alt="Fit-Stop Logo" class="logo-img" />
+            <a href=""></a>
             <span class="logo-text">Fit-Stop</span>
         </div>
 
