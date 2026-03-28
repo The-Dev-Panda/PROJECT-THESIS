@@ -41,52 +41,10 @@
         <!-- APP PREFERENCES -->
         <div class="settings-section">
           <div class="section-header">
-            <h3><i class="bi bi-bell"></i> Notifications</h3>
+            <h3><i class="bi bi-bell"></i> Functions</h3>
           </div>
 
           <div class="settings-card">
-            <div class="setting-row">
-              <div class="setting-left">
-                <div class="setting-icon"><i class="bi bi-fork-knife"></i></div>
-                <div class="setting-info">
-                  <h4>Meal Reminders</h4>
-                  <p>Enable or disable meal reminder notifications</p>
-                </div>
-              </div>
-              <label class="toggle-wrap">
-                <input type="checkbox" id="notificationsToggle" />
-                <div class="toggle-track"></div>
-                <div class="toggle-thumb"></div>
-              </label>
-            </div>
-            <div class="setting-row">
-              <div class="setting-left">
-                <div class="setting-icon"><i class="bi bi-activity"></i></div>
-                <div class="setting-info">
-                  <h4>Workout Reminders</h4>
-                  <p>Enable or disable workout reminder notifications</p>
-                </div>
-              </div>
-              <label class="toggle-wrap">
-                <input type="checkbox" id="notificationsToggle" />
-                <div class="toggle-track"></div>
-                <div class="toggle-thumb"></div>
-              </label>
-            </div>
-            <div class="setting-row">
-              <div class="setting-left">
-                <div class="setting-icon"><i class="bi bi-droplet"></i></div>
-                <div class="setting-info">
-                  <h4>Water Reminders</h4>
-                  <p>Enable or disable water reminder notifications</p>
-                </div>
-              </div>
-              <label class="toggle-wrap">
-                <input type="checkbox" id="notificationsToggle" />
-                <div class="toggle-track"></div>
-                <div class="toggle-thumb"></div>
-              </label>
-            </div>
             <div class="setting-row">
               <div class="setting-left">
                 <div class="setting-icon">
@@ -103,6 +61,9 @@
                 <div class="toggle-thumb"></div>
               </label>
             </div>
+          
+            
+          
           </div>
         </div>
 
@@ -185,12 +146,7 @@
           </div>
         </div>
 
-        <!-- SAVE -->
-        <div class="save-bar">
-          <button class="save-btn">
-            <i class="bi bi-check-lg"></i> Save Changes
-          </button>
-        </div>
+    
       </main>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+EQG7wp9vY1Qtu2w1P7QHCMkHPlJ8" crossorigin="anonymous"></script>

@@ -10,7 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
     try {
 
-        // ── Search active monthly subscribers (non-members only) ───────────
         if ($action === 'search_monthly') {
             $q = '%' . trim($_POST['query'] ?? '') . '%';
             $today = date('Y-m-d');
@@ -29,7 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
-        // ── Record monthly non-member attendance ───────────────────────────
         if ($action === 'record_monthly_attendance') {
             $monthId = (int)($_POST['month_id'] ?? 0);
             $name    = trim($_POST['name'] ?? '');
@@ -83,7 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
-        // ── Record walk-in (non-member, per session) ───────────────────────
         if ($action === 'record_walkin') {
             $name = trim($_POST['name'] ?? '');
             if (!$name) {
@@ -103,7 +100,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
-        // ── Get today's attendance log ─────────────────────────────────────
         if ($action === 'get_today_log') {
             $today = date('Y-m-d');
             $rows = $pdo->query("
@@ -157,7 +153,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    /* ── Page-specific styles not in staff.css ── */
 
     .stats-row {
       display: grid;
@@ -591,7 +586,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 <body>
 
 <div class="dashboard">
-
+<button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu">
+    <i class="bi bi-list"></i>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
   <!-- ── Sidebar ── -->
   <aside class="sidebar">
     <div class="sidebar-header">
@@ -613,9 +611,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </li>
       <li onclick="window.location.href='staff.php#memberManagement'">
         <i class="bi bi-people"></i><span>Members</span>
-      </li>
-      <li onclick="window.location.href='staff.php#idGeneration'">
-        <i class="bi bi-qr-code"></i><span>ID Generation</span>
       </li>
       <li onclick="window.location.href='monthly.php'">
         <i class="bi bi-calendar-check"></i><span>Monthly Access</span>
@@ -791,11 +786,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-// ── State ──────────────────────────────────────────────────────────────────
 let allLogs      = [];
 let activeFilter = 'all';
 
-// ── Helpers ────────────────────────────────────────────────────────────────
 function escapeHtml(v) {
   return String(v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
@@ -825,11 +818,9 @@ function showToast(type, icon, html) {
   setTimeout(() => { if (el.parentElement) el.remove(); }, 5500);
 }
 
-// ── Date ──────────────────────────────────────────────────────────────────
 document.getElementById('currentDate').textContent =
   new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
 
-// ── Monthly search ─────────────────────────────────────────────────────────
 let searchTimer = null;
 
 function searchMonthly(q) {
@@ -895,7 +886,6 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// ── Record monthly attendance ──────────────────────────────────────────────
 function recordMonthlyAttendance() {
   const monthId = document.getElementById('selectedMonthId').value;
   const name    = document.getElementById('selectedMonthName').value;
@@ -937,7 +927,6 @@ function recordMonthlyAttendance() {
     });
 }
 
-// ── Record walk-in ─────────────────────────────────────────────────────────
 function recordWalkin() {
   const name = document.getElementById('walkinName').value.trim();
   if (!name) { showToast('error','bi-exclamation-triangle-fill','Please enter a customer name.'); return; }
@@ -973,7 +962,6 @@ function recordWalkin() {
     });
 }
 
-// ── Today's log ────────────────────────────────────────────────────────────
 function loadTodayLog() {
   const fd = new FormData();
   fd.append('action', 'get_today_log');
@@ -1030,11 +1018,39 @@ function renderLog() {
   }).join('');
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   loadTodayLog();
   setInterval(loadTodayLog, 15000);
 });
+
+const hamburgerBtn   = document.getElementById('hamburgerBtn');
+const sidebar        = document.querySelector('.sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+function openSidebar() {
+    sidebar.classList.add('open');
+    sidebarOverlay.classList.add('open');
+    hamburgerBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+}
+
+function closeSidebar() {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('open');
+    hamburgerBtn.innerHTML = '<i class="bi bi-list"></i>';
+}
+
+hamburgerBtn.addEventListener('click', function () {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+});
+
+sidebarOverlay.addEventListener('click', closeSidebar);
+
+document.querySelectorAll('.menu li').forEach(item => {
+    item.addEventListener('click', function () {
+        if (window.innerWidth <= 768) closeSidebar();
+    });
+});
+
 </script>
 </body>
 </html>

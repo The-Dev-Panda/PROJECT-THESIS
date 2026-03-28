@@ -48,7 +48,7 @@ try {
         
           <!-- E-Receipts -->
           <div class="profile-card terms-card">
-            <h4><i class="bi bi-receipt"></i> E-Receipts</h4>
+            <h4><i class="bi bi-receipt"></i> Payments</h4>
             <hr class="section-divider" />
 
             <?php if (empty($transactions)): ?>

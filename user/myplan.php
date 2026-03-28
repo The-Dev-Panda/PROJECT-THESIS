@@ -82,6 +82,16 @@ $targetProtein = 140;
 $targetCarbs = 240;
 $targetFat = 70;
 
+$exerciseList = [];
+try {
+    if (isset($pdo)) {
+        $exerciseStmt = $pdo->query('SELECT exercise_id, name, target_muscle, movement_type FROM exercises ORDER BY name ASC');
+        $exerciseList = $exerciseStmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Throwable $e) {
+    $exerciseList = [];
+}
+
 if (strpos($goalLower, 'lose') !== false || strpos($goalLower, 'fat') !== false || strpos($goalLower, 'weight') !== false) {
   $targetCalories = 1800;
   $targetProtein = 160;
@@ -484,169 +494,209 @@ if (!function_exists('progressPct')) {
   }
 }
 
-$userId = 0;
-if (isset($_SESSION['user_id'])) {
-  $userId = (int)$_SESSION['user_id'];
-} elseif (isset($_SESSION['id'])) {
-  $userId = (int)$_SESSION['id'];
-}
+if (!function_exists('myplan_build_live_nutrition_data')) {
+  function myplan_build_live_nutrition_data($conn, $goal, $fitnessLevel, $weeklyWorkoutCount, $weeklyWorkoutTarget, $weeklyAttendanceCount) {
+    $userId = 0;
+    if (isset($_SESSION['user_id'])) {
+      $userId = (int)$_SESSION['user_id'];
+    } elseif (isset($_SESSION['id'])) {
+      $userId = (int)$_SESSION['id'];
+    }
 
-$todayDate = date('Y-m-d');
-$weekDates = [];
-for ($i = 6; $i >= 0; $i--) {
-  $weekDates[] = date('Y-m-d', strtotime("-{$i} day"));
-}
+    $todayDate = date('Y-m-d');
+    $weekDates = [];
+    for ($i = 6; $i >= 0; $i--) {
+      $weekDates[] = date('Y-m-d', strtotime("-{$i} day"));
+    }
 
-$dailyTotals = [];
-foreach ($weekDates as $dateValue) {
-  $dailyTotals[$dateValue] = [
-    'calories' => 0,
-    'grams' => 0,
-    'meal_count' => 0,
-    'entry_count' => 0
-  ];
-}
-
-$todayTotals = [
-  'calories' => 0,
-  'grams' => 0,
-  'meal_count' => 0,
-  'entry_count' => 0
-];
-
-if ($userId > 0) {
-  $weekStart = $weekDates[0];
-  $weekEnd = $weekDates[count($weekDates) - 1];
-
-  $nutritionStmt = $conn->prepare("
-    SELECT 
-      log_date,
-      COALESCE(SUM(calories), 0) AS calories,
-      COALESCE(SUM(grams_consumed), 0) AS grams,
-      COUNT(*) AS entry_count,
-      COUNT(DISTINCT meal_type) AS meal_count
-    FROM meal_logs
-    WHERE user_id = ? AND log_date BETWEEN ? AND ?
-    GROUP BY log_date
-    ORDER BY log_date ASC
-  ");
-  $nutritionStmt->execute([$userId, $weekStart, $weekEnd]);
-  $nutritionRows = $nutritionStmt->fetchAll(PDO::FETCH_ASSOC);
-
-  foreach ($nutritionRows as $row) {
-    $logDate = $row['log_date'];
-    if (isset($dailyTotals[$logDate])) {
-      $dailyTotals[$logDate] = [
-        'calories' => (float)$row['calories'],
-        'grams' => (float)$row['grams'],
-        'meal_count' => (int)$row['meal_count'],
-        'entry_count' => (int)$row['entry_count']
+    $dailyTotals = [];
+    foreach ($weekDates as $dateValue) {
+      $dailyTotals[$dateValue] = [
+        'meal_count' => 0,
+        'entry_count' => 0
       ];
     }
-  }
 
-  $todayTotals = $dailyTotals[$todayDate] ?? $todayTotals;
+    $todayTotals = [
+      'meal_count' => 0,
+      'entry_count' => 0
+    ];
+
+    if ($userId > 0) {
+      $weekStart = $weekDates[0];
+      $weekEnd = $weekDates[count($weekDates) - 1];
+
+      $nutritionStmt = $conn->prepare("
+        SELECT 
+          log_date,
+          COUNT(*) AS entry_count,
+          COUNT(DISTINCT meal_type) AS meal_count
+        FROM meal_logs
+        WHERE user_id = ? AND log_date BETWEEN ? AND ?
+        GROUP BY log_date
+        ORDER BY log_date ASC
+      ");
+      $nutritionStmt->execute([$userId, $weekStart, $weekEnd]);
+      $nutritionRows = $nutritionStmt->fetchAll(PDO::FETCH_ASSOC);
+
+      foreach ($nutritionRows as $row) {
+        $logDate = $row['log_date'];
+        if (isset($dailyTotals[$logDate])) {
+          $dailyTotals[$logDate] = [
+            'meal_count' => (int)$row['meal_count'],
+            'entry_count' => (int)$row['entry_count']
+          ];
+        }
+      }
+
+      $todayTotals = $dailyTotals[$todayDate] ?? $todayTotals;
+    }
+
+    $targetMeals = 4;
+    $targetEntries = 4;
+
+    $mealsPct = progressPct($todayTotals['meal_count'], $targetMeals);
+    $entriesPct = progressPct($todayTotals['entry_count'], $targetEntries);
+
+    $weeklyNutritionEntries = 0;
+    foreach ($dailyTotals as $dayData) {
+      $weeklyNutritionEntries += (int)$dayData['entry_count'];
+    }
+
+    $goalProgressPct = progressPct((int)$weeklyWorkoutCount, (int)$weeklyWorkoutTarget);
+
+    $smartSuggestions = [];
+
+    if ($todayTotals['entry_count'] === 0) {
+      $smartSuggestions[] = "You have no meal logs today. Start with your first meal entry to keep your nutrition tracking updated.";
+    }
+    if ($todayTotals['meal_count'] < 3) {
+      $smartSuggestions[] = "You have only logged {$todayTotals['meal_count']} meal types today. Try spreading your intake across breakfast, lunch, dinner, and snacks.";
+    }
+    if ($weeklyNutritionEntries >= 20) {
+      $smartSuggestions[] = "Great consistency this week. Your meal logging habit is staying active across multiple days.";
+    }
+
+    if (empty($smartSuggestions)) {
+      $smartSuggestions[] = "Your nutrition logs are on track. Keep recording meals consistently to improve your weekly snapshot.";
+    }
+
+    $calendarDays = [];
+    foreach ($weekDates as $dateValue) {
+      $isToday = $dateValue === $todayDate;
+      $dayTotals = $dailyTotals[$dateValue] ?? ['meal_count' => 0, 'entry_count' => 0];
+      $calendarDays[] = [
+        'date' => $dateValue,
+        'is_today' => $isToday,
+        'day_name' => $isToday ? 'Today' : date('l', strtotime($dateValue)),
+        'meal_count' => (int)$dayTotals['meal_count'],
+        'entry_count' => (int)$dayTotals['entry_count'],
+        'meal_pct' => (int)progressPct($dayTotals['meal_count'], $targetMeals),
+        'entry_pct' => (int)progressPct($dayTotals['entry_count'], $targetEntries)
+      ];
+    }
+
+    return [
+      'todayTotals' => [
+        'meal_count' => (int)$todayTotals['meal_count'],
+        'entry_count' => (int)$todayTotals['entry_count']
+      ],
+      'targets' => [
+        'targetMeals' => (int)$targetMeals,
+        'targetEntries' => (int)$targetEntries
+      ],
+      'percentages' => [
+        'mealsPct' => (int)$mealsPct,
+        'entriesPct' => (int)$entriesPct,
+        'goalProgressPct' => (int)$goalProgressPct,
+        'attendancePct' => (int)progressPct((int)$weeklyAttendanceCount, 4)
+      ],
+      'goal' => (string)$goal,
+      'fitnessLevel' => (string)$fitnessLevel,
+      'weeklyWorkoutCount' => (int)$weeklyWorkoutCount,
+      'weeklyWorkoutTarget' => (int)$weeklyWorkoutTarget,
+      'weeklyAttendanceCount' => (int)$weeklyAttendanceCount,
+      'calendarDays' => $calendarDays,
+      'smartSuggestions' => $smartSuggestions
+    ];
+  }
 }
 
 $goal = $goal ?? 'Fitness Goal';
 $fitnessLevel = $fitnessLevel ?? 'beginner';
 $fitnessLower = strtolower($fitnessLevel);
-
-$targetCalories = isset($targetCalories) ? (int)$targetCalories : 2200;
-$targetGrams = isset($targetGrams) ? (int)$targetGrams : 1800;
-$targetMeals = isset($targetMeals) ? (int)$targetMeals : 4;
-$targetEntries = isset($targetEntries) ? (int)$targetEntries : 4;
-
-$caloriesPct = progressPct($todayTotals['calories'], $targetCalories);
-$gramsPct = progressPct($todayTotals['grams'], $targetGrams);
-$mealsPct = progressPct($todayTotals['meal_count'], $targetMeals);
-$entriesPct = progressPct($todayTotals['entry_count'], $targetEntries);
-
-$weeklyNutritionCalories = 0;
-$weeklyNutritionGrams = 0;
-$weeklyNutritionMeals = 0;
-$weeklyNutritionEntries = 0;
-
-foreach ($dailyTotals as $dayData) {
-  $weeklyNutritionCalories += (float)$dayData['calories'];
-  $weeklyNutritionGrams += (float)$dayData['grams'];
-  $weeklyNutritionMeals += (int)$dayData['meal_count'];
-  $weeklyNutritionEntries += (int)$dayData['entry_count'];
-}
-
 $weeklyWorkoutCount = isset($weeklyWorkoutCount) ? (int)$weeklyWorkoutCount : 0;
 $weeklyWorkoutTarget = isset($weeklyWorkoutTarget) ? (int)$weeklyWorkoutTarget : 5;
-$goalProgressPct = progressPct($weeklyWorkoutCount, $weeklyWorkoutTarget);
-
 $weeklyAttendanceCount = isset($weeklyAttendanceCount) ? (int)$weeklyAttendanceCount : 0;
 
-$smartSuggestions = [];
-
-if ($todayTotals['entry_count'] === 0) {
-  $smartSuggestions[] = "You have no meal logs today. Start with your first meal entry to keep your nutrition tracking updated.";
-}
-if ($todayTotals['calories'] < ($targetCalories * 0.5)) {
-  $smartSuggestions[] = "Your calorie intake is still low for today. Add another meal or snack if you are still below your target.";
-}
-if ($todayTotals['meal_count'] < 3) {
-  $smartSuggestions[] = "You have only logged {$todayTotals['meal_count']} meal types today. Try spreading your intake across breakfast, lunch, dinner, and snacks.";
-}
-if ($todayTotals['grams'] < ($targetGrams * 0.6)) {
-  $smartSuggestions[] = "Your total logged food amount is still below your daily grams target. Add another serving if needed.";
-}
-if ($todayTotals['calories'] >= $targetCalories) {
-  $smartSuggestions[] = "You have reached your calorie target for today. Keep portions balanced for the rest of the day.";
-}
-if ($weeklyNutritionEntries >= 20) {
-  $smartSuggestions[] = "Great consistency this week. Your meal logging habit is staying active across multiple days.";
+if (isset($_GET['nutrition_live']) && $_GET['nutrition_live'] === '1') {
+  header('Content-Type: application/json; charset=utf-8');
+  echo json_encode(
+    myplan_build_live_nutrition_data(
+      $conn,
+      $goal,
+      $fitnessLevel,
+      $weeklyWorkoutCount,
+      $weeklyWorkoutTarget,
+      $weeklyAttendanceCount
+    ),
+    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+  );
+  exit;
 }
 
-if (empty($smartSuggestions)) {
-  $smartSuggestions[] = "Your nutrition logs are on track. Keep recording meals consistently to improve your weekly snapshot.";
-}
+$liveNutritionData = myplan_build_live_nutrition_data(
+  $conn,
+  $goal,
+  $fitnessLevel,
+  $weeklyWorkoutCount,
+  $weeklyWorkoutTarget,
+  $weeklyAttendanceCount
+);
+
+$todayTotals = $liveNutritionData['todayTotals'];
+$targetMeals = $liveNutritionData['targets']['targetMeals'];
+$targetEntries = $liveNutritionData['targets']['targetEntries'];
+$mealsPct = $liveNutritionData['percentages']['mealsPct'];
+$entriesPct = $liveNutritionData['percentages']['entriesPct'];
+$goalProgressPct = $liveNutritionData['percentages']['goalProgressPct'];
+$attendancePct = $liveNutritionData['percentages']['attendancePct'];
+$smartSuggestions = $liveNutritionData['smartSuggestions'];
 
 ?>
 
 <!-- ── NUTRITION SNAPSHOT ── -->
-<section class="diet-schedule-section">
+<section class="diet-schedule-section" id="liveNutritionSection">
   <div class="section-header">
     <h3>Weekly Nutrition Snapshot</h3>
     <span class="btn-outline">Live from your meal logs</span>
   </div>
 
-  <div class="diet-calendar">
-    <?php foreach ($weekDates as $dateValue): ?>
-    <?php $isToday = $dateValue === $todayDate; ?>
-    <?php $dayTotals = $dailyTotals[$dateValue] ?? ['calories' => 0, 'grams' => 0, 'meal_count' => 0, 'entry_count' => 0]; ?>
-    <div class="diet-day<?php echo $isToday ? ' active' : ''; ?>">
+  <div class="diet-calendar" id="liveDietCalendar">
+    <?php foreach ($liveNutritionData['calendarDays'] as $dayData): ?>
+    <div class="diet-day<?php echo $dayData['is_today'] ? ' active' : ''; ?>">
       <div class="day-header">
-        <span class="day-name"><?php echo $isToday ? 'Today' : htmlspecialchars(date('l', strtotime($dateValue)), ENT_QUOTES, 'UTF-8'); ?></span>
-        <span class="day-calories"><?php echo (int)$dayTotals['calories']; ?> cal</span>
+        <span class="day-name"><?php echo htmlspecialchars($dayData['day_name'], ENT_QUOTES, 'UTF-8'); ?></span>
+        <span class="day-calories"><?php echo (int)$dayData['entry_count']; ?> entries</span>
       </div>
 
       <div class="meals">
-        <div class="meal-item<?php echo $isToday ? ' completed' : ''; ?>">
-          <span class="meal-time">Grams</span>
-          <span class="meal-name"><?php echo (int)round((float)$dayTotals['grams']); ?> g total</span>
-          <span class="meal-cal"><?php echo (int)progressPct($dayTotals['grams'], $targetGrams); ?>%</span>
-        </div>
-
-        <div class="meal-item<?php echo $isToday ? ' completed' : ''; ?>">
+        <div class="meal-item">
           <span class="meal-time">Meal Types</span>
-          <span class="meal-name"><?php echo (int)$dayTotals['meal_count']; ?> types logged</span>
-          <span class="meal-cal"><?php echo (int)progressPct($dayTotals['meal_count'], $targetMeals); ?>%</span>
+          <span class="meal-name"><?php echo (int)$dayData['meal_count']; ?> types logged</span>
+          <span class="meal-cal"><?php echo (int)$dayData['meal_pct']; ?>%</span>
         </div>
 
-        <div class="meal-item<?php echo $isToday ? ' completed' : ''; ?>">
+        <div class="meal-item">
           <span class="meal-time">Entries</span>
-          <span class="meal-name"><?php echo (int)$dayTotals['entry_count']; ?> food entries</span>
-          <span class="meal-cal"><?php echo (int)progressPct($dayTotals['entry_count'], $targetEntries); ?>%</span>
+          <span class="meal-name"><?php echo (int)$dayData['entry_count']; ?> food entries</span>
+          <span class="meal-cal"><?php echo (int)$dayData['entry_pct']; ?>%</span>
         </div>
 
         <div class="meal-item">
           <span class="meal-time">Target</span>
-          <span class="meal-name"><?php echo (int)$targetCalories; ?> cal target</span>
-          <span class="meal-cal"><?php echo (int)$targetGrams; ?> g goal</span>
+          <span class="meal-name"><?php echo (int)$targetMeals; ?> meal types</span>
+          <span class="meal-cal"><?php echo (int)$targetEntries; ?> entries</span>
         </div>
       </div>
     </div>
@@ -655,40 +705,14 @@ if (empty($smartSuggestions)) {
 
   <div class="nutrition-summary">
     <div class="nutrition-card">
-      <div class="nutrition-icon protein">
-        <i class="fas fa-fire"></i>
-      </div>
-      <div class="nutrition-info">
-        <span class="nutrition-label">Calories</span>
-        <span class="nutrition-value"><?php echo (int)$todayTotals['calories']; ?> / <?php echo (int)$targetCalories; ?> cal</span>
-        <div class="nutrition-bar">
-          <div class="bar-fill" style="width: <?php echo $caloriesPct; ?>%"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="nutrition-card">
-      <div class="nutrition-icon carbs">
-        <i class="fas fa-weight-hanging"></i>
-      </div>
-      <div class="nutrition-info">
-        <span class="nutrition-label">Grams Logged</span>
-        <span class="nutrition-value"><?php echo (int)round((float)$todayTotals['grams']); ?>g / <?php echo (int)$targetGrams; ?>g</span>
-        <div class="nutrition-bar">
-          <div class="bar-fill" style="width: <?php echo $gramsPct; ?>%"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="nutrition-card">
       <div class="nutrition-icon fats">
         <i class="fas fa-utensils"></i>
       </div>
       <div class="nutrition-info">
         <span class="nutrition-label">Meal Types</span>
-        <span class="nutrition-value"><?php echo (int)$todayTotals['meal_count']; ?> / <?php echo (int)$targetMeals; ?></span>
+        <span class="nutrition-value" id="liveMealTypesValue"><?php echo (int)$todayTotals['meal_count']; ?> / <?php echo (int)$targetMeals; ?></span>
         <div class="nutrition-bar">
-          <div class="bar-fill" style="width: <?php echo $mealsPct; ?>%"></div>
+          <div class="bar-fill" id="liveMealTypesBar" style="width: <?php echo $mealsPct; ?>%"></div>
         </div>
       </div>
     </div>
@@ -699,17 +723,423 @@ if (empty($smartSuggestions)) {
       </div>
       <div class="nutrition-info">
         <span class="nutrition-label">Food Entries</span>
-        <span class="nutrition-value"><?php echo (int)$todayTotals['entry_count']; ?> / <?php echo (int)$targetEntries; ?> entries</span>
+        <span class="nutrition-value" id="liveEntriesValue"><?php echo (int)$todayTotals['entry_count']; ?> / <?php echo (int)$targetEntries; ?> entries</span>
         <div class="nutrition-bar">
-          <div class="bar-fill" style="width: <?php echo $entriesPct; ?>%"></div>
+          <div class="bar-fill" id="liveEntriesBar" style="width: <?php echo $entriesPct; ?>%"></div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
+
+date_default_timezone_set('Asia/Manila');
+
+if (!isset($conn)) {
+  $dbPath = __DIR__ . '/../Database/DB.sqlite';
+  try {
+    $conn = new PDO("sqlite:" . $dbPath);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  } catch (Exception $e) {
+    die("Database connection failed: " . $e->getMessage());
+  }
+}
+
+if (!function_exists('progressPct')) {
+  function progressPct($value, $target) {
+    $value = (float)$value;
+    $target = (float)$target;
+    if ($target <= 0) {
+      return 0;
+    }
+    $pct = round(($value / $target) * 100);
+    if ($pct < 0) $pct = 0;
+    if ($pct > 100) $pct = 100;
+    return $pct;
+  }
+}
+
+if (!function_exists('myplan_build_live_dashboard_data')) {
+  function myplan_build_live_dashboard_data($conn, $goal, $fitnessLevel) {
+    $userId = 0;
+    if (isset($_SESSION['user_id'])) {
+      $userId = (int)$_SESSION['user_id'];
+    } elseif (isset($_SESSION['id'])) {
+      $userId = (int)$_SESSION['id'];
+    }
+
+    $goalLower = function_exists('mb_strtolower') ? mb_strtolower((string)$goal, 'UTF-8') : strtolower((string)$goal);
+    $fitnessLower = function_exists('mb_strtolower') ? mb_strtolower((string)$fitnessLevel, 'UTF-8') : strtolower((string)$fitnessLevel);
+
+    $todayDate = date('Y-m-d');
+    $weekDates = [];
+    for ($i = 6; $i >= 0; $i--) {
+      $weekDates[] = date('Y-m-d', strtotime("-{$i} day"));
+    }
+
+    $dailyTotals = [];
+    foreach ($weekDates as $dateValue) {
+      $dailyTotals[$dateValue] = [
+        'meal_count' => 0,
+        'entry_count' => 0
+      ];
+    }
+
+    $todayTotals = [
+      'meal_count' => 0,
+      'entry_count' => 0
+    ];
+
+    $weeklyAttendanceCount = 0;
+    $weeklyWorkoutCount = 0;
+
+    $targetMeals = 4;
+    $targetEntries = 4;
+    $weeklyWorkoutTarget = 4;
+
+    if (strpos($fitnessLower, 'beginner') !== false) {
+      $weeklyWorkoutTarget = 3;
+    } elseif (strpos($fitnessLower, 'advanced') !== false) {
+      $weeklyWorkoutTarget = 5;
+    }
+
+    if ($userId > 0) {
+      $weekStart = $weekDates[0];
+      $weekEnd = $weekDates[count($weekDates) - 1];
+
+      try {
+        $nutritionStmt = $conn->prepare("
+          SELECT 
+            log_date,
+            COUNT(*) AS entry_count,
+            COUNT(DISTINCT meal_type) AS meal_count
+          FROM meal_logs
+          WHERE user_id = ? AND log_date BETWEEN ? AND ?
+          GROUP BY log_date
+          ORDER BY log_date ASC
+        ");
+        $nutritionStmt->execute([$userId, $weekStart, $weekEnd]);
+        $nutritionRows = $nutritionStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($nutritionRows as $row) {
+          $logDate = (string)$row['log_date'];
+          if (isset($dailyTotals[$logDate])) {
+            $dailyTotals[$logDate] = [
+              'meal_count' => (int)$row['meal_count'],
+              'entry_count' => (int)$row['entry_count']
+            ];
+          }
+        }
+
+        $todayTotals = $dailyTotals[$todayDate] ?? $todayTotals;
+      } catch (Throwable $e) {
+      }
+
+      try {
+        $attendanceStmt = $conn->prepare("
+          SELECT COUNT(*)
+          FROM attendance
+          WHERE user_id = ?
+          AND date(datetime) BETWEEN ? AND ?
+        ");
+        $attendanceStmt->execute([$userId, $weekStart, $weekEnd]);
+        $weeklyAttendanceCount = (int)$attendanceStmt->fetchColumn();
+      } catch (Throwable $e) {
+        $weeklyAttendanceCount = 0;
+      }
+
+      try {
+        $workoutStmt = $conn->prepare("
+          SELECT COUNT(*)
+          FROM workout_logs
+          WHERE user_id = ?
+          AND date(logged_at) BETWEEN ? AND ?
+        ");
+        $workoutStmt->execute([$userId, $weekStart, $weekEnd]);
+        $weeklyWorkoutCount = (int)$workoutStmt->fetchColumn();
+      } catch (Throwable $e) {
+        $weeklyWorkoutCount = 0;
+      }
+    }
+
+    $mealsPct = progressPct($todayTotals['meal_count'], $targetMeals);
+    $entriesPct = progressPct($todayTotals['entry_count'], $targetEntries);
+    $goalProgressPct = progressPct($weeklyWorkoutCount, $weeklyWorkoutTarget);
+    $attendancePct = progressPct($weeklyAttendanceCount, 4);
+
+    $weeklyNutritionEntries = 0;
+    foreach ($dailyTotals as $dayData) {
+      $weeklyNutritionEntries += (int)$dayData['entry_count'];
+    }
+
+    $smartSuggestions = [];
+
+    if (strpos($goalLower, 'lose') !== false || strpos($goalLower, 'fat') !== false || strpos($goalLower, 'weight') !== false) {
+      if ($todayTotals['entry_count'] < 3) {
+        $smartSuggestions[] = 'For fat loss, keep meal logging consistent so portions stay controlled.';
+      }
+      if ($weeklyWorkoutCount < $weeklyWorkoutTarget) {
+        $smartSuggestions[] = 'You are below your weekly workout target. Add one more cardio or full-body session.';
+      }
+    } elseif (strpos($goalLower, 'gain') !== false || strpos($goalLower, 'muscle') !== false || strpos($goalLower, 'bulk') !== false) {
+      if ($todayTotals['entry_count'] < 4) {
+        $smartSuggestions[] = 'For muscle gain, spread meals more evenly through the day.';
+      }
+      if ($weeklyWorkoutCount < $weeklyWorkoutTarget) {
+        $smartSuggestions[] = 'Add another strength session this week to stay aligned with muscle gain.';
+      }
+    } elseif (strpos($goalLower, 'endurance') !== false || strpos($goalLower, 'run') !== false || strpos($goalLower, 'cardio') !== false) {
+      $smartSuggestions[] = 'Keep your meal timing regular so your energy stays steady for endurance work.';
+      if ($weeklyWorkoutCount < $weeklyWorkoutTarget) {
+        $smartSuggestions[] = 'You still have room for another cardio-focused workout this week.';
+      }
+    } else {
+      if ($todayTotals['meal_count'] < 3) {
+        $smartSuggestions[] = 'Try completing more meal types today to build a more balanced routine.';
+      }
+    }
+
+    if ($todayTotals['entry_count'] === 0) {
+      $smartSuggestions[] = 'You have no meal logs today. Start with your first meal entry.';
+    }
+
+    if ($todayTotals['meal_count'] < 3) {
+      $smartSuggestions[] = 'You have only logged ' . $todayTotals['meal_count'] . ' meal types today. Try spreading meals across breakfast, lunch, dinner, and snacks.';
+    }
+
+    if ($weeklyAttendanceCount < 3) {
+      $smartSuggestions[] = 'Gym attendance is still light this week. Lock in another visit to stay on track.';
+    }
+
+    if ($weeklyNutritionEntries >= 20) {
+      $smartSuggestions[] = 'Great consistency this week. Your meal logging habit is staying active.';
+    }
+
+    if (empty($smartSuggestions)) {
+      $smartSuggestions[] = 'Your current routine is on track. Keep logging meals and finishing workouts consistently.';
+    }
+
+    $smartSuggestions = array_values(array_unique($smartSuggestions));
+    $smartSuggestions = array_slice($smartSuggestions, 0, 4);
+
+    $calendarDays = [];
+    foreach ($weekDates as $dateValue) {
+      $isToday = $dateValue === $todayDate;
+      $dayTotals = $dailyTotals[$dateValue] ?? ['meal_count' => 0, 'entry_count' => 0];
+      $calendarDays[] = [
+        'date' => $dateValue,
+        'is_today' => $isToday,
+        'day_name' => $isToday ? 'Today' : date('l', strtotime($dateValue)),
+        'meal_count' => (int)$dayTotals['meal_count'],
+        'entry_count' => (int)$dayTotals['entry_count'],
+        'meal_pct' => (int)progressPct($dayTotals['meal_count'], $targetMeals),
+        'entry_pct' => (int)progressPct($dayTotals['entry_count'], $targetEntries)
+      ];
+    }
+
+    return [
+      'todayTotals' => [
+        'meal_count' => (int)$todayTotals['meal_count'],
+        'entry_count' => (int)$todayTotals['entry_count']
+      ],
+      'targets' => [
+        'targetMeals' => (int)$targetMeals,
+        'targetEntries' => (int)$targetEntries
+      ],
+      'percentages' => [
+        'mealsPct' => (int)$mealsPct,
+        'entriesPct' => (int)$entriesPct,
+        'goalProgressPct' => (int)$goalProgressPct,
+        'attendancePct' => (int)$attendancePct
+      ],
+      'goal' => (string)$goal,
+      'fitnessLevel' => (string)$fitnessLevel,
+      'weeklyWorkoutCount' => (int)$weeklyWorkoutCount,
+      'weeklyWorkoutTarget' => (int)$weeklyWorkoutTarget,
+      'weeklyAttendanceCount' => (int)$weeklyAttendanceCount,
+      'calendarDays' => $calendarDays,
+      'smartSuggestions' => $smartSuggestions
+    ];
+  }
+}
+
+$goal = $goal ?? 'Fitness Goal';
+$fitnessLevel = $fitnessLevel ?? 'beginner';
+$fitnessLower = strtolower($fitnessLevel);
+
+if (isset($_GET['dashboard_live']) && $_GET['dashboard_live'] === '1') {
+  header('Content-Type: application/json; charset=utf-8');
+  echo json_encode(
+    myplan_build_live_dashboard_data($conn, $goal, $fitnessLevel),
+    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+  );
+  exit;
+}
+
+$liveDashboardData = myplan_build_live_dashboard_data($conn, $goal, $fitnessLevel);
+
+$todayTotals = $liveDashboardData['todayTotals'];
+$targetMeals = $liveDashboardData['targets']['targetMeals'];
+$targetEntries = $liveDashboardData['targets']['targetEntries'];
+$mealsPct = $liveDashboardData['percentages']['mealsPct'];
+$entriesPct = $liveDashboardData['percentages']['entriesPct'];
+$goalProgressPct = $liveDashboardData['percentages']['goalProgressPct'];
+$attendancePct = $liveDashboardData['percentages']['attendancePct'];
+$weeklyWorkoutCount = $liveDashboardData['weeklyWorkoutCount'];
+$weeklyWorkoutTarget = $liveDashboardData['weeklyWorkoutTarget'];
+$weeklyAttendanceCount = $liveDashboardData['weeklyAttendanceCount'];
+$smartSuggestions = $liveDashboardData['smartSuggestions'];
+?>
+
+<script>
+(function () {
+  const liveUrl = window.location.pathname + '?dashboard_live=1';
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function renderCalendar(days, targets) {
+    const wrap = document.getElementById('liveDietCalendar');
+    if (!wrap) return;
+
+    wrap.innerHTML = days.map(function (day) {
+      return `
+        <div class="diet-day${day.is_today ? ' active' : ''}">
+          <div class="day-header">
+            <span class="day-name">${escapeHtml(day.day_name)}</span>
+            <span class="day-calories">${day.entry_count} entries</span>
+          </div>
+
+          <div class="meals">
+            <div class="meal-item">
+              <span class="meal-time">Meal Types</span>
+              <span class="meal-name">${day.meal_count} types logged</span>
+              <span class="meal-cal">${day.meal_pct}%</span>
+            </div>
+
+            <div class="meal-item">
+              <span class="meal-time">Entries</span>
+              <span class="meal-name">${day.entry_count} food entries</span>
+              <span class="meal-cal">${day.entry_pct}%</span>
+            </div>
+
+            <div class="meal-item">
+              <span class="meal-time">Target</span>
+              <span class="meal-name">${targets.targetMeals} meal types</span>
+              <span class="meal-cal">${targets.targetEntries} entries</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderSuggestions(items) {
+    const wrap = document.getElementById('liveSuggestionCards');
+    if (!wrap) return;
+
+    wrap.innerHTML = items.map(function (text) {
+      return `
+        <div class="suggestion-card" data-tab="workout" style="display: flex">
+          <div class="suggestion-icon workout">
+            <i class="fas fa-bolt"></i>
+          </div>
+          <div class="suggestion-text">
+            <h5>Action Item</h5>
+            <p>${escapeHtml(text)}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function applyNutritionData(data) {
+    renderCalendar(data.calendarDays, data.targets);
+    renderSuggestions(data.smartSuggestions);
+
+    const liveMealTypesValue = document.getElementById('liveMealTypesValue');
+    const liveMealTypesBar = document.getElementById('liveMealTypesBar');
+    const liveEntriesValue = document.getElementById('liveEntriesValue');
+    const liveEntriesBar = document.getElementById('liveEntriesBar');
+    const liveGoalProgressBar = document.getElementById('liveGoalProgressBar');
+    const myPlanPrimaryGoalHint = document.getElementById('myPlanPrimaryGoalHint');
+    const liveAttendanceBar = document.getElementById('liveAttendanceBar');
+    const liveAttendanceText = document.getElementById('liveAttendanceText');
+    const liveMealLoggingBar = document.getElementById('liveMealLoggingBar');
+    const liveMealLoggingText = document.getElementById('liveMealLoggingText');
+
+    if (liveMealTypesValue) {
+      liveMealTypesValue.textContent = data.todayTotals.meal_count + ' / ' + data.targets.targetMeals;
+    }
+    if (liveMealTypesBar) {
+      liveMealTypesBar.style.width = data.percentages.mealsPct + '%';
+    }
+    if (liveEntriesValue) {
+      liveEntriesValue.textContent = data.todayTotals.entry_count + ' / ' + data.targets.targetEntries + ' entries';
+    }
+    if (liveEntriesBar) {
+      liveEntriesBar.style.width = data.percentages.entriesPct + '%';
+    }
+    if (liveGoalProgressBar) {
+      liveGoalProgressBar.style.width = data.percentages.goalProgressPct + '%';
+    }
+    if (myPlanPrimaryGoalHint) {
+      myPlanPrimaryGoalHint.textContent = data.weeklyWorkoutCount + '/' + data.weeklyWorkoutTarget + ' workout sessions this week (' + data.fitnessLevel + ')';
+    }
+    if (liveAttendanceBar) {
+      liveAttendanceBar.style.width = data.percentages.attendancePct + '%';
+    }
+    if (liveAttendanceText) {
+      liveAttendanceText.textContent = data.weeklyAttendanceCount + ' check-ins this week';
+    }
+    if (liveMealLoggingBar) {
+      liveMealLoggingBar.style.width = data.percentages.entriesPct + '%';
+    }
+    if (liveMealLoggingText) {
+      liveMealLoggingText.textContent = data.todayTotals.entry_count + ' / ' + data.targets.targetEntries + ' food entries today';
+    }
+  }
+
+  async function refreshNutritionLive() {
+    try {
+      const response = await fetch(liveUrl, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      });
+
+      if (!response.ok) return;
+      const data = await response.json();
+      applyNutritionData(data);
+    } catch (error) {
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    refreshNutritionLive();
+    setInterval(refreshNutritionLive, 3000);
+  });
+
+  document.addEventListener('mealLogUpdated', function () {
+    refreshNutritionLive();
+  });
+
+  window.refreshNutritionLive = refreshNutritionLive;
+})();
+</script>
+
 <!-- ── GOALS & SUGGESTIONS ── -->
-<section class="bottom-grid">
+<section class="bottom-grid" id="liveGoalsSection">
   <div class="box goals-box">
     <div class="box-header">
       <h3>Goals Progress</h3>
@@ -717,18 +1147,7 @@ if (empty($smartSuggestions)) {
     </div>
 
     <ul class="goals-list">
-      <li>
-        <div class="icon-circle cycling">
-          <i class="fas fa-bicycle"></i>
-        </div>
-        <div class="goal-info">
-          <span class="goal-name" id="myPlanPrimaryGoalName"><?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?></span>
-          <div class="progress-container">
-            <div class="progress-bar yellow" style="width: <?php echo $goalProgressPct; ?>%"></div>
-          </div>
-          <span class="days-count" id="myPlanPrimaryGoalHint"><?php echo $weeklyWorkoutCount; ?>/<?php echo $weeklyWorkoutTarget; ?> workout sessions this week (<?php echo htmlspecialchars($fitnessLevel, ENT_QUOTES, 'UTF-8'); ?>)</span>
-        </div>
-      </li>
+
 
       <li>
         <div class="icon-circle running">
@@ -737,22 +1156,9 @@ if (empty($smartSuggestions)) {
         <div class="goal-info">
           <span class="goal-name">Gym Attendance</span>
           <div class="progress-container">
-            <div class="progress-bar orange" style="width: <?php echo progressPct($weeklyAttendanceCount, 4); ?>%"></div>
+            <div class="progress-bar orange" id="liveAttendanceBar" style="width: <?php echo $attendancePct; ?>%"></div>
           </div>
-          <span class="days-count"><?php echo $weeklyAttendanceCount; ?> check-ins this week</span>
-        </div>
-      </li>
-
-      <li>
-        <div class="icon-circle water">
-          <i class="fas fa-fire"></i>
-        </div>
-        <div class="goal-info">
-          <span class="goal-name">Calorie Target</span>
-          <div class="progress-container">
-            <div class="progress-bar blue" style="width: <?php echo $caloriesPct; ?>%"></div>
-          </div>
-          <span class="days-count"><?php echo (int)$todayTotals['calories']; ?> / <?php echo (int)$targetCalories; ?> calories today</span>
+          <span class="days-count" id="liveAttendanceText"><?php echo $weeklyAttendanceCount; ?> check-ins this week</span>
         </div>
       </li>
 
@@ -763,92 +1169,33 @@ if (empty($smartSuggestions)) {
         <div class="goal-info">
           <span class="goal-name">Meal Logging</span>
           <div class="progress-container">
-            <div class="progress-bar purple" style="width: <?php echo $entriesPct; ?>%"></div>
+            <div class="progress-bar purple" id="liveMealLoggingBar" style="width: <?php echo $entriesPct; ?>%"></div>
           </div>
-          <span class="days-count"><?php echo (int)$todayTotals['entry_count']; ?> / <?php echo (int)$targetEntries; ?> food entries today</span>
+          <span class="days-count" id="liveMealLoggingText"><?php echo (int)$todayTotals['entry_count']; ?> / <?php echo (int)$targetEntries; ?> food entries today</span>
         </div>
       </li>
     </ul>
   </div>
+
+  <div class="ai-suggestions-box">
+    <h4>Personalized Suggestions</h4>
+    <div class="suggestion-cards" id="liveSuggestionCards">
+      <?php foreach ($smartSuggestions as $suggestion): ?>
+      <div class="suggestion-card" data-tab="workout" style="display: flex">
+        <div class="suggestion-icon workout">
+          <i class="fas fa-bolt"></i>
+        </div>
+        <div class="suggestion-text">
+          <h5>Action Item</h5>
+          <p><?php echo htmlspecialchars($suggestion, ENT_QUOTES, 'UTF-8'); ?></p>
+        </div>
+      </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
 </section>
 
-<?php
-$workoutMode = $_GET['mode'] ?? 'moderate';
-$selectedLevel = $_GET['level'] ?? $fitnessLower;
-
-$sets = 3;
-$multiplier = 1;
-
-if ($workoutMode === 'light') {
-  $sets = 2;
-  $multiplier = 0.8;
-} elseif ($workoutMode === 'heavy') {
-  $sets = 5;
-  $multiplier = 1.3;
-}
-
-if ($selectedLevel === 'advanced') {
-  $sets += 1;
-} elseif ($selectedLevel === 'beginner') {
-  $sets = max(2, $sets - 1);
-}
-
-$exercisePlan = [
-  ['name' => 'Chest Press', 'machine' => 'SeatedChestPress.php', 'cal' => 8],
-  ['name' => 'Lat Pulldown', 'machine' => 'LatPulldownSeatedCableRow.php', 'cal' => 8],
-  ['name' => 'Leg Press', 'machine' => 'LegPressHackSquat.php', 'cal' => 10],
-  ['name' => 'Shoulder Press', 'machine' => 'ShoulderPress.php', 'cal' => 7],
-  ['name' => 'Preacher Curl', 'machine' => 'PreacherCurl.php', 'cal' => 6],
-  ['name' => 'Treadmill', 'machine' => 'Treadmill.php', 'cal' => 12],
-];
-
-$totalBurn = 0;
-foreach ($exercisePlan as &$ex) {
-  $ex['burn'] = round($ex['cal'] * $sets * $multiplier);
-  $totalBurn += $ex['burn'];
-}
-unset($ex);
-
-$targetBurn = 300;
-if ($workoutMode === 'light') $targetBurn = 200;
-if ($workoutMode === 'heavy') $targetBurn = 600;
-?>
-
-<style>
-.plan-select {
-  background: #0f0f0f;
-  border: 1px solid #383838;
-  color: #fff;
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 0.85rem;
-  outline: none;
-}
-
-.plan-select:focus {
-  border-color: #ffcc00;
-}
-
-.plan-mode-btn.active {
-  background: #ffcc00;
-  color: #111 !important;
-  border-color: #ffcc00;
-}
-</style>
-
-<!-- ── WORKOUT PLAN ── --> 
-<?php
-$exerciseList = [];
-
-try {
-    require __DIR__ . '/../Login/connection.php';
-    $stmt = $pdo->query("SELECT exercise_id, name, movement_type FROM exercises ORDER BY name ASC");
-    $exerciseList = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (Throwable $e) {
-    $exerciseList = [];
-}
-?>
-
+<!-- ── WORKOUT PLAN ── -->
 <section class="workout-tracker-section">
   <div class="mt-stripe"></div>
   <div class="mt-panel">
@@ -901,7 +1248,7 @@ try {
         </select>
       </div>
 
-      <button class="mt-add-btn" onclick="addWorkout()">Add Workout</button>
+      <button class="mt-add-btn" type="button" onclick="addWorkout()">Add Workout</button>
     </div>
 
     <hr class="mt-cards-divider" />
@@ -910,25 +1257,242 @@ try {
 </section>
 
 <style>
-/* Keep original design */
-.mt-select, .mt-number { width:100%; background:#0f0f0f; color:#fff; border:1px solid #383838; border-radius:8px; padding:10px; }
-.mt-select:focus, .mt-number:focus { border-color:#ffcc00; text-align:center; }
-.workout-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
-.day-card { background:#101010; border:1px solid #2b2b2b; border-radius:10px; padding:12px; }
-.day-title { color:#ffcc00; font-weight:700; margin-bottom:10px; }
-.workout-item { background:#0d0d0d; border:1px solid #2e2e2e; border-radius:8px; padding:8px; margin-bottom:8px; font-size:0.85rem; }
-.done-btn, .remove-btn { margin-top:6px; border:none; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:0.75rem; }
-.done-btn { background:#ffcc00; } .remove-btn { background:#ff4d4d; color:#fff; margin-left:5px; }
+.plan-select {
+  background: #0f0f0f;
+  border: 1px solid #383838;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.plan-select:focus {
+  border-color: #ffcc00;
+}
+
+.plan-mode-btn.active {
+  background: #ffcc00;
+  color: #111 !important;
+  border-color: #ffcc00;
+}
+
+.mt-select,
+.mt-number {
+  width:100%;
+  background:#0f0f0f;
+  color:#fff;
+  border:1px solid #383838;
+  border-radius:8px;
+  padding:10px;
+}
+
+.mt-select:focus,
+.mt-number:focus {
+  border-color:#ffcc00;
+  text-align:center;
+}
+
+.workout-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;
+}
+
+.day-card {
+  background:#101010;
+  border:1px solid #2b2b2b;
+  border-radius:10px;
+  padding:12px;
+}
+
+.day-title {
+  color:#ffcc00;
+  font-weight:700;
+  margin-bottom:10px;
+}
+
+.workout-item {
+  background:#0d0d0d;
+  border:1px solid #2e2e2e;
+  border-radius:8px;
+  padding:8px;
+  margin-bottom:8px;
+  font-size:0.85rem;
+}
+
+.done-btn,
+.remove-btn {
+  margin-top:6px;
+  border:none;
+  padding:4px 8px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:0.75rem;
+}
+
+.done-btn {
+  background:#ffcc00;
+}
+
+.remove-btn {
+  background:#ff4d4d;
+  color:#fff;
+  margin-left:5px;
+}
 </style>
 
 <script>
-const exercises = <?php echo json_encode($exerciseList); ?>;
+(function () {
+  const liveUrl = window.location.pathname + '?dashboard_live=1';
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function renderCalendar(days, targets) {
+    const wrap = document.getElementById('liveDietCalendar');
+    if (!wrap) return;
+
+    wrap.innerHTML = days.map(function (day) {
+      return `
+        <div class="diet-day${day.is_today ? ' active' : ''}">
+          <div class="day-header">
+            <span class="day-name">${escapeHtml(day.day_name)}</span>
+            <span class="day-calories">${day.entry_count} entries</span>
+          </div>
+
+          <div class="meals">
+            <div class="meal-item${day.is_today ? ' completed' : ''}">
+              <span class="meal-time">Meal Types</span>
+              <span class="meal-name">${day.meal_count} types logged</span>
+              <span class="meal-cal">${day.meal_pct}%</span>
+            </div>
+
+            <div class="meal-item${day.is_today ? ' completed' : ''}">
+              <span class="meal-time">Entries</span>
+              <span class="meal-name">${day.entry_count} food entries</span>
+              <span class="meal-cal">${day.entry_pct}%</span>
+            </div>
+
+            <div class="meal-item">
+              <span class="meal-time">Target</span>
+              <span class="meal-name">${targets.targetMeals} meal types</span>
+              <span class="meal-cal">${targets.targetEntries} entries</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderSuggestions(items) {
+    const wrap = document.getElementById('liveSuggestionCards');
+    if (!wrap) return;
+
+    wrap.innerHTML = items.map(function (text) {
+      return `
+        <div class="suggestion-card" data-tab="workout" style="display: flex">
+          <div class="suggestion-icon workout">
+            <i class="fas fa-bolt"></i>
+          </div>
+          <div class="suggestion-text">
+            <h5>Action Item</h5>
+            <p>${escapeHtml(text)}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function applyDashboardData(data) {
+    renderCalendar(data.calendarDays, data.targets);
+    renderSuggestions(data.smartSuggestions);
+
+    const liveMealTypesValue = document.getElementById('liveMealTypesValue');
+    const liveMealTypesBar = document.getElementById('liveMealTypesBar');
+    const liveEntriesValue = document.getElementById('liveEntriesValue');
+    const liveEntriesBar = document.getElementById('liveEntriesBar');
+    const liveGoalProgressBar = document.getElementById('liveGoalProgressBar');
+    const myPlanPrimaryGoalName = document.getElementById('myPlanPrimaryGoalName');
+    const myPlanPrimaryGoalHint = document.getElementById('myPlanPrimaryGoalHint');
+    const liveAttendanceBar = document.getElementById('liveAttendanceBar');
+    const liveAttendanceText = document.getElementById('liveAttendanceText');
+    const liveMealLoggingBar = document.getElementById('liveMealLoggingBar');
+    const liveMealLoggingText = document.getElementById('liveMealLoggingText');
+
+    if (myPlanPrimaryGoalName) {
+      myPlanPrimaryGoalName.textContent = data.goal;
+    }
+    if (liveMealTypesValue) {
+      liveMealTypesValue.textContent = data.todayTotals.meal_count + ' / ' + data.targets.targetMeals;
+    }
+    if (liveMealTypesBar) {
+      liveMealTypesBar.style.width = data.percentages.mealsPct + '%';
+    }
+    if (liveEntriesValue) {
+      liveEntriesValue.textContent = data.todayTotals.entry_count + ' / ' + data.targets.targetEntries + ' entries';
+    }
+    if (liveEntriesBar) {
+      liveEntriesBar.style.width = data.percentages.entriesPct + '%';
+    }
+    if (liveGoalProgressBar) {
+      liveGoalProgressBar.style.width = data.percentages.goalProgressPct + '%';
+    }
+    if (myPlanPrimaryGoalHint) {
+      myPlanPrimaryGoalHint.textContent = data.weeklyWorkoutCount + '/' + data.weeklyWorkoutTarget + ' workout sessions this week (' + data.fitnessLevel + ')';
+    }
+    if (liveAttendanceBar) {
+      liveAttendanceBar.style.width = data.percentages.attendancePct + '%';
+    }
+    if (liveAttendanceText) {
+      liveAttendanceText.textContent = data.weeklyAttendanceCount + ' check-ins this week';
+    }
+    if (liveMealLoggingBar) {
+      liveMealLoggingBar.style.width = data.percentages.entriesPct + '%';
+    }
+    if (liveMealLoggingText) {
+      liveMealLoggingText.textContent = data.todayTotals.entry_count + ' / ' + data.targets.targetEntries + ' food entries today';
+    }
+  }
+
+  async function refreshDashboardLive() {
+    try {
+      const response = await fetch(liveUrl, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      });
+
+      if (!response.ok) return;
+      const data = await response.json();
+      applyDashboardData(data);
+    } catch (error) {
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    refreshDashboardLive();
+    setInterval(refreshDashboardLive, 3000);
+  });
+
+  document.addEventListener('dashboardDataUpdated', function () {
+    refreshDashboardLive();
+  });
+
+  window.refreshDashboardLive = refreshDashboardLive;
+})();
+
+const exercises = <?php echo json_encode($exerciseList, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 const workoutType = document.getElementById("workoutType");
 const workoutName = document.getElementById("workoutName");
 const workoutGrid = document.getElementById("workoutGrid");
 const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-
-// Load saved workouts from localStorage
 let savedWorkouts = JSON.parse(localStorage.getItem("workoutLogs") || "[]");
 
 function initDays() {
@@ -941,10 +1505,9 @@ function initDays() {
     workoutGrid.appendChild(card);
   });
 
-  // Reload saved workouts into page
   savedWorkouts.forEach(w => {
     const container = document.querySelector("#day-" + w.day + " .day-content");
-    if(container){
+    if (container) {
       const item = document.createElement("div");
       item.className = "workout-item";
       item.innerHTML = `
@@ -953,12 +1516,14 @@ function initDays() {
         <button class="done-btn">Done</button>
         <button class="remove-btn">Remove</button>
       `;
-      item.querySelector(".remove-btn").onclick = () => { 
-        item.remove(); 
+
+      item.querySelector(".remove-btn").onclick = () => {
+        item.remove();
         savedWorkouts = savedWorkouts.filter(s => !(s.id === w.id));
         localStorage.setItem("workoutLogs", JSON.stringify(savedWorkouts));
       };
-      item.querySelector(".done-btn").onclick = () => saveWorkout(w);
+
+      item.querySelector(".done-btn").onclick = () => saveWorkout(w, item);
       container.appendChild(item);
     }
   });
@@ -968,7 +1533,7 @@ function loadExercises() {
   const type = workoutType.value;
   workoutName.innerHTML = '<option value="">Select Workout</option>';
   exercises.forEach(ex => {
-    if(type === "All" || ex.movement_type === type){
+    if (type === "All" || ex.movement_type === type) {
       const opt = document.createElement("option");
       opt.value = ex.exercise_id;
       opt.textContent = ex.name;
@@ -978,7 +1543,7 @@ function loadExercises() {
 }
 
 workoutType.addEventListener("change", loadExercises);
-window.onload = () => { initDays(); loadExercises(); };
+window.addEventListener("load", () => { initDays(); loadExercises(); });
 
 function addWorkout() {
   const exId = workoutName.value;
@@ -988,10 +1553,10 @@ function addWorkout() {
   const weight = document.getElementById("weight").value;
   const day = document.getElementById("workoutDay").value;
 
-  if(!exId) return alert("Select workout");
+  if (!exId) return alert("Select workout");
 
   const container = document.querySelector("#day-" + day + " .day-content");
-  const id = Date.now(); // unique id for localStorage
+  const id = Date.now();
   const item = document.createElement("div");
   item.className = "workout-item";
 
@@ -1002,24 +1567,23 @@ function addWorkout() {
     <button class="remove-btn">Remove</button>
   `;
 
-  item.querySelector(".remove-btn").onclick = () => { 
-    item.remove(); 
+  item.querySelector(".remove-btn").onclick = () => {
+    item.remove();
     savedWorkouts = savedWorkouts.filter(s => s.id !== id);
     localStorage.setItem("workoutLogs", JSON.stringify(savedWorkouts));
   };
 
   item.querySelector(".done-btn").onclick = () => {
-    saveWorkout({id, exercise_id: exId, name: exName, sets, reps, weight, day});
+    saveWorkout({id, exercise_id: exId, name: exName, sets, reps, weight, day}, item);
   };
 
   container.appendChild(item);
 
-  // Save to localStorage
   savedWorkouts.push({id, exercise_id: exId, name: exName, sets, reps, weight, day});
   localStorage.setItem("workoutLogs", JSON.stringify(savedWorkouts));
 }
 
-function saveWorkout(workout){
+function saveWorkout(workout, itemEl) {
   fetch("save_workout.php", {
     method: "POST",
     headers: {"Content-Type":"application/json"},
@@ -1032,15 +1596,11 @@ function saveWorkout(workout){
   })
   .then(res => res.json())
   .then(data => {
-    if(data.status === "ok"){
-      alert("Workout saved!");
-      // Remove from localStorage and page
+    if (data.status === "ok") {
       savedWorkouts = savedWorkouts.filter(s => s.id !== workout.id);
       localStorage.setItem("workoutLogs", JSON.stringify(savedWorkouts));
-      const container = document.querySelector("#day-" + workout.day + " .day-content");
-      if(container) container.querySelectorAll(".workout-item").forEach(el => {
-        if(el.querySelector("strong").textContent === workout.name) el.remove();
-      });
+      if (itemEl) itemEl.remove();
+      document.dispatchEvent(new CustomEvent("dashboardDataUpdated"));
     } else {
       alert("Error: " + data.error);
     }
@@ -1081,7 +1641,7 @@ if (isset($_SESSION['user_id'])) {
 }
 
 $mt_today = date('Y-m-d');
-$mt_status_message = "Type a food name — calories auto-fill based on grams.";
+$mt_status_message = "Type a food name — grams auto-fill based on selected food.";
 $mt_status_type = "info";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mt_action'])) {
@@ -1105,7 +1665,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mt_action'])) {
                 $mt_status_message = "Please select a valid food and grams.";
                 $mt_status_type = "error";
             } else {
-                $meal_stmt = $conn->prepare("SELECT meal_id, food_name, serving_grams, calories FROM meals WHERE meal_id = ? LIMIT 1");
+                $meal_stmt = $conn->prepare("SELECT meal_id, food_name, serving_grams FROM meals WHERE meal_id = ? LIMIT 1");
                 $meal_stmt->execute([$meal_id]);
                 $meal_row = $meal_stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -1113,35 +1673,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mt_action'])) {
                     $mt_status_message = "Selected food was not found.";
                     $mt_status_type = "error";
                 } else {
-                    $base_grams = (float) $meal_row['serving_grams'];
-                    $base_calories = (float) $meal_row['calories'];
+                    $insert_stmt = $conn->prepare("
+                        INSERT INTO meal_logs (user_id, meal_id, meal_type, log_date, grams_consumed)
+                        VALUES (?, ?, ?, ?, ?)
+                    ");
+                    $ok = $insert_stmt->execute([
+                        $mt_user_id,
+                        $meal_id,
+                        $meal_type,
+                        $mt_today,
+                        $grams_consumed
+                    ]);
 
-                    if ($base_grams <= 0) {
-                        $mt_status_message = "Invalid food serving data.";
-                        $mt_status_type = "error";
+                    if ($ok) {
+                        $mt_status_message = "Food added to meal log.";
+                        $mt_status_type = "success";
                     } else {
-                        $computed_calories = round(($grams_consumed / $base_grams) * $base_calories, 2);
-
-                        $insert_stmt = $conn->prepare("
-                            INSERT INTO meal_logs (user_id, meal_id, meal_type, log_date, grams_consumed, calories)
-                            VALUES (?, ?, ?, ?, ?, ?)
-                        ");
-                        $ok = $insert_stmt->execute([
-                            $mt_user_id,
-                            $meal_id,
-                            $meal_type,
-                            $mt_today,
-                            $grams_consumed,
-                            $computed_calories
-                        ]);
-
-                        if ($ok) {
-                            $mt_status_message = "Food added to meal log.";
-                            $mt_status_type = "success";
-                        } else {
-                            $mt_status_message = "Failed to add food.";
-                            $mt_status_type = "error";
-                        }
+                        $mt_status_message = "Failed to add food.";
+                        $mt_status_type = "error";
                     }
                 }
             }
@@ -1163,18 +1712,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mt_action'])) {
 }
 
 $mt_meals = [];
-$mt_meals_stmt = $conn->query("SELECT meal_id, food_name, serving_grams, calories FROM meals ORDER BY food_name ASC");
+$mt_meals_stmt = $conn->query("SELECT meal_id, food_name, serving_grams FROM meals ORDER BY food_name ASC");
 while ($row = $mt_meals_stmt->fetch(PDO::FETCH_ASSOC)) {
     $row['meal_id'] = (int) $row['meal_id'];
     $row['serving_grams'] = (float) $row['serving_grams'];
-    $row['calories'] = (float) $row['calories'];
     $mt_meals[] = $row;
 }
 
 $mt_today_logs = [];
 if ($mt_user_id > 0) {
     $logs_stmt = $conn->prepare("
-        SELECT ml.log_id, ml.meal_type, ml.grams_consumed, ml.calories, m.food_name
+        SELECT ml.log_id, ml.meal_type, ml.grams_consumed, m.food_name
         FROM meal_logs ml
         INNER JOIN meals m ON ml.meal_id = m.meal_id
         WHERE ml.user_id = ? AND ml.log_date = ?
@@ -1247,7 +1795,7 @@ foreach ($mt_today_logs as $log) {
           >Qty / Grams</label>
           <div class="mt-qty-wrap">
             <button class="mt-qty-btn" type="button" onclick="mtChangeQty(-10)">−</button>
-            <input id="mtQtyInput" class="mt-number" name="grams_consumed" type="number" value="100" min="1" step="1" />
+            <input id="mtQtyInput" class="mt-number" name="grams_consumed" type="number" value="0" min="1" step="1" />
             <button class="mt-qty-btn" type="button" onclick="mtChangeQty(10)">+</button>
           </div>
         </div>
@@ -1260,10 +1808,6 @@ foreach ($mt_today_logs as $log) {
 
     <div class="mt-nutrition-preview" id="mtNutritionPreview">
       <div class="mt-preview-top">
-        <div class="mt-nutr-item">
-          <span class="mt-nutr-val" id="mtPvCal">0</span>
-          <span class="mt-nutr-lbl">Calories</span>
-        </div>
         <div class="mt-nutr-item">
           <span class="mt-nutr-val" id="mtPvGrams">0g</span>
           <span class="mt-nutr-lbl">Grams</span>
@@ -1296,7 +1840,7 @@ foreach ($mt_today_logs as $log) {
             <?php foreach ($logs as $log) { ?>
               <div class="mt-meal-info">
                 <?php echo htmlspecialchars($log['food_name'], ENT_QUOTES, 'UTF-8'); ?><br />
-                <?php echo (float) $log['grams_consumed']; ?>g • <?php echo (float) $log['calories']; ?> cal
+                <?php echo (float) $log['grams_consumed']; ?>g
               </div>
             <?php } ?>
           <?php } else { ?>
@@ -1317,8 +1861,7 @@ foreach ($mt_today_logs as $log) {
             <div class="mt-meal-title"><?php echo htmlspecialchars($log['food_name'], ENT_QUOTES, 'UTF-8'); ?></div>
             <div class="mt-meal-info">
               Meal: <?php echo htmlspecialchars(ucfirst($log['meal_type']), ENT_QUOTES, 'UTF-8'); ?><br />
-              Grams: <?php echo (float) $log['grams_consumed']; ?>g<br />
-              Calories: <?php echo (float) $log['calories']; ?>
+              Grams: <?php echo (float) $log['grams_consumed']; ?>g
             </div>
           </div>
         <?php } ?>
@@ -1602,7 +2145,6 @@ const mtMealId = document.getElementById("mtMealId");
 const mtQtyInput = document.getElementById("mtQtyInput");
 const mtSuggestions = document.getElementById("mtSuggestions");
 const mtAddBtn = document.getElementById("mtAddBtn");
-const mtPvCal = document.getElementById("mtPvCal");
 const mtPvGrams = document.getElementById("mtPvGrams");
 const mtPvServing = document.getElementById("mtPvServing");
 const mtStatus = document.getElementById("mtStatus");
@@ -1632,19 +2174,14 @@ function mtUpdatePreview() {
 
   if (!mtSelectedMeal) {
     mtAddBtn.disabled = true;
-    mtPvCal.textContent = "0";
     mtPvGrams.textContent = grams + "g";
     mtPvServing.textContent = "";
     return;
   }
 
   const baseGrams = parseFloat(mtSelectedMeal.serving_grams) || 1;
-  const baseCalories = parseFloat(mtSelectedMeal.calories) || 0;
-  const totalCalories = ((grams / baseGrams) * baseCalories).toFixed(2);
-
-  mtPvCal.textContent = totalCalories;
   mtPvGrams.textContent = grams + "g";
-  mtPvServing.textContent = mtSelectedMeal.food_name + " • standard serving " + baseGrams + "g = " + baseCalories + " cal";
+  mtPvServing.textContent = mtSelectedMeal.food_name + " • standard serving " + baseGrams + "g";
   mtAddBtn.disabled = false;
 }
 
@@ -1658,7 +2195,7 @@ function mtRenderSuggestions(list) {
   mtSuggestions.innerHTML = list.map(item => `
     <div class="mt-suggestion-item" data-id="${item.meal_id}">
       <strong>${item.food_name}</strong><br>
-      <small>${item.serving_grams}g • ${item.calories} cal</small>
+      <small>${item.serving_grams}g</small>
     </div>
   `).join("");
 
@@ -1754,13 +2291,13 @@ mtFoodName.addEventListener("input", function () {
   mtMealId.value = "";
   mtSelectedMeal = null;
   mtAddBtn.disabled = true;
-  mtPvCal.textContent = "0";
   mtPvServing.textContent = "";
 
   if (!q) {
     mtSuggestions.innerHTML = "";
     mtSuggestions.style.display = "none";
-    mtSetStatus("Type a food name — calories auto-fill based on grams.", "info");
+    mtSetStatus("Type a food name — grams auto-fill based on selected food.", "info");
+    mtUpdatePreview();
     return;
   }
 

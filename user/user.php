@@ -24,6 +24,7 @@ $paymentDueSoon = false;
 $daysLeft = null;
 $monthlyExpiry = null;
 $monthlyId = null;
+$transactions = [];
 try {
   require __DIR__ . '/../Login/connection.php';
   
@@ -227,7 +228,16 @@ try {
     $attendanceHistoryStmt = $pdo->prepare('SELECT datetime FROM attendance WHERE user_id = :user_id ORDER BY datetime DESC LIMIT 7');
     $attendanceHistoryStmt->execute([':user_id' => $userId]);
     $rawHistoryRows = $attendanceHistoryStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
+$attendanceHistory = [
+];
+ 
+$previewCount = 5;
+// Summary counts for modal
+$counts = ['present' => 0,];
+foreach ($attendanceHistory as $e) {
+  $k = strtolower($e['status']);
+  if (isset($counts[$k])) $counts[$k]++;
+}
     foreach ($rawHistoryRows as $row) {
       $rowAt = DateTime::createFromFormat('Y-m-d H:i:s', (string)$row['datetime'], new DateTimeZone('UTC'));
       if ($rowAt !== false) {
@@ -336,6 +346,15 @@ try {
         'total_volume' => round((float)$entry['total_volume'], 1),
         'exercises' => $entry['exercises']
       ];
+    }
+
+    // E-Receipts: show most recent 3 transactions
+    try {
+      $transactionStmt = $pdo->prepare('SELECT receipt_number, amount, payment_method, status, "desc" AS description, created_at FROM transactions WHERE user_id = :user_id ORDER BY datetime(created_at) DESC LIMIT 3');
+      $transactionStmt->execute([':user_id' => $userId]);
+      $transactions = $transactionStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Throwable $t) {
+      $transactions = [];
     }
   }
 } catch (Throwable $e) {
@@ -722,83 +741,135 @@ $activePage = 'dashboard';
           </div>
 
           <div class="records-grid">
-            <!-- Attendance Logs -->
-            <div class="profile-card terms-card">
-              <h4><i class="bi bi-calendar-check"></i> Attendance Logs</h4>
-              <hr class="section-divider" />
-
-              <?php if (!empty($attendanceHistory)): ?>
-                <?php foreach ($attendanceHistory as $entry): ?>
-                  <div class="log-entry">
-                    <div class="log-dot"></div>
-                    <div class="log-info">
-                      <span class="log-date"><?php echo htmlspecialchars($entry['display_date'], ENT_QUOTES, 'UTF-8'); ?></span>
-                      <span class="log-time"><?php echo htmlspecialchars($entry['time'], ENT_QUOTES, 'UTF-8'); ?></span>
-                    </div>
-                    <span class="log-status"><?php echo htmlspecialchars($entry['status'], ENT_QUOTES, 'UTF-8'); ?></span>
-                  </div>
-                <?php endforeach; ?>
-              <?php else: ?>
-                <div class="log-entry" style="border-color: #e5e7eb">
-                  <div class="log-dot" style="background: #e5e7eb"></div>
-                  <div class="log-info">
-                    <span class="log-date">No attendance yet</span>
-                    <span class="log-time">Record your first check-in to see history.</span>
-                  </div>
-                  <span class="log-status" style="background: #f3f4f6; color: #6b7280">None</span>
-                </div>
-              <?php endif; ?>
-
-              <a class="view-all-link"
-                >See full log <i class="fas fa-chevron-right"></i
-              ></a>
-            </div>
-
+           <!-- ── CARD ── -->
+<div class="profile-card terms-card attendance-log-card">
+  <h4><i class="bi bi-calendar-check"></i> Attendance Logs</h4>
+  <hr class="section-divider" style="border-color:#2a2a2a; margin: 14px 0 16px;" />
+ 
+  <?php if (!empty($attendanceHistory)): ?>
+ 
+    <?php foreach (array_slice($attendanceHistory, 0, $previewCount) as $entry):
+      $sl = strtolower($entry['status']);
+      $cls = ($sl === 'present') ? '' : $sl;
+    ?>
+      <div class="att-log-entry <?php echo htmlspecialchars($cls, ENT_QUOTES, 'UTF-8'); ?>">
+        <div class="att-dot"></div>
+        <div class="att-info">
+          <span class="att-date"><?php echo htmlspecialchars($entry['display_date'], ENT_QUOTES, 'UTF-8'); ?></span>
+          <span class="att-time"><?php echo htmlspecialchars($entry['time'], ENT_QUOTES, 'UTF-8'); ?></span>
+        </div>
+        <span class="att-status"><?php echo htmlspecialchars($entry['status'], ENT_QUOTES, 'UTF-8'); ?></span>
+      </div>
+    <?php endforeach; ?>
+ 
+  <?php else: ?>
+    <div class="att-log-entry" style="border-left-color:#333;">
+      <div class="att-dot" style="background:#333;"></div>
+      <div class="att-info">
+        <span class="att-date" style="color:#666;">No attendance yet</span>
+        <span class="att-time">Record your first check-in to see history.</span>
+      </div>
+      <span class="att-status" style="color:#555;border-color:#333;background:transparent;">None</span>
+    </div>
+  <?php endif; ?>
+ 
+  <?php if (count($attendanceHistory) > $previewCount): ?>
+    <button class="att-view-all" onclick="openAttModal()">
+      See full log <i class="bi bi-chevron-right"></i>
+    </button>
+  <?php endif; ?>
+</div>
+ 
+ 
+<!-- ══════════════════════════════════════
+     FULL LOG MODAL
+══════════════════════════════════════ -->
+<div class="att-modal-overlay" id="attModal" onclick="attCloseBackdrop(event)">
+  <div class="att-modal">
+ 
+    <!-- Head -->
+    <div class="att-modal-head">
+      <div class="att-modal-head-left">
+        <span class="att-modal-logo">Logs</span>
+        <div>
+          <span class="att-modal-title">Full Attendance Log</span>
+          <span class="att-modal-sub">All recorded sessions</span>
+        </div>
+      </div>
+      <button class="att-modal-close" onclick="closeAttModal()" aria-label="Close">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+ 
+ 
+    <div class="att-hr" style="margin: 14px 20px 0;"></div>
+ 
+    <!-- All entries -->
+    <div class="att-modal-body">
+      <?php foreach ($attendanceHistory as $entry):
+        $sl  = strtolower($entry['status']);
+        $cls = ($sl === 'present') ? '' : $sl;
+      ?>
+        <div class="att-log-entry <?php echo htmlspecialchars($cls, ENT_QUOTES, 'UTF-8'); ?>">
+          <div class="att-dot"></div>
+          <div class="att-info">
+            <span class="att-date"><?php echo htmlspecialchars($entry['display_date'], ENT_QUOTES, 'UTF-8'); ?></span>
+            <span class="att-time"><?php echo htmlspecialchars($entry['time'], ENT_QUOTES, 'UTF-8'); ?></span>
+          </div>
+          <span class="att-status"><?php echo htmlspecialchars($entry['status'], ENT_QUOTES, 'UTF-8'); ?></span>
+        </div>
+      <?php endforeach; ?>
+    </div>
+ 
+  </div>
+</div>
+ 
+ 
+<script>
+  function openAttModal() {
+    document.getElementById('attModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeAttModal() {
+    document.getElementById('attModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function attCloseBackdrop(e) {
+    if (e.target === document.getElementById('attModal')) closeAttModal();
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeAttModal();
+  });
+</script>
             <!-- E-Receipts -->
             <div class="profile-card terms-card">
               <h4>
-                <i class="bi bi-receipt"></i> E-Receipts & Payment History
+                <i class="bi bi-receipt"></i> Payments
               </h4>
               <hr class="section-divider" />
 
-              <div class="receipt-entry">
-                <div class="receipt-icon">
-                  <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-                <div class="receipt-info">
-                  <span class="rname">Monthly Membership</span>
-                  <span class="rdate"
-                    >Jan 15, 2025 &nbsp;•&nbsp; Auto-renewed</span
-                  >
-                </div>
-                <span class="receipt-amount">Php49.99</span>
-              </div>
-
-              <div class="receipt-entry">
-                <div class="receipt-icon">
-                  <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-                <div class="receipt-info">
-                  <span class="rname">Personal Training Session</span>
-                  <span class="rdate"
-                    >Jan 22, 2025 &nbsp;•&nbsp; 1 session</span
-                  >
-                </div>
-                <span class="receipt-amount">Php35.00</span>
-              </div>
-
-              <div class="receipt-entry">
-                <div class="receipt-icon">
-                  <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-                <div class="receipt-info">
-                  <span class="rname">Monthly Membership</span>
-                  <span class="rdate"
-                    >Feb 15, 2025 &nbsp;•&nbsp; Auto-renewed</span
-                  >
-                </div>
-                <span class="receipt-amount">Php49.99</span>
-              </div>
+              <?php if (empty($transactions)): ?>
+                <p style="text-align: center; color: #999; padding: 20px;">No transactions found.</p>
+              <?php else: ?>
+                <?php foreach ($transactions as $transaction): ?>
+                  <?php
+                    $transactionDate = isset($transaction['created_at']) ? date('M j, Y', strtotime($transaction['created_at'])) : 'Unknown Date';
+                    $transactionDesc = htmlspecialchars($transaction['description'] ?? $transaction['desc'] ?? 'Payment', ENT_QUOTES, 'UTF-8');
+                    $transactionMethod = htmlspecialchars($transaction['payment_method'] ?? 'N/A', ENT_QUOTES, 'UTF-8');
+                    $transactionAmount = '₱' . number_format((float)($transaction['amount'] ?? 0), 2);
+                  ?>
+                  <div class="receipt-entry">
+                    <div class="receipt-icon">
+                      <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <div class="receipt-info">
+                      <span class="rname"><?php echo $transactionDesc; ?></span>
+                      <span class="rdate"><?php echo $transactionDate; ?> &nbsp;•&nbsp; <?php echo $transactionMethod; ?></span>
+                    </div>
+                    <span class="receipt-amount"><?php echo $transactionAmount; ?></span>
+                  </div>
+                <?php endforeach; ?>
+              <?php endif; ?>
             </div>
           </div>
         </section>
