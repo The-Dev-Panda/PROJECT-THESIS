@@ -415,6 +415,10 @@ $jsNotifTotal = $notifCount;
       <img src="staffimage/FIT-STOP LOGO.png" alt="Fit-Stop Logo" class="logo-img">
       <span class="logo-text">Fit-Stop</span>
     </div>
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu">
+    <i class="bi bi-list"></i>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
     <ul class="menu">
   <li onclick="window.location.href='staff.php'" style="cursor:pointer;">
     <i class="bi bi-speedometer2"></i><span>Dashboard</span>
@@ -1373,6 +1377,35 @@ window.addEventListener('load', function() {
     applyLocalStorageTally();
   }, 10000);
 });
+
+const hamburgerBtn   = document.getElementById('hamburgerBtn');
+const sidebar        = document.querySelector('.sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+function openSidebar() {
+    sidebar.classList.add('open');
+    sidebarOverlay.classList.add('open');
+    hamburgerBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+}
+
+function closeSidebar() {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('open');
+    hamburgerBtn.innerHTML = '<i class="bi bi-list"></i>';
+}
+
+hamburgerBtn.addEventListener('click', function () {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+});
+
+sidebarOverlay.addEventListener('click', closeSidebar);
+
+document.querySelectorAll('.menu li').forEach(item => {
+    item.addEventListener('click', function () {
+        if (window.innerWidth <= 768) closeSidebar();
+    });
+});
+
 </script>
 
 </body>

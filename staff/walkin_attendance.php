@@ -586,7 +586,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 <body>
 
 <div class="dashboard">
-
+<button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu">
+    <i class="bi bi-list"></i>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
   <!-- ── Sidebar ── -->
   <aside class="sidebar">
     <div class="sidebar-header">
@@ -608,9 +611,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </li>
       <li onclick="window.location.href='staff.php#memberManagement'">
         <i class="bi bi-people"></i><span>Members</span>
-      </li>
-      <li onclick="window.location.href='staff.php#idGeneration'">
-        <i class="bi bi-qr-code"></i><span>ID Generation</span>
       </li>
       <li onclick="window.location.href='monthly.php'">
         <i class="bi bi-calendar-check"></i><span>Monthly Access</span>
@@ -1022,6 +1022,35 @@ document.addEventListener('DOMContentLoaded', function() {
   loadTodayLog();
   setInterval(loadTodayLog, 15000);
 });
+
+const hamburgerBtn   = document.getElementById('hamburgerBtn');
+const sidebar        = document.querySelector('.sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+function openSidebar() {
+    sidebar.classList.add('open');
+    sidebarOverlay.classList.add('open');
+    hamburgerBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+}
+
+function closeSidebar() {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('open');
+    hamburgerBtn.innerHTML = '<i class="bi bi-list"></i>';
+}
+
+hamburgerBtn.addEventListener('click', function () {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+});
+
+sidebarOverlay.addEventListener('click', closeSidebar);
+
+document.querySelectorAll('.menu li').forEach(item => {
+    item.addEventListener('click', function () {
+        if (window.innerWidth <= 768) closeSidebar();
+    });
+});
+
 </script>
 </body>
 </html>
