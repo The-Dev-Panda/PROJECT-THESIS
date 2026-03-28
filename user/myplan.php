@@ -671,13 +671,13 @@ $smartSuggestions = $liveNutritionData['smartSuggestions'];
       </div>
 
       <div class="meals">
-        <div class="meal-item<?php echo $dayData['is_today'] ? ' completed' : ''; ?>">
+        <div class="meal-item">
           <span class="meal-time">Meal Types</span>
           <span class="meal-name"><?php echo (int)$dayData['meal_count']; ?> types logged</span>
           <span class="meal-cal"><?php echo (int)$dayData['meal_pct']; ?>%</span>
         </div>
 
-        <div class="meal-item<?php echo $dayData['is_today'] ? ' completed' : ''; ?>">
+        <div class="meal-item">
           <span class="meal-time">Entries</span>
           <span class="meal-name"><?php echo (int)$dayData['entry_count']; ?> food entries</span>
           <span class="meal-cal"><?php echo (int)$dayData['entry_pct']; ?>%</span>
@@ -984,6 +984,149 @@ $weeklyWorkoutTarget = $liveDashboardData['weeklyWorkoutTarget'];
 $weeklyAttendanceCount = $liveDashboardData['weeklyAttendanceCount'];
 $smartSuggestions = $liveDashboardData['smartSuggestions'];
 ?>
+
+<script>
+(function () {
+  const liveUrl = window.location.pathname + '?dashboard_live=1';
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function renderCalendar(days, targets) {
+    const wrap = document.getElementById('liveDietCalendar');
+    if (!wrap) return;
+
+    wrap.innerHTML = days.map(function (day) {
+      return `
+        <div class="diet-day${day.is_today ? ' active' : ''}">
+          <div class="day-header">
+            <span class="day-name">${escapeHtml(day.day_name)}</span>
+            <span class="day-calories">${day.entry_count} entries</span>
+          </div>
+
+          <div class="meals">
+            <div class="meal-item">
+              <span class="meal-time">Meal Types</span>
+              <span class="meal-name">${day.meal_count} types logged</span>
+              <span class="meal-cal">${day.meal_pct}%</span>
+            </div>
+
+            <div class="meal-item">
+              <span class="meal-time">Entries</span>
+              <span class="meal-name">${day.entry_count} food entries</span>
+              <span class="meal-cal">${day.entry_pct}%</span>
+            </div>
+
+            <div class="meal-item">
+              <span class="meal-time">Target</span>
+              <span class="meal-name">${targets.targetMeals} meal types</span>
+              <span class="meal-cal">${targets.targetEntries} entries</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderSuggestions(items) {
+    const wrap = document.getElementById('liveSuggestionCards');
+    if (!wrap) return;
+
+    wrap.innerHTML = items.map(function (text) {
+      return `
+        <div class="suggestion-card" data-tab="workout" style="display: flex">
+          <div class="suggestion-icon workout">
+            <i class="fas fa-bolt"></i>
+          </div>
+          <div class="suggestion-text">
+            <h5>Action Item</h5>
+            <p>${escapeHtml(text)}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function applyNutritionData(data) {
+    renderCalendar(data.calendarDays, data.targets);
+    renderSuggestions(data.smartSuggestions);
+
+    const liveMealTypesValue = document.getElementById('liveMealTypesValue');
+    const liveMealTypesBar = document.getElementById('liveMealTypesBar');
+    const liveEntriesValue = document.getElementById('liveEntriesValue');
+    const liveEntriesBar = document.getElementById('liveEntriesBar');
+    const liveGoalProgressBar = document.getElementById('liveGoalProgressBar');
+    const myPlanPrimaryGoalHint = document.getElementById('myPlanPrimaryGoalHint');
+    const liveAttendanceBar = document.getElementById('liveAttendanceBar');
+    const liveAttendanceText = document.getElementById('liveAttendanceText');
+    const liveMealLoggingBar = document.getElementById('liveMealLoggingBar');
+    const liveMealLoggingText = document.getElementById('liveMealLoggingText');
+
+    if (liveMealTypesValue) {
+      liveMealTypesValue.textContent = data.todayTotals.meal_count + ' / ' + data.targets.targetMeals;
+    }
+    if (liveMealTypesBar) {
+      liveMealTypesBar.style.width = data.percentages.mealsPct + '%';
+    }
+    if (liveEntriesValue) {
+      liveEntriesValue.textContent = data.todayTotals.entry_count + ' / ' + data.targets.targetEntries + ' entries';
+    }
+    if (liveEntriesBar) {
+      liveEntriesBar.style.width = data.percentages.entriesPct + '%';
+    }
+    if (liveGoalProgressBar) {
+      liveGoalProgressBar.style.width = data.percentages.goalProgressPct + '%';
+    }
+    if (myPlanPrimaryGoalHint) {
+      myPlanPrimaryGoalHint.textContent = data.weeklyWorkoutCount + '/' + data.weeklyWorkoutTarget + ' workout sessions this week (' + data.fitnessLevel + ')';
+    }
+    if (liveAttendanceBar) {
+      liveAttendanceBar.style.width = data.percentages.attendancePct + '%';
+    }
+    if (liveAttendanceText) {
+      liveAttendanceText.textContent = data.weeklyAttendanceCount + ' check-ins this week';
+    }
+    if (liveMealLoggingBar) {
+      liveMealLoggingBar.style.width = data.percentages.entriesPct + '%';
+    }
+    if (liveMealLoggingText) {
+      liveMealLoggingText.textContent = data.todayTotals.entry_count + ' / ' + data.targets.targetEntries + ' food entries today';
+    }
+  }
+
+  async function refreshNutritionLive() {
+    try {
+      const response = await fetch(liveUrl, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      });
+
+      if (!response.ok) return;
+      const data = await response.json();
+      applyNutritionData(data);
+    } catch (error) {
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    refreshNutritionLive();
+    setInterval(refreshNutritionLive, 3000);
+  });
+
+  document.addEventListener('mealLogUpdated', function () {
+    refreshNutritionLive();
+  });
+
+  window.refreshNutritionLive = refreshNutritionLive;
+})();
+</script>
 
 <!-- ── GOALS & SUGGESTIONS ── -->
 <section class="bottom-grid" id="liveGoalsSection">
