@@ -689,10 +689,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       <h2>Workout / Performance Log</h2>
       <div class="registration-card" style="margin-bottom:20px;">
         <div class="form-grid">
-          <div class="form-group">
-            <label>Member ID</label>
-            <input type="text" id="perfID" class="form-input">
-          </div>
+                <div class="form-group">
+        <label>Member ID</label>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <select id="perfID" class="form-input" style="flex:1;" onchange="updateWorkoutMemberName(this)">
+            <option value="">Select member...</option>
+          </select>
+          <span id="workoutMemberName" style="color:var(--text-muted);font-size:13px;min-width:140px;"></span>
+        </div>
+      </div>
           <div class="form-group">
             <label>Exercise</label>
             <input type="text" id="exercise" class="form-input" list="exerciseOptions" placeholder="Select or type exercise">
@@ -702,7 +707,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <label id="performanceMetricLabel">Weight (kg)</label>
             <input type="number" id="performanceMetric" class="form-input" placeholder="Enter weight" step="0.1" min="0">
           </div>
+          <!-- ADD this before the Reps group -->
           <div class="form-group">
+            <label>Sets</label>
+            <input type="number" id="sets" class="form-input" placeholder="Enter sets" min="1">
+          </div>
+            <div class="form-group">
             <label>Reps</label>
             <input type="number" id="reps" class="form-input">
           </div>
@@ -1611,15 +1621,45 @@ function loadAttendanceMembers() {
     .then(r => r.json())
     .then(data => {
       if (!data.success || !Array.isArray(data.members)) return;
+
+      // Manual attendance dropdown
       const select = document.getElementById('manualAttendanceUser');
-      if (!select) return;
-      select.innerHTML = '<option value="">Select a member...</option>';
-      data.members.forEach(m => {
-        const o = document.createElement('option');
-        o.value = m.member_ref; o.textContent = m.display_name;
-        select.appendChild(o);
-      });
+      if (select) {
+        select.innerHTML = '<option value="">Select a member...</option>';
+        data.members.forEach(m => {
+          const o = document.createElement('option');
+          o.value = m.member_ref; o.textContent = m.display_name;
+          select.appendChild(o);
+        });
+      }
+
+      // Workout member dropdown — show "FS-YYYY-ID · Name" while open,
+      // after select only the member_ref shows as the value
+      const perfSelect = document.getElementById('perfID');
+      if (perfSelect) {
+        perfSelect.innerHTML = '<option value="">Select member...</option>';
+        data.members.forEach(m => {
+          const o = document.createElement('option');
+          o.value = m.member_ref;
+          o.textContent = m.member_ref + '  ·  ' + m.display_name;
+          o.dataset.name = m.display_name;
+          perfSelect.appendChild(o);
+        });
+      }
     }).catch(()=>{});
+}
+
+function updateWorkoutMemberName(sel) {
+  const nameSpan = document.getElementById('workoutMemberName');
+  if (!nameSpan) return;
+  const selected = sel.options[sel.selectedIndex];
+  if (selected && selected.dataset.name) {
+    nameSpan.textContent = selected.dataset.name;
+    // After selecting, show only the member_ref in the option text
+    selected.textContent = selected.value;
+  } else {
+    nameSpan.textContent = '';
+  }
 }
 
 function startScanner() {
@@ -1692,25 +1732,47 @@ function logWorkout() {
   const id = document.getElementById('perfID').value.trim();
   const exercise = document.getElementById('exercise').value.trim();
   const metricValue = document.getElementById('performanceMetric').value.trim();
+  const sets = document.getElementById('sets').value.trim();
   const reps = document.getElementById('reps').value.trim();
-  if (!id||!exercise||!metricValue||!reps) { alert('Please provide all fields.'); return; }
+  if (!id||!exercise||!metricValue||!sets||!reps) { alert('Please provide all fields.'); return; }
   const exerciseId = exerciseNameToId[exercise.toLowerCase()];
   if (!exerciseId) { alert('Please choose a valid exercise from the dropdown list.'); return; }
   const metricNum = parseFloat(metricValue);
   if (isNaN(metricNum)||metricNum<0) { alert('Please enter a valid value.'); return; }
+  const setsNum = parseInt(sets, 10);
+  if (isNaN(setsNum)||setsNum<1) { alert('Please enter a valid number of sets.'); return; }
+
+  // Extract numeric user_id from FS-2024-7 → 7
+  let userId = null;
+  const fsMatch = id.match(/^FS-\d{4}-(\d+)$/i);
+  if (fsMatch) userId = parseInt(fsMatch[1], 10);
+  else if (/^\d+$/.test(id)) userId = parseInt(id, 10);
+  if (!userId) { alert('Invalid Member ID. Use FS-YYYY-### or numeric ID.'); return; }
+
   fetch('../Database/save_workout_log.php', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ member_ref: id, exercise_id: exerciseId, reps: parseInt(reps,10), weight: metricNum })
+    body: JSON.stringify({
+      user_id: userId, exercise_id: exerciseId,
+      weight: metricNum, sets: setsNum, reps: parseInt(reps, 10)
+    })
   })
+  // ... rest of .then() stays the same
   .then(r => r.json())
   .then(data => {
     if (!data.success) { alert(data.error||'Failed to save workout log.'); return; }
     const logs  = document.getElementById('workoutLogs');
     const entry = document.createElement('div');
-    entry.classList.add('attendance-item');
-    const ms = (exerciseNameToType[exercise.toLowerCase()]||'')==='cardio' ? 'min' : 'kg';
-    entry.innerHTML = `<strong style="color:var(--text-primary);font-family:'Chakra Petch',sans-serif;">${id}</strong> <span style="color:var(--text-muted);font-size:13px;margin-left:10px;">${exercise} · ${metricNum} ${ms} · ${reps} reps</span>`;
-    logs.prepend(entry);
+entry.classList.add('attendance-item');
+const ms = (exerciseNameToType[exercise.toLowerCase()]||'')==='cardio' ? 'min' : 'kg';
+
+// Resolve member name from allMembers list using userId
+const foundMember = allMembers.find(m => m.id === userId);
+const displayName = foundMember
+  ? ([foundMember.first_name, foundMember.last_name].filter(Boolean).join(' ') || foundMember.username)
+  : id;
+
+entry.innerHTML = `<strong style="color:var(--text-primary);font-family:'Chakra Petch',sans-serif;">${escapeHtml(displayName)}</strong> <span style="color:var(--text-muted);font-size:13px;margin-left:10px;">${exercise} · ${metricNum} ${ms} · ${setsNum} sets · ${reps} reps</span>`;
+logs.prepend(entry);
   })
   .catch(() => alert('Unable to save workout log right now.'));
 }
