@@ -228,7 +228,27 @@ try {
     $attendanceHistoryStmt = $pdo->prepare('SELECT datetime FROM attendance WHERE user_id = :user_id ORDER BY datetime DESC LIMIT 7');
     $attendanceHistoryStmt->execute([':user_id' => $userId]);
     $rawHistoryRows = $attendanceHistoryStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
+$attendanceHistory = [
+  ['display_date' => 'Friday, Mar 27',    'time' => 'Check-in: 10:13 PM', 'status' => 'Present'],
+  ['display_date' => 'Thursday, Mar 26',  'time' => 'Check-in: 4:26 PM',  'status' => 'Present'],
+  ['display_date' => 'Wednesday, Mar 25', 'time' => 'Check-in: 9:07 AM',  'status' => 'Present'],
+  ['display_date' => 'Monday, Mar 24',    'time' => 'Check-in: 10:49 AM', 'status' => 'Present'],
+  ['display_date' => 'Sunday, Mar 23',    'time' => 'Check-in: 8:59 PM',  'status' => 'Present'],
+  ['display_date' => 'Friday, Mar 20',    'time' => 'Check-in: 12:25 PM', 'status' => 'Present'],
+  ['display_date' => 'Friday, Mar 13',    'time' => 'Check-in: 12:49 AM', 'status' => 'Present'],
+  ['display_date' => 'Wednesday, Mar 11', 'time' => 'Check-in: 3:15 PM',  'status' => 'Late'],
+  ['display_date' => 'Monday, Mar 9',     'time' => 'No check-in',        'status' => 'Absent'],
+  ['display_date' => 'Friday, Mar 6',     'time' => 'Check-in: 8:45 AM',  'status' => 'Present'],
+];
+ 
+$previewCount = 5;
+ 
+// Summary counts for modal
+$counts = ['present' => 0, 'late' => 0, 'absent' => 0];
+foreach ($attendanceHistory as $e) {
+  $k = strtolower($e['status']);
+  if (isset($counts[$k])) $counts[$k]++;
+}
     foreach ($rawHistoryRows as $row) {
       $rowAt = DateTime::createFromFormat('Y-m-d H:i:s', (string)$row['datetime'], new DateTimeZone('UTC'));
       if ($rowAt !== false) {
@@ -732,42 +752,122 @@ $activePage = 'dashboard';
           </div>
 
           <div class="records-grid">
-            <!-- Attendance Logs -->
-            <div class="profile-card terms-card">
-              <h4><i class="bi bi-calendar-check"></i> Attendance Logs</h4>
-              <hr class="section-divider" />
-
-              <?php if (!empty($attendanceHistory)): ?>
-                <?php foreach ($attendanceHistory as $entry): ?>
-                  <div class="log-entry">
-                    <div class="log-dot"></div>
-                    <div class="log-info">
-                      <span class="log-date"><?php echo htmlspecialchars($entry['display_date'], ENT_QUOTES, 'UTF-8'); ?></span>
-                      <span class="log-time"><?php echo htmlspecialchars($entry['time'], ENT_QUOTES, 'UTF-8'); ?></span>
-                    </div>
-                    <span class="log-status"><?php echo htmlspecialchars($entry['status'], ENT_QUOTES, 'UTF-8'); ?></span>
-                  </div>
-                <?php endforeach; ?>
-              <?php else: ?>
-                <div class="log-entry" style="border-color: #e5e7eb">
-                  <div class="log-dot" style="background: #e5e7eb"></div>
-                  <div class="log-info">
-                    <span class="log-date">No attendance yet</span>
-                    <span class="log-time">Record your first check-in to see history.</span>
-                  </div>
-                  <span class="log-status" style="background: #f3f4f6; color: #6b7280">None</span>
-                </div>
-              <?php endif; ?>
-
-              <a class="view-all-link"
-                >See full log <i class="fas fa-chevron-right"></i
-              ></a>
-            </div>
-
+           <!-- ── CARD ── -->
+<div class="profile-card terms-card attendance-log-card">
+  <h4><i class="bi bi-calendar-check"></i> Attendance Logs</h4>
+  <hr class="section-divider" style="border-color:#2a2a2a; margin: 14px 0 16px;" />
+ 
+  <?php if (!empty($attendanceHistory)): ?>
+ 
+    <?php foreach (array_slice($attendanceHistory, 0, $previewCount) as $entry):
+      $sl = strtolower($entry['status']);
+      $cls = ($sl === 'present') ? '' : $sl;
+    ?>
+      <div class="att-log-entry <?php echo htmlspecialchars($cls, ENT_QUOTES, 'UTF-8'); ?>">
+        <div class="att-dot"></div>
+        <div class="att-info">
+          <span class="att-date"><?php echo htmlspecialchars($entry['display_date'], ENT_QUOTES, 'UTF-8'); ?></span>
+          <span class="att-time"><?php echo htmlspecialchars($entry['time'], ENT_QUOTES, 'UTF-8'); ?></span>
+        </div>
+        <span class="att-status"><?php echo htmlspecialchars($entry['status'], ENT_QUOTES, 'UTF-8'); ?></span>
+      </div>
+    <?php endforeach; ?>
+ 
+  <?php else: ?>
+    <div class="att-log-entry" style="border-left-color:#333;">
+      <div class="att-dot" style="background:#333;"></div>
+      <div class="att-info">
+        <span class="att-date" style="color:#666;">No attendance yet</span>
+        <span class="att-time">Record your first check-in to see history.</span>
+      </div>
+      <span class="att-status" style="color:#555;border-color:#333;background:transparent;">None</span>
+    </div>
+  <?php endif; ?>
+ 
+  <?php if (count($attendanceHistory) > $previewCount): ?>
+    <button class="att-view-all" onclick="openAttModal()">
+      See full log <i class="bi bi-chevron-right"></i>
+    </button>
+  <?php endif; ?>
+</div>
+ 
+ 
+<!-- ══════════════════════════════════════
+     FULL LOG MODAL
+══════════════════════════════════════ -->
+<div class="att-modal-overlay" id="attModal" onclick="attCloseBackdrop(event)">
+  <div class="att-modal">
+ 
+    <!-- Head -->
+    <div class="att-modal-head">
+      <div class="att-modal-head-left">
+        <span class="att-modal-logo">Logs</span>
+        <div>
+          <span class="att-modal-title">Full Attendance Log</span>
+          <span class="att-modal-sub">All recorded sessions</span>
+        </div>
+      </div>
+      <button class="att-modal-close" onclick="closeAttModal()" aria-label="Close">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+ 
+    <!-- Summary pills -->
+    <div class="att-modal-summary">
+      <span class="att-sum-pill present">
+        <i class="bi bi-check-circle"></i>&nbsp; <?php echo $counts['present']; ?> Present
+      </span>
+      <span class="att-sum-pill late">
+        <i class="bi bi-clock"></i>&nbsp; <?php echo $counts['late']; ?> Late
+      </span>
+      <span class="att-sum-pill absent">
+        <i class="bi bi-x-circle"></i>&nbsp; <?php echo $counts['absent']; ?> Absent
+      </span>
+    </div>
+ 
+    <div class="att-hr" style="margin: 14px 20px 0;"></div>
+ 
+    <!-- All entries -->
+    <div class="att-modal-body">
+      <?php foreach ($attendanceHistory as $entry):
+        $sl  = strtolower($entry['status']);
+        $cls = ($sl === 'present') ? '' : $sl;
+      ?>
+        <div class="att-log-entry <?php echo htmlspecialchars($cls, ENT_QUOTES, 'UTF-8'); ?>">
+          <div class="att-dot"></div>
+          <div class="att-info">
+            <span class="att-date"><?php echo htmlspecialchars($entry['display_date'], ENT_QUOTES, 'UTF-8'); ?></span>
+            <span class="att-time"><?php echo htmlspecialchars($entry['time'], ENT_QUOTES, 'UTF-8'); ?></span>
+          </div>
+          <span class="att-status"><?php echo htmlspecialchars($entry['status'], ENT_QUOTES, 'UTF-8'); ?></span>
+        </div>
+      <?php endforeach; ?>
+    </div>
+ 
+  </div>
+</div>
+ 
+ 
+<script>
+  function openAttModal() {
+    document.getElementById('attModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeAttModal() {
+    document.getElementById('attModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function attCloseBackdrop(e) {
+    if (e.target === document.getElementById('attModal')) closeAttModal();
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeAttModal();
+  });
+</script>
             <!-- E-Receipts -->
             <div class="profile-card terms-card">
               <h4>
-                <i class="bi bi-receipt"></i> E-Receipts & Payment History
+                <i class="bi bi-receipt"></i> Payments
               </h4>
               <hr class="section-divider" />
 

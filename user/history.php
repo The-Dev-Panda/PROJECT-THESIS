@@ -323,8 +323,8 @@ try {
             <button class="modal-close" onclick="closeReceiptModal()">&#10005;</button>
         </div>
 
-        <div class="modal-body">
-            <div class="modal-icon-wrap">
+<div class="modal-body" id="receipt-capture-zone">
+              <div class="modal-icon-wrap">
                 <div class="modal-icon-big">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.8">
                         <rect x="2" y="6" width="20" height="12" rx="1"/>
