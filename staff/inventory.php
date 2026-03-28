@@ -830,7 +830,6 @@ function saveSoldChange() {
         currentRow.setAttribute('data-qty', newQty);
         currentRow.setAttribute('data-updated', row.updated_at);
 
-        // Update the sales modal tally for this item
         const itemId  = currentRow.getAttribute('data-id');
         const sfRow   = document.querySelector(`#sfItemsBody tr[data-inv-id="${itemId}"]`);
         if (sfRow) {
@@ -857,7 +856,6 @@ function saveSoldChange() {
           else sfRow.classList.remove('stock-oos');
         }
 
-        // Sync updated tally back to localStorage
         syncTallyToLocalStorage();
 
         notifLoaded = false;
@@ -876,7 +874,7 @@ function saveSoldChange() {
 
 function openSalesModal() {
   sfRecalc();
-  applyLocalStorageTally();   // refresh tally from staff.php payments
+  applyLocalStorageTally();   
   document.getElementById('sfSuccess').classList.remove('show');
   document.getElementById('salesModal').classList.add('active');
 }
@@ -892,7 +890,6 @@ function sfRecalc() {
     let tot;
 
     if (inp.id === 'sfMonthly') {
-      // Monthly has mixed rates (650 member / 750 walk-in), use stored total
       const tallyCell = document.getElementById('sfMonthlyTally');
       tot = parseFloat(tallyCell?.dataset.total || 0);
     } else {
@@ -923,17 +920,13 @@ function sfRecalc() {
   document.getElementById('sfGrandTot').innerHTML = fmt(entryTotal + itemsTotal - water);
 }
 
-/**
- * Reads inventory tally written by staff.php's deductInventoryStock()
- * from localStorage and updates the "Today's Tally" column in the logsheet.
- */
+
 function applyLocalStorageTally() {
   const TALLY_KEY = 'fitstop_inv_tally';
   const today     = new Date().toISOString().slice(0, 10);
   let tally = {};
   try { tally = JSON.parse(localStorage.getItem(TALLY_KEY) || '{}'); } catch(e) {}
 
-  // Ignore if tally is from a previous day
   if (tally._date !== today) return;
 
   document.querySelectorAll('#sfItemsBody tr[data-inv-id]').forEach(row => {
@@ -948,13 +941,11 @@ function applyLocalStorageTally() {
     if (tallyQty > prevStored) {
       row.dataset.tally = tallyQty;
 
-      // ✅ UPDATE the tally display column
       if (tallyCell) {
         tallyCell.innerHTML = `<span style="font-weight:700;">${tallyQty}</span>
           <span style="font-size:10.5px;color:var(--text-muted);display:block;">${fmt(tallyQty * price)}</span>`;
       }
 
-      // ✅ NEW: Also set the "Add Qty" input to reflect new sales from staff.php
       const qtyInput = row.querySelector('.sf-item-qty');
       if (qtyInput && !qtyInput.disabled) {
         const addedSinceLastOpen = tallyQty - prevStored;
@@ -993,7 +984,7 @@ function applyLocalStorageTally() {
           const updated = Math.max(prev, newCount);
           tallyCell.dataset.tally = updated;
 
-          // Monthly uses stored total from localStorage (mixed 650/750 rates)
+          
           if (key === 'monthly') {
             const monthlyTotal = parseFloat(entryTally['monthly_total']) || 0;
             tallyCell.dataset.total = monthlyTotal;
@@ -1014,10 +1005,7 @@ function applyLocalStorageTally() {
 
   sfRecalc();
 }
-/**
- * Writes all current row tallies back to localStorage so they survive
- * page refresh and are visible to staff.php payment page.
- */
+
 function syncTallyToLocalStorage() {
   const TALLY_KEY = 'fitstop_inv_tally';
   const today     = new Date().toISOString().slice(0, 10);
@@ -1113,7 +1101,7 @@ function submitSalesForm() {
     .then(r => r.json())
     .then(data => {
       if (data.success) {
-        // Update inventory table rows with new quantities
+        
         if (Array.isArray(data.updated_rows)) {
           data.updated_rows.forEach(row => {
             const tr = document.querySelector(`#inventoryBody tr[data-id="${row.id}"]`);
@@ -1140,7 +1128,6 @@ function submitSalesForm() {
               if (qtyInp) {
                 const addedQty = parseInt(qtyInp.value) || 0;
 
-                // Accumulate tally
                 const prevTally = parseInt(sfRow.dataset.tally) || 0;
                 const newTally  = prevTally + addedQty;
                 sfRow.dataset.tally = newTally;
@@ -1172,7 +1159,6 @@ function submitSalesForm() {
         successBar.classList.add('show');
         successBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-        // Accumulate entry fee tallies
           const entryMap = {
         sfNonMember    : { tallyId: 'sfNonMemberTally',    rate: 60  },
         sfMemberWalkin : { tallyId: 'sfMemberWalkinTally', rate: 50  },
@@ -1199,8 +1185,6 @@ function submitSalesForm() {
 
         document.querySelectorAll('.sf-item-qty').forEach(i => i.value = 0);
         document.getElementById('sfWater').value = 0;
-
-        // Sync accumulated tallies to localStorage
         syncTallyToLocalStorage();
 
         sfRecalc();
@@ -1241,7 +1225,6 @@ function initNotifBadge() {
   let lastRead = { date: '', count: 0 };
   try { lastRead = JSON.parse(localStorage.getItem(NOTIF_KEY) || '{}'); } catch(e) {}
 
-  // If last read was a previous day, treat everything as unread
   const lastReadCount = (lastRead.date === today) ? (parseInt(lastRead.count) || 0) : 0;
   const unread        = Math.max(0, totalCount - lastReadCount);
 
@@ -1258,13 +1241,12 @@ function toggleNotifPanel() {
   notifPanelOpen = !notifPanelOpen;
   document.getElementById('notifPanel').classList.toggle('open', notifPanelOpen);
   if (notifPanelOpen) {
-    // Mark as read — save current total to localStorage
+    
     const NOTIF_KEY = 'fitstop_inv_notif_read';
    localStorage.setItem(NOTIF_KEY, JSON.stringify({
   date:  new Date().toISOString().slice(0, 10),
-  count: window._totalNotifCount || 0   // ← always save the FULL total, not the badge number
+  count: window._totalNotifCount || 0   
 }));
-    // Clear the badge
     const badge = document.getElementById('notifBadge');
     badge.textContent = '0';
     badge.classList.add('hidden');
@@ -1382,11 +1364,10 @@ document.querySelector('.search-input').addEventListener('keydown', e => { if (e
 document.getElementById('soldModal').addEventListener('click', function(e) { if (e.target === this) closeSoldModal(); });
 document.getElementById('salesModal').addEventListener('click', function(e) { if (e.target === this) closeSalesModal(); });
 
-// Add this inside window.addEventListener('load', ...) at the bottom
 window.addEventListener('load', function() {
   loadSalesSummary();
   sfRecalc();
-  initNotifBadge();           // ← add this line
+  initNotifBadge();         
 
   setInterval(function() {
     applyLocalStorageTally();
