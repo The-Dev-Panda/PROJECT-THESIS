@@ -17,7 +17,7 @@
 // $pdo->exec('PRAGMA foreign_keys = ON');
 
 //MYSQL CONNECTION
-$dsn = 'mysql:host=localhost;dbname=fitstoptest;charset=utf8';
+$dsn = 'mysql:host=localhost;dbname=fitstopdb;charset=utf8';
 $db_username = 'root';
 $db_password = '';
 

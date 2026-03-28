@@ -22,32 +22,6 @@ $unread_count = $unread_stmt->fetch()['count'];
 
 <body>
 
-    <!-- CUSOTM CURSOR -->
-    <div class="cursor" id="cursor"></div>
-    <script>
-        const cursor = document.getElementById('cursor');
-
-        document.addEventListener('mousemove', e => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-            cursor.style.display = 'block';
-        });
-
-        const clickables = 'a, button, [onclick], input, select, textarea, label';
-
-        document.addEventListener('mouseover', (e) => {
-            if (e.target.closest(clickables)) {
-                cursor.classList.add('hovered');
-            }
-        });
-
-        document.addEventListener('mouseout', (e) => {
-            if (e.target.closest(clickables)) {
-                cursor.classList.remove('hovered');
-            }
-        });
-    </script>
-
     <!-- ================= MOBILE TOPBAR ================= -->
     <div class="mobile-topbar">
         <button id="hamburgerBtn" class="hamburger-btn">
@@ -66,7 +40,7 @@ $unread_count = $unread_stmt->fetch()['count'];
         </a>
     </div>
 
-    <!-- ================= DESKTOP NOTIFICATION (UNCHANGED) ================= -->
+    <!-- ================= DESKTOP NOTIFICATION ================= -->
     <div style="position: fixed; bottom: 20px; left: calc(var(--sidebar-w) - 70px); z-index: 1001;">
         <div class="notif-wrapper">
             <button class="notif-bell-btn" id="notifBellBtn">
@@ -149,8 +123,8 @@ $unread_count = $unread_stmt->fetch()['count'];
         </div>
     </div>
 
-    <!-- ================= SIDEBAR (UNCHANGED) ================= -->
-    <div class="sidebar">
+    <!-- ================= SIDEBAR ================= -->
+    <div class="sidebar" id="mainSidebar">
         <div class="sidebar-header">
             <span class="logo-text">FITSTOP<span style="color:red;">-ADMIN</span></span>
         </div>
@@ -204,43 +178,55 @@ $unread_count = $unread_stmt->fetch()['count'];
             const bellBtn = document.getElementById('notifBellBtn');
             const panel = document.getElementById('notifPanel');
             const hamburger = document.getElementById('hamburgerBtn');
-            const sidebar = document.querySelector('.sidebar');
+            const sidebar = document.getElementById('mainSidebar');
 
+            // Notification panel toggle
             if (bellBtn && panel) {
                 bellBtn.addEventListener('click', function (e) {
                     e.stopPropagation();
                     panel.classList.toggle('open');
                 });
 
-                // Close when clicking outside
                 document.addEventListener('click', function (e) {
                     if (!panel.contains(e.target) && e.target !== bellBtn) {
                         panel.classList.remove('open');
                     }
                 });
 
-                // Prevent closing when clicking inside panel
                 panel.addEventListener('click', function (e) {
                     e.stopPropagation();
                 });
             }
-            // 🍔 MOBILE SIDEBAR
+            
+            // 🍔 HAMBURGER MENU
             if (hamburger && sidebar) {
-                hamburger.addEventListener('click', function () {
+                hamburger.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     sidebar.classList.toggle('mobile-active');
+                    console.log('Hamburger clicked!'); // Debug
+                });
+                
+                // Close sidebar when clicking outside on mobile
+                document.addEventListener('click', function(e) {
+                    if (window.innerWidth <= 768) {
+                        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                            sidebar.classList.remove('mobile-active');
+                        }
+                    }
                 });
             }
         });
     </script>
 
-    <!-- ================= MOBILE CSS ONLY ================= -->
+    <!-- ================= MOBILE CSS ================= -->
     <style>
-        /* hide mobile bar on desktop */
+        /* Hide mobile bar on desktop */
         .mobile-topbar {
             display: none;
         }
 
-        /* ================= MOBILE ================= */
+        /* ================= MOBILE RESPONSIVE ================= */
         @media (max-width: 768px) {
 
             .mobile-topbar {
@@ -254,6 +240,7 @@ $unread_count = $unread_stmt->fetch()['count'];
                 justify-content: space-between;
                 padding: 0 15px;
                 z-index: 2000;
+                border-bottom: 1px solid #222;
             }
 
             body {
@@ -272,39 +259,77 @@ $unread_count = $unread_stmt->fetch()['count'];
             .hamburger-btn {
                 background: none;
                 border: none;
-                color: white;
-                font-size: 22px;
+                color: #FFCC00;
+                font-size: 26px;
+                cursor: pointer;
+                padding: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+                position: relative;
+                z-index: 2001;
+            }
+
+            .hamburger-btn:hover {
+                color: #ffd700;
+            }
+
+            .hamburger-btn:active {
+                transform: scale(0.95);
             }
 
             .topbar-title {
-                font-family: 'Chakra Petch';
+                font-family: 'Chakra Petch', sans-serif;
                 font-weight: 700;
                 color: var(--hazard);
                 letter-spacing: 2px;
+                font-size: 14px;
             }
 
-            /* 🔥 FIXED SIDEBAR */
+            /* 🔥 MOBILE SIDEBAR */
             .sidebar {
                 position: fixed !important;
                 top: 50px !important;
                 left: -100% !important;
                 width: 260px !important;
-                height: calc(100% - 50px);
-                transition: 0.3s ease;
-                z-index: 1500;
+                height: calc(100% - 50px) !important;
+                transition: left 0.3s ease !important;
+                z-index: 1500 !important;
+                overflow-y: auto !important;
             }
 
             .sidebar.mobile-active {
-                left: 0 !important;
+                left: 260px !important;
             }
 
-            /* hide desktop notif on mobile */
+            /* Hide desktop notif on mobile */
             .notif-panel {
                 display: none !important;
             }
 
             #notifBellBtn {
                 display: none !important;
+            }
+
+            /* Mobile notification badge */
+            .notif-badge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                background: red;
+                color: white;
+                border-radius: 50%;
+                padding: 2px 6px;
+                font-size: 10px;
+                font-weight: bold;
+            }
+
+            #notifBellBtnMobile {
+                position: relative;
+                color: #FFCC00;
+                text-decoration: none;
+                font-size: 20px;
             }
 
         }

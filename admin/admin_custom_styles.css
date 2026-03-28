@@ -162,29 +162,30 @@
 .reveal-delay-4 { animation-delay: 0.4s; }
 .reveal-delay-5 { animation-delay: 0.5s; }
 
-/* CUSTOM CURSOR */
-*, *::before, *::after {
-    cursor: none !important;
-}
-
-.cursor {
-    display: none;
-    width: 16px;
-    height: 16px;
-    border: 1px solid var(--hazard);
+/* Custom Cursor */
+/* .cursor {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--hazard);
     border-radius: 50%;
-    opacity: 90%;
-    background-color: var(--hazard);
     position: fixed;
     pointer-events: none;
-    z-index: 99999;
-    translate: -50% -50%;
-    transition: background-color 0.1s ease, border-color 0.1s ease, scale 0.1s ease;
-}
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: all 0.1s ease;
+    display: none;
+} */
 
-.cursor.hovered {
-    background-color: white;
-    border-color: var(--hazard);
-    opacity: 100%;
-    scale: 1.2;
-}
+/* .cursor.hovered {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 204, 0, 0.1);
+    border-width: 3px;
+} */
+
+/* Hide cursor on mobile */
+/* @media (max-width: 768px) {
+    .cursor {
+        display: none !important;
+    }
+} */
