@@ -354,7 +354,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       <li onclick="window.location.href='inventory.php'" style="cursor:pointer;"><i class="bi bi-box-seam"></i><span>Inventory</span></li>
       <li onclick="window.location.href='staff.php#attendance'" style="cursor:pointer;"><i class="bi bi-clipboard-check"></i><span>Attendance</span></li>
       <li onclick="window.location.href='staff.php#memberManagement'" style="cursor:pointer;"><i class="bi bi-people"></i><span>Members</span></li>
-      <li onclick="window.location.href='staff.php#idGeneration'" style="cursor:pointer;"><i class="bi bi-qr-code"></i><span>ID Generation</span></li>
       <li class="active" style="cursor:default;"><i class="bi bi-calendar-check"></i><span>Monthly Access</span></li>
       <li onclick="window.location.href='walkin_attendance.php'" style="cursor:pointer;"><i class="bi bi-person-walking"></i><span>Walk-In Log</span></li>
       <li onclick="window.location.href='staff.php#settings'" style="cursor:pointer;"><i class="bi bi-gear"></i><span>Settings</span></li>
