@@ -173,38 +173,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             ]);
             exit;
         }
-    if ($action === 'record_monthly_walkin_attendance') {
-        $name     = trim($_POST['name'] ?? '');
-        $monthId  = (int)($_POST['month_id'] ?? 0);
 
-        if (empty($name) || !$monthId) {
-            echo json_encode(['success' => false, 'message' => 'Missing data.']);
+        if ($action === 'record_monthly_walkin_attendance') {
+            $name     = trim($_POST['name'] ?? '');
+            $monthId  = (int)($_POST['month_id'] ?? 0);
+
+            if (empty($name) || !$monthId) {
+                echo json_encode(['success' => false, 'message' => 'Missing data.']);
+                exit;
+            }
+
+            $today = date('Y-m-d');
+
+            $dupCheck = $pdo->prepare("
+                SELECT id FROM walk_attendance
+                WHERE month_id = :mid AND DATE(datetime) = :today
+                LIMIT 1
+            ");
+            $dupCheck->execute([':mid' => $monthId, ':today' => $today]);
+            if ($dupCheck->fetch()) {
+                echo json_encode(['success' => true, 'duplicate' => true, 'message' => 'Already logged today.']);
+                exit;
+            }
+
+            $now = date('Y-m-d H:i:s');
+            $ins = $pdo->prepare("
+                INSERT INTO walk_attendance (name, month_id, datetime)
+                VALUES (:name, :mid, :datetime)
+            ");
+            $ins->execute([':name' => $name, ':mid' => $monthId, ':datetime' => $now]);
+
+            echo json_encode(['success' => true, 'insert_id' => $pdo->lastInsertId()]);
             exit;
         }
 
-        $today = date('Y-m-d');
-
-        $dupCheck = $pdo->prepare("
-            SELECT id FROM walk_attendance
-            WHERE month_id = :mid AND DATE(datetime) = :today
-            LIMIT 1
-        ");
-        $dupCheck->execute([':mid' => $monthId, ':today' => $today]);
-        if ($dupCheck->fetch()) {
-            echo json_encode(['success' => true, 'duplicate' => true, 'message' => 'Already logged today.']);
+        if ($action === 'record_walkin_from_receipt') {
+            $name = trim($_POST['name'] ?? '');
+            if (empty($name)) {
+                echo json_encode(['success' => false, 'message' => 'Name missing.']);
+                exit;
+            }
+            $today = date('Y-m-d');
+            $dupCheck = $pdo->prepare("
+                SELECT id FROM walk_attendance
+                WHERE name = :name AND DATE(datetime) = :today AND month_id IS NULL
+                LIMIT 1
+            ");
+            $dupCheck->execute([':name' => $name, ':today' => $today]);
+            if ($dupCheck->fetch()) {
+                echo json_encode(['success' => true, 'duplicate' => true, 'message' => 'Already logged today.']);
+                exit;
+            }
+            $ins = $pdo->prepare("
+                INSERT INTO walk_attendance (name, month_id, datetime)
+                VALUES (:name, NULL, :datetime)
+            ");
+            $ins->execute([':name' => $name, ':datetime' => date('Y-m-d H:i:s')]);
+            echo json_encode(['success' => true, 'insert_id' => $pdo->lastInsertId()]);
             exit;
         }
-
-        $now = date('Y-m-d H:i:s');
-        $ins = $pdo->prepare("
-            INSERT INTO walk_attendance (name, month_id, datetime)
-            VALUES (:name, :mid, :datetime)
-        ");
-        $ins->execute([':name' => $name, ':mid' => $monthId, ':datetime' => $now]);
-
-        echo json_encode(['success' => true, 'insert_id' => $pdo->lastInsertId()]);
-        exit;
-    }
 
         echo json_encode(['success' => false, 'message' => 'Unknown action']);
         exit;
@@ -950,14 +977,14 @@ function autoFillAmount(paidFor) {
     'Monthly':            650,
     'Day Pass / Walk-In': 50,
     'Special Rate':       40,
-};
+  };
 
-const walkInPrices = {
+  const walkInPrices = {
     'Membership':         650,
     'Monthly':            750,
     'Day Pass / Walk-In': 60,
     'Special Rate':       40,
-};
+  };
 
   const priceTable = customerType === 'non-member' ? walkInPrices : memberPrices;
   const price = priceTable[paidFor] ?? null;
@@ -1166,46 +1193,43 @@ function doSaveTransaction(customerType, memberId, customerName, method, gcashRe
     if (!data.success) { alert(data.error || 'Failed to save transaction.'); return; }
 
     payCart.forEach(item => {
-  if (item.invItemId) {
-    deductInventoryStock(item.invItemId, item.invItemName, item.qty);
-  } else {
-    recordEntryFeeToLocalStorage(item.paidFor, customerType);
-     if (item.paidFor === 'Monthly') {
-      // For walk-in non-members paying Monthly: save record then log attendance with month_id
-      if (customerType === 'non-member') {
-        saveMonthlyRecord(customerType, memberId, customerName, function(newMonthId, resolvedName) {
-          if (!newMonthId) return;
-          const fd3 = new FormData();
-          fd3.append('action',   'record_monthly_walkin_attendance');
-          fd3.append('name',     resolvedName);
-          fd3.append('month_id', newMonthId);
-          fetch('staff.php', { method: 'POST', body: fd3 })
-            .then(r => r.json())
-            .then(d => {
-              if (d.success && !d.duplicate) {
-                console.log('Monthly walk-in attendance logged with month_id:', newMonthId);
-              }
-            })
-            .catch(err => console.warn('Monthly walk-in attendance error:', err));
-        });
+      if (item.invItemId) {
+        deductInventoryStock(item.invItemId, item.invItemName, item.qty);
       } else {
-        // Member paying monthly — save record without attendance log
-        saveMonthlyRecord(customerType, memberId, customerName, null);
+        recordEntryFeeToLocalStorage(item.paidFor, customerType, item.price);
+        if (item.paidFor === 'Monthly') {
+          if (customerType === 'non-member') {
+            saveMonthlyRecord(customerType, memberId, customerName, function(newMonthId, resolvedName) {
+              if (!newMonthId) return;
+              const fd3 = new FormData();
+              fd3.append('action',   'record_monthly_walkin_attendance');
+              fd3.append('name',     resolvedName);
+              fd3.append('month_id', newMonthId);
+              fetch('staff.php', { method: 'POST', body: fd3 })
+                .then(r => r.json())
+                .then(d => {
+                  if (d.success && !d.duplicate) {
+                    console.log('Monthly walk-in attendance logged with month_id:', newMonthId);
+                  }
+                })
+                .catch(err => console.warn('Monthly walk-in attendance error:', err));
+            });
+          } else {
+            saveMonthlyRecord(customerType, memberId, customerName, null);
+          }
+        }
+        if (item.paidFor === 'Day Pass / Walk-In' && customerType === 'non-member') {
+          const walkName = customerName || 'Walk-In Guest';
+          const fd2 = new FormData();
+          fd2.append('action', 'record_walkin_from_receipt');
+          fd2.append('name',   walkName);
+          fetch('staff.php', { method: 'POST', body: fd2 })
+            .then(r => r.json())
+            .then(d => { if (!d.success) console.warn('Walk-in log failed:', d.message); })
+            .catch(err => console.warn('Walk-in log error:', err));
+        }
       }
-    }
-    // ✅ Auto-log walk-in to walk_attendance table
-    if (item.paidFor === 'Day Pass / Walk-In' && customerType === 'non-member') {
-      const walkName = customerName || 'Walk-In Guest';
-      const fd2 = new FormData();
-      fd2.append('action', 'record_walkin_from_receipt');
-      fd2.append('name',   walkName);
-      fetch('staff.php', { method: 'POST', body: fd2 })
-        .then(r => r.json())
-        .then(d => { if (!d.success) console.warn('Walk-in log failed:', d.message); })
-        .catch(err => console.warn('Walk-in log error:', err));
-    }
-  }
-});
+    });
 
     const receiptData = {
       ...data.receipt,
@@ -1245,7 +1269,10 @@ function deductInventoryStock(invItemId, invItemName, qty) {
   localStorage.setItem(TALLY_KEY, JSON.stringify(tally));
 }
 
-function recordEntryFeeToLocalStorage(paidFor, customerType) {
+// FIX: Accept the actual item price so the amount is always correct regardless of customer type.
+// Previously the tally used hardcoded 650/750 which was wrong during renewals and
+// when the price had been manually changed in the cart.
+function recordEntryFeeToLocalStorage(paidFor, customerType, itemPrice) {
   const ENTRY_KEY = 'fitstop_entry_tally';
   const today     = new Date().toISOString().slice(0, 10);
   let tally = {};
@@ -1261,9 +1288,10 @@ function recordEntryFeeToLocalStorage(paidFor, customerType) {
   } else if (paidFor === 'Special Rate') {
     tally.special = (tally.special || 0) + 1;
   } else if (paidFor === 'Monthly') {
+    // FIX: Use the actual cart price instead of a hardcoded value.
+    // This ensures renewals and walk-in monthly both record the correct amount.
     tally.monthly       = (tally.monthly || 0) + 1;
-    tally.monthly_total = (tally.monthly_total || 0) +
-      (customerType === 'non-member' ? 750 : 650);
+    tally.monthly_total = (tally.monthly_total || 0) + (parseFloat(itemPrice) || 0);
   }
 
   localStorage.setItem(ENTRY_KEY, JSON.stringify(tally));
@@ -1299,7 +1327,6 @@ function saveMonthlyRecord(customerType, memberId, customerName, onSaved) {
     .then(data => {
       if (data.success) {
         console.log('Monthly record saved. Expires:', data.expires_in, 'ID:', data.insert_id);
-        // Fire callback with the new monthly ID and name
         if (typeof onSaved === 'function') {
           onSaved(data.insert_id, name);
         }
@@ -1321,6 +1348,10 @@ function showMonthlyRenewPrompt(dupData, name, mId, customerType, memberId, cust
   newExpiry.setDate(newExpiry.getDate() + 30);
   const newExpiryStr = newExpiry.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const oldExpiryStr = expiry.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  // Determine the renewal price from the cart (the Monthly item's actual price)
+  const monthlyCartItem = payCart.find(i => i.paidFor === 'Monthly');
+  const renewalPrice = monthlyCartItem ? monthlyCartItem.price : (customerType === 'non-member' ? 750 : 650);
 
   const modalHtml = `
     <div id="renewModal" style="
@@ -1407,7 +1438,7 @@ function showMonthlyRenewPrompt(dupData, name, mId, customerType, memberId, cust
              onmouseout="this.style.borderColor='#333';this.style.color='#888'">
             Cancel
           </button>
-          <button onclick="confirmRenewal('${escapeHtml(dupData.monthly_id || '')}', '${escapeHtml(name)}')" style="
+          <button onclick="confirmRenewal('${escapeHtml(dupData.monthly_id || '')}', '${escapeHtml(name)}', '${escapeHtml(customerType)}', '${escapeHtml(memberId || '')}', '${escapeHtml(customerName || '')}', ${renewalPrice})" style="
             flex:2;padding:13px;background:#FFCC00;border:none;
             color:#000;font-family:'Chakra Petch',sans-serif;font-size:12px;
             font-weight:700;text-transform:uppercase;letter-spacing:1px;
@@ -1429,7 +1460,11 @@ function closeRenewModal() {
   if (m) m.remove();
 }
 
-function confirmRenewal(monthlyId, name) {
+// FIX: Added renewalPrice parameter so the tally records the correct amount.
+// Removed the duplicate manual localStorage tally block that was here before —
+// doSaveTransaction → recordEntryFeeToLocalStorage now handles it correctly,
+// preventing the daily counter from being incremented twice.
+function confirmRenewal(monthlyId, name, customerType, memberId, customerName, renewalPrice) {
   if (!monthlyId) {
     alert('Unable to renew: subscription ID missing. Please contact admin.');
     closeRenewModal();
@@ -1446,49 +1481,27 @@ function confirmRenewal(monthlyId, name) {
   fetch('staff.php', { method: 'POST', body: fd })
     .then(r => r.json())
     .then(data => {
-  closeRenewModal();
-  if (data.success) {
-    const expStr = new Date(data.new_expiry).toLocaleDateString('en-US',
-      { month: 'long', day: 'numeric', year: 'numeric' });
-    showRenewSuccessToast(name, expStr, data.days_left);
+      closeRenewModal();
+      if (data.success) {
+        const expStr = new Date(data.new_expiry).toLocaleDateString('en-US',
+          { month: 'long', day: 'numeric', year: 'numeric' });
+        showRenewSuccessToast(name, expStr, data.days_left);
 
-    // ✅ Record renewal into localStorage tally so inventory.php logsheet picks it up
-    const ENTRY_KEY    = 'fitstop_entry_tally';
-    const today        = new Date().toISOString().slice(0, 10);
-    let entryTally     = {};
-    try { entryTally   = JSON.parse(localStorage.getItem(ENTRY_KEY) || '{}'); } catch(e) {}
-    if (entryTally._date !== today) { entryTally = { _date: today }; }
+        // Save transaction — this calls recordEntryFeeToLocalStorage internally
+        // with the correct customerType and itemPrice (renewalPrice), so the
+        // daily counter gets +1 and the amount is accurate (650 member / 750 walk-in).
+        const method   = document.getElementById('paymentMethod').value;
+        const gcashRef = document.getElementById('gcashRefNumber').value.trim();
+        const payBtn   = document.getElementById('paymentSubmitBtn');
+        doSaveTransaction(customerType, memberId, customerName, method, gcashRef, payBtn);
 
-    entryTally.monthly        = (entryTally.monthly || 0) + 1;
-    entryTally.monthly_total  = (entryTally.monthly_total || 0) + 650;
-    localStorage.setItem(ENTRY_KEY, JSON.stringify(entryTally));
+        // NOTE: No manual tally update here — doSaveTransaction handles it via
+        // recordEntryFeeToLocalStorage using the cart item's actual price.
 
-    // Build and show a renewal receipt
-    const now      = new Date();
-    const dateStr  = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const timeStr  = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-    const receiptNumber = 'RNW-' + now.getFullYear() + '-' + String(now.getTime()).slice(-6);
-
-    displayReceipt({
-      receiptNumber: receiptNumber,
-      date:          dateStr,
-      time:          timeStr,
-      customerType:  'member',
-      customerName:  name,
-      memberId:      name,
-      method:        'Monthly Renewal',
-      status:        'Renewed',
-      paidFor:       'Monthly Subscription Renewal',
-      notes:         'New expiry: ' + expStr,
-      amount:        650,
-      lineItems: [
-        { name: 'Monthly Subscription Renewal', qty: 1, sub: 650 }
-      ],
-    });
-  } else {
-    alert('Renewal failed: ' + (data.message || 'Unknown error.'));
-  }
-})
+      } else {
+        alert('Renewal failed: ' + (data.message || 'Unknown error.'));
+      }
+    })
     .catch(() => {
       closeRenewModal();
       alert('Unable to process renewal right now. Please try again.');

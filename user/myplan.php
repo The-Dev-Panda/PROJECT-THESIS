@@ -453,175 +453,342 @@ if (count($smartSuggestions) < 3) {
           </div>
         </section>
 
-        <!-- ── NUTRITION SNAPSHOT ── -->
-        <section class="diet-schedule-section">
-          <div class="section-header">
-            <h3>Weekly Nutrition Snapshot</h3>
-            <span class="btn-outline">Live from your meal logs</span>
-          </div>
-          <div class="diet-calendar">
-            <?php foreach ($weekDates as $dateValue): ?>
-            <?php $isToday = $dateValue === $todayDate; ?>
-            <?php $dayTotals = $dailyTotals[$dateValue] ?? ['calories' => 0, 'protein' => 0.0, 'carbs' => 0.0, 'fat' => 0.0, 'meal_count' => 0]; ?>
-            <div class="diet-day<?php echo $isToday ? ' active' : ''; ?>">
-              <div class="day-header">
-                <span class="day-name"><?php echo $isToday ? 'Today' : htmlspecialchars(date('l', strtotime($dateValue)), ENT_QUOTES, 'UTF-8'); ?></span
-                ><span class="day-calories"><?php echo (int)$dayTotals['calories']; ?> cal</span>
-              </div>
-              <div class="meals">
-                <div class="meal-item<?php echo $isToday ? ' completed' : ''; ?>">
-                  <span class="meal-time">Protein</span
-                  ><span class="meal-name"><?php echo (int)round((float)$dayTotals['protein']); ?> g total</span
-                  ><span class="meal-cal"><?php echo (int)$progressPct($dayTotals['protein'], $targetProtein); ?>%</span>
-                </div>
-                <div class="meal-item<?php echo $isToday ? ' completed' : ''; ?>">
-                  <span class="meal-time">Carbs</span
-                  ><span class="meal-name"><?php echo (int)round((float)$dayTotals['carbs']); ?> g total</span
-                  ><span class="meal-cal"><?php echo (int)$progressPct($dayTotals['carbs'], $targetCarbs); ?>%</span>
-                </div>
-                <div class="meal-item<?php echo $isToday ? ' completed' : ''; ?>">
-                  <span class="meal-time">Fat</span
-                  ><span class="meal-name"><?php echo (int)round((float)$dayTotals['fat']); ?> g total</span
-                  ><span class="meal-cal"><?php echo (int)$progressPct($dayTotals['fat'], $targetFat); ?>%</span>
-                </div>
-                <div class="meal-item">
-                  <span class="meal-time">Meals</span
-                  ><span class="meal-name"><?php echo (int)$dayTotals['meal_count']; ?> logged entries</span
-                  ><span class="meal-cal"><?php echo (int)$targetCalories; ?> cal target</span>
-                </div>
-              </div>
-            </div>
-            <?php endforeach; ?>
-          </div>
-          <div class="nutrition-summary">
-            <div class="nutrition-card">
-              <div class="nutrition-icon protein">
-                <i class="fas fa-drumstick-bite"></i>
-              </div>
-              <div class="nutrition-info">
-                <span class="nutrition-label">Protein</span
-                ><span class="nutrition-value"><?php echo (int)round((float)$todayTotals['protein']); ?>g / <?php echo (int)$targetProtein; ?>g</span>
-                <div class="nutrition-bar">
-                  <div class="bar-fill" style="width: <?php echo $proteinPct; ?>%"></div>
-                </div>
-              </div>
-            </div>
-            <div class="nutrition-card">
-              <div class="nutrition-icon carbs">
-                <i class="fas fa-bread-slice"></i>
-              </div>
-              <div class="nutrition-info">
-                <span class="nutrition-label">Carbs</span
-                ><span class="nutrition-value"><?php echo (int)round((float)$todayTotals['carbs']); ?>g / <?php echo (int)$targetCarbs; ?>g</span>
-                <div class="nutrition-bar">
-                  <div class="bar-fill" style="width: <?php echo $carbsPct; ?>%"></div>
-                </div>
-              </div>
-            </div>
-            <div class="nutrition-card">
-              <div class="nutrition-icon fats">
-                <i class="fas fa-cheese"></i>
-              </div>
-              <div class="nutrition-info">
-                <span class="nutrition-label">Fats</span
-                ><span class="nutrition-value"><?php echo (int)round((float)$todayTotals['fat']); ?>g / <?php echo (int)$targetFat; ?>g</span>
-                <div class="nutrition-bar">
-                  <div class="bar-fill" style="width: <?php echo $fatPct; ?>%"></div>
-                </div>
-              </div>
-            </div>
-            <div class="nutrition-card">
-              <div class="nutrition-icon fiber">
-                <i class="fas fa-seedling"></i>
-              </div>
-              <div class="nutrition-info">
-                <span class="nutrition-label">Calories</span
-                ><span class="nutrition-value"><?php echo (int)$todayTotals['calories']; ?> / <?php echo (int)$targetCalories; ?> cal</span>
-                <div class="nutrition-bar">
-                  <div class="bar-fill" style="width: <?php echo $caloriesPct; ?>%"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
 
-        <!-- ── GOALS & SUGGESTIONS ── -->
-        <section class="bottom-grid">
-          <div class="box goals-box">
-            <div class="box-header">
-              <h3>Goals Progress</h3>
-              <span class="btn-outline">Weekly metrics</span>
-            </div>
-            <ul class="goals-list">
-              <li>
-                <div class="icon-circle cycling">
-                  <i class="fas fa-bicycle"></i>
-                </div>
-                <div class="goal-info">
-                  <span class="goal-name" id="myPlanPrimaryGoalName"
-                    ><?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?></span
-                  >
-                  <div class="progress-container">
-                    <div class="progress-bar yellow" style="width: <?php echo $goalProgressPct; ?>%"></div>
-                  </div>
-                  <span class="days-count" id="myPlanPrimaryGoalHint"
-                    ><?php echo $weeklyWorkoutCount; ?>/<?php echo $weeklyWorkoutTarget; ?> workout sessions this week (<?php echo htmlspecialchars($fitnessLevel, ENT_QUOTES, 'UTF-8'); ?>)</span
-                  >
-                </div>
-              </li>
-              <li>
-                <div class="icon-circle running">
-                  <i class="fas fa-running"></i>
-                </div>
-                <div class="goal-info">
-                  <span class="goal-name">Gym Attendance</span>
-                  <div class="progress-container">
-                    <div class="progress-bar orange" style="width: <?php echo $progressPct($weeklyAttendanceCount, 4); ?>%"></div>
-                  </div>
-                  <span class="days-count"><?php echo $weeklyAttendanceCount; ?> check-ins this week</span>
-                </div>
-              </li>
-              <li>
-                <div class="icon-circle water"><i class="fas fa-tint"></i></div>
-                <div class="goal-info">
-                  <span class="goal-name">Calorie Target</span>
-                  <div class="progress-container">
-                    <div class="progress-bar blue" style="width: <?php echo $caloriesPct; ?>%"></div>
-                  </div>
-                  <span class="days-count"><?php echo (int)$todayTotals['calories']; ?> / <?php echo (int)$targetCalories; ?> calories today</span>
-                </div>
-              </li>
-              <li>
-                <div class="icon-circle workout">
-                  <i class="fas fa-dumbbell"></i>
-                </div>
-                <div class="goal-info">
-                  <span class="goal-name">Protein Target</span>
-                  <div class="progress-container">
-                    <div class="progress-bar purple" style="width: <?php echo $proteinPct; ?>%"></div>
-                  </div>
-                  <span class="days-count"><?php echo (int)round((float)$todayTotals['protein']); ?>g / <?php echo (int)$targetProtein; ?>g protein today</span>
-                </div>
-              </li>
-            </ul>
+date_default_timezone_set('Asia/Manila');
+
+if (!isset($conn)) {
+  $dbPath = __DIR__ . '/../Database/DB.sqlite';
+  try {
+    $conn = new PDO("sqlite:" . $dbPath);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  } catch (Exception $e) {
+    die("Database connection failed: " . $e->getMessage());
+  }
+}
+
+if (!function_exists('progressPct')) {
+  function progressPct($value, $target) {
+    $value = (float)$value;
+    $target = (float)$target;
+    if ($target <= 0) {
+      return 0;
+    }
+    $pct = round(($value / $target) * 100);
+    if ($pct < 0) $pct = 0;
+    if ($pct > 100) $pct = 100;
+    return $pct;
+  }
+}
+
+$userId = 0;
+if (isset($_SESSION['user_id'])) {
+  $userId = (int)$_SESSION['user_id'];
+} elseif (isset($_SESSION['id'])) {
+  $userId = (int)$_SESSION['id'];
+}
+
+$todayDate = date('Y-m-d');
+$weekDates = [];
+for ($i = 6; $i >= 0; $i--) {
+  $weekDates[] = date('Y-m-d', strtotime("-{$i} day"));
+}
+
+$dailyTotals = [];
+foreach ($weekDates as $dateValue) {
+  $dailyTotals[$dateValue] = [
+    'calories' => 0,
+    'grams' => 0,
+    'meal_count' => 0,
+    'entry_count' => 0
+  ];
+}
+
+$todayTotals = [
+  'calories' => 0,
+  'grams' => 0,
+  'meal_count' => 0,
+  'entry_count' => 0
+];
+
+if ($userId > 0) {
+  $weekStart = $weekDates[0];
+  $weekEnd = $weekDates[count($weekDates) - 1];
+
+  $nutritionStmt = $conn->prepare("
+    SELECT 
+      log_date,
+      COALESCE(SUM(calories), 0) AS calories,
+      COALESCE(SUM(grams_consumed), 0) AS grams,
+      COUNT(*) AS entry_count,
+      COUNT(DISTINCT meal_type) AS meal_count
+    FROM meal_logs
+    WHERE user_id = ? AND log_date BETWEEN ? AND ?
+    GROUP BY log_date
+    ORDER BY log_date ASC
+  ");
+  $nutritionStmt->execute([$userId, $weekStart, $weekEnd]);
+  $nutritionRows = $nutritionStmt->fetchAll(PDO::FETCH_ASSOC);
+
+  foreach ($nutritionRows as $row) {
+    $logDate = $row['log_date'];
+    if (isset($dailyTotals[$logDate])) {
+      $dailyTotals[$logDate] = [
+        'calories' => (float)$row['calories'],
+        'grams' => (float)$row['grams'],
+        'meal_count' => (int)$row['meal_count'],
+        'entry_count' => (int)$row['entry_count']
+      ];
+    }
+  }
+
+  $todayTotals = $dailyTotals[$todayDate] ?? $todayTotals;
+}
+
+$goal = $goal ?? 'Fitness Goal';
+$fitnessLevel = $fitnessLevel ?? 'beginner';
+$fitnessLower = strtolower($fitnessLevel);
+
+$targetCalories = isset($targetCalories) ? (int)$targetCalories : 2200;
+$targetGrams = isset($targetGrams) ? (int)$targetGrams : 1800;
+$targetMeals = isset($targetMeals) ? (int)$targetMeals : 4;
+$targetEntries = isset($targetEntries) ? (int)$targetEntries : 4;
+
+$caloriesPct = progressPct($todayTotals['calories'], $targetCalories);
+$gramsPct = progressPct($todayTotals['grams'], $targetGrams);
+$mealsPct = progressPct($todayTotals['meal_count'], $targetMeals);
+$entriesPct = progressPct($todayTotals['entry_count'], $targetEntries);
+
+$weeklyNutritionCalories = 0;
+$weeklyNutritionGrams = 0;
+$weeklyNutritionMeals = 0;
+$weeklyNutritionEntries = 0;
+
+foreach ($dailyTotals as $dayData) {
+  $weeklyNutritionCalories += (float)$dayData['calories'];
+  $weeklyNutritionGrams += (float)$dayData['grams'];
+  $weeklyNutritionMeals += (int)$dayData['meal_count'];
+  $weeklyNutritionEntries += (int)$dayData['entry_count'];
+}
+
+$weeklyWorkoutCount = isset($weeklyWorkoutCount) ? (int)$weeklyWorkoutCount : 0;
+$weeklyWorkoutTarget = isset($weeklyWorkoutTarget) ? (int)$weeklyWorkoutTarget : 5;
+$goalProgressPct = progressPct($weeklyWorkoutCount, $weeklyWorkoutTarget);
+
+$weeklyAttendanceCount = isset($weeklyAttendanceCount) ? (int)$weeklyAttendanceCount : 0;
+
+$smartSuggestions = [];
+
+if ($todayTotals['entry_count'] === 0) {
+  $smartSuggestions[] = "You have no meal logs today. Start with your first meal entry to keep your nutrition tracking updated.";
+}
+if ($todayTotals['calories'] < ($targetCalories * 0.5)) {
+  $smartSuggestions[] = "Your calorie intake is still low for today. Add another meal or snack if you are still below your target.";
+}
+if ($todayTotals['meal_count'] < 3) {
+  $smartSuggestions[] = "You have only logged {$todayTotals['meal_count']} meal types today. Try spreading your intake across breakfast, lunch, dinner, and snacks.";
+}
+if ($todayTotals['grams'] < ($targetGrams * 0.6)) {
+  $smartSuggestions[] = "Your total logged food amount is still below your daily grams target. Add another serving if needed.";
+}
+if ($todayTotals['calories'] >= $targetCalories) {
+  $smartSuggestions[] = "You have reached your calorie target for today. Keep portions balanced for the rest of the day.";
+}
+if ($weeklyNutritionEntries >= 20) {
+  $smartSuggestions[] = "Great consistency this week. Your meal logging habit is staying active across multiple days.";
+}
+
+if (empty($smartSuggestions)) {
+  $smartSuggestions[] = "Your nutrition logs are on track. Keep recording meals consistently to improve your weekly snapshot.";
+}
+
+?>
+
+<!-- ── NUTRITION SNAPSHOT ── -->
+<section class="diet-schedule-section">
+  <div class="section-header">
+    <h3>Weekly Nutrition Snapshot</h3>
+    <span class="btn-outline">Live from your meal logs</span>
+  </div>
+
+  <div class="diet-calendar">
+    <?php foreach ($weekDates as $dateValue): ?>
+    <?php $isToday = $dateValue === $todayDate; ?>
+    <?php $dayTotals = $dailyTotals[$dateValue] ?? ['calories' => 0, 'grams' => 0, 'meal_count' => 0, 'entry_count' => 0]; ?>
+    <div class="diet-day<?php echo $isToday ? ' active' : ''; ?>">
+      <div class="day-header">
+        <span class="day-name"><?php echo $isToday ? 'Today' : htmlspecialchars(date('l', strtotime($dateValue)), ENT_QUOTES, 'UTF-8'); ?></span>
+        <span class="day-calories"><?php echo (int)$dayTotals['calories']; ?> cal</span>
+      </div>
+
+      <div class="meals">
+        <div class="meal-item<?php echo $isToday ? ' completed' : ''; ?>">
+          <span class="meal-time">Grams</span>
+          <span class="meal-name"><?php echo (int)round((float)$dayTotals['grams']); ?> g total</span>
+          <span class="meal-cal"><?php echo (int)progressPct($dayTotals['grams'], $targetGrams); ?>%</span>
+        </div>
+
+        <div class="meal-item<?php echo $isToday ? ' completed' : ''; ?>">
+          <span class="meal-time">Meal Types</span>
+          <span class="meal-name"><?php echo (int)$dayTotals['meal_count']; ?> types logged</span>
+          <span class="meal-cal"><?php echo (int)progressPct($dayTotals['meal_count'], $targetMeals); ?>%</span>
+        </div>
+
+        <div class="meal-item<?php echo $isToday ? ' completed' : ''; ?>">
+          <span class="meal-time">Entries</span>
+          <span class="meal-name"><?php echo (int)$dayTotals['entry_count']; ?> food entries</span>
+          <span class="meal-cal"><?php echo (int)progressPct($dayTotals['entry_count'], $targetEntries); ?>%</span>
+        </div>
+
+        <div class="meal-item">
+          <span class="meal-time">Target</span>
+          <span class="meal-name"><?php echo (int)$targetCalories; ?> cal target</span>
+          <span class="meal-cal"><?php echo (int)$targetGrams; ?> g goal</span>
+        </div>
+      </div>
+    </div>
+    <?php endforeach; ?>
+  </div>
+
+  <div class="nutrition-summary">
+    <div class="nutrition-card">
+      <div class="nutrition-icon protein">
+        <i class="fas fa-fire"></i>
+      </div>
+      <div class="nutrition-info">
+        <span class="nutrition-label">Calories</span>
+        <span class="nutrition-value"><?php echo (int)$todayTotals['calories']; ?> / <?php echo (int)$targetCalories; ?> cal</span>
+        <div class="nutrition-bar">
+          <div class="bar-fill" style="width: <?php echo $caloriesPct; ?>%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nutrition-card">
+      <div class="nutrition-icon carbs">
+        <i class="fas fa-weight-hanging"></i>
+      </div>
+      <div class="nutrition-info">
+        <span class="nutrition-label">Grams Logged</span>
+        <span class="nutrition-value"><?php echo (int)round((float)$todayTotals['grams']); ?>g / <?php echo (int)$targetGrams; ?>g</span>
+        <div class="nutrition-bar">
+          <div class="bar-fill" style="width: <?php echo $gramsPct; ?>%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nutrition-card">
+      <div class="nutrition-icon fats">
+        <i class="fas fa-utensils"></i>
+      </div>
+      <div class="nutrition-info">
+        <span class="nutrition-label">Meal Types</span>
+        <span class="nutrition-value"><?php echo (int)$todayTotals['meal_count']; ?> / <?php echo (int)$targetMeals; ?></span>
+        <div class="nutrition-bar">
+          <div class="bar-fill" style="width: <?php echo $mealsPct; ?>%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nutrition-card">
+      <div class="nutrition-icon fiber">
+        <i class="fas fa-clipboard-list"></i>
+      </div>
+      <div class="nutrition-info">
+        <span class="nutrition-label">Food Entries</span>
+        <span class="nutrition-value"><?php echo (int)$todayTotals['entry_count']; ?> / <?php echo (int)$targetEntries; ?> entries</span>
+        <div class="nutrition-bar">
+          <div class="bar-fill" style="width: <?php echo $entriesPct; ?>%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── GOALS & SUGGESTIONS ── -->
+<section class="bottom-grid">
+  <div class="box goals-box">
+    <div class="box-header">
+      <h3>Goals Progress</h3>
+      <span class="btn-outline">Weekly metrics</span>
+    </div>
+
+    <ul class="goals-list">
+      <li>
+        <div class="icon-circle cycling">
+          <i class="fas fa-bicycle"></i>
+        </div>
+        <div class="goal-info">
+          <span class="goal-name" id="myPlanPrimaryGoalName"><?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?></span>
+          <div class="progress-container">
+            <div class="progress-bar yellow" style="width: <?php echo $goalProgressPct; ?>%"></div>
           </div>
-          <div class="ai-suggestions-box">
-            <h4>Personalized Suggestions</h4>
-            <div class="suggestion-cards">
-              <?php foreach ($smartSuggestions as $suggestion): ?>
-              <div class="suggestion-card" data-tab="workout" style="display: flex">
-                <div class="suggestion-icon workout">
-                  <i class="fas fa-bolt"></i>
-                </div>
-                <div class="suggestion-text">
-                  <h5>Action Item</h5>
-                  <p><?php echo htmlspecialchars($suggestion, ENT_QUOTES, 'UTF-8'); ?></p>
-                </div>
-              </div>
-              <?php endforeach; ?>
-            </div>
+          <span class="days-count" id="myPlanPrimaryGoalHint"><?php echo $weeklyWorkoutCount; ?>/<?php echo $weeklyWorkoutTarget; ?> workout sessions this week (<?php echo htmlspecialchars($fitnessLevel, ENT_QUOTES, 'UTF-8'); ?>)</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="icon-circle running">
+          <i class="fas fa-running"></i>
+        </div>
+        <div class="goal-info">
+          <span class="goal-name">Gym Attendance</span>
+          <div class="progress-container">
+            <div class="progress-bar orange" style="width: <?php echo progressPct($weeklyAttendanceCount, 4); ?>%"></div>
           </div>
-        </section>
+          <span class="days-count"><?php echo $weeklyAttendanceCount; ?> check-ins this week</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="icon-circle water">
+          <i class="fas fa-fire"></i>
+        </div>
+        <div class="goal-info">
+          <span class="goal-name">Calorie Target</span>
+          <div class="progress-container">
+            <div class="progress-bar blue" style="width: <?php echo $caloriesPct; ?>%"></div>
+          </div>
+          <span class="days-count"><?php echo (int)$todayTotals['calories']; ?> / <?php echo (int)$targetCalories; ?> calories today</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="icon-circle workout">
+          <i class="fas fa-utensils"></i>
+        </div>
+        <div class="goal-info">
+          <span class="goal-name">Meal Logging</span>
+          <div class="progress-container">
+            <div class="progress-bar purple" style="width: <?php echo $entriesPct; ?>%"></div>
+          </div>
+          <span class="days-count"><?php echo (int)$todayTotals['entry_count']; ?> / <?php echo (int)$targetEntries; ?> food entries today</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="ai-suggestions-box">
+    <h4>Personalized Suggestions</h4>
+    <div class="suggestion-cards">
+      <?php foreach ($smartSuggestions as $suggestion): ?>
+      <div class="suggestion-card" data-tab="workout" style="display: flex">
+        <div class="suggestion-icon workout">
+          <i class="fas fa-bolt"></i>
+        </div>
+        <div class="suggestion-text">
+          <h5>Action Item</h5>
+          <p><?php echo htmlspecialchars($suggestion, ENT_QUOTES, 'UTF-8'); ?></p>
+        </div>
+      </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+
 <?php
 $workoutMode = $_GET['mode'] ?? 'moderate';
 $selectedLevel = $_GET['level'] ?? $fitnessLower;
@@ -666,22 +833,23 @@ if ($workoutMode === 'heavy') $targetBurn = 600;
 
 <style>
 .plan-select {
-  background:#0f0f0f;
-  border:1px solid #383838;
-  color:#fff;
-  border-radius:8px;
-  padding:8px 10px;
-  font-size:0.85rem;
-  outline:none;
+  background: #0f0f0f;
+  border: 1px solid #383838;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  outline: none;
 }
+
 .plan-select:focus {
-  border-color:#ffcc00;
+  border-color: #ffcc00;
 }
 
 .plan-mode-btn.active {
-  background:#ffcc00;
-  color:#111 !important;
-  border-color:#ffcc00;
+  background: #ffcc00;
+  color: #111 !important;
+  border-color: #ffcc00;
 }
 </style>
 
@@ -897,131 +1065,342 @@ function saveWorkout(workout){
   .catch(err => alert("Error: " + err));
 }
 </script>
- <!-- ════════════════════════════════════════════
-           MEAL TRACKER — NEW UI (dark/yellow)
-           ════════════════════════════════════════════ -->
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+date_default_timezone_set('Asia/Manila');
+
+if (!function_exists('fitstop_csrf_token')) {
+    function fitstop_csrf_token() {
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        return $_SESSION['csrf_token'];
+    }
+}
+
+$dbPath = __DIR__ . '/../Database/DB.sqlite';
+
+try {
+    $conn = new PDO("sqlite:" . $dbPath);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (Exception $e) {
+    die("Database connection failed: " . $e->getMessage());
+}
+
+$mt_user_id = 0;
+if (isset($_SESSION['user_id'])) {
+    $mt_user_id = (int) $_SESSION['user_id'];
+} elseif (isset($_SESSION['id'])) {
+    $mt_user_id = (int) $_SESSION['id'];
+}
+
+$mt_today = date('Y-m-d');
+$mt_status_message = "Type a food name — calories auto-fill based on grams.";
+$mt_status_type = "info";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mt_action'])) {
+    $posted_token = isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '';
+
+    if (!hash_equals(fitstop_csrf_token(), $posted_token)) {
+        $mt_status_message = "Invalid CSRF token.";
+        $mt_status_type = "error";
+    } elseif ($mt_user_id <= 0) {
+        $mt_status_message = "User not logged in.";
+        $mt_status_type = "error";
+    } else {
+        if ($_POST['mt_action'] === 'add_food') {
+            $meal_id = isset($_POST['meal_id']) ? (int) $_POST['meal_id'] : 0;
+            $meal_type = isset($_POST['meal_type']) ? strtolower(trim($_POST['meal_type'])) : '';
+            $grams_consumed = isset($_POST['grams_consumed']) ? (float) $_POST['grams_consumed'] : 0;
+
+            $allowed_types = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+            if ($meal_id <= 0 || $grams_consumed <= 0 || !in_array($meal_type, $allowed_types, true)) {
+                $mt_status_message = "Please select a valid food and grams.";
+                $mt_status_type = "error";
+            } else {
+                $meal_stmt = $conn->prepare("SELECT meal_id, food_name, serving_grams, calories FROM meals WHERE meal_id = ? LIMIT 1");
+                $meal_stmt->execute([$meal_id]);
+                $meal_row = $meal_stmt->fetch(PDO::FETCH_ASSOC);
+
+                if (!$meal_row) {
+                    $mt_status_message = "Selected food was not found.";
+                    $mt_status_type = "error";
+                } else {
+                    $base_grams = (float) $meal_row['serving_grams'];
+                    $base_calories = (float) $meal_row['calories'];
+
+                    if ($base_grams <= 0) {
+                        $mt_status_message = "Invalid food serving data.";
+                        $mt_status_type = "error";
+                    } else {
+                        $computed_calories = round(($grams_consumed / $base_grams) * $base_calories, 2);
+
+                        $insert_stmt = $conn->prepare("
+                            INSERT INTO meal_logs (user_id, meal_id, meal_type, log_date, grams_consumed, calories)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                        ");
+                        $ok = $insert_stmt->execute([
+                            $mt_user_id,
+                            $meal_id,
+                            $meal_type,
+                            $mt_today,
+                            $grams_consumed,
+                            $computed_calories
+                        ]);
+
+                        if ($ok) {
+                            $mt_status_message = "Food added to meal log.";
+                            $mt_status_type = "success";
+                        } else {
+                            $mt_status_message = "Failed to add food.";
+                            $mt_status_type = "error";
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($_POST['mt_action'] === 'clear_today') {
+            $clear_stmt = $conn->prepare("DELETE FROM meal_logs WHERE user_id = ? AND log_date = ?");
+            $ok = $clear_stmt->execute([$mt_user_id, $mt_today]);
+
+            if ($ok) {
+                $mt_status_message = "Today's meal logs cleared.";
+                $mt_status_type = "success";
+            } else {
+                $mt_status_message = "Failed to clear today's meal logs.";
+                $mt_status_type = "error";
+            }
+        }
+    }
+}
+
+$mt_meals = [];
+$mt_meals_stmt = $conn->query("SELECT meal_id, food_name, serving_grams, calories FROM meals ORDER BY food_name ASC");
+while ($row = $mt_meals_stmt->fetch(PDO::FETCH_ASSOC)) {
+    $row['meal_id'] = (int) $row['meal_id'];
+    $row['serving_grams'] = (float) $row['serving_grams'];
+    $row['calories'] = (float) $row['calories'];
+    $mt_meals[] = $row;
+}
+
+$mt_today_logs = [];
+if ($mt_user_id > 0) {
+    $logs_stmt = $conn->prepare("
+        SELECT ml.log_id, ml.meal_type, ml.grams_consumed, ml.calories, m.food_name
+        FROM meal_logs ml
+        INNER JOIN meals m ON ml.meal_id = m.meal_id
+        WHERE ml.user_id = ? AND ml.log_date = ?
+        ORDER BY ml.log_id DESC
+    ");
+    $logs_stmt->execute([$mt_user_id, $mt_today]);
+    $mt_today_logs = $logs_stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+$mt_grouped_logs = [
+    'breakfast' => [],
+    'lunch' => [],
+    'dinner' => [],
+    'snack' => []
+];
+
+foreach ($mt_today_logs as $log) {
+    $type = strtolower($log['meal_type']);
+    if (isset($mt_grouped_logs[$type])) {
+        $mt_grouped_logs[$type][] = $log;
+    }
+}
+?>
+
 <section class="meal-tracker-section">
-  <!-- Hazard stripe -->
   <div class="mt-stripe"></div>
 
-  <!-- Customize panel -->
   <div class="mt-panel">
     <h2 class="mt-title">Customize Today's Meal</h2>
     <hr class="mt-title-divider" />
 
-    <!-- Input row -->
-    <div class="mt-input-row">
-      <!-- Meal type -->
-      <div class="mt-field">
-        <label for="mtMealType">Meal</label>
-        <select id="mtMealType">
-          <option>Breakfast</option>
-          <option>Lunch</option>
-          <option>Dinner</option>
-          <option>Snack</option>
-        </select>
-      </div>
+    <form method="POST" id="mtForm" autocomplete="off">
+      <input type="hidden" name="mt_action" id="mtAction" value="add_food" />
+      <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(fitstop_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>" />
+      <input type="hidden" name="meal_id" id="mtMealId" value="" />
 
-      <!-- Food search -->
-      <div class="mt-field" style="flex: 1; min-width: 220px">
-        <label for="mtFoodName">Food Name</label>
-        <div class="mt-suggest-wrap" id="mtSuggestWrap">
-          <input
-            id="mtFoodName"
-            type="text"
-            placeholder="Type food (e.g. rice, egg, sinigang…)"
-            autocomplete="off"
-          />
-          <div id="mtSuggestions"></div>
+      <div class="mt-input-row">
+        <div class="mt-field">
+          <label for="mtMealType">Meal</label>
+          <select id="mtMealType" name="meal_type" class="mt-select">
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+            <option value="snack">Snack</option>
+          </select>
         </div>
-      </div>
 
-      <!-- Qty stepper -->
-      <div class="mt-qty-group">
-        <label
-          style="
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-          "
-          >Qty / Servings</label
-        >
-        <div class="mt-qty-wrap">
-          <button class="mt-qty-btn" onclick="mtChangeQty(-0.5)">−</button>
-          <input id="mtQtyInput" type="number" value="1" min="0.5" step="0.5" />
-          <button class="mt-qty-btn" onclick="mtChangeQty(0.5)">+</button>
+        <div class="mt-field" style="flex: 1; min-width: 220px">
+          <label for="mtFoodName">Food Name</label>
+          <div class="mt-suggest-wrap" id="mtSuggestWrap">
+            <input
+              id="mtFoodName"
+              type="text"
+              placeholder="Type food (e.g. rice, egg, sinigang...)"
+              autocomplete="off"
+            />
+            <div id="mtSuggestions"></div>
+          </div>
         </div>
+
+        <div class="mt-qty-group">
+          <label
+            style="
+              font-family: 'Barlow Condensed', sans-serif;
+              font-size: 0.7rem;
+              font-weight: 700;
+              letter-spacing: 2px;
+              text-transform: uppercase;
+            "
+          >Qty / Grams</label>
+          <div class="mt-qty-wrap">
+            <button class="mt-qty-btn" type="button" onclick="mtChangeQty(-10)">−</button>
+            <input id="mtQtyInput" class="mt-number" name="grams_consumed" type="number" value="100" min="1" step="1" />
+            <button class="mt-qty-btn" type="button" onclick="mtChangeQty(10)">+</button>
+          </div>
+        </div>
+
+        <button class="mt-add-btn" id="mtAddBtn" type="submit" disabled>
+          Add Food
+        </button>
       </div>
+    </form>
 
-      <button class="mt-add-btn" id="mtAddBtn" onclick="mtAddFood()" disabled>
-        Add Food
-      </button>
-    </div>
-
-    <!-- Nutrition preview (auto-filled) -->
     <div class="mt-nutrition-preview" id="mtNutritionPreview">
       <div class="mt-preview-top">
         <div class="mt-nutr-item">
-          <span class="mt-nutr-val" id="mtPvCal">0</span
-          ><span class="mt-nutr-lbl">Calories</span>
+          <span class="mt-nutr-val" id="mtPvCal">0</span>
+          <span class="mt-nutr-lbl">Calories</span>
         </div>
         <div class="mt-nutr-item">
-          <span class="mt-nutr-val" id="mtPvP">0g</span
-          ><span class="mt-nutr-lbl">Protein</span>
-        </div>
-        <div class="mt-nutr-item">
-          <span class="mt-nutr-val" id="mtPvC">0g</span
-          ><span class="mt-nutr-lbl">Carbs</span>
-        </div>
-        <div class="mt-nutr-item">
-          <span class="mt-nutr-val" id="mtPvF">0g</span
-          ><span class="mt-nutr-lbl">Fat</span>
+          <span class="mt-nutr-val" id="mtPvGrams">0g</span>
+          <span class="mt-nutr-lbl">Grams</span>
         </div>
       </div>
       <div class="mt-preview-serving" id="mtPvServing"></div>
+      <div class="mt-preview-note">Nutritional value varies depending on ingredients used.</div>
     </div>
 
-    <div id="mtStatus">
-      Type a food name — nutrition auto-fills based on quantity.
+    <div id="mtStatus" class="mt-status <?php echo $mt_status_type === 'success' ? 'mt-status-success' : ($mt_status_type === 'error' ? 'mt-status-error' : ''); ?>">
+      <?php echo htmlspecialchars($mt_status_message, ENT_QUOTES, 'UTF-8'); ?>
     </div>
-
-    <!-- Today's meal cards -->
-    <hr class="mt-cards-divider" />
-    <div class="mt-meals-grid" id="mtTodayMeals"></div>
   </div>
 
-  <!-- Weekly panel -->
   <div class="mt-weekly-panel">
     <div class="mt-weekly-header">
-      <h2 class="mt-weekly-title">Weekly Diet Schedule</h2>
-      <button class="mt-clear-btn" onclick="mtClearToday()">✕ Clear Today</button>
+      <h2 class="mt-weekly-title">Today's Meal Schedule</h2>
+      <form method="POST" id="mtClearForm" style="margin:0;">
+        <input type="hidden" name="mt_action" value="clear_today" />
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(fitstop_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>" />
+        <button class="mt-clear-btn" type="submit">✕ Clear Today</button>
+      </form>
     </div>
-    <div id="mtWeekGrid"></div>
+
+    <div id="mtWeekGrid">
+      <?php foreach ($mt_grouped_logs as $meal_type => $logs) { ?>
+        <div class="mt-week-card">
+          <div class="mt-week-day"><?php echo htmlspecialchars(ucfirst($meal_type), ENT_QUOTES, 'UTF-8'); ?></div>
+          <?php if (!empty($logs)) { ?>
+            <?php foreach ($logs as $log) { ?>
+              <div class="mt-meal-info">
+                <?php echo htmlspecialchars($log['food_name'], ENT_QUOTES, 'UTF-8'); ?><br />
+                <?php echo (float) $log['grams_consumed']; ?>g • <?php echo (float) $log['calories']; ?> cal
+              </div>
+            <?php } ?>
+          <?php } else { ?>
+            <div class="mt-meal-info">No food added.</div>
+          <?php } ?>
+        </div>
+      <?php } ?>
+    </div>
+  </div>
+
+  <div class="mt-log-panel">
+    <h2 class="mt-log-title">Today's Meal Log</h2>
+    <hr class="mt-cards-divider" />
+    <div class="mt-meals-grid" id="mtTodayMeals">
+      <?php if (!empty($mt_today_logs)) { ?>
+        <?php foreach ($mt_today_logs as $log) { ?>
+          <div class="mt-meal-card">
+            <div class="mt-meal-title"><?php echo htmlspecialchars($log['food_name'], ENT_QUOTES, 'UTF-8'); ?></div>
+            <div class="mt-meal-info">
+              Meal: <?php echo htmlspecialchars(ucfirst($log['meal_type']), ENT_QUOTES, 'UTF-8'); ?><br />
+              Grams: <?php echo (float) $log['grams_consumed']; ?>g<br />
+              Calories: <?php echo (float) $log['calories']; ?>
+            </div>
+          </div>
+        <?php } ?>
+      <?php } else { ?>
+        <div class="mt-meal-card">
+          <div class="mt-meal-title">No meals yet</div>
+          <div class="mt-meal-info">Add food to create today's meal log.</div>
+        </div>
+      <?php } ?>
+    </div>
   </div>
 </section>
 
-<!-- Toast -->
 <div id="mtToast">✓ Food added!</div>
 
 <style>
-/* ─── MEAL TRACKER DESIGN ─── */
-.meal-tracker-section, .mt-panel, .mt-weekly-panel {
-  background: #000; /* black background */
+.meal-tracker-section,
+.mt-panel,
+.mt-weekly-panel,
+.mt-log-panel {
+  background: #000;
   border-radius: 12px;
   padding: 12px;
 }
 
-/* Hazard stripe now yellow */
+.meal-tracker-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .mt-stripe {
   height: 4px;
   background: linear-gradient(90deg, #ffcc00, #000);
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
-/* Inputs, selects, numbers */
-.mt-select, .mt-number, #mtFoodName {
+.mt-title,
+.mt-weekly-title,
+.mt-log-title {
+  color: #fff;
+  margin: 0;
+}
+
+.mt-input-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+
+.mt-field {
+  min-width: 160px;
+}
+
+.mt-field label,
+.mt-qty-group label {
+  color: #fff;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.mt-select,
+.mt-number,
+#mtFoodName {
   width: 100%;
   background: #0f0f0f;
   color: #fff;
@@ -1029,53 +1408,449 @@ function saveWorkout(workout){
   border-radius: 8px;
   padding: 10px;
 }
-.mt-select:focus, .mt-number:focus, #mtFoodName:focus { border-color:#ffcc00; }
 
-/* Buttons */
-.mt-add-btn, .mt-clear-btn, .mt-qty-btn {
+.mt-select:focus,
+.mt-number:focus,
+#mtFoodName:focus {
+  border-color: #ffcc00;
+  outline: none;
+}
+
+.mt-add-btn,
+.mt-clear-btn,
+.mt-qty-btn {
   background: #ffcc00;
   border: none;
   padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 700;
+  color: #000;
 }
-.mt-add-btn:disabled { opacity:0.5; cursor:not-allowed; }
 
-/* Grids */
-.mt-meals-grid, #mtWeekGrid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:10px; }
+.mt-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
-/* Meal/Week Cards */
-.mt-meal-card, .mt-week-card {
+.mt-meals-grid,
+#mtWeekGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.mt-meal-card,
+.mt-week-card {
   background: #101010;
   border: 1px solid #2b2b2b;
   border-radius: 10px;
   padding: 12px;
   font-size: 0.85rem;
+  color: #fff;
 }
-.mt-meal-title, .mt-week-day { color:#ffcc00; font-weight:700; margin-bottom:6px; }
-.mt-meal-info { background:#0d0d0d; border:1px solid #2e2e2e; border-radius:8px; padding:6px; margin-bottom:6px; }
 
-/* Nutrition Preview */
-.mt-nutrition-preview { background:#0f0f0f; border:1px solid #383838; border-radius:8px; padding:8px; margin-top:10px; display:flex; justify-content:space-between; flex-wrap:wrap; }
-.mt-nutr-item { text-align:center; flex:1; }
-.mt-nutr-val { font-weight:700; color:#ffcc00; display:block; }
-.mt-nutr-lbl { font-size:0.75rem; color:#aaa; }
+.mt-meal-title,
+.mt-week-day {
+  color: #ffcc00;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
 
-/* Qty stepper */
-.mt-qty-wrap { display:flex; justify-content:center; align-items:center; gap:6px; }
-.mt-qty-btn { background:#ffcc00; border:none; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:0.75rem; }
+.mt-meal-info {
+  background: #0d0d0d;
+  border: 1px solid #2e2e2e;
+  border-radius: 8px;
+  padding: 6px;
+  margin-bottom: 6px;
+}
+
+.mt-nutrition-preview {
+  background: #0f0f0f;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.mt-preview-top {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+}
+
+.mt-nutr-item {
+  text-align: center;
+  flex: 1;
+}
+
+.mt-nutr-val {
+  font-weight: 700;
+  color: #ffcc00;
+  display: block;
+}
+
+.mt-nutr-lbl {
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
+.mt-preview-serving {
+  width: 100%;
+  margin-top: 8px;
+  color: #ccc;
+  font-size: 0.82rem;
+}
+
+.mt-preview-note {
+  width: 100%;
+  margin-top: 8px;
+  color: #9a9a9a;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  border-top: 1px solid #232323;
+  padding-top: 8px;
+}
+
+.mt-qty-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.mt-qty-btn {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.mt-weekly-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mt-suggest-wrap {
+  position: relative;
+}
+
+#mtSuggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #0f0f0f;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  z-index: 1000;
+  max-height: 240px;
+  overflow-y: auto;
+  display: none;
+}
+
+.mt-suggestion-item {
+  padding: 10px;
+  cursor: pointer;
+  color: #fff;
+  border-bottom: 1px solid #1d1d1d;
+}
+
+.mt-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.mt-suggestion-item:hover,
+.mt-suggestion-item.active {
+  background: #1b1b1b;
+}
+
+#mtStatus {
+  margin-top: 10px;
+  color: #d6d6d6;
+}
+
+.mt-status-success {
+  color: #9bff8d !important;
+}
+
+.mt-status-error {
+  color: #ff8d8d !important;
+}
+
+#mtToast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  background: #ffcc00;
+  color: #000;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: 0.25s ease;
+  z-index: 9999;
+}
+
+#mtToast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+EQG7wp9vY1Qtu2w1P7QHCMkHPlJ8" crossorigin="anonymous"></script>
 <script src="lightmode.js"></script>
+
 <script>
-  window.MT_CONFIG = {
-    apiBase: "../Database",
-    csrfToken: <?php echo json_encode(fitstop_csrf_token()); ?>,
-  };
+const mtMeals = <?php echo json_encode($mt_meals, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+let mtSelectedMeal = null;
+
+const mtFoodName = document.getElementById("mtFoodName");
+const mtMealId = document.getElementById("mtMealId");
+const mtQtyInput = document.getElementById("mtQtyInput");
+const mtSuggestions = document.getElementById("mtSuggestions");
+const mtAddBtn = document.getElementById("mtAddBtn");
+const mtPvCal = document.getElementById("mtPvCal");
+const mtPvGrams = document.getElementById("mtPvGrams");
+const mtPvServing = document.getElementById("mtPvServing");
+const mtStatus = document.getElementById("mtStatus");
+const mtForm = document.getElementById("mtForm");
+const mtClearForm = document.getElementById("mtClearForm");
+const mtToast = document.getElementById("mtToast");
+
+function mtChangeQty(change) {
+  let current = parseFloat(mtQtyInput.value) || 0;
+  current += change;
+  if (current < 1) current = 1;
+  mtQtyInput.value = Math.round(current);
+  mtUpdatePreview();
+}
+
+function mtSetSelectedMeal(meal) {
+  mtSelectedMeal = meal;
+  mtMealId.value = meal.meal_id;
+  mtFoodName.value = meal.food_name;
+  mtQtyInput.value = Math.round(parseFloat(meal.serving_grams) || 100);
+  mtSuggestions.style.display = "none";
+  mtUpdatePreview();
+}
+
+function mtUpdatePreview() {
+  const grams = parseFloat(mtQtyInput.value) || 0;
+
+  if (!mtSelectedMeal) {
+    mtAddBtn.disabled = true;
+    mtPvCal.textContent = "0";
+    mtPvGrams.textContent = grams + "g";
+    mtPvServing.textContent = "";
+    return;
+  }
+
+  const baseGrams = parseFloat(mtSelectedMeal.serving_grams) || 1;
+  const baseCalories = parseFloat(mtSelectedMeal.calories) || 0;
+  const totalCalories = ((grams / baseGrams) * baseCalories).toFixed(2);
+
+  mtPvCal.textContent = totalCalories;
+  mtPvGrams.textContent = grams + "g";
+  mtPvServing.textContent = mtSelectedMeal.food_name + " • standard serving " + baseGrams + "g = " + baseCalories + " cal";
+  mtAddBtn.disabled = false;
+}
+
+function mtRenderSuggestions(list) {
+  if (!list.length) {
+    mtSuggestions.innerHTML = "";
+    mtSuggestions.style.display = "none";
+    return;
+  }
+
+  mtSuggestions.innerHTML = list.map(item => `
+    <div class="mt-suggestion-item" data-id="${item.meal_id}">
+      <strong>${item.food_name}</strong><br>
+      <small>${item.serving_grams}g • ${item.calories} cal</small>
+    </div>
+  `).join("");
+
+  mtSuggestions.style.display = "block";
+
+  document.querySelectorAll(".mt-suggestion-item").forEach((item) => {
+    item.addEventListener("click", function () {
+      const id = parseInt(this.getAttribute("data-id"), 10);
+      const meal = mtMeals.find(m => parseInt(m.meal_id, 10) === id);
+      if (meal) {
+        mtSetSelectedMeal(meal);
+      }
+    });
+  });
+}
+
+function mtShowToast(message) {
+  mtToast.textContent = message;
+  mtToast.classList.add("show");
+  setTimeout(function () {
+    mtToast.classList.remove("show");
+  }, 1800);
+}
+
+function mtSetStatus(message, type) {
+  mtStatus.textContent = message;
+  mtStatus.classList.remove("mt-status-success");
+  mtStatus.classList.remove("mt-status-error");
+
+  if (type === "success") {
+    mtStatus.classList.add("mt-status-success");
+  } else if (type === "error") {
+    mtStatus.classList.add("mt-status-error");
+  }
+}
+
+function mtSyncTokensFromResponse(doc) {
+  const newAddToken = doc.querySelector('#mtForm input[name="csrf_token"]');
+  const currentAddToken = mtForm.querySelector('input[name="csrf_token"]');
+  if (newAddToken && currentAddToken) {
+    currentAddToken.value = newAddToken.value;
+  }
+
+  const newClearToken = doc.querySelector('#mtClearForm input[name="csrf_token"]');
+  const currentClearToken = mtClearForm.querySelector('input[name="csrf_token"]');
+  if (newClearToken && currentClearToken) {
+    currentClearToken.value = newClearToken.value;
+  }
+}
+
+function mtRefreshSectionsFromHtml(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  const newWeekGrid = doc.querySelector("#mtWeekGrid");
+  const currentWeekGrid = document.querySelector("#mtWeekGrid");
+  if (newWeekGrid && currentWeekGrid) {
+    currentWeekGrid.innerHTML = newWeekGrid.innerHTML;
+  }
+
+  const newTodayMeals = doc.querySelector("#mtTodayMeals");
+  const currentTodayMeals = document.querySelector("#mtTodayMeals");
+  if (newTodayMeals && currentTodayMeals) {
+    currentTodayMeals.innerHTML = newTodayMeals.innerHTML;
+  }
+
+  const newStatus = doc.querySelector("#mtStatus");
+  if (newStatus) {
+    mtStatus.className = newStatus.className;
+    mtStatus.innerHTML = newStatus.innerHTML;
+  }
+
+  mtSyncTokensFromResponse(doc);
+}
+
+async function mtPostForm(formElement) {
+  const formData = new FormData(formElement);
+
+  const response = await fetch(window.location.href, {
+    method: "POST",
+    body: formData,
+    headers: {
+      "X-Requested-With": "XMLHttpRequest"
+    }
+  });
+
+  return await response.text();
+}
+
+mtFoodName.addEventListener("input", function () {
+  const q = this.value.trim().toLowerCase();
+
+  mtMealId.value = "";
+  mtSelectedMeal = null;
+  mtAddBtn.disabled = true;
+  mtPvCal.textContent = "0";
+  mtPvServing.textContent = "";
+
+  if (!q) {
+    mtSuggestions.innerHTML = "";
+    mtSuggestions.style.display = "none";
+    mtSetStatus("Type a food name — calories auto-fill based on grams.", "info");
+    return;
+  }
+
+  const exactMeal = mtMeals.find(item => item.food_name.toLowerCase() === q);
+  if (exactMeal) {
+    mtSetSelectedMeal(exactMeal);
+    return;
+  }
+
+  const matches = mtMeals.filter(item =>
+    item.food_name.toLowerCase().includes(q)
+  ).slice(0, 10);
+
+  mtRenderSuggestions(matches);
+});
+
+mtQtyInput.addEventListener("input", mtUpdatePreview);
+
+document.addEventListener("click", function (e) {
+  const wrap = document.getElementById("mtSuggestWrap");
+  if (!wrap.contains(e.target)) {
+    mtSuggestions.style.display = "none";
+  }
+});
+
+mtForm.addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  if (!mtMealId.value || !mtSelectedMeal) {
+    mtSetStatus("Please select a food from the suggestions.", "error");
+    return;
+  }
+
+  const previousScrollY = window.scrollY;
+
+  try {
+    const html = await mtPostForm(mtForm);
+    mtRefreshSectionsFromHtml(html);
+
+    mtFoodName.value = "";
+    mtMealId.value = "";
+    mtSelectedMeal = null;
+    mtQtyInput.value = "100";
+    mtSuggestions.innerHTML = "";
+    mtSuggestions.style.display = "none";
+    mtUpdatePreview();
+
+    window.scrollTo(0, previousScrollY);
+    mtShowToast("✓ Food added!");
+  } catch (error) {
+    mtSetStatus("Failed to add food.", "error");
+    window.scrollTo(0, previousScrollY);
+  }
+});
+
+mtClearForm.addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const previousScrollY = window.scrollY;
+
+  try {
+    const html = await mtPostForm(mtClearForm);
+    mtRefreshSectionsFromHtml(html);
+    window.scrollTo(0, previousScrollY);
+    mtShowToast("✓ Today cleared!");
+  } catch (error) {
+    mtSetStatus("Failed to clear today's meal logs.", "error");
+    window.scrollTo(0, previousScrollY);
+  }
+});
+
+mtUpdatePreview();
 </script>
-<script src="meal.js"></script>
 
 <script>
 document.querySelectorAll(".plan-ai-chip").forEach((chip) => {
@@ -1091,4 +1866,3 @@ document.querySelectorAll(".plan-ai-chip").forEach((chip) => {
   });
 });
 </script>
-
