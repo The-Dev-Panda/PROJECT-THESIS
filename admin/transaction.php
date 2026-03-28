@@ -49,16 +49,16 @@ if ($payment_method !== '') {
 if ($time_filter) {
     switch ($time_filter) {
         case 'today':
-            $where_conditions[] = "DATE(t.transaction_date) = DATE('now')";
+            $where_conditions[] = "DATE(t.transaction_date) = CURDATE()";
             break;
         case 'week':
-            $where_conditions[] = "t.transaction_date >= DATE('now', '-7 days')";
+            $where_conditions[] = "t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
             break;
         case 'month':
-            $where_conditions[] = "t.transaction_date >= DATE('now', '-30 days')";
+            $where_conditions[] = "t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
             break;
         case 'year':
-            $where_conditions[] = "t.transaction_date >= DATE('now', '-365 days')";
+            $where_conditions[] = "t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)";
             break;
     }
 }
