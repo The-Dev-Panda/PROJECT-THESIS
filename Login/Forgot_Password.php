@@ -3,67 +3,119 @@ require_once __DIR__ . '/../includes/security.php';
 ?>
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8">
-    <title>Forgot Password?</title>
-    <meta name="description" content="">
+    <title>Forgot Password — FitStop</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="../styles.css" rel="stylesheet">
+    <style>
+        /* Auth-specific only */
+        .auth-center {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-        crossorigin="anonymous"></script>
+        .auth-center::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url('../images/Fitstop.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.05;
+            z-index: 0;
+        }
 
+        .auth-card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 440px;
+            background: var(--bg-card);
+            border: 1px solid #2a2a2a;
+            border-top: 3px solid var(--hazard-yellow);
+            padding: 2.5rem;
+        }
+
+        .form-control-custom {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #333;
+            color: var(--text-primary);
+            padding: 0.5rem 0;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-control-custom::placeholder { color: #444; }
+        .form-control-custom:focus { border-bottom-color: var(--hazard-yellow); }
+    </style>
 </head>
+<body>
 
-<body class="bg-dark">
-    <img src="../images/Fitstop.png" alt="FITSTOP LOGIN" class="img-fluid w-100 h-100"
-        style="object-fit: cover; position: absolute; opacity: 10%; z-index: -1;">
-    </div>
-    <div class="container">
-        <div class="row justify-content-center align-items-center min-vh-100 rounded">
-            <div class="col-md-4">
-                <div class="container p-4 rounded"
-                    style="background-color:rgba(155, 155, 155, 0.18); box-shadow: inset;">
-                    <div class="card shadow">
-                        <div class="card-body p-3" style="background-color:rgba(153, 153, 153, 0.5)">
-                            <h3 class="text-center mb-4">Password Reset - <span style="color:rgb(197, 184, 0);">FitStop
-                                    Gym</span></h3>
-                            <form action="Process_Forgot_Password.php" method="POST">
-                                <?php echo fitstop_csrf_input(); ?>
-                                <div class="col px-4">
-                                    <div class="row mb-2">
-                                        <p>Please enter the email associated to your account</p>
-                                        <label for="email" style="font-weight: 500;">Email</label>
-                                        <input type="text" name="email" id="email" required placeholder="Enter email"
-                                            style="border: none; border-bottom: 1px solid black; background: none;">
-                                    </div>
-                                    <div class="row mt-4">
-                                        <input type="submit" value="Send Code" class="btn"
-                                            style="background-color:rgb(197, 184, 0);">
-                                    </div>
-                                    <?php
-                                    if (isset($_GET['c'])) {
-                                        if ($_GET['c'] == '1') {
-                                            echo '<span class="text-danger py-2">Code Expired</span>';
-                                        }
-                                    }
-                                    if (isset($_GET['c'])) {
-                                        if ($_GET['c'] == '500') {
-                                            echo '<span class="text-danger py-2">Failed to Send Email</span>';
-                                        }
-                                    }
-                                    ?>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="cursor" id="cursor"></div>
+
+<div class="auth-center">
+    <div class="auth-card">
+        <div class="hazard-stripes mb-4"></div>
+
+        <div class="d-inline-block bg-warning text-black px-2 py-1 mb-3 fw-bold small brand-font">
+            <i class="fa-solid fa-lock me-1"></i> ACCOUNT RECOVERY
         </div>
-    </div>
-</body>
+        <h2 class="brand-font text-white mb-1">FORGOT <span class="text-hazard">PASSWORD</span></h2>
+        <p class="text-white small mb-4">Enter the email address associated with your account and we'll send you a reset code.</p>
 
+        <form action="Process_Forgot_Password.php" method="POST">
+            <?php echo fitstop_csrf_input(); ?>
+
+            <div class="mb-4">
+                <label class="text-white small brand-font" style="font-size: 0.7rem; letter-spacing: 2px;">Email Address</label>
+                <input type="email" name="email" id="email" class="form-control-custom" required placeholder="e.g. johndoe@email.com">
+            </div>
+
+            <?php if (isset($_GET['c'])): ?>
+                <?php if ($_GET['c'] == '1'): ?>
+                    <div class="error-box"><i class="fa-solid fa-clock me-2"></i>Reset code has expired. Please try again.</div>
+                <?php elseif ($_GET['c'] == '500'): ?>
+                    <div class="error-box"><i class="fa-solid fa-triangle-exclamation me-2"></i>Failed to send email. Please try again.</div>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-hazard w-100">
+                    <i class="fa-solid fa-paper-plane me-2"></i>Send Reset Code
+                </button>
+            </div>
+        </form>
+
+        <hr style="border-color: #2a2a2a; margin: 1.5rem 0;">
+
+        <a href="Login_Page.php" class="text-white small" style="text-decoration: none; transition: color 0.2s ease;"
+            onmouseover="this.style.color='var(--hazard-yellow)'" onmouseout="this.style.color=''">
+            <i class="fa-solid fa-arrow-left me-1"></i> Back to Login
+        </a>
+    </div>
+</div>
+
+<script>
+    const cursor = document.getElementById('cursor');
+    document.addEventListener('mousemove', e => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top  = e.clientY + 'px';
+    });
+    document.querySelectorAll('a, button, [onclick], input, select, textarea, label').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
+    });
+</script>
+</body>
 </html>

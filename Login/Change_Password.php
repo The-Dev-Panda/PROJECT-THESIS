@@ -3,59 +3,119 @@ require_once __DIR__ . '/../includes/security.php';
 ?>
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8">
-    <title>Chnage Password</title>
-    <meta name="description" content="">
+    <title>Change Password — FitStop</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="../styles.css" rel="stylesheet">
+    <style>
+        /* Auth-specific only */
+        .auth-center {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-        crossorigin="anonymous"></script>
+        .auth-center::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url('../images/Fitstop.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.05;
+            z-index: 0;
+        }
 
+        .auth-card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 440px;
+            background: var(--bg-card);
+            border: 1px solid #2a2a2a;
+            border-top: 3px solid var(--hazard-yellow);
+            padding: 2.5rem;
+        }
+
+        .email-badge {
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-left: 3px solid var(--hazard-yellow);
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            color: var(--text-white);
+            margin-bottom: 2rem;
+        }
+
+        .form-control-custom {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #333;
+            color: var(--text-primary);
+            padding: 0.5rem 0;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-control-custom::placeholder { color: #444; }
+        .form-control-custom:focus { border-bottom-color: var(--hazard-yellow); }
+    </style>
 </head>
+<body>
 
-<body class="bg-dark">
-    <img src="../images/Fitstop.png" alt="FITSTOP LOGIN" class="img-fluid w-100 h-100"
-        style="object-fit: cover; position: absolute; opacity: 10%; z-index: -1">
-    </div>
-    <div class="container">
-        <div class="row justify-content-center align-items-center min-vh-100 rounded">
-            <div class="col-md-4">
-                <div class="container p-4 rounded"
-                    style="background-color:rgba(155, 155, 155, 0.18); box-shadow: inset;">
-                    <div class="card shadow">
-                        <div class="card-body p-3" style="background-color:rgba(153, 153, 153, 0.5)">
-                            <h3 class="text-center mb-4">Password Change - <span style="color:rgb(197, 184, 0);">FitStop
-                                    Gym</span></h3>
-                            <h4 class="text-center mb-4 border border-dark shadow p-1 rounded"><?php
-                            echo $_SESSION['reset_password_email'];
-                            ?></h4>
-                            <form action="Process_Change_Password.php" method="POST">
-                                <?php echo fitstop_csrf_input(); ?>
-                                <div class="col px-4">
-                                    <div class="row mb-2">
-                                        <p>Please enter your new password</p>
-                                        <label for="password" style="font-weight: 500;">password</label>
-                                        <input type="text" name="password" id="password" required
-                                            placeholder="New Password"
-                                            style="border: none; border-bottom: 1px solid black; background: none;">
-                                    </div>
-                                    <div class="row mt-4">
-                                        <input type="submit" value="Chnage Password" class="btn"
-                                            style="background-color:rgb(197, 184, 0);">
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="cursor" id="cursor"></div>
+
+<div class="auth-center">
+    <div class="auth-card">
+        <div class="hazard-stripes mb-4"></div>
+
+        <div class="d-inline-block bg-warning text-black px-2 py-1 mb-3 fw-bold small brand-font">
+            <i class="fa-solid fa-key me-1"></i> PASSWORD RESET
         </div>
-    </div>
-</body>
+        <h2 class="brand-font text-white mb-1">NEW <span class="text-hazard">PASSWORD</span></h2>
+        <p class="text-white small mb-3">Set a new password for your account.</p>
 
+        <div class="email-badge">
+            <i class="fa-solid fa-user me-2 text-hazard"></i>
+            <?php echo htmlspecialchars($_SESSION['reset_password_email']); ?>
+        </div>
+
+        <form action="Process_Change_Password.php" method="POST">
+            <?php echo fitstop_csrf_input(); ?>
+
+            <div class="mb-4">
+                <label class="text-white small brand-font" style="font-size: 0.7rem; letter-spacing: 2px;"  >New Password</label>
+                <input type="text" name="password" id="password" class="form-control-custom" required minlength="8" placeholder="Enter new password (min 8 characters)">
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-hazard w-100">
+                    <i class="fa-solid fa-check me-2"></i>Change Password
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const cursor = document.getElementById('cursor');
+    document.addEventListener('mousemove', e => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top  = e.clientY + 'px';
+    });
+    document.querySelectorAll('a, button, [onclick], input, select, textarea, label').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
+    });
+</script>
+</body>
 </html>
