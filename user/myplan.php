@@ -994,18 +994,7 @@ $smartSuggestions = $liveDashboardData['smartSuggestions'];
     </div>
 
     <ul class="goals-list">
-      <li>
-        <div class="icon-circle cycling">
-          <i class="fas fa-bicycle"></i>
-        </div>
-        <div class="goal-info">
-          <span class="goal-name" id="myPlanPrimaryGoalName"><?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?></span>
-          <div class="progress-container">
-            <div class="progress-bar yellow" id="liveGoalProgressBar" style="width: <?php echo $goalProgressPct; ?>%"></div>
-          </div>
-          <span class="days-count" id="myPlanPrimaryGoalHint"><?php echo $weeklyWorkoutCount; ?>/<?php echo $weeklyWorkoutTarget; ?> workout sessions this week (<?php echo htmlspecialchars($fitnessLevel, ENT_QUOTES, 'UTF-8'); ?>)</span>
-        </div>
-      </li>
+
 
       <li>
         <div class="icon-circle running">
@@ -1052,85 +1041,6 @@ $smartSuggestions = $liveDashboardData['smartSuggestions'];
     </div>
   </div>
 </section>
-
-<!-- ── NUTRITION SNAPSHOT ── -->
-<section class="diet-schedule-section" id="liveNutritionSection">
-  <div class="section-header">
-    <h3>Weekly Nutrition Snapshot</h3>
-    <span class="btn-outline">Live from your meal logs</span>
-  </div>
-
-  <div class="diet-calendar" id="liveDietCalendar">
-    <?php foreach ($liveDashboardData['calendarDays'] as $dayData): ?>
-    <div class="diet-day<?php echo $dayData['is_today'] ? ' active' : ''; ?>">
-      <div class="day-header">
-        <span class="day-name"><?php echo htmlspecialchars($dayData['day_name'], ENT_QUOTES, 'UTF-8'); ?></span>
-        <span class="day-calories"><?php echo (int)$dayData['entry_count']; ?> entries</span>
-      </div>
-
-      <div class="meals">
-        <div class="meal-item<?php echo $dayData['is_today'] ? ' completed' : ''; ?>">
-          <span class="meal-time">Meal Types</span>
-          <span class="meal-name"><?php echo (int)$dayData['meal_count']; ?> types logged</span>
-          <span class="meal-cal"><?php echo (int)$dayData['meal_pct']; ?>%</span>
-        </div>
-
-        <div class="meal-item<?php echo $dayData['is_today'] ? ' completed' : ''; ?>">
-          <span class="meal-time">Entries</span>
-          <span class="meal-name"><?php echo (int)$dayData['entry_count']; ?> food entries</span>
-          <span class="meal-cal"><?php echo (int)$dayData['entry_pct']; ?>%</span>
-        </div>
-
-        <div class="meal-item">
-          <span class="meal-time">Target</span>
-          <span class="meal-name"><?php echo (int)$targetMeals; ?> meal types</span>
-          <span class="meal-cal"><?php echo (int)$targetEntries; ?> entries</span>
-        </div>
-      </div>
-    </div>
-    <?php endforeach; ?>
-  </div>
-
-  <div class="nutrition-summary">
-    <div class="nutrition-card">
-      <div class="nutrition-icon fats">
-        <i class="fas fa-utensils"></i>
-      </div>
-      <div class="nutrition-info">
-        <span class="nutrition-label">Meal Types</span>
-        <span class="nutrition-value" id="liveMealTypesValue"><?php echo (int)$todayTotals['meal_count']; ?> / <?php echo (int)$targetMeals; ?></span>
-        <div class="nutrition-bar">
-          <div class="bar-fill" id="liveMealTypesBar" style="width: <?php echo $mealsPct; ?>%"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="nutrition-card">
-      <div class="nutrition-icon fiber">
-        <i class="fas fa-clipboard-list"></i>
-      </div>
-      <div class="nutrition-info">
-        <span class="nutrition-label">Food Entries</span>
-        <span class="nutrition-value" id="liveEntriesValue"><?php echo (int)$todayTotals['entry_count']; ?> / <?php echo (int)$targetEntries; ?> entries</span>
-        <div class="nutrition-bar">
-          <div class="bar-fill" id="liveEntriesBar" style="width: <?php echo $entriesPct; ?>%"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<?php
-$exerciseList = [];
-
-try {
-  require __DIR__ . '/../Login/connection.php';
-  $stmt = $pdo->query("SELECT exercise_id, name, movement_type FROM exercises ORDER BY name ASC");
-  $exerciseList = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (Throwable $e) {
-  $exerciseList = [];
-}
-?>
 
 <!-- ── WORKOUT PLAN ── -->
 <section class="workout-tracker-section">
