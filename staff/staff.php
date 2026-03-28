@@ -348,10 +348,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <i class="bi bi-people"></i>
         <span>Members</span>
       </li>
-      <li id="idGenBtn" data-target="idGeneration">
-        <i class="bi bi-qr-code"></i>
-        <span>ID Generation</span>
-      </li>
       <li id="monthlyBtn" onclick="window.location.href='monthly.php'" style="cursor:pointer;">
         <i class="bi bi-calendar-check"></i>
         <span>Monthly Access</span>
@@ -744,24 +740,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       <h2>Active Members</h2>
       <div id="membersGrid" class="members-grid">
         <div style="padding:24px;color:var(--text-muted);font-size:13px;">Loading members...</div>
-      </div>
-    </section>
-
-    <section id="idGeneration">
-      <h2>ID Generation</h2>
-      <div class="registration-card">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Member ID / Reference</label>
-            <input type="text" id="idGenMemberRef" class="form-input" placeholder="Enter Member ID e.g. FS-2026-0001">
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="btn-primary" onclick="generateMemberID()">
-            <i class="bi bi-qr-code" style="margin-right:6px;"></i>Generate ID Card
-          </button>
-        </div>
-        <div id="idGenResult" style="margin-top:20px;"></div>
       </div>
     </section>
 
