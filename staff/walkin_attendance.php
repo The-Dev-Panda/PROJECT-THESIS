@@ -10,14 +10,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
     try {
 
-        // ── Search active monthly subscribers ──────────────────────────────
+        // ── Search active monthly subscribers (non-members only) ───────────
         if ($action === 'search_monthly') {
             $q = '%' . trim($_POST['query'] ?? '') . '%';
             $today = date('Y-m-d');
             $stmt = $pdo->prepare("
                 SELECT id, name, expires_in, member
                 FROM monthly
-                WHERE name LIKE :q AND expires_in >= :today
+                WHERE name LIKE :q
+                  AND expires_in >= :today
+                  AND (member IS NULL OR member = '')
                 ORDER BY name ASC
                 LIMIT 20
             ");
@@ -38,12 +40,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
 
             $today = date('Y-m-d');
-            $check = $pdo->prepare("SELECT id, name, expires_in FROM monthly WHERE id = :id AND expires_in >= :today LIMIT 1");
+            $check = $pdo->prepare("
+                SELECT id, name, expires_in FROM monthly
+                WHERE id = :id
+                  AND expires_in >= :today
+                  AND (member IS NULL OR member = '')
+                LIMIT 1
+            ");
             $check->execute([':id' => $monthId, ':today' => $today]);
             $monthly = $check->fetch(PDO::FETCH_ASSOC);
 
             if (!$monthly) {
-                echo json_encode(['success' => false, 'message' => 'Monthly subscription not found or already expired.']);
+                echo json_encode(['success' => false, 'message' => 'Monthly subscription not found, already expired, or linked to a registered member.']);
                 exit;
             }
 
@@ -838,7 +846,7 @@ function searchMonthly(q) {
         if (!data.success) return;
         const results = data.results || [];
         if (results.length === 0) {
-          dd.innerHTML = '<div class="search-empty"><i class="bi bi-search" style="display:block;font-size:20px;margin-bottom:8px;opacity:.3;"></i>No active subscribers found.</div>';
+          dd.innerHTML = '<div class="search-empty"><i class="bi bi-search" style="display:block;font-size:20px;margin-bottom:8px;opacity:.3;"></i>No active non-member subscribers found.</div>';
         } else {
           dd.innerHTML = results.map(r => {
             const exp = new Date(r.expires_in).toLocaleDateString('en-US',
