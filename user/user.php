@@ -24,6 +24,7 @@ $paymentDueSoon = false;
 $daysLeft = null;
 $monthlyExpiry = null;
 $monthlyId = null;
+$transactions = [];
 try {
   require __DIR__ . '/../Login/connection.php';
   
@@ -336,6 +337,15 @@ try {
         'total_volume' => round((float)$entry['total_volume'], 1),
         'exercises' => $entry['exercises']
       ];
+    }
+
+    // E-Receipts: show most recent 3 transactions
+    try {
+      $transactionStmt = $pdo->prepare('SELECT receipt_number, amount, payment_method, status, "desc" AS description, created_at FROM transactions WHERE user_id = :user_id ORDER BY datetime(created_at) DESC LIMIT 3');
+      $transactionStmt->execute([':user_id' => $userId]);
+      $transactions = $transactionStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Throwable $t) {
+      $transactions = [];
     }
   }
 } catch (Throwable $e) {
@@ -761,44 +771,28 @@ $activePage = 'dashboard';
               </h4>
               <hr class="section-divider" />
 
-              <div class="receipt-entry">
-                <div class="receipt-icon">
-                  <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-                <div class="receipt-info">
-                  <span class="rname">Monthly Membership</span>
-                  <span class="rdate"
-                    >Jan 15, 2025 &nbsp;•&nbsp; Auto-renewed</span
-                  >
-                </div>
-                <span class="receipt-amount">Php49.99</span>
-              </div>
-
-              <div class="receipt-entry">
-                <div class="receipt-icon">
-                  <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-                <div class="receipt-info">
-                  <span class="rname">Personal Training Session</span>
-                  <span class="rdate"
-                    >Jan 22, 2025 &nbsp;•&nbsp; 1 session</span
-                  >
-                </div>
-                <span class="receipt-amount">Php35.00</span>
-              </div>
-
-              <div class="receipt-entry">
-                <div class="receipt-icon">
-                  <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-                <div class="receipt-info">
-                  <span class="rname">Monthly Membership</span>
-                  <span class="rdate"
-                    >Feb 15, 2025 &nbsp;•&nbsp; Auto-renewed</span
-                  >
-                </div>
-                <span class="receipt-amount">Php49.99</span>
-              </div>
+              <?php if (empty($transactions)): ?>
+                <p style="text-align: center; color: #999; padding: 20px;">No transactions found.</p>
+              <?php else: ?>
+                <?php foreach ($transactions as $transaction): ?>
+                  <?php
+                    $transactionDate = isset($transaction['created_at']) ? date('M j, Y', strtotime($transaction['created_at'])) : 'Unknown Date';
+                    $transactionDesc = htmlspecialchars($transaction['description'] ?? $transaction['desc'] ?? 'Payment', ENT_QUOTES, 'UTF-8');
+                    $transactionMethod = htmlspecialchars($transaction['payment_method'] ?? 'N/A', ENT_QUOTES, 'UTF-8');
+                    $transactionAmount = '₱' . number_format((float)($transaction['amount'] ?? 0), 2);
+                  ?>
+                  <div class="receipt-entry">
+                    <div class="receipt-icon">
+                      <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <div class="receipt-info">
+                      <span class="rname"><?php echo $transactionDesc; ?></span>
+                      <span class="rdate"><?php echo $transactionDate; ?> &nbsp;•&nbsp; <?php echo $transactionMethod; ?></span>
+                    </div>
+                    <span class="receipt-amount"><?php echo $transactionAmount; ?></span>
+                  </div>
+                <?php endforeach; ?>
+              <?php endif; ?>
             </div>
           </div>
         </section>
