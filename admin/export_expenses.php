@@ -2,7 +2,7 @@
 session_start();
 
 if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
-    header('Location:../Login/Login_Page.php');
+    header('Location:../LoginLogin_Page.php');
     exit();
 }
 
@@ -24,16 +24,16 @@ if ($search !== '') {
 if ($time_filter) {
     switch ($time_filter) {
         case 'today':
-            $where_conditions[] = "DATE(created_at) = DATE('now')";
+            $where_conditions[] = "DATE(created_at) = CURDATE()";
             break;
         case 'week':
-            $where_conditions[] = "created_at >= DATE('now', '-7 days')";
+            $where_conditions[] = "created_at >= NOW() - INTERVAL 7 DAY";
             break;
         case 'month':
-            $where_conditions[] = "created_at >= DATE('now', '-30 days')";
+            $where_conditions[] = "created_at >= NOW() - INTERVAL 30 DAY";
             break;
         case 'year':
-            $where_conditions[] = "created_at >= DATE('now', '-365 days')";
+            $where_conditions[] = "created_at >= NOW() - INTERVAL 365 DAY";
             break;
     }
 }
