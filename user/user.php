@@ -15,6 +15,7 @@ $toGoalText = 'Not set';
 $bmiMarkerLeft = '50';
 $attendanceTitle = 'No Attendance Yet';
 $attendanceDetail = 'No check-in record found.';
+$attendanceHistory = [];
 $workoutDays = [];
 $profileInitials = 'MM';
 $monthWeightChangeText = 'No data';
@@ -134,8 +135,29 @@ try {
         } elseif ($oldestWeight !== null) {
           $monthWeightChangeText = $formatWeightDiff($weightKg - $oldestWeight);
         }
+
+        // NEW: Fetch history for the chart (grab up to the last 10 entries to keep the chart clean)
+        $weightHistory = [];
+        $chartStmt = $pdo->prepare("SELECT date(archived_at, 'localtime') as log_date, weight_kg
+          FROM old_member_profiles
+          WHERE user_id = :user_id AND weight_kg IS NOT NULL
+          ORDER BY datetime(archived_at, 'localtime') ASC
+          LIMIT 10");
+        $chartStmt->execute([':user_id' => $userId]);
+        $weightHistory = $chartStmt->fetchAll(PDO::FETCH_ASSOC);
       }
     }
+
+    // Add their *current* weight as the final data point on the chart
+    if ($weightKg !== null && $weightKg > 0) {
+        $weightHistory[] = [
+            'log_date' => date('Y-m-d'),
+            'weight_kg' => $weightKg
+        ];
+    }
+
+    // Encode to JSON so Javascript can read it
+    $weightChartDataJson = json_encode($weightHistory ?? []);
 
     if ($bmi !== null && $bmi > 0) {
       $bmiValueText = number_format($bmi, 1, '.', '');
@@ -200,6 +222,24 @@ try {
       $attendanceAt->setTimezone(new DateTimeZone('Asia/Manila'));
       $attendanceTitle = 'Last Attendance';
       $attendanceDetail = $attendanceAt->format('M j, Y') . ' at ' . $attendanceAt->format('g:i A');
+    }
+
+    $attendanceHistoryStmt = $pdo->prepare('SELECT datetime FROM attendance WHERE user_id = :user_id ORDER BY datetime DESC LIMIT 7');
+    $attendanceHistoryStmt->execute([':user_id' => $userId]);
+    $rawHistoryRows = $attendanceHistoryStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+    foreach ($rawHistoryRows as $row) {
+      $rowAt = DateTime::createFromFormat('Y-m-d H:i:s', (string)$row['datetime'], new DateTimeZone('UTC'));
+      if ($rowAt !== false) {
+        $rowAt->setTimezone(new DateTimeZone('Asia/Manila'));
+        $attendanceHistory[] = [
+          'label' => $rowAt->format('l, M j'),
+          'time' => 'Check-in: ' . $rowAt->format('g:i A'),
+          'status' => 'Present',
+          'raw_date' => $rowAt->format('Y-m-d'),
+          'display_date' => $rowAt->format('l, M j'),
+        ];
+      }
     }
 
     $workoutStmt = $pdo->prepare("SELECT
@@ -469,10 +509,10 @@ $activePage = 'dashboard';
 
           <div class="bmi-card progress-chart">
             <h3>Weight Progress</h3>
-            <div class="chart-area">
-              <div class="chart-line"></div>
+            <div class="chart-area" style="position: relative; height: 160px; width: 100%; margin-top: 10px;">
+              <canvas id="weightChart"></canvas>
             </div>
-            <div class="progress-stats">
+            <div class="progress-stats" style="margin-top: 15px;">
               <div class="stat-item">
                 <span class="stat-label">This Month</span>
                 <span class="stat-value"><?php echo htmlspecialchars($monthWeightChangeText, ENT_QUOTES, 'UTF-8'); ?></span>
@@ -687,51 +727,27 @@ $activePage = 'dashboard';
               <h4><i class="bi bi-calendar-check"></i> Attendance Logs</h4>
               <hr class="section-divider" />
 
-              <div class="log-entry">
-                <div class="log-dot"></div>
-                <div class="log-info">
-                  <span class="log-date">Monday, Feb 10</span>
-                  <span class="log-time"
-                    >Check-in: 6:28 AM &nbsp;•&nbsp; Check-out: 8:05 AM</span
-                  >
+              <?php if (!empty($attendanceHistory)): ?>
+                <?php foreach ($attendanceHistory as $entry): ?>
+                  <div class="log-entry">
+                    <div class="log-dot"></div>
+                    <div class="log-info">
+                      <span class="log-date"><?php echo htmlspecialchars($entry['display_date'], ENT_QUOTES, 'UTF-8'); ?></span>
+                      <span class="log-time"><?php echo htmlspecialchars($entry['time'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    </div>
+                    <span class="log-status"><?php echo htmlspecialchars($entry['status'], ENT_QUOTES, 'UTF-8'); ?></span>
+                  </div>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <div class="log-entry" style="border-color: #e5e7eb">
+                  <div class="log-dot" style="background: #e5e7eb"></div>
+                  <div class="log-info">
+                    <span class="log-date">No attendance yet</span>
+                    <span class="log-time">Record your first check-in to see history.</span>
+                  </div>
+                  <span class="log-status" style="background: #f3f4f6; color: #6b7280">None</span>
                 </div>
-                <span class="log-status">Present</span>
-              </div>
-
-              <div class="log-entry">
-                <div class="log-dot"></div>
-                <div class="log-info">
-                  <span class="log-date">Tuesday, Feb 11</span>
-                  <span class="log-time"
-                    >Check-in: 6:55 AM &nbsp;•&nbsp; Check-out: 7:50 AM</span
-                  >
-                </div>
-                <span class="log-status">Present</span>
-              </div>
-
-              <div class="log-entry" style="border-color: #e5e7eb">
-                <div class="log-dot" style="background: #e5e7eb"></div>
-                <div class="log-info">
-                  <span class="log-date">Wednesday, Feb 12</span>
-                  <span class="log-time">Rest Day</span>
-                </div>
-                <span
-                  class="log-status"
-                  style="background: #f3f4f6; color: #6b7280"
-                  >Absent</span
-                >
-              </div>
-
-              <div class="log-entry">
-                <div class="log-dot"></div>
-                <div class="log-info">
-                  <span class="log-date">Today, Feb 13</span>
-                  <span class="log-time"
-                    >Check-in: 6:30 AM &nbsp;•&nbsp; Ongoing</span
-                  >
-                </div>
-                <span class="log-status">Present</span>
-              </div>
+              <?php endif; ?>
 
               <a class="view-all-link"
                 >See full log <i class="fas fa-chevron-right"></i
@@ -790,217 +806,13 @@ $activePage = 'dashboard';
             </div>
           </div>
         </section>
-        <!-- DIET SCHEDULE SECTION -->
-        <section class="diet-schedule-section">
-          <div class="section-header">
-            <h3>Weekly Diet Schedule</h3>
-            <button class="edit-btn">
-              <i class="bi bi-pencil"></i> Edit Schedule
-            </button>
-          </div>
-
-          <div class="diet-calendar">
-            <div class="diet-day">
-              <div class="day-header">
-                <span class="day-name">Monday</span>
-                <span class="day-calories">2,100 cal</span>
-              </div>
-              <div class="meals">
-                <div class="meal-item">
-                  <span class="meal-time">Breakfast</span
-                  ><span class="meal-name">Oatmeal with berries & nuts</span
-                  ><span class="meal-cal">450 cal</span>
-                </div>
-                <div class="meal-item">
-                  <span class="meal-time">Lunch</span
-                  ><span class="meal-name">Grilled chicken salad</span
-                  ><span class="meal-cal">550 cal</span>
-                </div>
-                <div class="meal-item">
-                  <span class="meal-time">Snack</span
-                  ><span class="meal-name">Protein shake & banana</span
-                  ><span class="meal-cal">320 cal</span>
-                </div>
-                <div class="meal-item">
-                  <span class="meal-time">Dinner</span
-                  ><span class="meal-name">Salmon with quinoa</span
-                  ><span class="meal-cal">680 cal</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="diet-day active">
-              <div class="day-header">
-                <span class="day-name">Today</span>
-                <span class="day-calories">2,050 cal</span>
-              </div>
-              <div class="meals">
-                <div class="meal-item completed">
-                  <span class="meal-time">Breakfast</span
-                  ><span class="meal-name">Greek yogurt with granola</span
-                  ><span class="meal-cal">420 cal</span>
-                </div>
-                <div class="meal-item completed">
-                  <span class="meal-time">Lunch</span
-                  ><span class="meal-name">Turkey wrap with veggies</span
-                  ><span class="meal-cal">520 cal</span>
-                </div>
-                <div class="meal-item">
-                  <span class="meal-time">Snack</span
-                  ><span class="meal-name">Apple & almond butter</span
-                  ><span class="meal-cal">280 cal</span>
-                </div>
-                <div class="meal-item">
-                  <span class="meal-time">Dinner</span
-                  ><span class="meal-name">Grilled steak & sweet potato</span
-                  ><span class="meal-cal">730 cal</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="diet-day">
-              <div class="day-header">
-                <span class="day-name">Wednesday</span>
-                <span class="day-calories">2,200 cal</span>
-              </div>
-              <div class="meals">
-                <div class="meal-item">
-                  <span class="meal-time">Breakfast</span
-                  ><span class="meal-name">Scrambled eggs & toast</span
-                  ><span class="meal-cal">480 cal</span>
-                </div>
-                <div class="meal-item">
-                  <span class="meal-time">Lunch</span
-                  ><span class="meal-name">Pasta with vegetables</span
-                  ><span class="meal-cal">600 cal</span>
-                </div>
-                <div class="meal-item">
-                  <span class="meal-time">Snack</span
-                  ><span class="meal-name">Mixed nuts</span
-                  ><span class="meal-cal">300 cal</span>
-                </div>
-                <div class="meal-item">
-                  <span class="meal-time">Dinner</span
-                  ><span class="meal-name">Chicken stir-fry</span
-                  ><span class="meal-cal">720 cal</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="nutrition-summary">
-            <div class="nutrition-card">
-              <div class="nutrition-icon protein">
-                <i class="fas fa-drumstick-bite"></i>
-              </div>
-              <div class="nutrition-info">
-                <span class="nutrition-label">Protein</span>
-                <span class="nutrition-value">142g / 180g</span>
-                <div class="nutrition-bar">
-                  <div class="bar-fill" style="width: 79%"></div>
-                </div>
-              </div>
-            </div>
-            <div class="nutrition-card">
-              <div class="nutrition-icon carbs">
-                <i class="fas fa-bread-slice"></i>
-              </div>
-              <div class="nutrition-info">
-                <span class="nutrition-label">Carbs</span>
-                <span class="nutrition-value">218g / 250g</span>
-                <div class="nutrition-bar">
-                  <div class="bar-fill" style="width: 87%"></div>
-                </div>
-              </div>
-            </div>
-            <div class="nutrition-card">
-              <div class="nutrition-icon fats">
-                <i class="fas fa-cheese"></i>
-              </div>
-              <div class="nutrition-info">
-                <span class="nutrition-label">Fats</span>
-                <span class="nutrition-value">58g / 70g</span>
-                <div class="nutrition-bar">
-                  <div class="bar-fill" style="width: 83%"></div>
-                </div>
-              </div>
-            </div>
-            <div class="nutrition-card">
-              <div class="nutrition-icon fiber">
-                <i class="fas fa-seedling"></i>
-              </div>
-              <div class="nutrition-info">
-                <span class="nutrition-label">Fiber</span>
-                <span class="nutrition-value">28g / 35g</span>
-                <div class="nutrition-bar">
-                  <div class="bar-fill" style="width: 80%"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- GOALS & TRAINERS -->
-        <section class="bottom-grid">
-          <div class="box goals-box">
-            <div class="box-header">
-              <h3>Goals Progress</h3>
-              <button class="btn-outline">View All</button>
-            </div>
-            <ul class="goals-list">
-              <li>
-                <div class="icon-circle cycling">
-                  <i class="fas fa-bicycle"></i>
-                </div>
-                <div class="goal-info">
-                  <span class="goal-name" id="dashboardPrimaryGoalName"><?php echo htmlspecialchars($goal, ENT_QUOTES, 'UTF-8'); ?></span>
-                  <div class="progress-container">
-                    <div class="progress-bar yellow" style="width: 65%"></div>
-                  </div>
-                  <span class="days-count" id="dashboardPrimaryGoalHint">From your Profile settings</span>
-                </div>
-              </li>
-              <li>
-                <div class="icon-circle running">
-                  <i class="fas fa-running"></i>
-                </div>
-                <div class="goal-info">
-                  <span class="goal-name">Running</span>
-                  <div class="progress-container">
-                    <div class="progress-bar orange" style="width: 42%"></div>
-                  </div>
-                  <span class="days-count">42/100 days</span>
-                </div>
-              </li>
-              <li>
-                <div class="icon-circle water"><i class="fas fa-tint"></i></div>
-                <div class="goal-info">
-                  <span class="goal-name">Water Intake</span>
-                  <div class="progress-container">
-                    <div class="progress-bar blue" style="width: 85%"></div>
-                  </div>
-                  <span class="days-count">85/100 days</span>
-                </div>
-              </li>
-              <li>
-                <div class="icon-circle workout">
-                  <i class="fas fa-dumbbell"></i>
-                </div>
-                <div class="goal-info">
-                  <span class="goal-name">Strength Training</span>
-                  <div class="progress-container">
-                    <div class="progress-bar purple" style="width: 73%"></div>
-                  </div>
-                  <span class="days-count">73/100 days</span>
-                </div>
-              </li>
-            </ul>
-          </div>
+        
         </section>
       </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+EQG7wp9vY1Qtu2w1P7QHCMkHPlJ8" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="lightmode.js"></script>
     <script>
       const currentLeaderboardUserId = <?php echo (int)($_SESSION['id'] ?? 0); ?>;
@@ -1185,6 +997,67 @@ $activePage = 'dashboard';
       }
 
       loadLeaderboard("weekly");
+
+      /* ── Weight Progress Chart ── */
+      const weightData = <?php echo $weightChartDataJson ?? '[]'; ?>;
+      const chartCanvas = document.getElementById('weightChart');
+      if (chartCanvas && Array.isArray(weightData) && weightData.length > 1) {
+        const ctx = chartCanvas.getContext('2d');
+        const labels = weightData.map(d => {
+          const date = new Date(d.log_date);
+          return isNaN(date.getTime()) ? d.log_date : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+        const dataPoints = weightData.map(d => parseFloat(d.weight_kg) || 0);
+
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Weight (kg)',
+              data: dataPoints,
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.15)',
+              borderWidth: 2,
+              tension: 0.4,
+              fill: true,
+              pointBackgroundColor: '#ffffff',
+              pointBorderColor: '#f59e0b',
+              pointRadius: 4,
+              pointHoverRadius: 6,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return context.parsed.y + ' kg';
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { font: { family: "'Inter', sans-serif", size: 10 }, color: '#6b7280' }
+              },
+              y: {
+                grid: { color: '#f3f4f6', drawBorder: false },
+                ticks: { font: { family: "'Inter', sans-serif", size: 10 }, color: '#6b7280' }
+              }
+            }
+          }
+        });
+      } else if (chartCanvas) {
+        const chartArea = chartCanvas.parentElement;
+        if (chartArea) {
+          chartArea.innerHTML = '<div style="height: 100%; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 0.9rem;">Log your weight again to see your progress chart!</div>';
+        }
+      }
     </script>
   </body>
 </html>
