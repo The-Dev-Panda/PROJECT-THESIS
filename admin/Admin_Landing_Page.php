@@ -2,7 +2,7 @@
 session_start();
 
 if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
-    header('Location: ../login/Login_Page.php');
+    header('Location: ../Login/Login_Page.php');
     exit();
 }
 date_default_timezone_set('Asia/Manila');

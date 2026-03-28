@@ -3,7 +3,7 @@ session_start();
 require_once __DIR__ . '/../includes/security.php';
 
 if (empty($_SESSION['username']) || $_SESSION['user_type'] != 'admin') {
-    header('Location: Login_Page.php');
+    header('Location: ../Login/Login_Page.php');
     exit();
 }
 ?>
