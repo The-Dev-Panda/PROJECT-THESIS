@@ -29,6 +29,7 @@ try {
     $customerName  = isset($input['customer_name'])   ? trim((string)$input['customer_name'])   : '';
     $amount        = isset($input['amount'])          ? (float)$input['amount']                 : 0;
     $paymentMethod = isset($input['payment_method'])  ? trim((string)$input['payment_method'])  : '';
+    $gcashRef      = isset($input['gcash_ref'])       ? trim((string)$input['gcash_ref'])       : '';
     $paidFor       = isset($input['paid_for'])        ? trim((string)$input['paid_for'])        : '';
     $notes         = isset($input['notes'])           ? trim((string)$input['notes'])           : '';
 
@@ -76,6 +77,9 @@ try {
 
     $desc = "Paid For: " . $paidFor;
     if ($notes !== '') $desc .= " | Notes: " . $notes;
+    if (strtolower($paymentMethod) === 'gcash' && $gcashRef !== '') {
+        $desc .= " | GCash Ref: " . $gcashRef;
+    }
 
     $insertStmt = $db->prepare('
         INSERT INTO transactions
