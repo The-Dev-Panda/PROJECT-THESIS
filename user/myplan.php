@@ -770,23 +770,6 @@ if (empty($smartSuggestions)) {
       </li>
     </ul>
   </div>
-
-  <div class="ai-suggestions-box">
-    <h4>Personalized Suggestions</h4>
-    <div class="suggestion-cards">
-      <?php foreach ($smartSuggestions as $suggestion): ?>
-      <div class="suggestion-card" data-tab="workout" style="display: flex">
-        <div class="suggestion-icon workout">
-          <i class="fas fa-bolt"></i>
-        </div>
-        <div class="suggestion-text">
-          <h5>Action Item</h5>
-          <p><?php echo htmlspecialchars($suggestion, ENT_QUOTES, 'UTF-8'); ?></p>
-        </div>
-      </div>
-      <?php endforeach; ?>
-    </div>
-  </div>
 </section>
 
 <?php

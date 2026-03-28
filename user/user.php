@@ -799,10 +799,6 @@ $activePage = 'dashboard';
                 </div>
                 <span class="receipt-amount">Php49.99</span>
               </div>
-
-              <a class="view-all-link"
-                >Download all receipts <i class="fas fa-download"></i
-              ></a>
             </div>
           </div>
         </section>

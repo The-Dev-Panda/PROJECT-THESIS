@@ -11943,3 +11943,275 @@ body.light-mode .toggle-track {
 .form-input::placeholder {
   color: #555 !important;
 }
+/* ── Receipt entries ── */
+.receipt-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  background: #0f0f0f;
+  border-left: 3px solid #ffcc00;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+.receipt-entry:hover {
+  background: #1a2e24;
+  border-color: #ffcc00;
+}
+.receipt-icon {
+  width: 38px;
+  height: 38px;
+  background: #0d2e22;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.receipt-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.receipt-info {
+  flex: 1;
+  min-width: 0;
+}
+.rname {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rdate {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+  display: block;
+}
+.receipt-amount {
+  font-size: 14px;
+  font-weight: 700;
+  color: #10b981;
+  white-space: nowrap;
+}
+
+/* ── Modal overlay ── */
+.receipt-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.receipt-overlay.open {
+  display: flex;
+}
+
+/* ── Modal box ── */
+.receipt-modal {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-top: 3px solid #ffcc00;
+  width: 100%;
+  max-width: 420px;
+  clip-path: polygon(
+    12px 0,
+    100% 0,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    0 100%,
+    0 12px
+  );
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px dashed #333;
+}
+.modal-head-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.modal-logo {
+  background: #ffcc00;
+  color: #000;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  text-transform: uppercase;
+}
+.modal-title {
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: block;
+}
+.modal-sub {
+  font-size: 10px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.modal-close {
+  background: #222;
+  border: none;
+  color: #aaa;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.modal-close:hover {
+  background: #ffcc00;
+  color: #000;
+}
+
+.modal-body {
+  padding: 20px;
+}
+.modal-icon-wrap {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.modal-icon-big {
+  width: 64px;
+  height: 64px;
+  background: #0d2e22;
+  border: 2px solid #10b981;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-icon-big svg {
+  width: 30px;
+  height: 30px;
+}
+
+.modal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dashed #333;
+}
+.modal-row:last-of-type {
+  border-bottom: none;
+}
+.modal-label {
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.modal-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  font-family: "Chakra Petch", sans-serif;
+  text-align: right;
+  max-width: 230px;
+  word-break: break-word;
+}
+.modal-amount {
+  color: #ffcc00;
+  font-size: 20px;
+}
+.modal-status {
+  color: #10b981;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border: 1px solid #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  text-transform: uppercase;
+  font-family: "Chakra Petch", sans-serif;
+  letter-spacing: 1px;
+}
+
+.modal-footer {
+  padding: 16px 20px;
+  border-top: 1px dashed #333;
+}
+.dl-single-btn {
+  width: 100%;
+  padding: 13px;
+  background: #ffcc00;
+  color: #000;
+  border: none;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  clip-path: polygon(
+    8px 0,
+    100% 0,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    0 100%,
+    0 8px
+  );
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.dl-single-btn:hover {
+  background: #e6b800;
+}
+
+/* ── Toast ── */
+.receipt-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffcc00;
+  color: #000;
+  padding: 10px 24px;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  clip-path: polygon(
+    6px 0,
+    100% 0,
+    100% calc(100% - 6px),
+    calc(100% - 6px) 100%,
+    0 100%,
+    0 6px
+  );
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 99999;
+}
+.receipt-toast.show {
+  opacity: 1;
+}

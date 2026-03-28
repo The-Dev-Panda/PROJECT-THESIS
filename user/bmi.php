@@ -4,6 +4,29 @@ require __DIR__ . '/../Login/connection.php';
 $activePage = 'bmi';
 $firstName = 'Member';
 $goal = 'Primary Goal';
+$displayName = 'Member';
+$firstName = 'Member';
+$fitnessLevel = 'Not set';
+$goal = 'Primary Goal';
+$bmiBadgeClass = 'healthy';
+$bmiLabel = 'Not set';
+$bmiValueText = '--';
+$heightText = 'Not set';
+$weightText = 'Not set';
+$targetWeightText = 'Not set';
+$toGoalText = 'Not set';
+$bmiMarkerLeft = '50';
+$attendanceTitle = 'No Attendance Yet';
+$attendanceDetail = 'No check-in record found.';
+$attendanceHistory = [];
+$workoutDays = [];
+$profileInitials = 'MM';
+$monthWeightChangeText = 'No data';
+$totalWeightChangeText = 'No data';
+$paymentDueSoon = false;
+$daysLeft = null;
+$monthlyExpiry = null;
+$monthlyId = null;
 
 $userId = (int)($_SESSION['id'] ?? 0);
 if ($userId > 0) {
@@ -25,6 +48,7 @@ if ($userId > 0) {
     $goal = trim((string)$profile['goal']);
   }
 }
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -112,13 +136,21 @@ if ($userId > 0) {
  
     <!-- Weight Progress -->
     <div class="bmi-card progress-chart">
-      <h3>Weight Progress</h3>
-      <div class="chart-area"><div class="chart-line"></div></div>
-      <div class="progress-stats">
-        <div class="stat-item"><span class="stat-label">This Month</span><span class="stat-value">-2.3 kg</span></div>
-        <div class="stat-item"><span class="stat-label">Total Lost</span><span class="stat-value">-8.7 kg</span></div>
-      </div>
-    </div>
+            <h3>Weight Progress</h3>
+            <div class="chart-area" style="position: relative; height: 160px; width: 100%; margin-top: 10px;">
+              <canvas id="weightChart"></canvas>
+            </div>
+            <div class="progress-stats" style="margin-top: 15px;">
+              <div class="stat-item">
+                <span class="stat-label">This Month</span>
+                <span class="stat-value"><?php echo htmlspecialchars($monthWeightChangeText, ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Total Lost</span>
+                <span class="stat-value"><?php echo htmlspecialchars($totalWeightChangeText, ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+            </div>
+          </div>
  
     <!-- Today's Stats -->
     <div class="bmi-card quick-stats">
@@ -222,6 +254,69 @@ if ($userId > 0) {
 </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+EQG7wp9vY1Qtu2w1P7QHCMkHPlJ8" crossorigin="anonymous"></script>
     <script src="bmi.js"></script>
+    <script src="lightmode.js"></script>
+
   </body>
 </html>
+<script>
+  /* ── Weight Progress Chart ── */
+      const weightData = <?php echo $weightChartDataJson ?? '[]'; ?>;
+      const chartCanvas = document.getElementById('weightChart');
+      if (chartCanvas && Array.isArray(weightData) && weightData.length > 1) {
+        const ctx = chartCanvas.getContext('2d');
+        const labels = weightData.map(d => {
+          const date = new Date(d.log_date);
+          return isNaN(date.getTime()) ? d.log_date : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+        const dataPoints = weightData.map(d => parseFloat(d.weight_kg) || 0);
 
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Weight (kg)',
+              data: dataPoints,
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.15)',
+              borderWidth: 2,
+              tension: 0.4,
+              fill: true,
+              pointBackgroundColor: '#ffffff',
+              pointBorderColor: '#f59e0b',
+              pointRadius: 4,
+              pointHoverRadius: 6,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return context.parsed.y + ' kg';
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { font: { family: "'Inter', sans-serif", size: 10 }, color: '#6b7280' }
+              },
+              y: {
+                grid: { color: '#f3f4f6', drawBorder: false },
+                ticks: { font: { family: "'Inter', sans-serif", size: 10 }, color: '#6b7280' }
+              }
+            }
+          }
+        });
+      } else if (chartCanvas) {
+        const chartArea = chartCanvas.parentElement;
+        if (chartArea) {
+          chartArea.innerHTML = '<div style="height: 100%; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 0.9rem;">Log your weight again to see your progress chart!</div>';
+        }
+      }
+</script>

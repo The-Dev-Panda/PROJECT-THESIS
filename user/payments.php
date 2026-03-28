@@ -67,8 +67,6 @@ try {
               </div>
               <?php endforeach; ?>
             <?php endif; ?>
-
-            <a class="view-all-link">Download all receipts <i class="fas fa-download"></i></a>
           </div>
           <!-- TERMS & POLICY -->
           <div class="profile-card terms-card">
