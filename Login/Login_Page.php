@@ -113,6 +113,18 @@ if (isset($_SESSION["username"]) && $_SESSION["username"] != "") {
 
     <div class="cursor" id="cursor"></div>
     <?php include('../includes/header.php'); ?>
+    <div class="row bg-dark" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: -1;">
+        <div class="auth-background">
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="opacity: 0.4;">
+                <use xlink:href="BACKGROUND.svg" />
+            </svg>
+        </div>
+        <div class="auth-background">
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="opacity: 0.4;">
+                <use xlink:href="BACKGROUND.svg" />
+            </svg>
+        </div>
+    </div>
     <div class="auth-wrapper">
         <div class="auth-left">
             <div class="auth-card">
