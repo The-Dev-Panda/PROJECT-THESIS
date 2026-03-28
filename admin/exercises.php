@@ -104,7 +104,7 @@ $allowedMovementTypes = ['strength', 'cardio', 'hypertrophy', 'flexibility', 'mo
         <!-- Filters Section -->
         <section>
             <div>
-                <form method="GET">
+                <form method="GET" class="reveal-right">
                     <div class="row my-2">
                         <div class="col-sm-12 col-xl-3 my-1">
                             <div class="search-wrapper" style="min-width: 200px;">
@@ -162,7 +162,7 @@ $allowedMovementTypes = ['strength', 'cardio', 'hypertrophy', 'flexibility', 'mo
                     <tbody>
                         <?php if (count($exercises) > 0): ?>
                             <?php foreach ($exercises as $row): ?>
-                                <tr>
+                                <tr class="reveal">
                                     <td><?php echo (int) $row['exercise_id']; ?></td>
                                     <td><strong><?php echo htmlspecialchars($row['name']); ?></strong></td>
                                     <td><?php echo htmlspecialchars($row['target_muscle']); ?></td>

@@ -185,7 +185,7 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
 
         <section>
             <h2><i class="bi bi-plus-circle"></i> Add New Expense</h2>
-            <div class="registration-card">
+            <div class="registration-card reveal-left">
                 <form method="POST" action="process_expenses.php">
                     <?php echo fitstop_csrf_input(); ?>
                     <input type="hidden" name="action" value="add">
@@ -221,7 +221,7 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
         </section>
 
         <section>
-            <div class="my-2">
+            <div class="my-2 reveal-right">
                 <form method="GET">
                     <div class="row">
                         <div class="col-sm-12 col-md-4">
@@ -313,7 +313,7 @@ function getPaginationUrl($page_num, $search, $time, $sort, $order)
                     <tbody>
                         <?php if (count($expenses) > 0): ?>
                             <?php foreach ($expenses as $expense): ?>
-                                <tr>
+                                <tr class="reveal">
                                     <td><?php echo $expense['expense_id']; ?></td>
                                     <td><strong><?php echo htmlspecialchars($expense['expense_name']); ?></strong></td>
                                     <td><strong

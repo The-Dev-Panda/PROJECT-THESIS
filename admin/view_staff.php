@@ -127,7 +127,7 @@ function getSortIcon($column, $current_sort, $current_order) {
 
         <!-- Search & Filter Section -->
         <section>
-            <div class="inventory-header">
+            <div class="inventory-header reveal-right">
                 <form method="GET" class="search-container">
                     <div class="search-wrapper" style="flex: 1;">
                         <i class="bi bi-search search-icon"></i>
@@ -154,7 +154,7 @@ function getSortIcon($column, $current_sort, $current_order) {
             <!-- Staff Table -->
             <div class="inventory-table">
                 <table>
-                    <thead>
+                    <thead class="reveal-left">
                         <tr>
                             <th class="sortable-header" onclick="window.location.href='<?php echo getSortUrl('first_name', $sort_by, $sort_order, $search); ?>'">
                                 Name <?php echo getSortIcon('first_name', $sort_by, $sort_order); ?>
@@ -184,7 +184,7 @@ function getSortIcon($column, $current_sort, $current_order) {
                                 $last_login = timeAgo($staff['last_logged_in']);
                                 $joined = date('M d, Y', strtotime($staff['created_at']));
                                 ?>
-                                <tr>
+                                <tr class="reveal">
                                     <td>
                                         <i class='bi bi-person-circle' style='color: var(--hazard); margin-right: 8px;'></i>
                                         <strong><?php echo $full_name; ?></strong>

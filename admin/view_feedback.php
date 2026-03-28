@@ -62,7 +62,7 @@ try {
         <?php else: ?>
             <!-- Filter Buttons -->
             <section>
-                <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+                <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;" class="reveal-right">
                     <button class="btn-primary filter-btn active" data-filter="all" style="padding: 9px 16px;">All</button>
                     <button class="btn-secondary filter-btn" data-filter="member"
                         style="padding: 9px 16px;">Members</button>
@@ -123,7 +123,7 @@ try {
                             if ($status === 'closed')
                                 $statusBadgeClass = 'inactive';
                             ?>
-                            <article class="registration-card feedback-item" data-source="<?php echo $sourceType; ?>"
+                            <article class="registration-card feedback-item reveal" data-source="<?php echo $sourceType; ?>"
                                 data-status="<?php echo $statusSafe; ?>" data-feedback-id="<?php echo $id; ?>">
                                 <div
                                     style="display: flex; justify-content: space-between; align-items: start; gap: 20px; margin-bottom: 16px;">

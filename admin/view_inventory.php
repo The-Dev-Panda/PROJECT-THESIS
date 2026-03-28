@@ -230,7 +230,7 @@ function getPaginationUrl($page_num, $search, $category, $stock, $sort, $order)
         <!-- Topbar -->
         <div class="topbar row">
             <div class="topbar-left col-sm-12 col-xl-6">
-                <h1><i class="bi bi-box-seam"></i> Inventory</h1>
+                <h1><i class="bi bi-box-seam"></i>Manage Inventory</h1>
                 <p>Manage equipment stock & status</p>
             </div>
             <div class="topbar-right col-sm-12 col-xl-1 col-xl-offset-5">
@@ -259,7 +259,7 @@ function getPaginationUrl($page_num, $search, $category, $stock, $sort, $order)
 
         <!-- Search and Filter Bar -->
         <section>
-            <div class="inventory-header row">
+            <div class="inventory-header row reveal-right">
                 <div class="col-8">
                     <form method="GET">
                         <div class="row">
@@ -324,7 +324,7 @@ function getPaginationUrl($page_num, $search, $category, $stock, $sort, $order)
             <!-- Inventory Table -->
             <div class="inventory-table">
                 <table>
-                    <thead>
+                    <thead class="reveal-left">
                         <tr>
                             <th class="sortable-header"
                                 onclick="window.location.href='<?php echo getSortUrl('item_name', $sort_by, $sort_order, $search, $category_filter, $stock_filter, $page); ?>'">
@@ -349,7 +349,7 @@ function getPaginationUrl($page_num, $search, $category, $stock, $sort, $order)
                     <tbody>
                         <?php if (count($items) > 0): ?>
                             <?php foreach ($items as $item): ?>
-                                <tr>
+                                <tr class="reveal">
                                     <td><strong><?php echo htmlspecialchars($item['item_name']); ?></strong></td>
                                     <td>
                                         <span
