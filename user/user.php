@@ -236,15 +236,12 @@ $attendanceHistory = [
   ['display_date' => 'Sunday, Mar 23',    'time' => 'Check-in: 8:59 PM',  'status' => 'Present'],
   ['display_date' => 'Friday, Mar 20',    'time' => 'Check-in: 12:25 PM', 'status' => 'Present'],
   ['display_date' => 'Friday, Mar 13',    'time' => 'Check-in: 12:49 AM', 'status' => 'Present'],
-  ['display_date' => 'Wednesday, Mar 11', 'time' => 'Check-in: 3:15 PM',  'status' => 'Late'],
-  ['display_date' => 'Monday, Mar 9',     'time' => 'No check-in',        'status' => 'Absent'],
   ['display_date' => 'Friday, Mar 6',     'time' => 'Check-in: 8:45 AM',  'status' => 'Present'],
 ];
  
 $previewCount = 5;
- 
 // Summary counts for modal
-$counts = ['present' => 0, 'late' => 0, 'absent' => 0];
+$counts = ['present' => 0,];
 foreach ($attendanceHistory as $e) {
   $k = strtolower($e['status']);
   if (isset($counts[$k])) $counts[$k]++;
@@ -817,12 +814,7 @@ $activePage = 'dashboard';
       <span class="att-sum-pill present">
         <i class="bi bi-check-circle"></i>&nbsp; <?php echo $counts['present']; ?> Present
       </span>
-      <span class="att-sum-pill late">
-        <i class="bi bi-clock"></i>&nbsp; <?php echo $counts['late']; ?> Late
-      </span>
-      <span class="att-sum-pill absent">
-        <i class="bi bi-x-circle"></i>&nbsp; <?php echo $counts['absent']; ?> Absent
-      </span>
+
     </div>
  
     <div class="att-hr" style="margin: 14px 20px 0;"></div>

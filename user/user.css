@@ -12381,16 +12381,6 @@ body.light-mode .toggle-track {
   background: #1a1a00;
   border-left-color: var(--hazard-yellow, #ffcc00);
 }
-.att-log-entry.late {
-  border-left-color: #fb923c;
-}
-.att-log-entry.absent {
-  border-left-color: #f87171;
-}
-.att-log-entry.late:hover,
-.att-log-entry.absent:hover {
-  border-left-color: var(--hazard-yellow, #ffcc00);
-}
 
 .att-dot {
   width: 9px;
@@ -12626,11 +12616,7 @@ body.light-mode .toggle-track {
   border: 1px solid #00d084;
   background: rgba(0, 208, 132, 0.12);
 }
-.att-sum-pill.late {
-  color: #fb923c;
-  border: 1px solid #fb923c;
-  background: rgba(251, 146, 60, 0.12);
-}
+
 .att-sum-pill.absent {
   color: #f87171;
   border: 1px solid #f87171;
