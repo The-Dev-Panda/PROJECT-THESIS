@@ -321,8 +321,8 @@ $inactive_apis = $stmt->fetch()['total'];
                                     <td>
                                         <div style="display: flex; align-items: center;">
                                             <code class="api-key-display masked-key" id="key-<?php echo $api['api_id']; ?>">
-                                                        <?php echo htmlspecialchars($api['api_key']); ?>
-                                                    </code>
+                                                                <?php echo htmlspecialchars($api['api_key']); ?>
+                                                            </code>
                                             <span class="reveal-btn" onclick="toggleKey(<?php echo $api['api_id']; ?>)">
                                                 <i class="bi bi-eye" id="icon-<?php echo $api['api_id']; ?>"></i>
                                             </span>
@@ -448,8 +448,6 @@ $inactive_apis = $stmt->fetch()['total'];
             })
         }
     </script>
-
-    <?php include('includes/footer_admin.php') ?>
 </body>
 
 </html>

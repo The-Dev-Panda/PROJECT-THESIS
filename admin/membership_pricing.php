@@ -133,7 +133,7 @@ $pricing = $stmt->fetchAll();
                         </div>
                         <div class="form-group col-sm-12 col-xl-5">
                             <label class="form-label">Price (₱)</label>
-                            <input type="text" name="price" class="form-input number-only" placeholder="0.00"
+                            <input type="number" name="price" class="form-input number-only" placeholder="0.00"
                                 maxlength="10" required>
                         </div>
                         <div class="form-group col-sm-12 col-xl-2 mt-4">
