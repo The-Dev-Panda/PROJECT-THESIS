@@ -1700,20 +1700,36 @@ function startScanner() {
   if (scannerRunning) return;
   document.getElementById('reader').innerHTML = '';
   if (!activeQrScanner) activeQrScanner = new Html5Qrcode('reader');
-  activeQrScanner.start(
-    { facingMode: 'environment' }, { fps: 10, qrbox: 250 },
-    qrCodeMessage => {
-      const memberRef = resolveMemberRefFromQr(qrCodeMessage);
-      if (!memberRef) { alert('Invalid QR data.'); return; }
-      stopScanner();
-      submitAttendance(memberRef, 'qr')
-        .then(data => alert(data.point_awarded ? 'Attendance recorded. +1 point credited.' : 'Attendance recorded. Point already credited today.'))
-        .catch(err => alert(err.message || 'Unable to save attendance.'));
-    }, () => {}
-  ).then(() => {
+
+  Html5Qrcode.getCameras().then(cameras => {
+    let cameraId = null;
+    if (Array.isArray(cameras) && cameras.length) {
+      const preferred = cameras.find(c => /back|rear|environment/i.test(c.label));
+      cameraId = preferred ? preferred.id : cameras[0].id;
+    }
+
+    const cameraConfig = cameraId ? cameraId : { facingMode: 'environment' };
+    return activeQrScanner.start(
+      cameraConfig,
+      { fps: 10, qrbox: 250 },
+      qrCodeMessage => {
+        const memberRef = resolveMemberRefFromQr(qrCodeMessage);
+        if (!memberRef) { alert('Invalid QR data.'); return; }
+        stopScanner();
+        submitAttendance(memberRef, 'qr')
+          .then(data => alert(data.point_awarded ? 'Attendance recorded. +1 point credited.' : 'Attendance recorded. Point already credited today.'))
+          .catch(err => alert(err.message || 'Unable to save attendance.'));
+      },
+      () => {}
+    );
+  }).then(() => {
     scannerRunning = true;
     document.getElementById('stopScannerBtn').style.display = 'inline-block';
-  }).catch(err => { scannerRunning = false; alert('Camera Error: ' + err); });
+  }).catch(err => {
+    scannerRunning = false;
+    const message = err && err.message ? err.message : err;
+    alert('Camera Error: ' + message + '\nMake sure the page is loaded over HTTPS or localhost and camera access is allowed.');
+  });
 }
 
 function stopScanner() {
